@@ -20,23 +20,8 @@ uses Classes, kbmMemTable, jvuiblib, PDGUtils, DB;
 
 type
   TkbUIBLoader = class(TkbmMemTable)
-
   public
-    constructor Create(AOwner: TComponent); override;
     procedure LoadFromSQLResult(F: TSQLResult);
-  end;
-
-  TkbUIBDeltaHandler = class(TkbmCustomDeltaHandler)
-  private
-    FStream: TPooledMemoryStream;
-  protected
-    procedure InsertRecord(var Retry: boolean; var State: TUpdateStatus); override;
-    procedure DeleteRecord(var Retry: boolean; var State: TUpdateStatus); override;
-    procedure ModifyRecord(var Retry: boolean; var State: TUpdateStatus); override;
-  public
-    procedure Resolve; override;
-    constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
   end;
 
 procedure Register;
@@ -50,13 +35,6 @@ begin
 end;
 
 { TkbUIBLoader }
-
-constructor TkbUIBLoader.Create(AOwner: TComponent);
-begin
-  inherited;
-  DeltaHandler := TkbUIBDeltaHandler.Create(Self);
-  DeltaHandler.DataSet := Self;
-end;
 
 procedure TkbUIBLoader.LoadFromSQLResult(F: TSQLResult);
 var
@@ -268,61 +246,6 @@ begin
     if Stream <> nil then
       Stream.Free;
   end;
-end;
-
-{ TkbUIBDeltaHandler }
-
-constructor TkbUIBDeltaHandler.Create(AOwner: TComponent);
-begin
-  inherited;
-  FStream := TPooledMemoryStream.Create;
-end;
-
-procedure TkbUIBDeltaHandler.DeleteRecord(var Retry: boolean;
-  var State: TUpdateStatus);
-begin
-  DataSet.OverrideActiveRecordBuffer := FPOrigRecord;
-  try
-    //DataSet.RecordSize
-  finally
-    DataSet.OverrideActiveRecordBuffer := nil;
-  end;
-end;
-
-destructor TkbUIBDeltaHandler.Destroy;
-begin
-  FStream.Free;
-  inherited;
-end;
-
-procedure TkbUIBDeltaHandler.InsertRecord(var Retry: boolean;
-  var State: TUpdateStatus);
-begin
-  inherited;
-end;
-
-procedure TkbUIBDeltaHandler.ModifyRecord(var Retry: boolean;
-  var State: TUpdateStatus);
-begin
-  inherited;
-
-end;
-
-procedure TkbUIBDeltaHandler.Resolve;
-var
-  i: integer;
-  f: TFieldDef;
-begin
-  FStream.Clear;
-  FStream.WriteInteger(DataSet.FieldDefs.Count);
-  for i := 0 to DataSet.FieldDefs.Count - 1 do
-  begin
-    f := DataSet.FieldDefs[i];
-    FStream.WriteString(f.Name);
-  end;
-
-
-  inherited;
 end;
 
 end.
