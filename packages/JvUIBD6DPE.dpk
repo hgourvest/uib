@@ -1,0 +1,46 @@
+package JvUIBD6DPE;
+
+{$R *.res}
+{$ALIGN 8}
+{$ASSERTIONS OFF}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS OFF}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS ON}
+{$REFERENCEINFO OFF}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST ON}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DESCRIPTION 'UIB - Unified Interbase Components'}
+{$DESIGNONLY}
+{$IMPLICITBUILD OFF}
+{$DEFINE UIBPEVERSION}
+
+requires
+{$IFDEF HAVE_SYNEDIT}
+  SynEdit_D6_PE,
+{$ENDIF}
+  JvUIBD6RPE,
+  designide;
+
+contains
+{$IFDEF HAVE_SYNEDIT}
+  jvuibsqledit in '..\source\jvuibsqledit.pas' {UIBSQLEditForm},
+  jvuibsynedit in '..\source\jvuibsynedit.pas',
+{$ENDIF}
+  jvuibdatabaseedit in '..\source\jvuibdatabaseedit.pas' {UIBDatabaseEditForm},
+  jvuibtransactionedit in '..\source\jvuibtransactionedit.pas' {UIBTransactionEditForm},
+  jvuibreg in '..\source\jvuibreg.pas';
+
+end.

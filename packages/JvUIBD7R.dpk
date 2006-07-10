@@ -1,0 +1,45 @@
+package JvUIBD7R;
+
+{$R *.res}
+{$ALIGN 8}
+{$ASSERTIONS OFF}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS OFF}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO OFF}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST ON}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DESCRIPTION 'UIB - Unified Interbase Components'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl,
+  dbrtl,
+  vcl;
+
+contains
+  jvuibase in '..\source\jvuibase.pas',
+  jvuiberror in '..\source\jvuiberror.pas',
+  jvuiblib in '..\source\jvuiblib.pas',
+  jvuib in '..\source\jvuib.pas',
+  jvuibconst in '..\source\jvuibconst.pas',
+  jvuibsqlparser in '..\source\jvuibsqlparser.pas',
+  jvuibdataset in '..\source\jvuibdataset.pas',
+  jvuibmetadata in '..\source\jvuibmetadata.pas',
+  FastCode in '..\source\fastcode.pas';
+
+end.

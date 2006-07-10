@@ -1,0 +1,48 @@
+package JvUIBK3D;
+
+{$R *.res}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DESCRIPTION 'UIB - Unified Interbase Components'}
+{$DESIGNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl,
+  vcl,
+  JvUIBK3R,
+  visualclx,
+{$IFDEF HAVE_SYNEDIT}
+  synedit_kylix,
+{$ENDIF}
+  dbdesign;
+
+contains
+{$IFDEF HAVE_SYNEDIT}
+  jvuibsqledit in '../source/jvuibsqledit.pas' {UIBSQLEditForm},
+  jvuibsynedit in '../source/jvuibsynedit.pas',
+{$ENDIF}
+  jvuibreg in '../source/jvuibreg.pas',
+  jvuibdatabaseedit in '../source/jvuibdatabaseedit.pas' {UIBDatabaseEditForm},
+  jvuibtransactionedit in '../source/jvuibtransactionedit.pas' {UIBTransactionEditForm};
+
+end.
