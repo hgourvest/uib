@@ -1,0 +1,329 @@
+(*
+    "The contents of this file are subject to the Mozilla Public License
+    Version 1.1 (the "License"); you may not use this file except in
+    compliance with the License. You may obtain a copy of the License at
+    http://www.mozilla.org/MPL/
+
+    Software distributed under the License is distributed on an "AS IS"
+    basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
+    License for the specific language governing rights and limitations
+    under the License.
+
+    The Initial Developer of the Original Code is
+      Henri Gourvest <hgourvest@progdigy.com>.
+*)
+
+unit kbUIBLoader;
+
+interface
+uses Classes, kbmMemTable, jvuiblib, PDGUtils, DB;
+
+type
+  TkbUIBLoader = class(TkbmMemTable)
+
+  public
+    constructor Create(AOwner: TComponent); override;
+    procedure LoadFromSQLResult(F: TSQLResult);
+  end;
+
+  TkbUIBDeltaHandler = class(TkbmCustomDeltaHandler)
+  private
+    FStream: TPooledMemoryStream;
+  protected
+    procedure InsertRecord(var Retry: boolean; var State: TUpdateStatus); override;
+    procedure DeleteRecord(var Retry: boolean; var State: TUpdateStatus); override;
+    procedure ModifyRecord(var Retry: boolean; var State: TUpdateStatus); override;
+  public
+    procedure Resolve; override;
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+  end;
+
+procedure Register;
+
+implementation
+uses SysUtils, jvuibase, jvuibconst, FmtBcd, Windows;
+
+procedure Register;
+begin
+  RegisterComponents('jv UIB', [TkbUIBLoader]);
+end;
+
+{ TkbUIBLoader }
+
+constructor TkbUIBLoader.Create(AOwner: TComponent);
+begin
+  inherited;
+  DeltaHandler := TkbUIBDeltaHandler.Create(Self);
+  DeltaHandler.DataSet := Self;
+end;
+
+procedure TkbUIBLoader.LoadFromSQLResult(F: TSQLResult);
+var
+  i, j: Integer;
+  fcount: Integer;
+  TmpName: string;
+
+  FieldNo: integer;
+  FieldType: TUIBFieldType;
+  Buffer: record
+    case byte of
+      0: (Currency: Currency);
+      1: (BCD: TBCD);
+      2: (Int64: Int64);
+      3: (Double: Double);
+      4: (Smallint: Smallint);
+      5: (TimeStamp: TTimeStamp);
+      6: (Integer: Integer);
+  end;
+  Str: string;
+  Stream: TMemoryStream;
+  Accept: boolean;
+  SqlVar: PUIBSQLVar;
+begin
+  Filtered := False;
+  Filter := '';
+  Close;
+
+  FieldDefs.BeginUpdate;
+  try
+    FieldDefs.Clear;
+
+    for i := 0 to F.FieldCount - 1 do
+
+      with FieldDefs.AddFieldDef, F do
+      begin
+        fcount := 1;
+        TmpName := AliasName[i];
+        while TDefCollection(Collection).IndexOf(TmpName) >= 0 do
+        begin
+          TmpName := TmpName + inttostr(fcount);
+          inc(fcount);
+        end;
+        Name := TmpName;
+
+        FieldNo := i;
+        Required := not IsNullable[i];
+        case FieldType[i] of
+          uftNumeric:
+            begin
+              case SQLType[i] of
+                SQL_SHORT:
+                  begin
+                    DataType := ftFMTBcd; // else
+                    Size := -Data.sqlvar[i].SqlScale;
+                    if Size = 4 then
+                      Precision := 5
+                    else
+                      Precision := 4;
+                  end;
+                SQL_LONG:
+                  begin
+                    DataType := ftFMTBcd; // else
+                    Size := -Data.sqlvar[i].SqlScale;
+                    if Size = 9 then
+                      Precision := 10
+                    else
+                      Precision := 9;
+                  end;
+                SQL_INT64,
+                  SQL_QUAD:
+                  begin
+                    DataType := ftFMTBcd; // else
+                    Size := -Data.sqlvar[i].SqlScale;
+                    if Size = 18 then
+                      Precision := 19
+                    else
+                      Precision := 18;
+                  end;
+                SQL_DOUBLE:
+                  DataType := ftFloat; // possible
+              end;
+            end;
+          uftChar,
+            uftCstring,
+            uftVarchar:
+            begin
+              DataType := ftString;
+              Size := SQLLen[i];
+            end;
+          uftSmallint: DataType := ftSmallint;
+          uftInteger: DataType := ftInteger;
+          uftFloat,
+            uftDoublePrecision: DataType := ftFloat;
+          uftTimestamp: DataType := ftDateTime;
+          uftBlob, uftBlobId:
+            begin
+              if Data.sqlvar[i].SqlSubType = 1 then
+                DataType := ftMemo
+              else
+                DataType := ftBlob;
+              Size := SizeOf(TIscQuad);
+            end;
+          uftDate: DataType := ftDate;
+          uftTime: DataType := ftTime;
+          uftInt64:
+            DataType := ftLargeint;
+        else
+          DataType := ftUnknown;
+        end;
+      end;
+  finally
+    FieldDefs.EndUpdate;
+  end;
+  Open;
+  Stream := nil;
+  try
+    for j := 0 to F.RecordCount - 1 do
+    begin
+      F.GetRecord(j);
+      Append;
+      for i := 0 to Fields.Count - 1 do
+        if Fields[i].FieldKind = fkData then
+        begin
+          FieldNo := Fields[i].FieldNo - 1;
+          FieldType := F.FieldType[FieldNo];
+          SqlVar := @F.Data.sqlvar[FieldNo];
+          if F.IsNull[FieldNo] then
+            Fields[i].Clear
+          else
+            case FieldType of
+              uftNumeric:
+                begin
+                  case F.SQLType[FieldNo] of
+                    SQL_SHORT:
+                      Buffer.bcd := strToBcd(FloatToStr(PSmallint(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
+                    SQL_LONG:
+                      Buffer.BCD := strToBcd(FloatToStr(PInteger(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
+                    SQL_INT64,
+                      SQL_QUAD:
+                      Buffer.BCD := strToBcd(FloatToStr(PInt64(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
+                    SQL_DOUBLE:
+                      Buffer.Double := PDouble(SqlVar.sqldata)^;
+                  else
+                    raise Exception.Create(EUIB_UNEXPECTEDCASTERROR);
+                  end;
+                  SetFieldData(Fields[i], @Buffer);
+                end;
+              uftChar,
+                uftCstring:
+                begin
+                  SetLength(Str, SqlVar.SqlLen);
+                  Move(SqlVar.sqldata^, PChar(Str)^, SqlVar.SqlLen);
+                  SetFieldData(Fields[i], Pointer(Str));
+                end;
+              uftVarchar:
+                begin
+                  SetLength(Str, SqlVar.SqlLen);
+                  Move(PVary(SqlVar.sqldata).vary_string, PChar(Str)^, PVary(SqlVar.sqldata).vary_length);
+                  if (Word(SqlVar.SqlLen)) > PVary(SqlVar.sqldata).vary_length then
+                    PChar(str)[PVary(SqlVar.sqldata).vary_length] := #0;
+                  SetFieldData(Fields[i], Pointer(Str));
+                end;
+              uftSmallint, uftInteger, uftDoublePrecision, uftInt64:
+                SetFieldData(Fields[i], SqlVar.sqldata);
+              uftFloat:
+                begin
+                  Buffer.Double := PSingle(SqlVar.sqldata)^;
+                  SetFieldData(Fields[i], @Buffer);
+                end;
+              uftTimestamp:
+                begin
+                  DecodeTimeStamp(PIscTimeStamp(SqlVar.sqldata), Buffer.TimeStamp);
+                  Buffer.Double := TimeStampToMSecs(Buffer.TimeStamp);
+                  SetFieldData(Fields[i], @Buffer);
+                end;
+              uftBlob, uftBlobId:
+                begin
+                  if Stream = nil then
+                    Stream := TMemoryStream.Create;
+                  F.ReadBlob(FieldNo, Stream);
+                  Stream.Seek(0, soFromBeginning);
+                  SetFieldData(Fields[i], Stream);
+                end;
+              uftDate:
+                begin
+                  Buffer.Integer := PInteger(SqlVar.sqldata)^ - DateOffset + 693594;
+                  SetFieldData(Fields[i], @Buffer);
+                end;
+              uftTime:
+                begin
+                  Buffer.Integer := PCardinal(SqlVar.sqldata)^ div 10;
+                  SetFieldData(Fields[i], @Buffer);
+                end;
+            else
+              raise EUIBError.Create(EUIB_UNEXPECTEDERROR);
+            end;
+
+          if Assigned(OnLoad) then
+            OnLoadField(Self, i, Fields[i]);
+        end;
+
+      Accept := True;
+      if Assigned(OnLoadRecord) then
+        OnLoadRecord(Self, Accept);
+      Post;
+    end;
+  finally
+    if Stream <> nil then
+      Stream.Free;
+  end;
+end;
+
+{ TkbUIBDeltaHandler }
+
+constructor TkbUIBDeltaHandler.Create(AOwner: TComponent);
+begin
+  inherited;
+  FStream := TPooledMemoryStream.Create;
+end;
+
+procedure TkbUIBDeltaHandler.DeleteRecord(var Retry: boolean;
+  var State: TUpdateStatus);
+begin
+  DataSet.OverrideActiveRecordBuffer := FPOrigRecord;
+  try
+    //DataSet.RecordSize
+  finally
+    DataSet.OverrideActiveRecordBuffer := nil;
+  end;
+end;
+
+destructor TkbUIBDeltaHandler.Destroy;
+begin
+  FStream.Free;
+  inherited;
+end;
+
+procedure TkbUIBDeltaHandler.InsertRecord(var Retry: boolean;
+  var State: TUpdateStatus);
+begin
+  inherited;
+end;
+
+procedure TkbUIBDeltaHandler.ModifyRecord(var Retry: boolean;
+  var State: TUpdateStatus);
+begin
+  inherited;
+
+end;
+
+procedure TkbUIBDeltaHandler.Resolve;
+var
+  i: integer;
+  f: TFieldDef;
+begin
+  FStream.Clear;
+  FStream.WriteInteger(DataSet.FieldDefs.Count);
+  for i := 0 to DataSet.FieldDefs.Count - 1 do
+  begin
+    f := DataSet.FieldDefs[i];
+    FStream.WriteString(f.Name);
+  end;
+
+
+  inherited;
+end;
+
+end.
+

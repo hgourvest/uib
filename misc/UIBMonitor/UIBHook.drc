@@ -1,0 +1,219 @@
+/* VER150
+  Généré par le compilateur Pascal Delphi de Borland
+  parce que -GD ou --drc a été fourni au compilateur.
+
+  Il contient des ressources générées par le compilateur liées à l'exécutable.
+  S'il est vide, aucune ressource générée par le compilateur ne sera
+  liée à l'exécutable produit.
+*/
+
+#define RTLConsts_SListCountError 65424
+#define RTLConsts_SListIndexError 65425
+#define RTLConsts_SMemoryStreamError 65426
+#define RTLConsts_SReadError 65427
+#define RTLConsts_SSeekNotImplemented 65428
+#define RTLConsts_SSortedListError 65429
+#define RTLConsts_SWriteError 65430
+#define SysConst_SShortDayNameThu 65440
+#define SysConst_SShortDayNameFri 65441
+#define SysConst_SShortDayNameSat 65442
+#define SysConst_SLongDayNameSun 65443
+#define SysConst_SLongDayNameMon 65444
+#define SysConst_SLongDayNameTue 65445
+#define SysConst_SLongDayNameWed 65446
+#define SysConst_SLongDayNameThu 65447
+#define SysConst_SLongDayNameFri 65448
+#define SysConst_SLongDayNameSat 65449
+#define RTLConsts_SAssignError 65450
+#define RTLConsts_SDuplicateString 65451
+#define RTLConsts_SFCreateErrorEx 65452
+#define RTLConsts_SFOpenErrorEx 65453
+#define RTLConsts_SInvalidPropertyValue 65454
+#define RTLConsts_SListCapacityError 65455
+#define SysConst_SLongMonthNameJan 65456
+#define SysConst_SLongMonthNameFeb 65457
+#define SysConst_SLongMonthNameMar 65458
+#define SysConst_SLongMonthNameApr 65459
+#define SysConst_SLongMonthNameMay 65460
+#define SysConst_SLongMonthNameJun 65461
+#define SysConst_SLongMonthNameJul 65462
+#define SysConst_SLongMonthNameAug 65463
+#define SysConst_SLongMonthNameSep 65464
+#define SysConst_SLongMonthNameOct 65465
+#define SysConst_SLongMonthNameNov 65466
+#define SysConst_SLongMonthNameDec 65467
+#define SysConst_SShortDayNameSun 65468
+#define SysConst_SShortDayNameMon 65469
+#define SysConst_SShortDayNameTue 65470
+#define SysConst_SShortDayNameWed 65471
+#define SysConst_SAbstractError 65472
+#define SysConst_SModuleAccessViolation 65473
+#define SysConst_SOSError 65474
+#define SysConst_SUnkOSError 65475
+#define SysConst_SShortMonthNameJan 65476
+#define SysConst_SShortMonthNameFeb 65477
+#define SysConst_SShortMonthNameMar 65478
+#define SysConst_SShortMonthNameApr 65479
+#define SysConst_SShortMonthNameMay 65480
+#define SysConst_SShortMonthNameJun 65481
+#define SysConst_SShortMonthNameJul 65482
+#define SysConst_SShortMonthNameAug 65483
+#define SysConst_SShortMonthNameSep 65484
+#define SysConst_SShortMonthNameOct 65485
+#define SysConst_SShortMonthNameNov 65486
+#define SysConst_SShortMonthNameDec 65487
+#define SysConst_SVarArrayLocked 65488
+#define SysConst_SInvalidVarCast 65489
+#define SysConst_SInvalidVarOp 65490
+#define SysConst_SInvalidVarOpWithHResultWithPrefix 65491
+#define SysConst_SVarTypeCouldNotConvert 65492
+#define SysConst_SVarTypeConvertOverflow 65493
+#define SysConst_SVarOverflow 65494
+#define SysConst_SVarInvalid 65495
+#define SysConst_SVarBadType 65496
+#define SysConst_SVarNotImplemented 65497
+#define SysConst_SVarUnexpected 65498
+#define SysConst_SExternalException 65499
+#define SysConst_SAssertionFailed 65500
+#define SysConst_SIntfCastError 65501
+#define SysConst_SSafecallException 65502
+#define SysConst_SAssertError 65503
+#define SysConst_SInvalidPointer 65504
+#define SysConst_SInvalidCast 65505
+#define SysConst_SAccessViolationArg3 65506
+#define SysConst_SAccessViolationNoArg 65507
+#define SysConst_SStackOverflow 65508
+#define SysConst_SControlC 65509
+#define SysConst_SPrivilege 65510
+#define SysConst_SException 65511
+#define SysConst_SExceptTitle 65512
+#define SysConst_SInvalidFormat 65513
+#define SysConst_SArgumentMissing 65514
+#define SysConst_SDispatchError 65515
+#define SysConst_SReadAccess 65516
+#define SysConst_SWriteAccess 65517
+#define SysConst_SVarArrayCreate 65518
+#define SysConst_SVarArrayBounds 65519
+#define SysConst_SOutOfMemory 65520
+#define SysConst_SInOutError 65521
+#define SysConst_SFileNotFound 65522
+#define SysConst_SInvalidFilename 65523
+#define SysConst_STooManyOpenFiles 65524
+#define SysConst_SAccessDenied 65525
+#define SysConst_SEndOfFile 65526
+#define SysConst_SDiskFull 65527
+#define SysConst_SInvalidInput 65528
+#define SysConst_SDivByZero 65529
+#define SysConst_SRangeError 65530
+#define SysConst_SIntOverflow 65531
+#define SysConst_SInvalidOp 65532
+#define SysConst_SZeroDivide 65533
+#define SysConst_SOverflow 65534
+#define SysConst_SUnderflow 65535
+STRINGTABLE
+BEGIN
+	RTLConsts_SListCountError,	"Compte de liste hors limites (%d)"
+	RTLConsts_SListIndexError,	"Indice de liste hors limites (%d)"
+	RTLConsts_SMemoryStreamError,	"Mémoire insuffisante lors de l'extension du flux mémoire"
+	RTLConsts_SReadError,	"Erreur de lecture du flux"
+	RTLConsts_SSeekNotImplemented,	"%s.Seek non implémenté"
+	RTLConsts_SSortedListError,	"Opération non autorisée dans une liste ordonnée"
+	RTLConsts_SWriteError,	"Erreur d'écriture dans le flux"
+	SysConst_SShortDayNameThu,	"Jeu"
+	SysConst_SShortDayNameFri,	"Ven"
+	SysConst_SShortDayNameSat,	"Sam"
+	SysConst_SLongDayNameSun,	"Dimanche"
+	SysConst_SLongDayNameMon,	"Lundi"
+	SysConst_SLongDayNameTue,	"Mardi"
+	SysConst_SLongDayNameWed,	"Mercredi"
+	SysConst_SLongDayNameThu,	"Jeudi"
+	SysConst_SLongDayNameFri,	"Vendredi"
+	SysConst_SLongDayNameSat,	"Samedi"
+	RTLConsts_SAssignError,	"Impossible d'affecter %s à %s"
+	RTLConsts_SDuplicateString,	"La liste de chaînes n'autorise pas les doublons"
+	RTLConsts_SFCreateErrorEx,	"Impossible de créer le fichier \"%s\". %s"
+	RTLConsts_SFOpenErrorEx,	"Impossible d'ouvrir le fichier \"%s\". %s"
+	RTLConsts_SInvalidPropertyValue,	"Valeur de propriété incorrecte"
+	RTLConsts_SListCapacityError,	"Capacité de liste hors limites (%d)"
+	SysConst_SLongMonthNameJan,	"Janvier"
+	SysConst_SLongMonthNameFeb,	"Février"
+	SysConst_SLongMonthNameMar,	"Mars"
+	SysConst_SLongMonthNameApr,	"Avril"
+	SysConst_SLongMonthNameMay,	"Mai"
+	SysConst_SLongMonthNameJun,	"Juin"
+	SysConst_SLongMonthNameJul,	"Juillet"
+	SysConst_SLongMonthNameAug,	"Août"
+	SysConst_SLongMonthNameSep,	"Septembre"
+	SysConst_SLongMonthNameOct,	"Octobre"
+	SysConst_SLongMonthNameNov,	"Novembre"
+	SysConst_SLongMonthNameDec,	"Décembre"
+	SysConst_SShortDayNameSun,	"Dim"
+	SysConst_SShortDayNameMon,	"Lun"
+	SysConst_SShortDayNameTue,	"Mar"
+	SysConst_SShortDayNameWed,	"Mer"
+	SysConst_SAbstractError,	"Erreur abstraite"
+	SysConst_SModuleAccessViolation,	"Violation d'accès à l'adresse %p dans le module '%s'. %s de l'adresse %p"
+	SysConst_SOSError,	"Erreur système.  Code : %d.\r\n%s"
+	SysConst_SUnkOSError,	"Un appel à une fonction du système d'exploitation a échoué"
+	SysConst_SShortMonthNameJan,	"Jan"
+	SysConst_SShortMonthNameFeb,	"Fév"
+	SysConst_SShortMonthNameMar,	"Mar"
+	SysConst_SShortMonthNameApr,	"Avr"
+	SysConst_SShortMonthNameMay,	"Mai"
+	SysConst_SShortMonthNameJun,	"Jun"
+	SysConst_SShortMonthNameJul,	"Jul"
+	SysConst_SShortMonthNameAug,	"Aoû"
+	SysConst_SShortMonthNameSep,	"Sep"
+	SysConst_SShortMonthNameOct,	"Oct"
+	SysConst_SShortMonthNameNov,	"Nov"
+	SysConst_SShortMonthNameDec,	"Déc"
+	SysConst_SVarArrayLocked,	"Le variant ou le tableau est verrouillé"
+	SysConst_SInvalidVarCast,	"Conversion de type variant incorrecte"
+	SysConst_SInvalidVarOp,	"Opération de variant incorrecte"
+	SysConst_SInvalidVarOpWithHResultWithPrefix,	"Opération variant incorrecte (%s%.8x)\n%s"
+	SysConst_SVarTypeCouldNotConvert,	"Impossible de convertir le variant de type (%s) en type (%s)"
+	SysConst_SVarTypeConvertOverflow,	"Débordement lors de la conversion du variant de type (%s) en type (%s)"
+	SysConst_SVarOverflow,	"Débordement de variant"
+	SysConst_SVarInvalid,	"Argument incorrect"
+	SysConst_SVarBadType,	"Type de variant incorrect"
+	SysConst_SVarNotImplemented,	"Opération non supportée"
+	SysConst_SVarUnexpected,	"Erreur de variant inattendue"
+	SysConst_SExternalException,	"Exception externe %x"
+	SysConst_SAssertionFailed,	"Echec de l'assertion"
+	SysConst_SIntfCastError,	"Interface non supportée"
+	SysConst_SSafecallException,	"Exception dans méthode safecall"
+	SysConst_SAssertError,	"%s (%s, ligne %d)"
+	SysConst_SInvalidPointer,	"Opération de pointeur incorrecte"
+	SysConst_SInvalidCast,	"Transtypage de classe incorrect"
+	SysConst_SAccessViolationArg3,	"Violation d'accès à l'adresse %p. %s de l'adresse %p"
+	SysConst_SAccessViolationNoArg,	"Violation d'accès"
+	SysConst_SStackOverflow,	"Débordement de pile"
+	SysConst_SControlC,	"Frappe de Contrôle-C"
+	SysConst_SPrivilege,	"Instruction privilégiée"
+	SysConst_SException,	"Exception %s dans le module %s dans %p.\r\n%s%s\r\n"
+	SysConst_SExceptTitle,	"Erreur d'application"
+	SysConst_SInvalidFormat,	"Le format '%s' est incorrect ou incompatible avec l'argument"
+	SysConst_SArgumentMissing,	"Aucun argument pour le format '%s'"
+	SysConst_SDispatchError,	"Appels de méthode variante non supportés"
+	SysConst_SReadAccess,	"Lecture"
+	SysConst_SWriteAccess,	"Ecriture"
+	SysConst_SVarArrayCreate,	"Erreur lors de la création du variant ou du tableau"
+	SysConst_SVarArrayBounds,	"Indice de variant ou de tableau hors limites"
+	SysConst_SOutOfMemory,	"Mémoire insuffisante"
+	SysConst_SInOutError,	"Erreur E/S %d"
+	SysConst_SFileNotFound,	"Fichier introuvable"
+	SysConst_SInvalidFilename,	"Nom de fichier incorrect"
+	SysConst_STooManyOpenFiles,	"Trop de fichiers ouverts"
+	SysConst_SAccessDenied,	"Accès au fichier refusé"
+	SysConst_SEndOfFile,	"Lecture au-delà de la fin de fichier"
+	SysConst_SDiskFull,	"Disque plein"
+	SysConst_SInvalidInput,	"Saisie numérique incorrecte"
+	SysConst_SDivByZero,	"Division par zéro"
+	SysConst_SRangeError,	"Erreur de vérification d'étendue"
+	SysConst_SIntOverflow,	"Débordement d'entier"
+	SysConst_SInvalidOp,	"Opération en virgule flottante incorrecte"
+	SysConst_SZeroDivide,	"Division par zéro en virgule flottante"
+	SysConst_SOverflow,	"Débordement en virgule flottante"
+	SysConst_SUnderflow,	"Débordement inférieur flottant"
+END
+
