@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <Package Version="2">
+    <PathDelim Value="\"/>
+    <Name Value="UIBLaz"/>
+    <Author Value="Henri Gourvest"/>
+    <CompilerOptions>
+      <Version Value="2"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <OtherUnitFiles Value="."/>
+        <UnitOutputDirectory Value="lib\"/>
+      </SearchPaths>
+      <CodeGeneration>
+        <Generate Value="Faster"/>
+      </CodeGeneration>
+      <Other>
+        <Verbosity>
+          <ShowHints Value="False"/>
+        </Verbosity>
+        <ConfigFile>
+          <ConfigFilePath Value=".\fpc.cfg"/>
+        </ConfigFile>
+        <CompilerPath Value="$(CompPath)"/>
+      </Other>
+    </CompilerOptions>
+    <Description Value="Lazarus package for the Unified Interbase components."/>
+    <License Value="MPL"/>
+    <Version Major="1"/>
+    <Files Count="4">
+      <Item1>
+        <Filename Value="registeruib.pp"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="RegisterUIB"/>
+      </Item1>
+      <Item2>
+        <Filename Value="jvuib.pas"/>
+        <Type Value="Virtual Unit"/>
+        <UnitName Value="jvuib"/>
+      </Item2>
+      <Item3>
+        <Filename Value="registeruib.lrs"/>
+        <Type Value="LRS"/>
+      </Item3>
+      <Item4>
+        <Filename Value="jvuibdataset.pas"/>
+        <Type Value="Virtual Unit"/>
+        <UnitName Value="jvuibdataset"/>
+      </Item4>
+    </Files>
+    <Type Value="RunAndDesignTime"/>
+    <RequiredPkgs Count="2">
+      <Item1>
+        <PackageName Value="LCL"/>
+        <MinVersion Major="1" Valid="True"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="FCL"/>
+        <MinVersion Major="1" Valid="True"/>
+      </Item2>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+      <DestinationDirectory Value="$(TestDir)\publishedpackage\"/>
+      <IgnoreBinaries Value="False"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>
