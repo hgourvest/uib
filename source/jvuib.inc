@@ -73,6 +73,9 @@
 // no components
 {.$DEFINE UIB_NO_COMPONENT}
 
+// support VARCHAR(16) CHARSET OCTET COLLATION OCTET as TGUID
+{$DEFINE GUID_TYPE}
+
 // ***************
 // END USER DEFINE
 // ***************

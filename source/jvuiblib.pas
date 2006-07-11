@@ -82,6 +82,12 @@ type
 const
   QuadNull: TISCQuad = (gds_quad_high: 0; gds_quad_low: 0);
 
+{$IFDEF GUID_TYPE}
+const
+  GUIDNull: TGUID = (D1:0;D2:0;D3:0;D4:(0,0,0,0,0,0,0,0));
+  GUIDUndefined: TGUID = (D1:$FFFFFFFF;D2:$FFFF;D3:$FFFF;D4:($FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF));
+{$ENDIF}
+
 //******************************************************************************
 // Database
 //******************************************************************************
@@ -244,6 +250,9 @@ type
     function DecodeString(const Code: Smallint; Index: Word): String; overload;
     procedure EncodeString(Code: Smallint; Index: Word; const str: String);
     procedure EncodeWideString(Code: Smallint; Index: Word; const str: WideString);
+  {$IFDEF GUID_TYPE}
+    procedure EncodeGUID(Code: Smallint; Index: Word; G: TGUID);
+  {$ENDIF}
   protected
     function GetSqlName(const Index: Word): string;
     function GetRelName(const Index: Word): string;
@@ -271,6 +280,9 @@ type
     function GetAsDate(const Index: Word): Integer;
     function GetAsTime(const Index: Word): Cardinal;
     function GetAsBoolean(const Index: Word): boolean;
+  {$IFDEF GUID_TYPE}
+    function GetAsGUID(const Index: Word): TGUID;
+  {$ENDIF}
 
     procedure SetIsNull(const Index: Word; const Value: boolean);
     procedure SetAsDouble(const Index: Word; const Value: Double); virtual;
@@ -286,6 +298,9 @@ type
     procedure SetAsBoolean(const Index: Word; const Value: Boolean); virtual;
     procedure SetAsDate(const Index: Word; const Value: Integer); virtual;
     procedure SetAsTime(const Index: Word; const Value: Cardinal); virtual;
+  {$IFDEF GUID_TYPE}
+    procedure SetAsGUID(const Index: Word; const Value: TGUID); virtual;
+  {$ENDIF}
 
     function GetByNameIsNumeric(const Name: String): boolean;
     function GetByNameIsBlob(const Name: String): boolean;
@@ -306,6 +321,9 @@ type
     function GetByNameAsBoolean(const Name: String): boolean;
     function GetByNameAsDate(const Name: String): Integer;
     function GetByNameAsTime(const Name: String): Cardinal;
+  {$IFDEF GUID_TYPE}
+    function GetByNameAsGUID(const Name: String): TGUID;
+  {$ENDIF}
 
     procedure SetByNameIsNull(const Name: String; const Value: boolean);
     procedure SetByNameAsDouble(const Name: String; const Value: Double);
@@ -320,6 +338,9 @@ type
     procedure SetByNameAsDateTime(const Name: String; const Value: TDateTime);
     procedure SetByNameAsBoolean(const Name: String; const Value: boolean);
     procedure SetByNameAsDate(const Name: String; const Value: Integer);
+  {$IFDEF GUID_TYPE}
+    procedure SetByNameAsGUID(const Name: String; const Value: TGUID);
+  {$ENDIF}
   public
     procedure CheckRange(const Index: Word);
     function GetFieldIndex(const name: String): Word; virtual;
@@ -348,6 +369,9 @@ type
     property AsDate       [const Index: Word]: Integer    read GetAsDate       write SetAsDate;
     property AsTime       [const Index: Word]: Cardinal   read GetAsTime       write SetAsTime;
     property AsVariant    [const Index: Word]: Variant    read GetAsVariant;
+  {$IFDEF GUID_TYPE}
+    property AsGUID       [const Index: Word]: TGUID      read GetAsGUID       write SetAsGUID;
+  {$ENDIF}
 
     property ByNameIsNull       [const name: String]: boolean    read GetByNameIsNull       write SetByNameIsNull;
     property ByNameAsSmallint   [const name: String]: Smallint   read GetByNameAsSmallint   write SetByNameAsSmallint;
@@ -363,6 +387,9 @@ type
     property ByNameAsDateTime   [const name: String]: TDateTime  read GetByNameAsDateTime   write SetByNameAsDateTime;
     property ByNameAsBoolean    [const name: String]: Boolean    read GetByNameAsBoolean    write SetByNameAsBoolean;
     property ByNameAsDate       [const name: String]: Integer    read GetByNameAsDate       write SetByNameAsDate;
+  {$IFDEF GUID_TYPE}
+    property ByNameAsGUID       [const name: String]: TGUID      read GetByNameAsGUID       write SetByNameAsGUID;
+  {$ENDIF}
   end;
 { TPoolStream }
 
@@ -570,6 +597,9 @@ type
     procedure SetAsBoolean(const Index: Word; const Value: Boolean); override;
     procedure SetAsDate(const Index: Word; const Value: Integer); override;
     procedure SetAsTime(const Index: Word; const Value: Cardinal); override;
+  {$IFDEF GUID_TYPE}
+    procedure SetAsGUID(const Index: Word; const Value: TGUID); override;
+  {$ENDIF}
 
     function GetFieldType(const Index: Word): TUIBFieldType; override;
   public
@@ -3132,6 +3162,60 @@ type
            end;
   end;
 
+{$IFDEF GUID_TYPE}
+  procedure TSQLDA.EncodeGUID(Code: Smallint; Index: Word; G: TGUID);
+  var
+    i: Smallint;
+    OldLen: SmallInt;
+    NewLen: Integer;
+  begin
+    OldLen  := FXSQLDA.sqlvar[Index].SqlLen;
+
+    with FXSQLDA.sqlvar[Index] do
+    begin
+      // Guid is GuidNull
+      if CompareMem(@G,@GuidNull,SizeOf(TGUID)) and (sqlind <> nil) then
+        sqlind^ := -1 // NULL
+      else
+      begin
+        case Code of
+          SQL_TEXT :
+            begin
+              NewLen := SizeOf(TGUID);
+              if sqldata = nil then
+                getmem(sqldata, NewLen) else
+                ReallocMem(sqldata, NewLen);
+              sqllen := NewLen;
+              Move(G, sqldata^, sqllen);
+            end;
+          SQL_VARYING :
+            begin
+              NewLen := SizeOf(TGUID);
+              if sqldata = nil then
+                getmem(sqldata, NewLen+2) else
+                ReallocMem(sqldata, NewLen+2);
+              sqllen := NewLen + 2;
+              PVary(sqldata).vary_length := NewLen;
+              Move(G, PVary(sqldata).vary_string,PVary(sqldata).vary_length);
+            end;
+        end;
+        if (sqlind <> nil) then
+          sqlind^ := 0;        
+      end;
+    end;
+
+    // named parametters share the same memory !!
+    with FXSQLDA.sqlvar[Index] do
+      if (ParamNameLength > 0) and (OldLen <> SqlLen) then
+         for i := 0 to FXSQLDA.sqln - 1 do
+           if (FXSQLDA.sqlvar[i].ID = ID) then
+           begin
+             FXSQLDA.sqlvar[i].SqlData := SqlData;
+             FXSQLDA.sqlvar[i].SqlLen  := SqlLen;
+           end;
+  end;
+{$ENDIF}
+
   procedure TSQLDA.ConvertString(const Code: Smallint; Index: Word; out value: Int64);
   begin
     value := StrToInt64(DecodeString(Code, Index));
@@ -3887,6 +3971,41 @@ end;
     end;
   end;
 
+{$IFDEF GUID_TYPE}
+  function TSQLDA.GetAsGUID(const Index: Word): TGUID;
+  var ASQLCode: SmallInt;
+  begin
+    CheckRange(Index);
+    Result := GuidNull;
+    with FXSQLDA.sqlvar[Index] do
+    begin
+      if (sqlind <> nil) and (sqlind^ = -1) then Exit;
+      ASQLCode := (sqltype and not(1));
+      // GUID can't be converted from numeric fields
+      if (sqlscale < 0)  then
+        raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR)
+      else
+        case ASQLCode of
+          SQL_TEXT    :
+          begin
+            if sqllen = SizeOf(TGUID) then
+              Move(sqldata^, Result, sqllen)
+            else
+              raise EUIBConvertError.Create(EUIB_CASTERROR);
+          end;
+          SQL_VARYING :
+          begin
+            if PVary(sqldata).vary_length = SizeOf(TGUID) then
+              Move(PVary(sqldata).vary_string, Result, PVary(sqldata).vary_length)
+            else
+              raise EUIBConvertError.Create(EUIB_CASTERROR);
+          end;
+        else
+          raise EUIBConvertError.Create(EUIB_CASTERROR);
+        end;
+    end;
+  end;
+{$ENDIF}
 
  // TSQLDA.SetAs...
 
@@ -4422,6 +4541,28 @@ end;
     end;
   end;
 
+{$IFDEF GUID_TYPE}
+  procedure TSQLDA.SetAsGUID(const Index: Word; const Value: TGUID);
+  var
+    ASQLCode: SmallInt;
+  begin
+    with FXSQLDA.sqlvar[Index] do
+    begin
+      ASQLCode := (sqltype and not(1));
+      // Is Numeric ?
+      if (sqlscale < 0)  then
+        raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR)
+      else
+        case ASQLCode of
+          SQL_TEXT      : EncodeGUID(SQL_TEXT, Index, Value);
+          SQL_VARYING   : EncodeGUID(SQL_VARYING, Index, Value);
+        else
+          raise EUIBConvertError.Create(EUIB_CASTERROR);
+        end;
+    end;
+  end;
+{$ENDIF}
+
   // TSQLDA.GetByName...
 
   function TSQLDA.GetFieldIndex(const name: String): Word;
@@ -4513,15 +4654,22 @@ end;
     Result := GetAsTime(GetFieldIndex(Name));
   end;
 
+  function TSQLDA.GetByNameIsNumeric(const Name: String): boolean;
+  begin
+    result := GetIsNumeric(GetFieldIndex(Name));
+  end;
+
   function TSQLDA.GetByNameIsNullable(const Name: String): boolean;
   begin
     Result := GetIsNullable(GetFieldIndex(Name));
   end;
 
-  function TSQLDA.GetByNameIsNumeric(const Name: String): boolean;
+{$IFDEF GUID_TYPE}
+  function TSQLDA.GetByNameAsGUID(const Name: String): TGUID;
   begin
-    result := GetIsNumeric(GetFieldIndex(Name));
+    result := GetAsGUID(GetFieldIndex(Name));
   end;
+{$ENDIF}
 
   // TSQLDA.SetByNameAs
 
@@ -4600,6 +4748,13 @@ end;
   begin
     SetAsWideString(GetFieldIndex(Name), Value);
   end;
+
+{$IFDEF GUID_TYPE}
+  procedure TSQLDA.SetByNameAsGUID(const Name: String; const Value: TGUID);
+  begin
+    SetAsGUID(GetFieldIndex(Name), Value);
+  end;
+{$ENDIF}
 
   function TSQLDA.GetFieldType(const Index: Word): TUIBFieldType;
   begin
@@ -5792,6 +5947,14 @@ end;
     SetFieldType(Index, sizeof(Int64), SQL_INT64 + 1, -4);
     inherited;
   end;
+
+{$IFDEF GUID_TYPE}
+  procedure  TSQLParams.SetAsGUID(const Index: Word; const Value: TGUID);
+  begin
+    SetFieldType(Index, SizeOf(TGUID), SQL_TEXT + 1, 0);
+    inherited;
+  end;
+{$ENDIF}
 
 end.
 
