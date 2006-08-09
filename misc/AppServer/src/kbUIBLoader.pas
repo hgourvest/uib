@@ -36,15 +36,8 @@ end;
 
 { TkbUIBLoader }
 
-procedure TkbUIBLoader.LoadFromSQLResult(F: TSQLResult);
-var
-  i, j: Integer;
-  fcount: Integer;
-  TmpName: string;
-
-  FieldNo: integer;
-  FieldType: TUIBFieldType;
-  Buffer: record
+type
+  TBufferVarData = record
     case byte of
       0: (Currency: Currency);
       1: (BCD: TBCD);
@@ -54,6 +47,15 @@ var
       5: (TimeStamp: TTimeStamp);
       6: (Integer: Integer);
   end;
+
+procedure TkbUIBLoader.LoadFromSQLResult(F: TSQLResult);
+var
+  i, j: Integer;
+  fcount: Integer;
+  TmpName: string;
+  FieldNo: integer;
+  FieldType: TUIBFieldType;
+  Buffer: TBufferVarData;
   Str: string;
   Stream: TMemoryStream;
   Accept: boolean;
