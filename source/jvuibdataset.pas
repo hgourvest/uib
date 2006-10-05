@@ -276,8 +276,6 @@ begin
   FStatement.First;
   FIsFirst := not FStatement.Eof;
   FCurrentRecord := 0;
-  if FStatement.Fields.RecordCount = 1 then
-    ActivateBuffers;
 end;
 
 procedure TJvUIBCustomDataSet.InternalLast;
