@@ -622,8 +622,6 @@ const
     'FLOAT', 'DOUBLE PRECISION', 'TIMESTAMP', 'BLOB', 'BLOBID', 'DATE', 'TIME',
     'BIGINT' , 'ARRAY'{$IFDEF IB7_UP}, 'BOOLEAN' {$ENDIF});
 
-  NumericSubType: array[1..2] of PChar = ('NUMERIC', 'DECIMAL');
-
   QRYDefaultCharset =
     'SELECT RDB$CHARACTER_SET_NAME FROM RDB$DATABASE';
 
@@ -1452,8 +1450,9 @@ procedure TMetaBaseField.SaveToDDLNode(Stream: TStringStream);
 begin
   case FFieldType of
     uftNumeric:
-      Stream.WriteString(Format('%s(%d,%d)',
-        [NumericSubType[FSubType], FPrecision, FScale]));
+      if FSubType = 2 then
+        Stream.WriteString(Format('DECIMAL(%d,%d)', [FPrecision, FScale])) else
+        Stream.WriteString(Format('NUMERIC(%d,%d)', [FPrecision, FScale]));
     uftChar..uftCstring:
       begin
         Stream.WriteString(Format('%s(%d)',
@@ -1481,8 +1480,9 @@ begin
       Result := Format('%s(%d)', [FieldTypes[FFieldType],
         FLength div FBytesPerCharacter]);
     uftNumeric:
-       Result := Format('%s(%d,%d)',
-         [NumericSubType[FSubType], FPrecision, FScale]);
+      if FSubType = 2 then
+       Result := Format('DECIMAL(%d,%d)', [FPrecision, FScale]) else
+       Result := Format('NUMERIC(%d,%d)', [FPrecision, FScale]);
   else
     Result := Format('%s', [FieldTypes[FFieldType]]);
   end;
@@ -3037,8 +3037,9 @@ begin
       begin
         case FFieldType of
           uftNumeric:
-            Stream.WriteString(Format('%s(%d,%d)',
-              [NumericSubType[FSubType], FPrecision, FScale]));
+            if FSubType = 2 then
+              Stream.WriteString(Format('DECIMAL(%d,%d)', [FPrecision, FScale])) else
+              Stream.WriteString(Format('NUMERIC(%d,%d)', [FPrecision, FScale]));
           uftChar..uftCstring:
             begin
               Stream.WriteString(Format('%s(%d)',
