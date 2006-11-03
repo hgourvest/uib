@@ -28,6 +28,12 @@ type
 implementation
 uses SysUtils;
 
+{$ifndef madExcept}
+// work around Delphi Bug
+const
+  CMadExceptVersion = 'dummy';
+{$endif}
+
 { TMyObjectStub }
 
 function TMyObjectStub.DecodeStream(stream: TPooledMemoryStream; socket: longint): boolean;

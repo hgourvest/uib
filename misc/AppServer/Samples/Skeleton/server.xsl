@@ -45,6 +45,12 @@ uses Classes, {$IFDEF FPC}sockets{$ELSE}WinSock{$ENDIF}, PDGUtils, PDGSocketStub
 </xsl:for-each>
 implementation
 uses SysUtils;
+
+{$ifndef madExcept}
+// work around Delphi Bug
+const
+  CMadExceptVersion = 'dummy';
+{$endif}
 <xsl:for-each select="object">
 { T<xsl:value-of select="@name"/>Stub }
 

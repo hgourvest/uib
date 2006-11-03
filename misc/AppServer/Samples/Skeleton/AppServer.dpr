@@ -7,9 +7,6 @@ uses
 {$IFDEF UNIX}
   cthreads,
 {$ENDIF}
-{$IFDEF madExcept}
-  madExcept,
-{$ENDIF}
 {$IFNDEF FPC}
   PDGZlib in '..\..\src\PDGZlib.pas',
 {$ENDIF}
