@@ -297,8 +297,11 @@ begin
     if recv(inSocket, insize, sizeof(insize), 0) <> sizeof(insize) then
       goto error;
     if insize > 0 then
+    begin
+      sleep(0);
       if recv(inSocket, inBuffer, insize, 0) <> insize then
         goto error;
+    end;
   end;
   repeat
     zstream.next_out := @outBuffer;
