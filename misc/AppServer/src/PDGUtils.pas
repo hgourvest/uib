@@ -293,6 +293,7 @@ begin
       outSize := bufferSize - zstream.avail_out;
       outStream.Write(outBuffer, outSize);
     until (zstream.avail_in = 0) and (zstream.avail_out > 0);
+    sleep(0);
     if recv(inSocket, insize, sizeof(insize), 0) <> sizeof(insize) then
       goto error;
     if insize > 0 then
@@ -372,6 +373,7 @@ begin
     if count > FPageSize then
       s := FPageSize else
       s := count;
+    sleep(0);
     if recv(socket, FList[i]^, s, 0) <> s then exit;
     dec(count, s);
     inc(i);
