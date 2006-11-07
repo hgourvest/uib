@@ -2106,6 +2106,8 @@ procedure TJvUIBStatement.InternalNext;
 begin
   if (FCurrentState < qsExecute) then
     BeginExecute;
+
+  if FSQLResult.FieldCount > 0 then
   if Fields.ScrollEOF then
     Fields.Next else
   begin
