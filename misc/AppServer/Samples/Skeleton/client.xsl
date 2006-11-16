@@ -164,7 +164,7 @@ begin
     fn_stream.read(<xsl:value-of select="@name"/>.Memory^, <xsl:value-of select="@name"/>_len);<xsl:text/>
   </xsl:when>
   <xsl:otherwise>
-    fn_stream.Read(<xsl:value-of select="@name"/>s, sizeof(<xsl:value-of select="@name"/>));<xsl:text/>
+    fn_stream.Read(<xsl:value-of select="@name"/>, sizeof(<xsl:value-of select="@name"/>));<xsl:text/>
   </xsl:otherwise>
 </xsl:choose>
 </xsl:if>
