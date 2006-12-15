@@ -229,11 +229,15 @@ begin
       zstream.avail_out := bufferSize;
       if deflate(zstream, Z_NO_FLUSH) < Z_OK then
         goto error;
+
       outSize := bufferSize - zstream.avail_out;
-      if send(outSocket, outSize, sizeof(outSize), 0) <> sizeof(outSize) then
-        goto error;
-      if send(outSocket, outBuffer, outSize, 0) <> outSize then
-        goto error;
+      if outSize > 0 then
+      begin
+        if send(outSocket, outSize, sizeof(outSize), 0) <> sizeof(outSize) then
+          goto error;
+        if send(outSocket, outBuffer, outSize, 0) <> outSize then
+          goto error;
+      end;
     until (zstream.avail_in = 0) and (zstream.avail_out > 0);
     inSize := inStream.Read(inBuffer, bufferSize);
   end;
@@ -291,14 +295,13 @@ begin
       if inflate(zstream, Z_NO_FLUSH) < Z_OK then
         goto error;
       outSize := bufferSize - zstream.avail_out;
-      outStream.Write(outBuffer, outSize);
+      if outSize > 0 then
+        outStream.Write(outBuffer, outSize);
     until (zstream.avail_in = 0) and (zstream.avail_out > 0);
-    sleep(0);
     if recv(inSocket, insize, sizeof(insize), 0) <> sizeof(insize) then
       goto error;
     if insize > 0 then
     begin
-      sleep(0);
       if recv(inSocket, inBuffer, insize, 0) <> insize then
         goto error;
     end;
@@ -376,7 +379,6 @@ begin
     if count > FPageSize then
       s := FPageSize else
       s := count;
-    sleep(0);
     if recv(socket, FList[i]^, s, 0) <> s then exit;
     dec(count, s);
     inc(i);
