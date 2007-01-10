@@ -114,6 +114,25 @@ type
 const
   bufferSize = 32768;
 
+function receive(s: TSocket; var Buf; len, flags: Integer): Integer;
+var
+ p: PChar;
+ r, l: integer;
+begin
+ Result := 0;
+ p := @Buf;
+ l := len;
+ r := recv(s, p^, l, flags);
+ while (r > 0) and (r < l) do
+ begin
+   inc(Result, r);
+   dec(l, r);
+   inc(p, r);
+   r := recv(s, p^, l, flags);
+ end;
+ inc(Result, r);
+end;
+
 function CompressStream(inStream, outStream: TStream; level: Integer): boolean;
 var
   zstream: TZStream;
@@ -280,10 +299,10 @@ begin
   FillChar(zstream, SizeOf(zstream), 0);
   if InflateInit(zstream) < Z_OK then
     exit;
-  if recv(inSocket, insize, sizeof(insize), 0) <> sizeof(insize) then
+  if receive(inSocket, insize, sizeof(insize), 0) <> sizeof(insize) then
     goto error;
   if insize > 0 then
-    if recv(inSocket, inBuffer, insize, 0) <> insize then
+    if receive(inSocket, inBuffer, insize, 0) <> insize then
       goto error;
   while inSize > 0 do
   begin
@@ -298,11 +317,11 @@ begin
       if outSize > 0 then
         outStream.Write(outBuffer, outSize);
     until (zstream.avail_in = 0) and (zstream.avail_out > 0);
-    if recv(inSocket, insize, sizeof(insize), 0) <> sizeof(insize) then
+    if receive(inSocket, insize, sizeof(insize), 0) <> sizeof(insize) then
       goto error;
     if insize > 0 then
     begin
-      if recv(inSocket, inBuffer, insize, 0) <> insize then
+      if receive(inSocket, inBuffer, insize, 0) <> insize then
         goto error;
     end;
   end;
@@ -365,11 +384,12 @@ end;
 function TPooledMemoryStream.LoadFromSocket(socket: longint; readsize: boolean = true): boolean;
 var
   s, count, i: integer;
+  p: PChar;
 begin
   Result := False;
   if readsize then
   begin
-    if recv(socket, count, sizeof(count), 0) <> sizeof(count) then exit;
+    if receive(socket, count, sizeof(count), 0) <> sizeof(count) then Exit;
     SetSize(count);
   end else
     count := Size;
@@ -379,7 +399,7 @@ begin
     if count > FPageSize then
       s := FPageSize else
       s := count;
-    if recv(socket, FList[i]^, s, 0) <> s then exit;
+    if receive(socket, FList[i]^, s, 0) <> s then exit;
     dec(count, s);
     inc(i);
   end;
