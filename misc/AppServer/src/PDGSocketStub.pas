@@ -373,15 +373,21 @@ var
   InputAddress: TSockAddr;
   InputLen: Integer;
   Stub: TSocketStub;
+  SO_True: Integer;
 begin
+  SO_True := -1;
+
   Result := 0;
   //SetThreadPriority(GetCurrentThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
   FSocketHandle := socket(AF_INET, SOCK_STREAM, 0);
   FAddress.sin_addr.s_addr := INADDR_ANY;
   FAddress.sin_family := AF_INET;
-
   FAddress.sin_port := htons(FPort);
+
+  SetSockOpt(FSocketHandle, SOL_SOCKET, SO_REUSEADDR, PChar(@SO_True), SizeOf(SO_True));
+  SetSockOpt(FSocketHandle, IPPROTO_TCP, TCP_NODELAY, PChar(@SO_True), SizeOf(SO_True));
+
 {$IFDEF FPC}
   if not bind(FSocketHandle, FAddress, SizeOf(FAddress)) then
 {$ELSE}
