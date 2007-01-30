@@ -667,6 +667,7 @@ type
     procedure DatabaseInfo(var DBHandle: IscDbHandle; const Items: string; var Buffer: string); overload;
     function DatabaseInfoIntValue(var DBHandle: IscDbHandle; const item: char): Integer;
     function DatabaseInfoString(var DBHandle: IscDbHandle; item: byte; size: Integer): string;
+    function DatabaseInfoDateTime(var DBHandle: IscDbHandle; item: byte): TDateTime;
 
     procedure TransactionStart(var TraHandle: IscTrHandle; var DbHandle: IscDbHandle; const TPB: string = '');
     procedure TransactionStartMultiple(var TraHandle: IscTrHandle; DBCount: Smallint; Vector: PISCTEB);
@@ -922,6 +923,9 @@ const
 function TryStrToInt(const S: string; out Value: Integer): Boolean;
 {$ENDIF}
 
+function SQLQuote(const name: string): string;
+function SQLUnQuote(const name: string): string;
+
 const
   ScaleDivisor: array[-15..-1] of Int64 = (1000000000000000,100000000000000,
     10000000000000,1000000000000,100000000000,10000000000,1000000000,100000000,
@@ -947,6 +951,44 @@ begin
   Result := E = 0;
 end;
 {$ENDIF}
+
+function SQLQuote(const name: string): string;
+var
+  i, len: integer;
+begin
+  len := Length(name);
+  if (len > 1) and (name[1] = '"') and (name[len] = '"') then
+  begin // allready quoted: keep case
+    Result := name;
+    Exit;
+  end;
+  for i := 1 to len do
+    if not (name[i] in ['a'..'z','A'..'Z', '0'..'9', '_', '$']) then
+    begin // non standard carracter: keep case
+      Result := '"' + name + '"';
+      Exit;
+    end;
+  Result := UpperCase(name);
+end;
+
+function SQLUnQuote(const name: string): string;
+var
+  i, len: integer;
+begin
+  len := Length(name);
+  if (len > 1) and (name[1] = '"') and (name[len] = '"') then
+  begin  // allready quoted: keep case
+    Result := copy(name, 2, len-2);
+    Exit;
+  end;
+  for i := 1 to len do
+    if not (name[i] in ['a'..'z','A'..'Z', '0'..'9', '_', '$']) then
+    begin // non standard carracter: keep case
+      Result := name;
+      Exit;
+    end;
+  Result := UpperCase(name);
+end;
 
 const
   ISC_MASK   = $14000000; // Defines the code as a valid ISC code
@@ -1286,6 +1328,30 @@ const
           raise exception.Create('Unexpected data size.');
         end else
           raise exception.Create('Invalid item identifier.');
+  {$IFDEF UIBTHREADSAFE}
+    finally
+      FLIBCritSec.Leave;
+    end;
+  {$ENDIF}
+  end;
+
+  function TUIBLibrary.DatabaseInfoDateTime(var DBHandle: IscDbHandle; item: byte): TDateTime;
+  var
+    data: packed record
+      item: char;
+      len: word;
+      date: TISCTimeStamp;
+      dummy: word;
+    end;
+  begin
+    result := 0;
+  {$IFDEF UIBTHREADSAFE}
+    FLIBCritSec.Enter;
+    try
+  {$ENDIF};
+      CheckUIBApiCall(isc_database_info(@FStatusVector, @DBHandle, 1, @item,
+        sizeof(data), @data));
+      Result := DecodeTimeStamp(@data.date);
   {$IFDEF UIBTHREADSAFE}
     finally
       FLIBCritSec.Leave;
@@ -1890,7 +1956,7 @@ const
     end;
     Command: byte;
   begin
-    if not (StatementType in [stUpdate, stDelete, stInsert]) then
+    if not (StatementType in [stUpdate, stDelete, stInsert, stExecProcedure]) then
       Result := 0 else
     begin
     {$IFDEF UIBTHREADSAFE}
@@ -1904,6 +1970,7 @@ const
           stUpdate: Result := InfoData.Infos[0].Rows;
           stDelete: Result := InfoData.Infos[1].Rows;
           stInsert: Result := InfoData.Infos[3].Rows;
+          stExecProcedure: Result := InfoData.Infos[0].Rows + InfoData.Infos[1].Rows + InfoData.Infos[3].Rows;
         else
           Result := 0;
         end;
@@ -4047,10 +4114,10 @@ end;
       if (sqlscale < 0)  then
       begin
         case ASQLCode of
-          SQL_SHORT  : PSmallInt(sqldata)^ := Trunc(Value * ScaleDivisor[sqlscale]);
-          SQL_LONG   : PInteger(sqldata)^  := Trunc(Value * ScaleDivisor[sqlscale]);
+          SQL_SHORT  : PSmallInt(sqldata)^ := Round(Value * ScaleDivisor[sqlscale]);
+          SQL_LONG   : PInteger(sqldata)^  := Round(Value * ScaleDivisor[sqlscale]);
           SQL_INT64,
-          SQL_QUAD   : PInt64(sqldata)^    := Trunc(Value * ScaleDivisor[sqlscale]);
+          SQL_QUAD   : PInt64(sqldata)^    := Round(Value * ScaleDivisor[sqlscale]);
           SQL_DOUBLE : PDouble(sqldata)^   := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4249,10 +4316,10 @@ end;
       if (sqlscale < 0)  then
       begin
         case ASQLCode of
-          SQL_SHORT  : PSmallInt(sqldata)^ := Trunc(Value * ScaleDivisor[sqlscale]);
-          SQL_LONG   : PInteger(sqldata)^  := Trunc(Value * ScaleDivisor[sqlscale]);
+          SQL_SHORT  : PSmallInt(sqldata)^ := Round(Value * ScaleDivisor[sqlscale]);
+          SQL_LONG   : PInteger(sqldata)^  := Round(Value * ScaleDivisor[sqlscale]);
           SQL_INT64,
-          SQL_QUAD   : PInt64(sqldata)^    := Trunc(Value * ScaleDivisor[sqlscale]);
+          SQL_QUAD   : PInt64(sqldata)^    := Round(Value * ScaleDivisor[sqlscale]);
           SQL_DOUBLE : PDouble(sqldata)^   := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4459,10 +4526,10 @@ end;
       if (sqlscale < 0)  then
       begin
         case ASQLCode of
-          SQL_SHORT  : PSmallInt(sqldata)^ := Trunc(Value * ScaleDivisor[sqlscale]);
-          SQL_LONG   : PInteger(sqldata)^  := Trunc(Value * ScaleDivisor[sqlscale]);
+          SQL_SHORT  : PSmallInt(sqldata)^ := Round(Value * ScaleDivisor[sqlscale]);
+          SQL_LONG   : PInteger(sqldata)^  := Round(Value * ScaleDivisor[sqlscale]);
           SQL_INT64,
-          SQL_QUAD   : PInt64(sqldata)^    := Trunc(Value * ScaleDivisor[sqlscale]);
+          SQL_QUAD   : PInt64(sqldata)^    := Round(Value * ScaleDivisor[sqlscale]);
           SQL_DOUBLE : PDouble(sqldata)^   := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4501,8 +4568,8 @@ end;
       if (sqlscale < 0)  then
       begin
         case ASQLCode of
-          SQL_SHORT  : PSmallInt(sqldata)^ := Trunc(Value * ScaleDivisor[sqlscale]);
-          SQL_LONG   : PInteger(sqldata)^  := Trunc(Value * ScaleDivisor[sqlscale]);
+          SQL_SHORT  : PSmallInt(sqldata)^ := Round(Value * ScaleDivisor[sqlscale]);
+          SQL_LONG   : PInteger(sqldata)^  := Round(Value * ScaleDivisor[sqlscale]);
           SQL_INT64,
           SQL_QUAD   : if (sqlscale = -4) then
                          PInt64(sqldata)^ := PInt64(@Value)^ else
@@ -5743,16 +5810,32 @@ end;
                 AddField('');
                 Next;
               end;
-        '[' : Skip(']'); 
+        '[' : Skip(']');
         // Named Input
         ':' : begin
                 inc(dest);
                 Result[dest] := '?';
                 inc(Src);
                 idlen := 0;
-                while Src[idlen] in Identifiers do
+                // quoted identifiers
+                if Src[idlen] = '"' then
+                begin
                   inc(idlen);
-                AddField(copy(Src, 0, idlen));
+                  while true do
+                    case Src[idlen] of
+                    #0: Break;
+                    '"':
+                      begin
+                        inc(idlen);
+                        Break;
+                      end;
+                    else
+                      inc(idlen);
+                    end;
+                end else
+                // unquoted identifiers
+                  while (Src[idlen] in Identifiers) do inc(idlen);
+                AddField(copy(Src, 2, idlen-2));
                 inc(Src, idlen);
               end;
         // skip everything when begin identifier found !

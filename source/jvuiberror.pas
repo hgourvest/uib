@@ -600,6 +600,8 @@ const
   isc_array_convert_error              = 335544861;
   isc_record_lock_not_supp             = 335544862;
   isc_partner_idx_not_found            = 335544863;
+  isc_tra_num_exc                      = 335544864;
+  isc_field_disappeared                = 335544865;
 {$ENDIF}
 
 {$IFDEF IB71_UP}
@@ -910,7 +912,7 @@ const
 {$ENDIF FB15}
 
 {$IFDEF FB20}
-  isc_err_max                           = 761;
+  isc_err_max                           = 763;
 {$ENDIF FB20}
 
 {$IFDEF YF867}

@@ -861,10 +861,10 @@ const
   blr_missing = 61;
   blr_unique = 62;
   blr_like = 63;
-
+{$IFNDEF FB20_UP}
   blr_stream = 65; // added from gds.h
   blr_set_index = 66; // added from gds.h
-
+{$ENDIF}
   blr_rse = 67;
   blr_first = 68;
   blr_project = 69;
@@ -913,11 +913,15 @@ const
   blr_matching2 = 106;
   blr_index = 107;
   blr_ansi_like = 108;
+{$IFNDEF FB20_UP}
   blr_bookmark = 109;
   blr_crack = 110;
   blr_force_crack = 111;
+{$ENDIF}
   blr_seek = 112;
+{$IFNDEF FB20_UP}
   blr_find = 113;
+{$ENDIF}
 
   (* these indicate directions for blr_seek and blr_find *)
 
@@ -926,18 +930,20 @@ const
   blr_backward = 2;
   blr_bof_forward = 3;
   blr_eof_backward = 4;
-
+{$IFNDEF FB20_UP}
   blr_lock_relation = 114;
   blr_lock_record = 115;
   blr_set_bookmark = 116;
   blr_get_bookmark = 117;
-
+{$ENDIF}
   blr_run_count = 118; // changed from 88 to avoid conflict with blr_parameter3
   blr_rs_stream = 119;
   blr_exec_proc = 120;
+{$IFNDEF FB20_UP}
   blr_begin_range = 121;
   blr_end_range = 122;
   blr_delete_range = 123;
+{$ENDIF}
   blr_procedure = 124;
   blr_pid = 125;
   blr_exec_pid = 126;
@@ -947,13 +953,17 @@ const
   blr_error_handler = 130;
 
   blr_cast = 131;
+{$IFNDEF FB20_UP}
   blr_release_lock = 132;
   blr_release_locks = 133;
+{$ENDIF}
   blr_start_savepoint = 134;
   blr_end_savepoint = 135;
+{$IFNDEF FB20_UP}
   blr_find_dbkey = 136;
   blr_range_relation = 137;
   blr_delete_ranges = 138;
+{$ENDIF}
 
   blr_plan = 139; // access plan items
   blr_merge = 140;
@@ -965,20 +975,26 @@ const
 
   blr_relation2 = 146;
   blr_rid2 = 147;
+{$IFNDEF FB20_UP}
   blr_reset_stream = 148;
   blr_release_bookmark = 149;
+{$ENDIF}
 
   blr_set_generator = 150;
 
   blr_ansi_any = 151; // required for NULL handling
   blr_exists = 152; // required for NULL handling
+{$IFNDEF FB20_UP}
   blr_cardinality = 153;
+{$ENDIF}
 
   blr_record_version = 154; // get tid of record
   blr_stall = 155; // fake server stall
 
+{$IFNDEF FB20_UP}
   blr_seek_no_warn = 156;
   blr_find_dbkey_version = 157; // find dbkey with record version
+{$ENDIF}  
   blr_ansi_all = 158; // required for NULL handling
 
   blr_extract = 159;
@@ -1504,6 +1520,10 @@ const
   isc_info_db_provider = 108;
   isc_info_active_transactions = 109;
 {$ENDIF FB102ORYF867}
+{$IFDEF FB20_UP}
+  isc_info_active_tran_count = 110;
+  isc_info_creation_date = 111;
+{$ENDIF}
 
   isc_info_version = isc_info_isc_version;
 
@@ -1576,6 +1596,9 @@ const
   isc_info_db_impl_linux_sparc = 65;
   isc_info_db_impl_linux_amd64 = 66; // FB151
 {$ENDIF FB15_UP}
+{$IFDEF FB20_UP}
+  isc_info_db_impl_freebsd_amd64 = 67;
+{$ENDIF}
 
   isc_info_db_impl_isc_a = isc_info_db_impl_isc_apl_68K;
   isc_info_db_impl_isc_u = isc_info_db_impl_isc_vax_ultr;
@@ -1702,7 +1725,24 @@ const
    *********************************)
 
   isc_info_tra_id = 4;
+{$IFDEF FB20_UP}
+  isc_info_tra_oldest_interesting = 5;
+  isc_info_tra_oldest_snapshot    = 6;
+  isc_info_tra_oldest_active      = 7;
+  isc_info_tra_isolation          = 8;
+  isc_info_tra_access             = 9;
+  isc_info_tra_lock_timeout       = 10;
 
+  isc_info_tra_consistency        = 1;
+  isc_info_tra_concurrency        = 2;
+  isc_info_tra_read_committed     = 3;
+
+  isc_info_tra_no_rec_version     = 0;
+  isc_info_tra_rec_version        = 1;
+
+  isc_info_tra_readonly           = 0;
+  isc_info_tra_readwrite          = 1;
+{$ENDIF}
   (*****************************
    * Service action items      *
    *****************************)
@@ -1719,6 +1759,9 @@ const
   isc_action_svc_remove_license = #10; // Removes a license from the license file
   isc_action_svc_db_stats = #11; // Retrieves database statistics
   isc_action_svc_get_ib_log = #12; // Retrieves the InterBase log file from the server
+{$IFDEF FB20_UP}
+  isc_action_svc_get_fb_log = #12;	// Retrieves the Firebird log file from the server
+{$ENDIF}
 
   (*****************************
    * Service information items *
@@ -3085,10 +3128,9 @@ type
     isc_wait_for_event: function(user_status: PISCStatus; handle: PIscDbHandle;
       length: Smallint; events, buffer: PChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    {$IFDEF FB15_UP}
-    isc_reset_fpe: function(fpe_status: Word): ISCLong;
-      {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    {$ENDIF FB15_UP}
+    {$IFDEF FB15_UP}{$IFNDEF UNIX}
+    isc_reset_fpe: function(fpe_status: Word): ISCLong; stdcall;
+    {$ENDIF}{$ENDIF FB15_UP}
     {$IFDEF IB7_UP}
     isc_array_gen_sdl2: function(status: PISCStatus; desc: PISCArrayDescV2;
       sdl_buffer_length: PSmallInt; sdl_buffer: PChar; sdl_length: PSmallInt): ISCStatus;
@@ -3419,9 +3461,9 @@ begin
       isc_vtof := nil;
       isc_vtov := nil;
       isc_wait_for_event := nil;
-    {$IFDEF FB15_UP}
+    {$IFDEF FB15_UP}{$IFNDEF UNIX}
       isc_reset_fpe := nil;
-    {$ENDIF FB15_UP}
+    {$ENDIF}{$ENDIF FB15_UP}
     {$IFDEF IB7_UP}
       isc_array_gen_sdl2 := nil;
       isc_array_gen_sdl2 := nil;
@@ -3635,9 +3677,9 @@ begin
         isc_vtov := GetProcAddress(FGDS32Lib, 'isc_vtov');
         isc_wait_for_event := GetProcAddress(FGDS32Lib, 'isc_wait_for_event');
 
-      {$IFDEF FB15_UP}
+      {$IFDEF FB15_UP}{$IFNDEF UNIX}
         isc_reset_fpe := GetProcAddress(FGDS32Lib, 'isc_reset_fpe');
-      {$ENDIF FB15_UP}
+      {$ENDIF}{$ENDIF FB15_UP}
       {$IFDEF IB7_UP}
         isc_array_gen_sdl2 := GetProcAddress(FGDS32Lib, 'isc_array_gen_sdl2');
         isc_array_get_slice2 := GetProcAddress(FGDS32Lib, 'isc_array_get_slice2');
@@ -3729,9 +3771,9 @@ begin
         {$IFDEF INTERBASEORFIREBIRD}
           and Assigned(isc_set_debug) and Assigned(BLOB_display)
         {$ENDIF INTERBASEORFIREBIRD}
-        {$IFDEF FB15_UP}
+        {$IFDEF FB15_UP}{$IFNDEF UNIX}
           and Assigned(isc_reset_fpe)
-        {$ENDIF FB15_UP}
+        {$ENDIF}{$ENDIF FB15_UP}
         {$IFDEF IB7_UP}
           and Assigned(isc_array_gen_sdl2) and Assigned(isc_array_get_slice2)
           and Assigned(isc_array_lookup_bounds2) and Assigned(isc_array_lookup_desc2)

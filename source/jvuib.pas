@@ -217,6 +217,7 @@ type
     procedure AddEventNotifier(Event: TJvUIBEvents);
 
     function GetInfoIntValue(const item: Integer): integer;
+    function GetInfoDateTimeValue(const item: Integer): TDateTime;
     function GetInfoBooleanValue(const item: Integer): boolean;
     function GetInfoStringValue(const item: integer): string;
     function GetInfoOperationsCount(const item: Integer): Integer;
@@ -383,6 +384,10 @@ type
     property InfoFirebirdVersion: string index isc_info_firebird_version read GetInfoStringValue;
     { Return number of active transactions. }
     property InfoActiveTransactions: Integer index isc_info_active_transactions read GetInfoIntCount;
+  {$ENDIF}
+  {$IFDEF FB20_UP}
+    property InfoActiveTransactionsCount: Integer index isc_info_active_tran_count read GetInfoIntValue;
+    property InfoCreationDate: TDateTime index isc_info_creation_date read GetInfoDateTimeValue;
   {$ENDIF}
   {$IFDEF IB7_UP}
     property InfoDbReads: Integer index isc_info_db_reads read GetInfoIntValue;
@@ -1664,6 +1669,21 @@ begin
 {$ENDIF}
 end;
 
+function TJvUIBDataBase.GetInfoDateTimeValue(const item: Integer): TDateTime;
+begin
+  SetConnected(true);
+{$IFDEF UIBTHREADSAFE}
+  Lock;
+  try
+{$ENDIF}
+    result := FLibrary.DatabaseInfoDateTime(FDbHandle, item);
+{$IFDEF UIBTHREADSAFE}
+  finally
+    UnLock;
+  end;
+{$ENDIF}
+end;
+
 function TJvUIBDataBase.GetInfoBooleanValue(const item: Integer): boolean;
 begin
   result := GetInfoIntValue(item) <> 0;
@@ -2906,7 +2926,7 @@ begin
        'FROM RDB$PROCEDURE_PARAMETERS PRM JOIN RDB$FIELDS FLD ON '+
        'PRM.RDB$FIELD_SOURCE = FLD.RDB$FIELD_NAME '+
       'WHERE '+
-          'PRM.RDB$PROCEDURE_NAME = ''' + UpperCase(StoredProc) + ''' '+
+          'PRM.RDB$PROCEDURE_NAME = ''' + SQLUnQuote(StoredProc) + ''' '+
       'ORDER BY RDB$PARAMETER_TYPE, PRM.RDB$PARAMETER_NUMBER';
     Open;
     try
@@ -2970,18 +2990,18 @@ begin
         Str[Length(Str)] := ')';
         if ((r > 0) and forSelect) then
           begin
-            FParsedSQL := 'SELECT * FROM ' + StoredProc + FParsedSQL;
-            FSQL.Text  := 'SELECT * FROM ' + StoredProc + Str;
+            FParsedSQL := 'SELECT * FROM ' + SQLQuote(StoredProc) + FParsedSQL;
+            FSQL.Text  := 'SELECT * FROM ' + SQLQuote(StoredProc) + Str;
           end else
           begin
-            FParsedSQL := 'EXECUTE PROCEDURE ' + StoredProc + FParsedSQL;
-            FSQL.Text  := 'EXECUTE PROCEDURE ' + StoredProc + Str;
+            FParsedSQL := 'EXECUTE PROCEDURE ' + SQLQuote(StoredProc) + FParsedSQL;
+            FSQL.Text  := 'EXECUTE PROCEDURE ' + SQLQuote(StoredProc) + Str;
           end;
       end else
         begin
           if r > 0 then
-            FParsedSQL := 'SELECT * FROM ' + StoredProc else
-            FParsedSQL := 'EXECUTE PROCEDURE ' + StoredProc;
+            FParsedSQL := 'SELECT * FROM ' + SQLQuote(StoredProc) else
+            FParsedSQL := 'EXECUTE PROCEDURE ' + SQLQuote(StoredProc);
           FSQL.Text := FParsedSQL;
         end;
     except
