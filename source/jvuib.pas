@@ -2320,6 +2320,8 @@ var
   {$ENDIF}
   end;
 begin
+  if FCurrentState > qsExecImme then
+    InternalClose(etmStayIn, false); // it shouldn't happen ...
   BeginTransaction;
   if FQuickScript then
     for i := 0 to FSQL.Count - 1 do
