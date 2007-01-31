@@ -2113,7 +2113,9 @@ end;
 
 procedure TJvUIBStatement.ExecSQL;
 begin
-  BeginExecImme;
+  if FCurrentState > qsExecImme then
+    BeginExecute else // it shouldn't happen ...
+    BeginExecImme;
 end;
 
 procedure TJvUIBStatement.Prepare;
@@ -2320,20 +2322,16 @@ var
   {$ENDIF}
   end;
 begin
-  if FCurrentState > qsExecImme then
-    BeginExecute else // it shouldn't happen ...
+  BeginTransaction;
+  if FQuickScript then
+    for i := 0 to FSQL.Count - 1 do
     begin
-      BeginTransaction;
-      if FQuickScript then
-        for i := 0 to FSQL.Count - 1 do
-        begin
-          ExecuteQuery(FSQL.Strings[i], nil);
-        end else
-          if FParseParams then
-            ExecuteQuery(FParsedSQL, FParameter) else
-            ExecuteQuery(FSQL.Text, FParameter);
-      FCurrentState := qsExecImme;
-    end;
+      ExecuteQuery(FSQL.Strings[i], nil);
+    end else
+      if FParseParams then
+        ExecuteQuery(FParsedSQL, FParameter) else
+        ExecuteQuery(FSQL.Text, FParameter);
+  FCurrentState := qsExecImme;
 end;
 
 procedure TJvUIBStatement.EndExecImme(const ETM: TEndTransMode; Auto: boolean);
