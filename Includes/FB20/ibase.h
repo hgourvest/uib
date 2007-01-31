@@ -68,6 +68,9 @@ typedef void*           FB_API_HANDLE;
 
 typedef long ISC_STATUS;
 
+#define ISC_STATUS_LENGTH       20
+typedef ISC_STATUS ISC_STATUS_ARRAY[ISC_STATUS_LENGTH];
+
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
         #define  ISC_EXPORT     __stdcall
         #define  ISC_EXPORT_VARARG      __cdecl
@@ -638,13 +641,13 @@ void ISC_EXPORT isc_encode_sql_time(const void*,
 void ISC_EXPORT isc_encode_timestamp(const void*,
 									 ISC_TIMESTAMP*);
 
-ISC_LONG ISC_EXPORT_VARARG isc_event_block(ISC_SCHAR**,
-										   ISC_SCHAR**,
+ISC_LONG ISC_EXPORT_VARARG isc_event_block(ISC_UCHAR**,
+										   ISC_UCHAR**,
 										   unsigned short, ...);
 
 void ISC_EXPORT isc_event_counts(ISC_ULONG*,
 								 short,
-								 ISC_SCHAR*,
+								 ISC_UCHAR*,
 								 const ISC_UCHAR *);
 
 /* 17 May 2001 - isc_expand_dpb is DEPRECATED */
@@ -683,7 +686,7 @@ ISC_LONG FB_API_DEPRECATED ISC_EXPORT isc_interprete(ISC_SCHAR*,
 
 /* This const params version used in the engine and other places. */
 ISC_LONG ISC_EXPORT fb_interpret(ISC_SCHAR*,
-								 int,
+								 unsigned int,
 								 const ISC_STATUS**);
 
 ISC_STATUS ISC_EXPORT isc_open_blob(ISC_STATUS*,
@@ -730,7 +733,7 @@ ISC_STATUS ISC_EXPORT isc_que_events(ISC_STATUS*,
 									 isc_db_handle*,
 									 ISC_LONG*,
 									 short,
-									 const ISC_SCHAR*,
+									 const ISC_UCHAR*,
 									 ISC_EVENT_CALLBACK,
 									 void*);
 
@@ -903,8 +906,8 @@ ISC_STATUS ISC_EXPORT isc_unwind_request(ISC_STATUS *,
 ISC_STATUS ISC_EXPORT isc_wait_for_event(ISC_STATUS*,
 										 isc_db_handle*,
 										 short,
-										 const ISC_SCHAR*,
-										 ISC_SCHAR*);
+										 const ISC_UCHAR*,
+										 ISC_UCHAR*);
 
 
 /*****************************/
@@ -1385,9 +1388,6 @@ int  ISC_EXPORT isc_get_client_minor_version ();
 #define blr_unique              (unsigned char)62
 #define blr_like                (unsigned char)63
 
-#define blr_stream              (unsigned char)65       
-#define blr_set_index           (unsigned char)66       
-
 #define blr_rse                 (unsigned char)67
 #define blr_first               (unsigned char)68
 #define blr_project             (unsigned char)69
@@ -1427,11 +1427,8 @@ int  ISC_EXPORT isc_get_client_minor_version ();
 #define blr_matching2           (unsigned char)106
 #define blr_index               (unsigned char)107
 #define blr_ansi_like           (unsigned char)108
-#define blr_bookmark            (unsigned char)109
-#define blr_crack               (unsigned char)110
-#define blr_force_crack         (unsigned char)111
+
 #define blr_seek                (unsigned char)112
-#define blr_find                (unsigned char)113
 
 #define blr_continue            (unsigned char)0
 #define blr_forward             (unsigned char)1
@@ -1439,17 +1436,10 @@ int  ISC_EXPORT isc_get_client_minor_version ();
 #define blr_bof_forward         (unsigned char)3
 #define blr_eof_backward        (unsigned char)4
 
-#define blr_lock_relation       (unsigned char)114
-#define blr_lock_record         (unsigned char)115
-#define blr_set_bookmark        (unsigned char)116
-#define blr_get_bookmark        (unsigned char)117
-
 #define blr_run_count           (unsigned char)118      
 #define blr_rs_stream           (unsigned char)119
 #define blr_exec_proc           (unsigned char)120
-#define blr_begin_range         (unsigned char)121
-#define blr_end_range           (unsigned char)122
-#define blr_delete_range        (unsigned char)123
+
 #define blr_procedure           (unsigned char)124
 #define blr_pid                 (unsigned char)125
 #define blr_exec_pid            (unsigned char)126
@@ -1459,13 +1449,9 @@ int  ISC_EXPORT isc_get_client_minor_version ();
 #define blr_error_handler       (unsigned char)130
 
 #define blr_cast                (unsigned char)131
-#define blr_release_lock        (unsigned char)132
-#define blr_release_locks       (unsigned char)133
+
 #define blr_start_savepoint     (unsigned char)134
 #define blr_end_savepoint       (unsigned char)135
-#define blr_find_dbkey          (unsigned char)136
-#define blr_range_relation      (unsigned char)137
-#define blr_delete_ranges       (unsigned char)138
 
 #define blr_plan                (unsigned char)139      
 #define blr_merge               (unsigned char)140
@@ -1477,20 +1463,15 @@ int  ISC_EXPORT isc_get_client_minor_version ();
 
 #define blr_relation2           (unsigned char)146
 #define blr_rid2                (unsigned char)147
-#define blr_reset_stream        (unsigned char)148
-#define blr_release_bookmark    (unsigned char)149
 
 #define blr_set_generator       (unsigned char)150
 
 #define blr_ansi_any            (unsigned char)151   
 #define blr_exists              (unsigned char)152   
-#define blr_cardinality         (unsigned char)153
 
 #define blr_record_version      (unsigned char)154      
 #define blr_stall               (unsigned char)155      
 
-#define blr_seek_no_warn        (unsigned char)156      
-#define blr_find_dbkey_version  (unsigned char)157   
 #define blr_ansi_all            (unsigned char)158   
 
 #define blr_extract             (unsigned char)159
@@ -1870,6 +1851,8 @@ enum db_info_types
         isc_info_next_transaction = 107,
         isc_info_db_provider = 108,
         isc_info_active_transactions = 109,
+        isc_info_active_tran_count = 110,
+        isc_info_creation_date = 111,
 
         isc_info_db_last_value   
 };
@@ -1933,6 +1916,8 @@ enum  info_db_implementations
 
         isc_info_db_impl_linux_sparc = 65,
         isc_info_db_impl_linux_amd64 = 66,
+
+        isc_info_db_impl_freebsd_amd64 = 67,
 
         isc_info_db_impl_last_value   
 };
@@ -2030,7 +2015,23 @@ enum info_db_provider
 #define isc_info_blob_total_length      6
 #define isc_info_blob_type              7
 
-#define isc_info_tra_id         4
+#define isc_info_tra_id                                         4
+#define isc_info_tra_oldest_interesting         5
+#define isc_info_tra_oldest_snapshot            6
+#define isc_info_tra_oldest_active                      7
+#define isc_info_tra_isolation                          8
+#define isc_info_tra_access                                     9
+#define isc_info_tra_lock_timeout                       10
+
+#define isc_info_tra_consistency                1
+#define isc_info_tra_concurrency                2
+#define isc_info_tra_read_committed             3
+
+#define isc_info_tra_no_rec_version             0
+#define isc_info_tra_rec_version                1
+
+#define isc_info_tra_readonly   0
+#define isc_info_tra_readwrite  1
 
 #define isc_info_sql_select             4
 #define isc_info_sql_bind               5
@@ -2089,6 +2090,7 @@ enum info_db_provider
 #define isc_action_svc_remove_license 10	/* Removes a license from the license file */
 #define isc_action_svc_db_stats	      11	/* Retrieves database statistics */
 #define isc_action_svc_get_ib_log     12	/* Retrieves the InterBase log file from the server */
+#define isc_action_svc_get_fb_log     12	/* Retrieves the Firebird log file from the server */
 
 /*****************************
  * Service information items *
