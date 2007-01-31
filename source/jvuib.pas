@@ -2321,17 +2321,19 @@ var
   end;
 begin
   if FCurrentState > qsExecImme then
-    InternalClose(etmStayIn, false); // it shouldn't happen ...
-  BeginTransaction;
-  if FQuickScript then
-    for i := 0 to FSQL.Count - 1 do
+    BeginExecute else // it shouldn't happen ...
     begin
-      ExecuteQuery(FSQL.Strings[i], nil);
-    end else
-      if FParseParams then
-        ExecuteQuery(FParsedSQL, FParameter) else
-        ExecuteQuery(FSQL.Text, FParameter);
-  FCurrentState := qsExecImme;
+      BeginTransaction;
+      if FQuickScript then
+        for i := 0 to FSQL.Count - 1 do
+        begin
+          ExecuteQuery(FSQL.Strings[i], nil);
+        end else
+          if FParseParams then
+            ExecuteQuery(FParsedSQL, FParameter) else
+            ExecuteQuery(FSQL.Text, FParameter);
+      FCurrentState := qsExecImme;
+    end;
 end;
 
 procedure TJvUIBStatement.EndExecImme(const ETM: TEndTransMode; Auto: boolean);
