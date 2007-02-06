@@ -375,6 +375,53 @@ begin
       AddLog('Alter Procedure: ' + metadb.Procedures[i].Name);
       ExecuteImmediate(metadb.Procedures[i].AsAlterDDL);
     end;
+
+    // GRANTS
+    for i := 0 to metadb.RolesCount - 1 do
+    begin
+      for j := 0 to metadb.Roles[i].GrantsCount - 1 do
+      begin
+         AddLog('Grant To Role: ' + metadb.Roles[i].Grants[j].Name);
+         ExecuteImmediate(metadb.Roles[i].Grants[j].AsDDL);
+      end;
+    end;
+
+    for i := 0 to metadb.TablesCount - 1 do
+    begin
+      for j := 0 to metadb.Tables[i].GrantsCount - 1 do
+      begin
+        AddLog('Grant To Table: ' + metadb.Tables[i].Grants[j].Name);
+        ExecuteImmediate(metadb.Tables[i].Grants[j].AsDDL);
+      end;
+      for j := 0 to metadb.Tables[i].FieldsGrantsCount - 1 do
+      begin
+        AddLog('Grant To TableField: ' + metadb.Tables[i].FieldsGrants[j].Name);
+        ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsDDL);
+      end;
+    end;
+
+    for i := 0 to metadb.ViewsCount - 1 do
+    begin
+      for j := 0 to metadb.Views[i].GrantsCount - 1 do
+      begin
+        AddLog('Grant To View: ' + metadb.Views[i].Grants[j].Name);
+        ExecuteImmediate(metadb.Views[i].Grants[j].AsDDL);
+      end;
+      for j := 0 to metadb.Views[i].FieldsGrantsCount - 1 do
+      begin
+        AddLog('Grant To ViewField: ' + metadb.Views[i].FieldsGrants[j].Name);
+        ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsDDL);
+      end;
+    end;
+
+    for i := 0 to metadb.ProceduresCount - 1 do
+    begin
+      for j := 0 to metadb.Procedures[i].GrantsCount - 1 do
+      begin
+        AddLog('Grant To Procedure: ' + metadb.Procedures[i].Grants[j].Name);
+        ExecuteImmediate(metadb.Procedures[i].Grants[j].AsDDL);
+      end;
+    end;
     DstTransaction.Commit;
   finally
     btStart.Enabled := true;

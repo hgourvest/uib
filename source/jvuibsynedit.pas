@@ -150,7 +150,18 @@ const
      (icon: 12; color : clBlack;   Token: tkUnknown),   //   MetaForeign
      (icon: 17;  color : clBlack;  Token: tkUnknown),   //   MetaIndex
      (icon: 11; color : clBlack;   Token: tkUnknown),   //   MetaPrimary
-     (icon: 16; color : clBlack;   Token: tkUnknown)    //   MetaUnique
+     (icon: 16; color : clBlack;   Token: tkUnknown),   //   MetaUnique
+     (icon: 9;  color : clBlack;   Token: tkUnknown),   // MetaGrant,
+     (icon: 9;  color : clBlack;   Token: tkUnknown),   //   MetaRoleGrant,
+     (icon: 9;  color : clBlack;   Token: tkUnknown),   //   MetaTableGrant,
+     (icon: 9;  color : clBlack;   Token: tkUnknown),   //   MetaFieldGrant,
+     (icon: 9;  color : clBlack;   Token: tkUnknown),   //   MetaProcedureGrant,
+     (icon: 9;  color : clBlack;   Token: tkUnknown),   // MetaGrantee,
+     (icon: 9;  color : clBlack;   Token: tkUnknown),   //   MetaUserGrantee,
+     (icon: 9;  color : clBlack;   Token: tkUnknown),   //   MetaRoleGrantee,
+     (icon: 9;  color : clBlack;   Token: tkUnknown),   //   MetaProcedureGrantee,
+     (icon: 9;  color : clBlack;   Token: tkUnknown),   //   MetaTriggerGrantee,
+     (icon: 9;  color : clBlack;   Token: tkUnknown)    //   MetaViewGrantee
    );
 
   SQLToKens: array[0..273] of string =

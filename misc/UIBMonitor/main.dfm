@@ -1,9 +1,9 @@
 object MainForm: TMainForm
   Left = 418
   Top = 311
-  Width = 839
-  Height = 604
   Caption = 'UIB SQL Monitor'
+  ClientHeight = 550
+  ClientWidth = 831
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -17,17 +17,18 @@ object MainForm: TMainForm
   TextHeight = 13
   object Splitter1: TSplitter
     Left = 0
-    Top = 385
+    Top = 377
     Width = 831
     Height = 3
     Cursor = crVSplit
     Align = alBottom
+    ExplicitTop = 385
   end
   object VirtualTree: TVirtualStringTree
     Left = 0
     Top = 77
     Width = 831
-    Height = 308
+    Height = 300
     Align = alClient
     Header.AutoSizeIndex = 1
     Header.Font.Charset = DEFAULT_CHARSET
@@ -99,7 +100,7 @@ object MainForm: TMainForm
   end
   object Editor: TSynEdit
     Left = 0
-    Top = 388
+    Top = 380
     Width = 831
     Height = 170
     Align = alBottom
@@ -175,7 +176,6 @@ object MainForm: TMainForm
     Width = 831
     Height = 28
     Caption = 'ToolBar1'
-    Flat = True
     Images = ImageList
     TabOrder = 3
     object ToolButton1: TToolButton

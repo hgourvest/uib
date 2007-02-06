@@ -1,9 +1,9 @@
 object MainForm: TMainForm
   Left = 166
   Top = 150
-  Width = 688
-  Height = 442
   Caption = 'Metadata explorer'
+  ClientHeight = 428
+  ClientWidth = 680
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -19,28 +19,20 @@ object MainForm: TMainForm
   object Splitter: TSplitter
     Left = 225
     Top = 0
-    Height = 396
+    Height = 428
+    ExplicitHeight = 396
   end
   object TreeView: TTreeView
     Left = 0
     Top = 0
     Width = 225
-    Height = 396
+    Height = 428
     Align = alLeft
     Images = ImageList
     Indent = 23
     ReadOnly = True
     TabOrder = 0
     OnChange = TreeViewChange
-  end
-  object Memo: TMemo
-    Left = 228
-    Top = 0
-    Width = 452
-    Height = 396
-    Align = alClient
-    ScrollBars = ssVertical
-    TabOrder = 1
   end
   object DataBase: TJvUIBDataBase
     Params.Strings = (
@@ -52,7 +44,7 @@ object MainForm: TMainForm
     SQLDialect = 1
     UserName = 'SYSDBA'
     PassWord = 'masterkey'
-    LibraryName = 'gds32.dll'
+    LibraryName = 'C:\Program Files\Firebird\bin\fbclient.dll'
     Left = 16
     Top = 8
   end

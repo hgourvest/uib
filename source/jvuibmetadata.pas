@@ -59,13 +59,32 @@ type
         MetaForeign,
         MetaIndex,
         MetaPrimary,
-        MetaUnique
+        MetaUnique,
+      MetaGrant,
+        MetaRoleGrant,
+        MetaTableGrant,
+        MetaFieldGrant,
+        MetaProcedureGrant,
+      MetaGrantee,
+        MetaUserGrantee,
+        MetaRoleGrantee,
+        MetaProcedureGrantee,
+        MetaTriggerGrantee,
+        MetaViewGrantee
    );
 
   // forward declarations
   TMetaNode = class;
   TMetaDomain = class;
   TMetaTable = class;
+  TMetaView = class;
+
+{ PrY - Grants }
+  TMetaRoleGrant = class;
+  TMetaProcedureGrant = class;
+  TMetaTableGrant = class;
+  TMetaFieldGrant = class;
+{ /PrY }
 
   TMetaNodeClass = class of TMetaNode;
 
@@ -85,9 +104,11 @@ type
     function GetAsDDL: string;
     procedure AddClass(ClassID: TMetaNodeClass);
     procedure CheckTransaction(Transaction: TJvUIBTransaction);
-    procedure SaveNode(Stream: TStringStream; OID: Integer; Separator: string = BreakLine);
+    procedure SaveNode(Stream: TStringStream; OID: Integer; Separator: string = NewLine);
     procedure LoadFromStream(Stream: TStream); virtual; abstract;
     function GetAsDDLNode: string;
+  protected
+    function GetName: String; virtual;
   public
     procedure SaveToDDLNode(Stream: TStringStream); virtual;
     function GetNodes(const Index: Integer): TNodeItem;
@@ -98,7 +119,7 @@ type
     destructor Destroy; override;
     procedure SaveToStream(Stream: TStream); virtual;
     procedure SaveToDDL(Stream: TStringStream); virtual;
-    property Name: string read FName;
+    property Name: string read GetName;
     property AsDDL: string read GetAsDDL;
     property AsDDLNode: string read GetAsDDLNode;
     property NodeCount: Integer read FNodeItemsCount;
@@ -328,12 +349,34 @@ type
     property AsAlterDDL: string read GetAsAlterDDL;
   end;
 
-  TMetaTable = class(TMetaNode)
+  TMetaBaseTable = class(TMetaNode)
+  private
+    function GetTableGrants(const Index: Integer): TMetaTableGrant;
+    function GetTableGrantsCount: Integer;
+    function GetFieldsGrants(const Index: Integer): TMetaFieldGrant;
+    function GetFieldsGrantsCount: Integer;
+  protected
+    FGrantsClassIndex: Integer;
+    FFieldsGrantsClassIndex: Integer;
+    procedure LoadGrantsFromQuery(G: TJvUIBStatement);
+    procedure LoadFieldsGrantsFromQuery(G: TJvUIBStatement);
+    function FindGrant(const Privileges: TTablePrivileges; Option: Boolean): TMetaTableGrant;
+    function FindFieldGrant(const Privilege: TFieldPrivilege; Option: Boolean; Fields: TStringList): TMetaFieldGrant;
+  public
+    property Grants[const Index: Integer]: TMetaTableGrant read GetTableGrants;
+    property GrantsCount: Integer read GetTableGrantsCount;
+
+    property FieldsGrants[const Index: Integer]: TMetaFieldGrant read GetFieldsGrants;
+    property FieldsGrantsCount: Integer read GetFieldsGrantsCount;
+  end;
+
+  TMetaTable = class(TMetaBaseTable)
   private
     function GetFields(const Index: Integer): TMetaTableField;
     function GetFieldsCount: Integer;
     procedure LoadFromDataBase(QNames, QFields, QCharset, QPrimary,
-      QIndex, QCheck, QTrigger, QArrayDim: TJvUIBStatement; OIDs: TOIDTables);
+      QIndex, QCheck, QTrigger, QArrayDim, QGrants, QFieldGrants: TJvUIBStatement;
+      OIDs: TOIDTables);
     function FindFieldIndex(const Name: string): Integer;
     function GetUniques(const Index: Integer): TMetaUnique;
     function GetUniquesCount: Integer;
@@ -379,7 +422,7 @@ type
     property TriggersCount: Integer read GetTriggersCount;
   end;
 
-  TMetaView = class(TMetaNode)
+  TMetaView = class(TMetaBaseTable)
   private
     FSource: string;
     function GetFields(const Index: Integer): TMetaField;
@@ -387,7 +430,7 @@ type
     function GetTriggers(const Index: Integer): TMetaTrigger;
     function GetTriggersCount: Integer;
     procedure LoadFromDataBase(QName, QFields, QTriggers,
-      QCharset, QArrayDim: TJvUIBStatement; OIDs: TOIDViews);
+      QCharset, QArrayDim, QGrants, QFieldGrants: TJvUIBStatement; OIDs: TOIDViews);
     procedure LoadFromStream(Stream: TStream); override;
   public
     procedure SaveToDDLNode(Stream: TStringStream); override;
@@ -406,7 +449,8 @@ type
   TMetaProcedure = class(TMetaNode)
   private
     FSource: string;
-    procedure LoadFromQuery(QNames, QFields, QCharset, QArrayDim: TJvUIBStatement; OIDs: TOIDProcedures);
+    procedure LoadFromQuery(QNames, QFields, QCharset, QArrayDim, QGrants: TJvUIBStatement; OIDs: TOIDProcedures);
+    procedure LoadGrantsFromQuery(QGrants: TJvUIBStatement);
     function GetInputFields(const Index: Integer): TMetaProcInField;
     function GetInputFieldsCount: Integer;
     function GetOutputFields(const Index: Integer): TMetaProcOutField;
@@ -416,6 +460,10 @@ type
     procedure SaveToCreateEmptyDDL(Stream: TStringStream);
     function GetAsAlterDDL: string;
     function GetAsCreateEmptyDDL: string;
+    function GetProcedureGrants(const Index: Integer): TMetaProcedureGrant;
+    function GetProcedureGrantsCount: Integer;
+  protected
+    function FindGrant(Option: Boolean): TMetaProcedureGrant;
   public
     procedure SaveToDDLNode(Stream: TStringStream); override;
     class function NodeClass: string; override;
@@ -428,12 +476,14 @@ type
     property AsCreateEmptyDDL: string read GetAsCreateEmptyDDL;
     property AsAlterDDL: string read GetAsAlterDDL;
 
-
     property InputFields[const Index: Integer]: TMetaProcInField read GetInputFields;
     property InputFieldsCount: Integer read GetInputFieldsCount;
 
     property OutputFields[const Index: Integer]: TMetaProcOutField read GetOutputFields;
     property OutputFieldsCount: Integer read GetOutputFieldsCount;
+
+    property Grants[const Index: Integer]: TMetaProcedureGrant read GetProcedureGrants;
+    property GrantsCount: Integer read GetProcedureGrantsCount;
   end;
 
   TMetaException = class(TMetaNode)
@@ -491,13 +541,22 @@ type
   private
     FOwner: string;
     procedure LoadFromStream(Stream: TStream); override;
-    procedure LoadFromQuery(QName: TJvUIBStatement);
+    procedure LoadFromQuery(QName, QGrants: TJvUIBStatement; OIDs: TOIDRoles);
+    procedure LoadGrantsFromQuery(QGrants: TJvUIBStatement);
+    function GetRoleGrants(const Index: Integer): TMetaRoleGrant;
+    function GetRoleGrantsCount: Integer;
+  protected
+    function FindGrant(Option: Boolean): TMetaRoleGrant;
   public
     procedure SaveToDDLNode(Stream: TStringStream); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
+    constructor Create(AOwner: TMetaNode; ClassIndex: Integer); override;
     procedure SaveToStream(Stream: TStream); override;
     property Owner: string read FOwner;
+
+    property Grants[const Index: Integer]: TMetaRoleGrant read GetRoleGrants;
+    property GrantsCount: Integer read GetRoleGrantsCount;
   end;
 
   TMetaDataBase = class(TMetaNode)
@@ -507,6 +566,7 @@ type
     FOIDViews: TOIDViews;
     FOIDProcedures: TOIDProcedures;
     FOIDUDFs: TOIDUDFs;
+    FOIDRoles: TOIDRoles;
     FSysInfos: Boolean;
     FDefaultCharset: TCharacterSet;
     function GetGenerators(const Index: Integer): TMetaGenerator;
@@ -576,10 +636,150 @@ type
 
     property Roles[const Index: Integer]: TMetaRole read GetRoles;
     property RolesCount: Integer read GetRolesCount;
+    property OIDRoles: TOIDRoles read FOIDRoles write FOIDRoles;
 
     property SysInfos: Boolean read FSysInfos write FSysInfos;
     property DefaultCharset: TCharacterSet read FDefaultCharset;
   end;
+
+{ PrY - Grants }
+
+  { Used to store temporary grantees }
+  TGrantee = record
+    User: String[31];
+    UserType: Integer;
+    Grantor: String[31];
+    Option: Boolean;
+  end;
+
+  { Grantees : Who or Which object has privileges }
+  TMetaGrantee = class(TMetaNode)
+  private
+    FGrantor: String;
+    procedure LoadFromGrantee(G: TGrantee);
+  protected
+    procedure LoadFromStream(Stream: TStream); override;    
+  public
+    procedure SaveToStream(Stream: TStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream); override;
+    class function NodeClass: string; override;
+    class function NodeType: TMetaNodeType; override;
+    property Grantor: String read FGrantor;
+  end;
+
+  TMetaRoleGrantee = class(TMetaGrantee)
+  public
+    class function NodeClass: string; override;
+    class function NodeType: TMetaNodeType; override;
+  end;
+
+  TMetaUserGrantee = class(TMetaGrantee)
+  public
+    class function NodeClass: string; override;
+    class function NodeType: TMetaNodeType; override;
+  end;
+
+  TMetaProcedureGrantee = class(TMetaGrantee)
+  public
+    procedure SaveToDDLNode(Stream: TStringStream); override;
+    class function NodeClass: string; override;
+    class function NodeType: TMetaNodeType; override;
+  end;
+
+  TMetaTriggerGrantee = class(TMetaGrantee)
+  public
+    procedure SaveToDDLNode(Stream: TStringStream); override;
+    class function NodeClass: string; override;
+    class function NodeType: TMetaNodeType; override;
+  end;
+
+  TMetaViewGrantee = class(TMetaGrantee)
+  public
+    procedure SaveToDDLNode(Stream: TStringStream); override;
+    class function NodeClass: string; override;
+    class function NodeType: TMetaNodeType; override;
+  end;
+
+  { Grants : Which privileges have been given to this object to whom }
+  TMetaGrant = class(TMetaNode)
+  private
+    FOption: Boolean;
+  protected
+    procedure LoadFromStream(Stream: TStream); override;
+  public
+    procedure SaveToStream(Stream: TStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveGranteesToDDLNode(Stream: TStringStream; OptionKeyWord: String);
+    class function NodeClass: string; override;
+    class function NodeType: TMetaNodeType; override;
+    property Option: Boolean read FOption;
+  end;
+
+  TMetaRoleGrant = class(TMetaGrant)
+  private
+    procedure LoadFromGrantee(G: TGrantee);
+  protected
+    function GetName: String; override;
+  public
+    procedure SaveToDDLNode(Stream: TStringStream); override;
+    class function NodeClass: string; override;
+    class function NodeType: TMetaNodeType; override;
+    constructor Create(AOwner: TMetaNode; ClassIndex: Integer); override;
+  end;
+
+  TMetaObjectGrant = class(TMetaGrant)
+  private
+    procedure LoadFromGrantee(G: TGrantee);
+  public
+    constructor Create(AOwner: TMetaNode; ClassIndex: Integer); override;
+  end;
+
+  TMetaProcedureGrant = class(TMetaObjectGrant)
+  protected
+    function GetName: String; override;
+  public
+    procedure SaveToDDLNode(Stream: TStringStream); override;
+    class function NodeClass: string; override;
+    class function NodeType: TMetaNodeType; override;
+  end;
+
+  TMetaTableGrant = class(TMetaObjectGrant)
+  private
+    FPrivileges : TTablePrivileges;
+  protected
+    function GetName: String; override;
+    procedure LoadFromStream(Stream: TStream); override;
+  public
+    procedure SaveToStream(Stream: TStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream); override;
+    class function NodeClass: string; override;
+    class function NodeType: TMetaNodeType; override;
+    property Privileges: TTablePrivileges read FPrivileges;
+  end;
+
+  TMetaFieldGrant = class(TMetaObjectGrant)
+  private
+    FPrivilege : TFieldPrivilege;
+    FFields: TStringList;
+    function GetFields(const Index: Integer): String;
+    function GetFieldsCount: Integer;
+  protected
+    function GetName: String; override;
+    procedure LoadFromStream(Stream: TStream); override;    
+  public
+    procedure SaveToStream(Stream: TStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream); override;
+    class function NodeClass: string; override;
+    class function NodeType: TMetaNodeType; override;
+    constructor Create(AOwner: TMetaNode; ClassIndex: Integer); override;
+    destructor Destroy; override;
+    function HasFields(F: TStringList): Boolean;
+    procedure AssignFields(F: TStringList);
+    property Privilege: TFieldPrivilege read FPrivilege;
+    property Fields[const Index: Integer]: String read GetFields;
+    property FieldsCount: Integer read GetFieldsCount;
+  end;
+{ /PrY}
 
 implementation
 {$IFNDEF PUREPASCAL}
@@ -608,6 +808,7 @@ implementation
 //  OIDUDF       = 6;
 //    OIDUDFField      = 0;
 //  OIDRole      = 7;
+//    OIDRoleGrantee   = 0;  // PrY
 
 const
 
@@ -769,6 +970,24 @@ const
     'SELECT RDB$LOWER_BOUND, RDB$UPPER_BOUND FROM RDB$FIELD_DIMENSIONS DIM '+
     'WHERE DIM.RDB$FIELD_NAME = ? ORDER BY DIM.RDB$DIMENSION';
 
+  { Some grants can be ignored, sometimes, by adding
+    "RDB$GRANT_OPTION is not NULL" to where clause...
+    Perhaps GRANTS could be filtered using RDB$USER_NAME <> RDB$GRANTOR since
+    there is no reason for a GRANTOR to GRANTS rights to himself...
+  }
+
+  QRYRelationGrants =
+    'SELECT RDB$USER, RDB$GRANTOR, RDB$PRIVILEGE, RDB$GRANT_OPTION, RDB$USER_TYPE ' +
+    'FROM RDB$USER_PRIVILEGES ' +
+    'WHERE (RDB$USER <> RDB$GRANTOR) AND (RDB$OBJECT_TYPE = ?) AND (RDB$RELATION_NAME = ?) AND (RDB$FIELD_NAME IS NULL) ' +
+    'ORDER BY RDB$GRANT_OPTION, RDB$USER_TYPE, RDB$USER, RDB$GRANTOR';
+
+  QRYFieldGrants =
+    'SELECT RDB$USER, RDB$GRANTOR, RDB$PRIVILEGE, RDB$GRANT_OPTION, RDB$USER_TYPE, RDB$FIELD_NAME ' +
+    'FROM RDB$USER_PRIVILEGES ' +
+    'WHERE (RDB$USER <> RDB$GRANTOR) AND (RDB$OBJECT_TYPE = ?) AND (RDB$RELATION_NAME = ?) AND (RDB$FIELD_NAME IS NOT NULL) ' +
+    'ORDER BY RDB$PRIVILEGE, RDB$GRANT_OPTION, RDB$USER_TYPE, RDB$USER, RDB$GRANTOR, RDB$FIELD_NAME';
+
 procedure WriteString(Stream: TStream; var Str: string);
 var
   Len: Integer;
@@ -899,6 +1118,11 @@ procedure TMetaNode.SaveToDDLNode(Stream: TStringStream);
 begin
 end;
 
+function TMetaNode.GetName: String;
+begin
+  Result := FName;
+end;
+
 function TMetaNode.GetNodes(const Index: Integer): TNodeItem;
 begin
   Assert((Index >= 0) and (FNodeItemsCount > 0) and (Index < FNodeItemsCount));
@@ -972,7 +1196,7 @@ end;
 procedure TMetaGenerator.SaveToDDLNode(Stream: TStringStream);
 begin
   SaveToCreateDDLNode(Stream);
-  Stream.WriteString(BreakLine);
+  Stream.WriteString(NewLine);
   SaveToAlterDDLNode(Stream);
 end;
 
@@ -1020,6 +1244,246 @@ begin
   end;
 end;
 
+{ TMetaBaseTable }
+
+function TMetaBaseTable.FindFieldGrant(const Privilege: TFieldPrivilege;
+  Option: Boolean; Fields: TStringList): TMetaFieldGrant;
+var
+  I: Integer;
+begin
+  Result := nil;
+  for I := 0 to FieldsGrantsCount - 1 do
+    if (FieldsGrants[I].Privilege = Privilege) and (FieldsGrants[I].Option = Option) and
+       (FieldsGrants[I].HasFields(Fields)) then
+    begin
+      Result := FieldsGrants[I];
+      Exit;
+    end;
+end;
+
+function TMetaBaseTable.FindGrant(const Privileges: TTablePrivileges;
+  Option: Boolean): TMetaTableGrant;
+var
+  I: Integer;
+begin
+  Result := nil;
+  for I := 0 to GrantsCount - 1 do
+    if (Grants[I].Privileges = Privileges) and (Grants[I].Option = Option) then
+    begin
+      Result := Grants[I];
+      Exit;
+    end;
+end;
+
+procedure TMetaBaseTable.LoadFieldsGrantsFromQuery(G: TJvUIBStatement);
+var
+  Current: TGrantee;
+  Previous: TGrantee;
+  CurrentPrivilege, PreviousPrivilege: TFieldPrivilege;
+  Grant: TMetaFieldGrant;
+  Privilege: Char;
+  Fields: TStringList;
+  FieldName: String;
+
+  function DecodePrivilege: TFieldPrivilege;
+  begin
+    case Privilege of
+    'U' : Result := fpUpdate;
+    'R' : Result := fpReference;
+    else
+      raise EUIBError.CreateFmt('Unsupported FIELD GRANT PRIVILEGE %s',[Privilege]);
+    end;
+  end;
+
+begin
+  Fields := TStringList.Create;
+  try
+    Current.UserType := -1;
+    Previous.UserType := -1;
+
+    { Fake initialisation, to make delphi compiler happy }
+    PreviousPrivilege := TFieldPrivilege(-1);
+    CurrentPrivilege := TFieldPrivilege(-1);
+
+    while not G.Eof do
+    begin
+      if G.Fields.IsNull[2] then
+        Privilege := #0
+      else
+        Privilege := G.Fields.AsString[2][1];
+
+      FieldName := Trim(G.Fields.AsString[5]);
+
+      Current.User := Trim(G.Fields.AsString[0]);
+      Current.Grantor := Trim(G.Fields.AsString[1]);
+      Current.Option := G.Fields.AsInteger[3] = 1;
+      Current.UserType := G.Fields.AsInteger[4];
+      CurrentPrivilege := DecodePrivilege;
+
+      // Au premier tour, on se contente d'enregistrer ce qu'on a lu
+      if Previous.UserType = -1 then
+      begin
+        Previous := Current;
+        PreviousPrivilege := CurrentPrivilege;
+        Fields.Add(FieldName);
+      end
+      else
+      begin
+        if (CurrentPrivilege = PreviousPrivilege) and
+           (Current.Option = Previous.Option) and
+           (Current.User = Previous.User) and
+           (Current.UserType = Previous.UserType) and
+           (Current.Grantor = Previous.Grantor) then
+        begin
+          // Même privilège (avec option), même utilisateur
+          Fields.Add(FieldName);
+        end
+        else
+        begin
+          // Utilisateur ou privilège différent
+          Grant := FindFieldGrant(PreviousPrivilege, Previous.Option, Fields);
+          if not Assigned(Grant) then
+          begin
+            Grant := TMetaFieldGrant.Create(Self,FFieldsGrantsClassIndex);
+            Grant.FPrivilege := PreviousPrivilege;
+            Grant.AssignFields(Fields);
+          end;
+          Grant.LoadFromGrantee(Previous);
+
+          Previous := Current;
+          PreviousPrivilege := CurrentPrivilege;
+          Fields.Clear;
+          Fields.Add(FieldName);
+        end;
+      end;
+
+      G.Next;
+    end;
+
+    if Current.UserType <> -1 then
+    begin
+      Grant := FindFieldGrant(CurrentPrivilege, Current.Option, Fields);
+      if not Assigned(Grant) then
+      begin
+        Grant := TMetaFieldGrant.Create(Self,FFieldsGrantsClassIndex);
+        Grant.FPrivilege := CurrentPrivilege;
+        Grant.AssignFields(Fields);
+      end;
+
+      Grant.LoadFromGrantee(Current);
+    end;
+  finally
+    Fields.Free;
+  end;
+end;
+
+procedure TMetaBaseTable.LoadGrantsFromQuery(G: TJvUIBStatement);
+var
+  Current: TGrantee;
+  Previous: TGrantee;
+  Privileges: TTablePrivileges;
+  Grant: TMetaTableGrant;
+  Privilege: Char;
+
+  procedure IncludePrivilege;
+  begin
+    case Privilege of
+    'S' : Include(Privileges,tpSelect);
+    'I' : Include(Privileges,tpInsert);
+    'U' : Include(Privileges,tpUpdate);
+    'D' : Include(Privileges,tpDelete);
+    'R' : Include(Privileges,tpReference);
+    else
+      raise EUIBError.CreateFmt('Unsupported GRANT PRIVILEGE %s',[Privilege]);
+    end;
+  end;
+
+begin
+  Privileges := [];
+  Current.UserType := -1;
+  Previous.UserType := -1;
+
+  while not G.Eof do
+  begin
+    if G.Fields.IsNull[2] then
+      Privilege := #0
+    else
+      Privilege := G.Fields.AsString[2][1];
+
+    Current.User := Trim(G.Fields.AsString[0]);
+    Current.Grantor := Trim(G.Fields.AsString[1]);
+    Current.Option := G.Fields.AsInteger[3] = 1;
+    Current.UserType := G.Fields.AsInteger[4];
+
+    if (Previous.UserType <> -1) and (
+         (Current.UserType = Previous.UserType) and
+         (Current.User = Previous.User) and
+         (Current.Grantor = Previous.Grantor) and
+         (Current.Option = Previous.Option)
+        ) then
+    begin
+      IncludePrivilege;
+    end
+    else
+    begin
+      if Previous.UserType <> -1 then
+      begin
+        Grant := FindGrant(Privileges, Previous.Option);
+        if not Assigned(Grant) then
+        begin
+          Grant := TMetaTableGrant.Create(Self,FGrantsClassIndex);
+          Grant.FPrivileges := Privileges;
+        end;
+
+        Grant.LoadFromGrantee(Previous);
+
+        Previous := Current;
+        Privileges := [];
+        IncludePrivilege;
+      end
+      else
+      begin
+        Previous := Current;
+        IncludePrivilege;
+      end;
+    end;
+
+    G.Next;
+  end;
+
+  if Current.UserType <> -1 then
+  begin
+    Grant := FindGrant(Privileges, Current.Option);
+    if not Assigned(Grant) then
+    begin
+      Grant := TMetaTableGrant.Create(Self,FGrantsClassIndex);
+      Grant.FPrivileges := Privileges;
+    end;
+
+    Grant.LoadFromGrantee(Current);
+  end;
+end;
+
+function TMetaBaseTable.GetFieldsGrants(const Index: Integer): TMetaFieldGrant;
+begin
+  Result := TMetaFieldGrant(GetItems(FFieldsGrantsClassIndex, Index));
+end;
+
+function TMetaBaseTable.GetFieldsGrantsCount: Integer;
+begin
+  Result := FNodeItems[FFieldsGrantsClassIndex].Childs.Count;
+end;
+
+function TMetaBaseTable.GetTableGrants(const Index: Integer): TMetaTableGrant;
+begin
+  Result := TMetaTableGrant(GetItems(FGrantsClassIndex, Index));
+end;
+
+function TMetaBaseTable.GetTableGrantsCount: Integer;
+begin
+  Result := FNodeItems[FGrantsClassIndex].Childs.Count;
+end;
+
 { TMetaTable }
 
 constructor TMetaTable.Create(AOwner: TMetaNode; ClassIndex: Integer);
@@ -1032,6 +1496,11 @@ begin
   AddClass(TMetaUnique);
   AddClass(TMetaIndex);
   AddClass(TMetaCheck);
+  AddClass(TMetaTableGrant);
+  AddClass(TMetaFieldGrant);
+
+  FGrantsClassIndex := Ord(OIDTableGrant);
+  FFieldsGrantsClassIndex := Ord(OIDTableFieldGrant);
 end;
 
 function TMetaTable.FindFieldName(const Name: string): TMetaTableField;
@@ -1078,7 +1547,8 @@ begin
 end;
 
 procedure TMetaTable.LoadFromDataBase(QNames, QFields, QCharset, QPrimary,
-  QIndex, QCheck, QTrigger, QArrayDim: TJvUIBStatement; OIDs: TOIDTables);
+  QIndex, QCheck, QTrigger, QArrayDim, QGrants, QFieldGrants: TJvUIBStatement;
+      OIDs: TOIDTables);
 var
   Unk: string;
 begin
@@ -1194,6 +1664,23 @@ begin
       QTrigger.Next;
     end;
   end;
+
+  // GRANTS
+  if OIDTableGrant in OIDs then
+  begin
+    QGrants.Params.AsInteger[0] := 0;
+    QGrants.Params.AsString[1] := FName;
+    QGrants.Open;
+    LoadGrantsFromQuery(QGrants);
+  end;
+
+  if OIDTableFieldGrant in OIDs then
+  begin
+    QFieldGrants.Params.AsInteger[0] := 0;
+    QFieldGrants.Params.AsString[1] := FName;
+    QFieldGrants.Open;
+    LoadFieldsGrantsFromQuery(QFieldGrants);
+  end;
 end;
 
 procedure TMetaTable.LoadFromStream(Stream: TStream);
@@ -1273,12 +1760,12 @@ begin
   Stream.WriteString(Format('CREATE TABLE %s (', [FName]));
   for I := 0 to FieldsCount - 1 do
   begin
-    Stream.WriteString(BreakLine + '   ');
+    Stream.WriteString(NewLine + '   ');
     Fields[I].SaveToDDL(Stream);
     if I <> FieldsCount - 1 then
       Stream.WriteString(',');
   end;
-  Stream.WriteString(BreakLine + ');');
+  Stream.WriteString(NewLine + ');');
 end;
 
 class function TMetaTable.NodeClass: string;
@@ -1512,6 +1999,7 @@ begin
   FOIDViews := ALLViews;
   FOIDProcedures := ALLProcedures;
   FOIDUDFs := ALLUDFs;
+  FOIDRoles := ALLRoles;
   FSysInfos := False;
   FDefaultCharset := csNONE;
 end;
@@ -1522,7 +2010,7 @@ var
   ConStr, Str: string;
   QNames, QFields, QCharset, QPrimary: TJvUIBStatement;
   QIndex, QForeign, QCheck, QTrigger, QArrayDim: TJvUIBStatement;
-  QDefaultCharset: TJvUIBStatement;
+  QDefaultCharset, QGrants, QFieldGrants: TJvUIBStatement;
   procedure Configure(var Q: TJvUIBStatement; const Qry: string;
     CachedFetch: Boolean = False);
   begin
@@ -1550,6 +2038,8 @@ begin
   Configure(QCheck, QRYCheck);
   Configure(QArrayDim, QRYArrayDim);
   Configure(QDefaultCharset, QRYDefaultCharset);
+  Configure(QGrants, QRYRelationGrants);
+  Configure(QFieldGrants, QRYFieldGrants);
 
   try
     if OIDDBCharset in FOIDDatabases then
@@ -1603,7 +2093,8 @@ begin
       begin
         with TMetaTable.Create(Self, Ord(OIDTable)) do
           LoadFromDataBase(QNames, QFields, QCharset, QPrimary,
-            QIndex, QCheck, QTrigger, QArrayDim, FOIDTables);
+            QIndex, QCheck, QTrigger, QArrayDim, QGrants, QFieldGrants,
+            FOIDTables);
         QNames.Next;
       end;
 
@@ -1669,7 +2160,8 @@ begin
       while not QNames.Eof do
       begin
         with TMetaView.Create(Self, Ord(OIDView)) do
-          LoadFromDataBase(QNames, QFields, QTrigger, QCharset, QArrayDim, FOIDViews);
+          LoadFromDataBase(QNames, QFields, QTrigger, QCharset, QArrayDim,
+            QGrants, QFieldGrants, FOIDViews);
         QNames.Next;
       end;
     end;
@@ -1684,7 +2176,7 @@ begin
       while not QNames.Eof do
       begin
         with TMetaProcedure.Create(Self, Ord(OIDProcedure)) do
-          LoadFromQuery(QNames, QFields, QCharset, QArrayDim, FOIDProcedures);
+          LoadFromQuery(QNames, QFields, QCharset, QArrayDim, QGrants, FOIDProcedures);
         QNames.Next;
       end;
     end;
@@ -1697,7 +2189,8 @@ begin
       QNames.Open;
       while not QNames.Eof do
       begin
-        TMetaException.Create(Self, Ord(OIDException)).LoadFromQuery(QNames);
+        with TMetaException.Create(Self, Ord(OIDException)) do
+          LoadFromQuery(QNames);
         QNames.Next;
       end;
     end;
@@ -1711,7 +2204,8 @@ begin
       QNames.Open;
       while not QNames.Eof do
       begin
-        TMetaUDF.Create(Self, Ord(OIDUDF)).LoadFromQuery(QNames, QFields, QCharset, QArrayDim, FOIDUDFs);
+        with TMetaUDF.Create(Self, Ord(OIDUDF)) do
+          LoadFromQuery(QNames, QFields, QCharset, QArrayDim, FOIDUDFs);
         QNames.Next;
       end;
     end;
@@ -1724,11 +2218,14 @@ begin
       QNames.Open;
       while not QNames.Eof do
       begin
-        TMetaRole.Create(Self, Ord(OIDRole)).LoadFromQuery(QNames);
+        with TMetaRole.Create(Self, Ord(OIDRole)) do
+          LoadFromQuery(QNames, QGrants, FOIDRoles);
         QNames.Next;
       end;
     end;
   finally
+    QFieldGrants.Free;
+    QGrants.Free;
     QNames.Free;
     QCharset.Free;
     QFields.Free;
@@ -1746,77 +2243,86 @@ procedure TMetaDataBase.SaveToDDL(Stream: TStringStream);
 var
   I: Integer;
 
-  procedure SaveChildNodes(comment: string; OIDParent, OIDChild: Integer;
-    Separator: string = BreakLine);
-  var
-    I, J: Integer;
-  begin
-    if TablesCount > 0 then
-    begin
-      Stream.WriteString(NewLine);
-      Stream.WriteString(Format('/* %s */', [comment]));
-      Stream.WriteString(BreakLine);
-      for I := 0 to FNodeItems[OIDParent].Childs.Count - 1 do
-        for J := 0 to GetItems(OIDParent, I).FNodeItems[OIDChild].Childs.Count - 1 do
-        begin
-          Stream.WriteString(Separator);
-          TMetaNode(GetItems(OIDParent, I).FNodeItems[OIDChild].Childs[J]).SaveToDDL(Stream);
-        end;
-    end;
-  end;
-
-  procedure SaveMainNodes(Comment: string; OID: Integer;
-    Separator: string = NewLine);
+  procedure SaveMainNodes(Comment: String; OID: Integer; Separator: String = '');
   var
     I: Integer;
   begin
+    Stream.WriteString(Format('/* %s */%s', [comment,NewLine]));
     if FNodeItems[OID].Childs.Count > 0 then
     begin
-      Stream.WriteString(NewLine);
-      Stream.WriteString(Format('/* %s */', [comment]));
       for I := 0 to FNodeItems[OID].Childs.Count - 1 do
       begin
-        if I = 0 then
-          Stream.WriteString(NewLine)
-        else
-          Stream.WriteString(Separator);
         if GetItems(OID, I) is TMetaProcedure then
           TMetaProcedure(GetItems(OID, I)).SaveToCreateEmptyDDL(Stream)
         else
           GetItems(OID, I).SaveToDDLNode(Stream);
+        Stream.WriteString(NewLine + Separator);
       end;
+
+      if Separator = '' then
+        Stream.WriteString(NewLine);
+    end
+    else
+      Stream.WriteString(NewLine);
+  end;
+
+  procedure SaveChildNodes(comment: string; OIDParent, OIDChild: Integer;
+    Separator: String = '');
+  var
+    I, J: Integer;
+    Done: Integer;
+  begin
+    if FNodeItems[OIDParent].Childs.Count > 0 then
+    begin
+      Done := 0;
+      Stream.WriteString(Format('/* %s */%s', [comment,NewLine]));
+      for I := 0 to FNodeItems[OIDParent].Childs.Count - 1 do
+        for J := 0 to GetItems(OIDParent, I).FNodeItems[OIDChild].Childs.Count - 1 do
+        begin
+          TMetaNode(GetItems(OIDParent, I).FNodeItems[OIDChild].Childs[J]).SaveToDDL(Stream);
+          Stream.WriteString(NewLine + Separator);
+          Inc(Done);
+        end;
+      if (Done = 0) or (Separator = '') then
+        Stream.WriteString(NewLine);
     end;
   end;
 
 begin
-  SaveMainNodes('ROLES', Ord(OIDRole), NewLine);
-  SaveMainNodes('FUNCTIONS', Ord(OIDUDF), NewLine);
-  SaveMainNodes('DOMAINS', Ord(OIDDomain), BreakLine);
-  SaveMainNodes('GENERATORS', Ord(OIDGenerator));
-  SaveMainNodes('EXEPTIONS', Ord(OIDException), BreakLine);
-  SaveMainNodes('PROCEDURES', Ord(OIDProcedure));
-  SaveMainNodes('TABLES', Ord(OIDTable));
-  SaveMainNodes('VIEWS', Ord(OIDView));
+  SaveMainNodes('ROLES',              Ord(OIDRole));
+  SaveMainNodes('FUNCTIONS',          Ord(OIDUDF),       NewLine);
+  SaveMainNodes('DOMAINS',            Ord(OIDDomain));
+  SaveMainNodes('GENERATORS',         Ord(OIDGenerator), NewLine);
+  SaveMainNodes('EXEPTIONS',          Ord(OIDException));
+  SaveMainNodes('PROCEDURES (Empty)', Ord(OIDProcedure), NewLine);
+  SaveMainNodes('TABLES',             Ord(OIDTable),     NewLine);
+  SaveMainNodes('VIEWS',              Ord(OIDView),      NewLine);
 
-  SaveChildNodes('UNIQUE', Ord(OIDTable), Ord(OIDUnique));
-  SaveChildNodes('PRIMARY', Ord(OIDTable), Ord(OIDPrimary));
-  SaveChildNodes('FOREIGN', Ord(OIDTable), Ord(OIDForeign));
-  SaveChildNodes('INDICES', Ord(OIDTable), Ord(OIDIndex));
-  SaveChildNodes('CHECKS', Ord(OIDTable), Ord(OIDCheck), NewLine);
-  SaveChildNodes('TRIGGERS', Ord(OIDTable), Ord(OIDTableTrigger), NewLine);
-  SaveChildNodes('TRIGGERS (Views)', Ord(OIDView), Ord(OIDViewTrigers), NewLine);
+  SaveChildNodes('UNIQUE CONSTRAINTS',Ord(OIDTable), Ord(OIDUnique));
+  SaveChildNodes('PRIMARY KEYS',      Ord(OIDTable), Ord(OIDPrimary));
+  SaveChildNodes('FOREIGN KEYS',      Ord(OIDTable), Ord(OIDForeign));
+  SaveChildNodes('INDICES',           Ord(OIDTable), Ord(OIDIndex));
+  SaveChildNodes('CHECK CONSTRAINTS', Ord(OIDTable), Ord(OIDCheck));
+  SaveChildNodes('TABLES TRIGGERS',   Ord(OIDTable), Ord(OIDTableTrigger), NewLine);
+  SaveChildNodes('VIEWS TRIGGERS',    Ord(OIDView),  Ord(OIDViewTrigers),  NewLine);
 
   if ProceduresCount > 0 then
   begin
-    Stream.WriteString(NewLine);
-    Stream.WriteString('/* PROCEDURES */');
+    Stream.WriteString('/* PROCEDURES (Code) */' + NewLine);
     for I := 0 to ProceduresCount - 1 do
     begin
-      Stream.WriteString(NewLine);
       Procedures[I].SaveToAlterDDL(Stream);
+      Stream.WriteString(NewLine + NewLine);
     end;
   end;
 
+  { Grants }
+  SaveChildNodes('GRANTS (Roles)',         Ord(OIDRole),      Ord(OIDRoleGrant));
+  SaveChildNodes('GRANTS (Tables)',        Ord(OIDTable),     Ord(OIDTableGrant));
+  SaveChildNodes('GRANTS (Tables Fields)', Ord(OIDTable),     Ord(OIDTableFieldGrant));
+  SaveChildNodes('GRANTS (Views)',         Ord(OIDView),      Ord(OIDViewGrant));
+  SaveChildNodes('GRANTS (Views Fields)',  Ord(OIDView),      Ord(OIDViewFieldGrant));
+  SaveChildNodes('GRANTS (Procedures)',    Ord(OIDProcedure), Ord(OIDProcedureGrant));
 end;
 
 function TMetaDataBase.GetGenerators(const Index: Integer): TMetaGenerator;
@@ -2239,7 +2745,7 @@ begin
   end;
   Stream.WriteString(');');
   if not FActive then
-    Stream.WriteString(Format('%sALTER INDEX %s INACTIVE;', [BreakLine, FName]));
+    Stream.WriteString(Format('%sALTER INDEX %s INACTIVE;', [NewLine, FName]));
 end;
 
 procedure TMetaIndex.SaveToStream(Stream: TStream);
@@ -2438,7 +2944,7 @@ var
   Suf: TTriggerSuffix;
 begin
   Stream.WriteString(Format('CREATE TRIGGER %s FOR %s%s',
-    [Name, TMetaNode(FOwner).Name, BreakLine]));
+    [Name, TMetaNode(FOwner).Name, NewLine]));
   if not FActive then
     Stream.WriteString('INACTIVE ');
 
@@ -2452,7 +2958,7 @@ begin
         Stream.WriteString(' OR ');
       Stream.WriteString(TriggerSuffixTypes[Suf]);
     end;
-  Stream.WriteString(Format(' POSITION %d%s%s;', [FPosition, BreakLine, FSource]));
+  Stream.WriteString(Format(' POSITION %d%s%s;', [FPosition, NewLine, FSource]));
 end;
 
 procedure TMetaTrigger.SaveToStream(Stream: TStream);
@@ -2472,7 +2978,7 @@ end;
 
 procedure TMetaTrigger.SaveToAlterDDL(Stream: TStringStream);
 begin
-  Stream.WriteString(Format('ALTER TRIGGER %s%s%s', [Name, BreakLine, FSource]));
+  Stream.WriteString(Format('ALTER TRIGGER %s%s%s', [Name, NewLine, FSource]));
 end;
 
 function TMetaTrigger.GetAsAlterDDL: string;
@@ -2494,16 +3000,21 @@ begin
   inherited Create(AOwner, ClassIndex);
   AddClass(TMetaField);
   AddClass(TMetaTrigger);
+  AddClass(TMetaTableGrant);
+  AddClass(TMetaFieldGrant);
+
+  FGrantsClassIndex := Ord(OIDViewGrant);
+  FFieldsGrantsClassIndex := Ord(OIDViewFieldGrant);  
 end;
 
 function TMetaView.GetFields(const Index: Integer): TMetaField;
 begin
-  Result := TMetaField(GetItems(Ord(OIDViewFields), Index))
+  Result := TMetaField(GetItems(Ord(OIDViewField), Index))
 end;
 
 function TMetaView.GetFieldsCount: Integer;
 begin
-  Result := FNodeItems[Ord(OIDViewFields)].Childs.Count;
+  Result := FNodeItems[Ord(OIDViewField)].Childs.Count;
 end;
 
 class function TMetaView.NodeClass: string;
@@ -2522,20 +3033,20 @@ begin
 end;
 
 procedure TMetaView.LoadFromDataBase(QName, QFields, QTriggers,
-  QCharset, QArrayDim: TJvUIBStatement; OIDs: TOIDViews);
+  QCharset, QArrayDim, QGrants, QFieldGrants: TJvUIBStatement; OIDs: TOIDViews);
 begin
   FName := Trim(QName.Fields.AsString[0]);
   QName.ReadBlob(1, FSource);
   FSource := Trim(FSource);
 
   // FIELD
-  if OIDViewFields in OIDs then
+  if OIDViewField in OIDs then
   begin
     QFields.Params.AsString[0] := FName;
     QFields.Open;
     while not QFields.Eof do
     begin
-      TMetaField.Create(Self, Ord(OIDViewFields)).LoadFromQuery(QFields, QCharset, QArrayDim);
+      TMetaField.Create(Self, Ord(OIDViewField)).LoadFromQuery(QFields, QCharset, QArrayDim);
       QFields.Next;
     end;
   end;
@@ -2550,6 +3061,25 @@ begin
       TMetaTrigger.Create(Self, Ord(OIDViewTrigers)).LoadFromQuery(QTriggers);
       QTriggers.Next;
     end;
+  end;
+
+  // GRANTS
+  if OIDViewGrant in OIDs then
+  begin
+    QGrants.Params.AsInteger[0] := 0;
+    QGrants.Params.AsString[1] := FName;
+    QGrants.Open;
+    LoadGrantsFromQuery(QGrants);
+  end;
+
+  // FIELD GRANTS
+  if OIDViewFieldGrant in OIDs then
+  begin
+    QFieldGrants.Params.AsInteger[0] := 0;
+    QFieldGrants.Params.AsString[1] := FName;
+    QFieldGrants.Open;
+
+    LoadFieldsGrantsFromQuery(QFieldGrants);
   end;
 end;
 
@@ -2572,11 +3102,11 @@ begin
   Stream.WriteString(Format('CREATE VIEW %s (', [Name]));
   for I := 0 to FieldsCount - 1 do
   begin
-    Stream.WriteString(BreakLine + '   ' + Fields[I].Name);
+    Stream.WriteString(NewLine + '   ' + Fields[I].Name);
     if I <> FieldsCount - 1 then
       Stream.WriteString(',');
   end;
-  Stream.WriteString(BreakLine + ')' + BreakLine + 'AS' + BreakLine);
+  Stream.WriteString(NewLine + ')' + NewLine + 'AS' + NewLine);
   Stream.WriteString(Source);
   Stream.WriteString(';');
 end;
@@ -2624,6 +3154,7 @@ begin
   inherited Create(AOwner, ClassIndex);
   AddClass(TMetaProcInField); // in
   AddClass(TMetaProcOutField); // out
+  AddClass(TMetaProcedureGrant); // grants
 end;
 
 function TMetaProcedure.GetInputFields(const Index: Integer): TMetaProcInField;
@@ -2651,6 +3182,16 @@ begin
   Result := FNodeItems[Ord(OIDProcFieldOut)].Childs.Count;
 end;
 
+function TMetaProcedure.GetProcedureGrants(const Index: Integer): TMetaProcedureGrant;
+begin
+  Result := TMetaProcedureGrant(GetItems(Ord(OIDProcedureGrant),Index));
+end;
+
+function TMetaProcedure.GetProcedureGrantsCount: Integer;
+begin
+  Result := FNodeItems[Ord(OIDProcedureGrant)].Childs.Count;
+end;
+
 procedure TMetaProcedure.InternalSaveToDDL(Stream: TStringStream;
   Operation: string);
 var
@@ -2662,7 +3203,7 @@ begin
     Stream.WriteString(' (');
     for I := 0 to InPutFieldsCount - 1 do
     begin
-      Stream.WriteString(BreakLine + '   ');
+      Stream.WriteString(NewLine + '   ');
       InputFields[I].SaveToDDL(Stream);
       if I <> InputFieldsCount - 1 then
         Stream.WriteString(',');
@@ -2672,10 +3213,10 @@ begin
 
   if OutputFieldsCount > 0 then
   begin
-    Stream.WriteString(Format('%sRETURNS (', [BreakLine]));
+    Stream.WriteString(Format('%sRETURNS (', [NewLine]));
     for I := 0 to OutputFieldsCount - 1 do
     begin
-      Stream.WriteString(BreakLine + '   ');
+      Stream.WriteString(NewLine + '   ');
       OutputFields[I].SaveToDDL(Stream);
       if I <> OutputFieldsCount - 1 then
         Stream.WriteString(',');
@@ -2685,7 +3226,7 @@ begin
 end;
 
 procedure TMetaProcedure.LoadFromQuery(QNames, QFields,
-  QCharset, QArrayDim: TJvUIBStatement; OIDs: TOIDProcedures);
+  QCharset, QArrayDim, QGrants: TJvUIBStatement; OIDs: TOIDProcedures);
 begin
   FName := Trim(QNames.Fields.AsString[0]);
   QNames.ReadBlob(1, FSource);
@@ -2712,6 +3253,15 @@ begin
       QFields.Next;
     end;
   end;
+
+  if OIDProcedureGrant in OIDs then
+  begin
+    { Load Procedure Grants }
+    QGrants.Params.AsInteger[0] := 5;
+    QGrants.Params.AsString[1] := FName;
+    QGrants.Open;
+    LoadGrantsFromQuery(QGrants);
+  end;
 end;
 
 procedure TMetaProcedure.LoadFromStream(Stream: TStream);
@@ -2720,26 +3270,97 @@ begin
   ReadString(Stream, FSource);
 end;
 
-procedure TMetaProcedure.SaveToAlterDDL(Stream: TStringStream);
+procedure TMetaProcedure.LoadGrantsFromQuery(QGrants: TJvUIBStatement);
+var
+  Current: TGrantee;
+  Previous: TGrantee;
+  G: TMetaProcedureGrant;
 begin
+  Current.UserType := -1;
+  Previous.UserType := -1;
+
+  while not QGrants.Eof do
+  begin
+    Current.User := Trim(QGrants.Fields.AsString[0]);
+    Current.Grantor := Trim(QGrants.Fields.AsString[1]);
+    Current.Option := QGrants.Fields.AsInteger[3] = 1;
+    Current.UserType := QGRants.Fields.AsInteger[4];
+
+    if (Previous.UserType <> -1) and (
+         (Current.UserType = Previous.UserType) and
+         (Current.User = Previous.User) and
+         (Current.Grantor = Previous.Grantor) and
+         (Current.Option = Previous.Option)
+        ) then
+    begin
+      // C'est exactement le même droit que le précédent, fait au même
+      // utilisateur avec la même option !
+    end
+    else
+    begin
+      if Previous.UserType <> -1 then
+      begin
+        G := FindGrant(Previous.Option);
+        if not Assigned(G) then
+          G := TMetaProcedureGrant.Create(Self,Ord(OIDProcedureGrant));
+
+        G.LoadFromGrantee(Previous);
+
+        Previous := Current;
+      end
+      else
+      begin
+        Previous := Current;
+      end;
+    end;
+
+    QGrants.Next;
+  end;
+
+  if Current.UserType <> -1 then
+  begin
+    G := FindGrant(Current.Option);
+    if not Assigned(G) then
+      G := TMetaProcedureGrant.Create(Self,Ord(OIDProcedureGrant));
+
+    G.LoadFromGrantee(Current);
+  end;
+end;
+
+procedure TMetaProcedure.SaveToAlterDDL(Stream: TStringStream);
+var
+  S: String;
+begin
+  S := Trim(FSource);
+  if SameText(Copy(S,1,4),'decl') then
+    Insert('  ',S,1);
+
   InternalSaveToDDL(Stream, 'ALTER');
-  Stream.WriteString(BreakLine + 'AS ');
-  Stream.WriteString(FSource);
+  Stream.WriteString(NewLine + 'AS ' + NewLine);
+  Stream.WriteString(S);
   Stream.WriteString(';');
 end;
 
 procedure TMetaProcedure.SaveToCreateEmptyDDL(Stream: TStringStream);
 begin
   InternalSaveToDDL(Stream, 'CREATE');
-  Stream.WriteString(BreakLine + 'AS' + breakline + 'BEGIN' + breakline +
-    '  EXIT;' + breakline + 'END;');
+  Stream.WriteString(NewLine + 'AS' + NewLine +
+    'begin' + NewLine +
+    '  exit;' + NewLine +
+    'end;');
 end;
 
 procedure TMetaProcedure.SaveToDDLNode(Stream: TStringStream);
+var
+  S: String;
 begin
+  S := Trim(FSource);
+  if SameText(Copy(S,1,4),'decl') then
+    Insert('  ',S,1);
+
   InternalSaveToDDL(Stream, 'CREATE');
-  Stream.WriteString(BreakLine + 'AS ');
-  Stream.WriteString(FSource);
+  Stream.WriteString(NewLine + 'AS ');
+  Stream.WriteString(S);
   Stream.WriteString(';');
 end;
 
@@ -2753,6 +3374,19 @@ end;
 class function TMetaProcedure.NodeType: TMetaNodeType;
 begin
   Result := MetaProcedure;
+end;
+
+function TMetaProcedure.FindGrant(Option: Boolean): TMetaProcedureGrant;
+var
+  I: Integer;
+begin
+  Result := nil;
+  for I := 0 to GrantsCount - 1 do
+    if (Grants[I].Option = Option) then
+    begin
+      Result := Grants[I];
+      Exit;
+    end;
 end;
 
 function TMetaProcedure.GetAsAlterDDL: string;
@@ -2853,14 +3487,14 @@ begin
       begin
         if C > 0 then
           Stream.WriteString(',');
-        Stream.WriteString(BreakLine + '  ');
+        Stream.WriteString(NewLine + '  ');
         Fields[I].SaveToDDL(Stream);
         Inc(C);
       end;
     for I := 0 to FieldsCount - 1 do
       if Fields[I].Position = Return then
       begin
-        Stream.WriteString(BreakLine + '  RETURNS ');
+        Stream.WriteString(NewLine + '  RETURNS ');
         Fields[I].SaveToDDL(Stream);
         Break;
       end;
@@ -2871,15 +3505,15 @@ begin
     begin
       if C > 0 then
         Stream.WriteString(',');
-      Stream.WriteString(BreakLine + '  ');
+      Stream.WriteString(NewLine + '  ');
       Fields[I].SaveToDDL(Stream);
       Inc(C);
     end;
-    Stream.WriteString(Format('%s  RETURNS PARAMETER %d', [BreakLine, Freturn]));
+    Stream.WriteString(Format('%s  RETURNS PARAMETER %d', [NewLine, Freturn]));
   end;
 
   Stream.WriteString(Format('%s  ENTRY_POINT ''%s'' MODULE_NAME ''%s'';',
-    [BreakLine, FEntry, FModule]));
+    [NewLine, FEntry, FModule]));
 end;
 
 procedure TMetaUDF.SaveToStream(Stream: TStream);
@@ -3176,16 +3810,111 @@ end;
 
 { TMetaRole }
 
-procedure TMetaRole.LoadFromQuery(QName: TJvUIBStatement);
+constructor TMetaRole.Create(AOwner: TMetaNode; ClassIndex: Integer);
+begin
+  inherited Create(AOwner, ClassIndex);
+  AddClass(TMetaRoleGrant);
+end;
+
+function TMetaRole.FindGrant(Option: Boolean): TMetaRoleGrant;
+var
+  I: Integer;
+begin
+  Result := nil;
+  for I := 0 to GrantsCount - 1 do
+    if (Grants[I].Option = Option) then
+    begin
+      Result := Grants[I];
+      Exit;
+    end;
+end;
+
+function TMetaRole.GetRoleGrants(const Index: Integer): TMetaRoleGrant;
+begin
+  Result := TMetaRoleGrant(GetItems(Ord(OIDRoleGrant),Index));
+end;
+
+function TMetaRole.GetRoleGrantsCount: Integer;
+begin
+  Result := FNodeItems[Ord(OIDRoleGrant)].Childs.Count;
+end;
+
+procedure TMetaRole.LoadFromQuery(QName, QGrants: TJvUIBStatement; OIDs: TOIDRoles);
 begin
   FName := Trim(QName.Fields.AsString[0]);
   FOwner := QName.Fields.AsString[1];
+
+  if OIDRoleGrant in OIDs then
+  begin
+    { Load Role Grants }
+    QGrants.Params.AsInteger[0] := 13;
+    QGrants.Params.AsString[1] := FName;
+    QGrants.Open;
+    LoadGrantsFromQuery(QGrants);
+  end;
 end;
 
 procedure TMetaRole.LoadFromStream(Stream: TStream);
 begin
   ReadString(Stream, FName);
   ReadString(Stream, FOwner);
+end;
+
+procedure TMetaRole.LoadGrantsFromQuery(QGrants: TJvUIBStatement);
+var
+  Current: TGrantee;
+  Previous: TGrantee;
+  G: TMetaRoleGrant;
+begin
+  Current.UserType := -1;
+  Previous.UserType := -1;
+
+  while not QGrants.Eof do
+  begin
+    Current.User := Trim(QGrants.Fields.AsString[0]);
+    Current.Grantor := Trim(QGrants.Fields.AsString[1]);
+    Current.Option := QGrants.Fields.AsInteger[3] = 2;
+    Current.UserType := QGRants.Fields.AsInteger[4];
+
+    if (Previous.UserType <> -1) and (
+         (Current.UserType = Previous.UserType) and
+         (Current.User = Previous.User) and
+         (Current.Grantor = Previous.Grantor) and
+         (Current.Option = Previous.Option)
+        ) then
+    begin
+      // C'est exactement le même droit que le précédent, fait au même
+      // utilisateur avec la même option !
+    end
+    else
+    begin
+      if Previous.UserType <> -1 then
+      begin
+        G := FindGrant(Previous.Option);
+        if not Assigned(G) then
+          G := TMetaRoleGrant.Create(Self,Ord(OIDRoleGrant));
+
+        G.LoadFromGrantee(Previous);
+
+        Previous := Current;
+      end
+      else
+      begin
+        Previous := Current;
+      end;
+    end;
+
+    QGrants.Next;
+  end;
+
+  if Current.UserType <> -1 then
+  begin
+    G := FindGrant(Current.Option);
+    if not Assigned(G) then
+      G := TMetaRoleGrant.Create(Self,Ord(OIDRoleGrant));
+
+    G.LoadFromGrantee(Current);
+  end;
 end;
 
 class function TMetaRole.NodeClass: string;
@@ -3200,7 +3929,7 @@ end;
 
 procedure TMetaRole.SaveToDDLNode(Stream: TStringStream);
 begin
-  Stream.WriteString(Format('CREATE ROLE %s /* By user %s */', [FName, Trim(FOwner)]));
+  Stream.WriteString(Format('CREATE ROLE %s; /* By user %s */', [FName, Trim(FOwner)]));
 end;
 
 procedure TMetaRole.SaveToStream(Stream: TStream);
@@ -3209,6 +3938,496 @@ begin
   WriteString(Stream, FOwner);
   inherited SaveToStream(Stream);
 end;
+
+{ PrY - Grants }
+
+{ TMetaGrant }
+
+procedure TMetaGrant.LoadFromStream(Stream: TStream);
+begin
+  ReadString(Stream,FName);
+  Stream.Read(FOption,SizeOf(Boolean));
+end;
+
+class function TMetaGrant.NodeClass: string;
+begin
+  Result := 'Grant';
+end;
+
+class function TMetaGrant.NodeType: TMetaNodeType;
+begin
+  Result := MetaGrant;
+end;
+
+procedure TMetaGrant.SaveGranteesToDDLNode(Stream: TStringStream;
+  OptionKeyWord: String);
+var
+  I, C: Integer;
+begin
+  for I := 0 to FNodeItemsCount - 1 do
+  begin
+    for C := 0 to FNodeItems[I].Childs.Count - 1 do
+    begin
+      with TMetaGrantee(FNodeItems[I].Childs.Items[C]) do
+        SaveToDDLNode(Stream);
+
+      if C < FNodeItems[I].Childs.Count - 1 then
+        Stream.WriteString(', ')
+    end;
+  end;
+
+  if (FNodeItemsCount > 0) and FOption then
+    Stream.WriteString(' WITH ' + OptionKeyWord + ' OPTION');
+  Stream.WriteString(';');
+end;
+
+procedure TMetaGrant.SaveToDDLNode(Stream: TStringStream);
+begin
+  Stream.WriteString('GRANT ');
+end;
+
+procedure TMetaGrant.SaveToStream(Stream: TStream);
+begin
+  WriteString(Stream,FName);
+  Stream.WriteBuffer(FOption,SizeOf(Boolean));
+  inherited SaveToStream(Stream);
+end;
+
+{ TMetaRoleGrant }
+
+constructor TMetaRoleGrant.Create(AOwner: TMetaNode; ClassIndex: Integer);
+begin
+  inherited;
+  AddClass(TMetaUserGrantee);
+  FName := AOwner.FName;
+end;
+
+function TMetaRoleGrant.GetName: String;
+begin
+  Result := FName;
+  if FOption then
+    Result := Result + ' [ADMIN]';
+end;
+
+procedure TMetaRoleGrant.LoadFromGrantee(G: TGrantee);
+begin
+  TMetaUserGrantee.Create(Self,0).LoadFromGrantee(G);
+  FOption := G.Option;  
+end;
+
+class function TMetaRoleGrant.NodeClass: string;
+begin
+  Result := 'Role Grant';
+end;
+
+class function TMetaRoleGrant.NodeType: TMetaNodeType;
+begin
+  Result := MetaRoleGrant;
+end;
+
+procedure TMetaRoleGrant.SaveToDDLNode(Stream: TStringStream);
+begin
+  inherited SaveToDDLNode(Stream);
+  Stream.WriteString('"' + FName + '" TO ');
+  inherited SaveGranteesToDDLNode(Stream, 'ADMIN');
+end;
+
+{ TMetaObjectGrant }
+
+constructor TMetaObjectGrant.Create(AOwner: TMetaNode; ClassIndex: Integer);
+begin
+  inherited Create(AOwner, ClassIndex);
+  AddClass(TMetaUserGrantee);
+  AddClass(TMetaRoleGrantee);
+  AddClass(TMetaProcedureGrantee);
+  AddClass(TMetaTriggerGrantee);
+  AddClass(TMetaViewGrantee);
+  FName := AOwner.FName;
+end;
+
+procedure TMetaObjectGrant.LoadFromGrantee(G: TGrantee);
+begin
+  // Object/User Types used in RDB$USER_PRIVILEGES
+  // Useful types for privileges management are those with the (*)
+
+  // select RDB$TYPE, RDB$TYPE_NAME from rdb$types
+  // where RDB$FIELD_NAME='RDB$OBJECT_TYPE'
+  // order by RDB$TYPE
+
+  //  0 => RELATION
+  //  1 => VIEW                 (*)
+  //  2 => TRIGGER              (*)
+  //  3 => COMPUTED_FIELD
+  //  4 => VALIDATION
+  //  5 => PROCEDURE            (*)
+  //  6 => EXPRESSION_INDEX
+  //  7 => EXCEPTION
+  //  8 => USER                 (*)
+  //  9 => FIELD
+  // 10 => INDEX
+  // 11 => DEPENDENT_COUNT
+  // 12 => USER_GROUP
+  // 13 => ROLE                 (*)
+  // 14 => GENERATOR
+  // 15 => UDF
+  // 16 => BLOB_FILTER
+
+  case G.UserType of
+  1  : TMetaViewGrantee.Create(Self,4).LoadFromGrantee(G);
+  2  : TMetaTriggerGrantee.Create(Self,3).LoadFromGrantee(G);
+  5  : TMetaProcedureGrantee.Create(Self,2).LoadFromGrantee(G);
+  8  : TMetaUserGrantee.Create(Self,0).LoadFromGrantee(G);
+  13 : TMetaRoleGrantee.Create(Self,1).LoadFromGrantee(G);
+  else
+    raise EUIBError.CreateFmt('Unsupported GRANT USER_TYPE %d',[G.UserType]);
+  end;
+
+  FOption := G.Option;  
+end;
+
+{ TMetaProcedureGrant }
+
+function TMetaProcedureGrant.GetName: String;
+begin
+  Result := FName + ' : EXECUTE';
+  if FOption then
+    Result := Result + ' [GRANT]';
+end;
+
+class function TMetaProcedureGrant.NodeClass: string;
+begin
+  Result := 'Procedure Grant';
+end;
+
+class function TMetaProcedureGrant.NodeType: TMetaNodeType;
+begin
+  Result := MetaProcedureGrant;
+end;
+
+procedure TMetaProcedureGrant.SaveToDDLNode(Stream: TStringStream);
+begin
+  inherited SaveToDDLNode(Stream);
+  Stream.WriteString('EXECUTE ON ' + FName + ' TO ');
+  inherited SaveGranteesToDDLNode(Stream, 'GRANT');
+end;
+
+{ TMetaTableGrant }
+
+function TMetaTableGrant.GetName: String;
+begin
+  Result := FName + ' : ';
+  if FPrivileges = ALLTablePrivileges then
+    Result := Result + 'ALL PRIVILEGES'
+  else
+  begin
+    if tpSelect in FPrivileges then
+      Result := Result + 'SELECT,';
+    if tpInsert in FPrivileges then
+      Result := Result + 'INSERT,';
+    if tpUpdate in FPrivileges then
+      Result := Result + 'UPDATE,';
+    if tpDelete in FPrivileges then
+      Result := Result + 'DELETE,';
+    if tpReference in FPrivileges then
+      Result := Result + 'REFERENCE,';
+  end;
+  Delete(Result,Length(Result),1);
+  if FOption then
+    Result := Result + ' [GRANT]';
+end;
+
+procedure TMetaTableGrant.LoadFromStream(Stream: TStream);
+begin
+  Stream.ReadBuffer(FPrivileges,SizeOf(TTablePrivileges));
+  inherited LoadFromStream(Stream);
+end;
+
+class function TMetaTableGrant.NodeClass: string;
+begin
+  Result := 'Table/View Grant';
+end;
+
+class function TMetaTableGrant.NodeType: TMetaNodeType;
+begin
+  Result := MetaTableGrant;
+end;
+
+procedure TMetaTableGrant.SaveToDDLNode(Stream: TStringStream);
+var
+  Grants: String;
+begin
+  inherited SaveToDDLNode(Stream);
+  if FPrivileges = ALLTablePrivileges then
+    Grants := 'ALL PRIVILEGES'
+  else
+  begin
+    Grants := '';
+    if tpSelect in FPrivileges then
+      Grants := Grants + 'SELECT,';
+    if tpInsert in FPrivileges then
+      Grants := Grants + 'INSERT,';
+    if tpUpdate in FPrivileges then
+      Grants := Grants + 'UPDATE,';
+    if tpDelete in FPrivileges then
+      Grants := Grants + 'DELETE,';
+    if tpReference in FPrivileges then
+      Grants := Grants + 'REFERENCE,';
+    Delete(Grants,Length(Grants),1);
+  end;
+  Stream.WriteString(Grants + ' ON ' + FName + ' TO ');
+  inherited SaveGranteesToDDLNode(Stream, 'GRANT');
+end;
+
+procedure TMetaTableGrant.SaveToStream(Stream: TStream);
+begin
+  Stream.WriteBuffer(FPrivileges, SizeOf(TTablePrivileges));
+  inherited SaveToStream(Stream);
+end;
+
+{ TMetaFieldGrant }
+
+procedure TMetaFieldGrant.AssignFields(F: TStringList);
+begin
+  FFields.Assign(F);
+end;
+
+constructor TMetaFieldGrant.Create(AOwner: TMetaNode; ClassIndex: Integer);
+begin
+  inherited Create(AOwner, ClassIndex);
+  FFields := TStringList.Create;
+end;
+
+destructor TMetaFieldGrant.Destroy;
+begin
+  FFields.Free;
+  inherited;
+end;
+
+function TMetaFieldGrant.GetFields(const Index: Integer): String;
+begin
+  Result := FFields[Index];
+end;
+
+function TMetaFieldGrant.GetFieldsCount: Integer;
+begin
+  Result := FFields.Count;
+end;
+
+function TMetaFieldGrant.GetName: String;
+var
+  I: Integer;
+begin
+  Result := FName + ' : ';
+  if fpUpdate = FPrivilege then
+    Result := Result + 'UPDATE(';
+
+  if fpReference = FPrivilege then
+    Result := Result + 'REFERENCE(';
+
+  for I := 0 to FFields.Count - 1 do
+    Result := Result + FFields[i] + ', ';
+
+  Result[Length(Result) - 1] := ')';
+
+  if FOption then
+    Result := Result + '[GRANT]';
+end;
+
+function TMetaFieldGrant.HasFields(F: TStringList): Boolean;
+var
+  I: Integer;
+begin
+  Result := false;
+  if FFields.Count = F.Count then
+  begin
+    for I := 0 to F.Count - 1 do
+      if FFields[I] <> F[I] then
+        Break;
+    Result := true;
+  end;
+end;
+
+procedure TMetaFieldGrant.LoadFromStream(Stream: TStream);
+var
+  F: Integer;
+  Field: String;
+begin
+  Stream.ReadBuffer(FPrivilege,SizeOf(TFieldPrivilege));
+  Stream.ReadBuffer(F,SizeOf(Integer));
+  FFields.Clear;
+  while F > 0 do
+  begin
+    ReadString(Stream,Field);
+    FFields.Append(Field);
+    Dec(F);
+  end;
+  inherited LoadFromStream(Stream);
+end;
+
+class function TMetaFieldGrant.NodeClass: string;
+begin
+  Result := 'Field Grant';
+end;
+
+class function TMetaFieldGrant.NodeType: TMetaNodeType;
+begin
+  Result := MetaFieldGrant;
+end;
+
+procedure TMetaFieldGrant.SaveToDDLNode(Stream: TStringStream);
+var
+  I: Integer;
+  Grants: String;
+begin
+  inherited SaveToDDLNode(Stream);
+  Grants := '';
+  if fpUpdate = FPrivilege then
+    Grants := Grants + 'UPDATE('
+  else if fpReference = FPrivilege then
+    Grants := Grants + 'REFERENCE(';
+  for I := 0 to FFields.Count - 1 do
+    Grants := Grants + FFields[i] + ', ';
+  Grants[Length(Grants) - 1] := ')';
+  Stream.WriteString(Grants + 'ON ' + FName + ' TO ');
+  inherited SaveGranteesToDDLNode(Stream, 'GRANT');
+end;
+
+procedure TMetaFieldGrant.SaveToStream(Stream: TStream);
+var
+  F: Integer;
+  Field: String;
+begin
+  Stream.WriteBuffer(FPrivilege,SizeOf(TFieldPrivilege));
+  F := FFields.Count;
+  Stream.WriteBuffer(F, SizeOf(Integer));
+  for F := 0 to FFields.Count - 1 do
+  begin
+    Field := FFields[F];
+    WriteString(Stream,Field);
+  end;
+  inherited SaveToStream(Stream);
+end;
+
+{ TMetaGrantee }
+
+procedure TMetaGrantee.LoadFromGrantee(G: TGrantee);
+begin
+  FName := G.User;
+  FGrantor := G.Grantor;
+end;
+
+procedure TMetaGrantee.LoadFromStream(Stream: TStream);
+begin
+  ReadString(Stream,FName);
+  ReadString(Stream,FGrantor);
+end;
+
+class function TMetaGrantee.NodeClass: string;
+begin
+  Result := 'Grantee';
+end;
+
+class function TMetaGrantee.NodeType: TMetaNodeType;
+begin
+  Result := MetaGrantee;
+end;
+
+procedure TMetaGrantee.SaveToDDLNode(Stream: TStringStream);
+begin
+  inherited SaveToDDLNode(Stream);
+  Stream.WriteString(FName);
+(*
+  { Add some comments for debugging purposes }
+  Stream.WriteString(' /* Grantor : ' + FGrantor + ' */');
+*)
+end;
+
+procedure TMetaGrantee.SaveToStream(Stream: TStream);
+begin
+  WriteString(Stream,FName);
+  WriteString(Stream,FGrantor);
+  inherited SaveToStream(Stream);
+end;
+
+{ TMetaUserGrantee }
+
+class function TMetaUserGrantee.NodeClass: string;
+begin
+  Result := 'User Grantee';
+end;
+
+class function TMetaUserGrantee.NodeType: TMetaNodeType;
+begin
+  Result := MetaUserGrantee;
+end;
+
+{ TMetaRoleGrantee }
+
+class function TMetaRoleGrantee.NodeClass: string;
+begin
+  Result := 'Role Grantee';
+end;
+
+class function TMetaRoleGrantee.NodeType: TMetaNodeType;
+begin
+  Result := MetaRoleGrantee;
+end;
+
+{ TMetaProcedureGrantee }
+
+class function TMetaProcedureGrantee.NodeClass: string;
+begin
+  Result := 'Procedure Grantee';
+end;
+
+class function TMetaProcedureGrantee.NodeType: TMetaNodeType;
+begin
+  Result := MetaProcedureGrantee;
+end;
+
+procedure TMetaProcedureGrantee.SaveToDDLNode(Stream: TStringStream);
+begin
+  Stream.WriteString('PROCEDURE ');
+  inherited SaveToDDLNode(Stream);
+end;
+
+{ TMetaTriggerGrantee }
+
+class function TMetaTriggerGrantee.NodeClass: string;
+begin
+  Result := 'Trigger Grantee';
+end;
+
+class function TMetaTriggerGrantee.NodeType: TMetaNodeType;
+begin
+  Result := MetaTriggerGrantee;
+end;
+
+procedure TMetaTriggerGrantee.SaveToDDLNode(Stream: TStringStream);
+begin
+  Stream.WriteString('TRIGGER ');
+  inherited SaveToDDLNode(Stream);
+end;
+
+{ TMetaViewGrantee }
+
+class function TMetaViewGrantee.NodeClass: string;
+begin
+  Result := 'View Grantee';
+end;
+
+class function TMetaViewGrantee.NodeType: TMetaNodeType;
+begin
+  Result := MetaViewGrantee;
+end;
+
+procedure TMetaViewGrantee.SaveToDDLNode(Stream: TStringStream);
+begin
+  Stream.WriteString('VIEW ');
+  inherited SaveToDDLNode(Stream);
+end;
+
+{ /PrY }
 
 end.
 

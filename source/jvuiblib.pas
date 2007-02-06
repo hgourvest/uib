@@ -1052,7 +1052,7 @@ const
         EUIBException(Exception).FNumber := Number;
       Exception.FSQLCode   := ErrSqlcode;
       if Exception.FSQLCode <> 0 then
-        Exception.Message := Exception.Message + ErrSQLInterprete(Exception.FSQLCode) + BreakLine;
+        Exception.Message := Exception.Message + ErrSQLInterprete(Exception.FSQLCode) + NewLine;
       Exception.FErrorCode := GETCode(Status);
       Exception.Message := Exception.Message + 'Error Code: ' + IntToStr(Exception.FErrorCode);
       raise Exception;
@@ -1344,7 +1344,6 @@ const
       dummy: word;
     end;
   begin
-    result := 0;
   {$IFDEF UIBTHREADSAFE}
     FLIBCritSec.Enter;
     try
@@ -2118,7 +2117,7 @@ const
         len := isc_interprete(buffer, @StatusVector);
       {$ENDIF}
         if len > 0 then
-          Result := Result + copy(buffer, 0, len) + BreakLine else
+          Result := Result + copy(buffer, 0, len) + NewLine else
           Break;
       until False;
   {$IFDEF UIBTHREADSAFE}
@@ -3248,22 +3247,38 @@ type
         case Code of
           SQL_TEXT :
             begin
+            {$IFDEF GUID_AS_TEXT}
+              NewLen := 38;
+            {$ELSE}
               NewLen := SizeOf(TGUID);
+            {$ENDIF}
               if sqldata = nil then
                 getmem(sqldata, NewLen) else
                 ReallocMem(sqldata, NewLen);
               sqllen := NewLen;
+            {$IFDEF GUID_AS_TEXT}
+              Move(PChar(GUIDToString(G))^, sqldata^, sqllen);
+            {$ELSE}
               Move(G, sqldata^, sqllen);
+            {$ENDIF}
             end;
           SQL_VARYING :
             begin
+            {$IFDEF GUID_AS_TEXT}
+              NewLen := 38;
+            {$ELSE}
               NewLen := SizeOf(TGUID);
+            {$ENDIF}
               if sqldata = nil then
-                getmem(sqldata, NewLen+2) else
-                ReallocMem(sqldata, NewLen+2);
+                getmem(sqldata, NewLen + 2) else
+                ReallocMem(sqldata, NewLen + 2);
               sqllen := NewLen + 2;
               PVary(sqldata).vary_length := NewLen;
-              Move(G, PVary(sqldata).vary_string,PVary(sqldata).vary_length);
+            {$IFDEF GUID_AS_TEXT}
+              Move(PChar(GUIDToString(G))^, PVary(sqldata).vary_string, PVary(sqldata).vary_length);
+            {$ELSE}
+              Move(G, PVary(sqldata).vary_string, PVary(sqldata).vary_length);
+            {$ENDIF}
             end;
         end;
         if (sqlind <> nil) then
@@ -4055,15 +4070,25 @@ end;
         case ASQLCode of
           SQL_TEXT    :
           begin
+          {$IFDEF GUID_AS_TEXT}
+            if sqllen = 38 then
+              Result := StringToGUID(DecodeString(SQL_TEXT, Index))
+          {$ELSE}
             if sqllen = SizeOf(TGUID) then
               Move(sqldata^, Result, sqllen)
+          {$ENDIF}        
             else
               raise EUIBConvertError.Create(EUIB_CASTERROR);
           end;
           SQL_VARYING :
-          begin
-            if PVary(sqldata).vary_length = SizeOf(TGUID) then
+          begin            
+          {$IFDEF GUID_AS_TEXT}
+            if PVary(sqldata).vary_length  = 38 then
+              Result := StringToGUID(DecodeString(SQL_VARYING, Index))
+          {$ELSE}
+            if PVary(sqldata).vary_length  = SizeOf(TGUID) then
               Move(PVary(sqldata).vary_string, Result, PVary(sqldata).vary_length)
+          {$ENDIF}            
             else
               raise EUIBConvertError.Create(EUIB_CASTERROR);
           end;
@@ -5820,23 +5845,20 @@ end;
                 // quoted identifiers
                 if Src[idlen] = '"' then
                 begin
-                  inc(idlen);
+                  inc(Src);
                   while true do
                     case Src[idlen] of
-                    #0: Break;
-                    '"':
-                      begin
-                        inc(idlen);
-                        Break;
-                      end;
+                    #0  : Break;
+                    '"' : Break;
                     else
                       inc(idlen);
                     end;
                 end else
                 // unquoted identifiers
                   while (Src[idlen] in Identifiers) do inc(idlen);
-                AddField(copy(Src, 2, idlen-2));
+                AddField(copy(Src, 1, idlen));
                 inc(Src, idlen);
+                if Src^ = '"' then inc(Src);
               end;
         // skip everything when begin identifier found !
         // in procedures
@@ -6032,11 +6054,15 @@ end;
   end;
 
 {$IFDEF GUID_TYPE}
-  procedure  TSQLParams.SetAsGUID(const Index: Word; const Value: TGUID);
+  procedure TSQLParams.SetAsGUID(const Index: Word; const Value: TGUID);
   begin
+  {$IFDEF GUID_AS_TEXT}
+    SetFieldType(Index, 38, SQL_TEXT + 1, 0);
+  {$ELSE}
     SetFieldType(Index, SizeOf(TGUID), SQL_TEXT + 1, 0);
+  {$ENDIF}
     inherited;
-  end;
+  end;  
 {$ENDIF}
 
 end.

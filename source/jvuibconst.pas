@@ -41,32 +41,48 @@ type
   TOIDDatabases = set of TOIDDatabase;
 
   TOIDTable = (OIDTableField, OIDPrimary, OIDForeign, OIDTableTrigger,
-    OIDUnique,OIDIndex, OIDCheck);
+    OIDUnique, OIDIndex, OIDCheck, OIDTableGrant, OIDTableFieldGrant);
   TOIDTables = set of TOIDTable;
 
-  TOIDView = (OIDViewFields, OIDViewTrigers);
+  TOIDView = (OIDViewField, OIDViewTrigers, OIDViewGrant, OIDViewFieldGrant);
   TOIDViews = set of TOIDView;
 
-  TOIDProcedure = (OIDProcFieldIn, OIDProcFieldOut);
+  TOIDProcedure = (OIDProcFieldIn, OIDProcFieldOut, OIDProcedureGrant);
   TOIDProcedures = set of TOIDProcedure;
 
   TOIDUDF = (OIDUDFField);
   TOIDUDFs = set of TOIDUDF;
 
+  TOIDRole = (OIDRoleGrant);
+  TOIDRoles = set of TOIDRole;
+
+  { Table Grants Privileges }
+  TTablePrivilege = (tpSelect, tpInsert, tpUpdate, tpDelete, tpReference);
+  TTablePrivileges = set of TTablePrivilege;
+
+  { Field Grants Privileges }
+  TFieldPrivilege = (fpUpdate, fpReference);
+  TFieldPrivileges = set of TFieldPrivilege;
+
 const
   ALLOBjects = [OIDDomain, OIDTable, OIDView, OIDProcedure, OIDGenerator,
     OIDException, OIDUDF, OIDRole, OIDDBCharset];
   ALLTables = [OIDTableField, OIDPrimary, OIDForeign, OIDTableTrigger,
-    OIDUnique,OIDIndex, OIDCheck];
-  ALLViews = [OIDViewFields, OIDViewTrigers];
-  ALLProcedures = [OIDProcFieldIn, OIDProcFieldOut];
+    OIDUnique,OIDIndex, OIDCheck, OIDTableGrant, OIDTableFieldGrant];
+  ALLViews = [OIDViewField, OIDViewTrigers, OIDViewGrant, OIDViewFieldGrant];
+  ALLProcedures = [OIDProcFieldIn, OIDProcFieldOut, OIDProcedureGrant];
   ALLUDFs = [OIDUDFField];
+  ALLRoles = [OIDRoleGrant];
+  { All Grantable Privileges }
+  ALLTablePrivileges = [tpSelect, tpInsert, tpUpdate, tpDelete, tpReference];
+  ALLFieldPrivileges = [fpUpdate, fpReference];
 {$IFDEF UNIX}
   BreakLine = #10;
+  NewLine = #10#10; //BreakLine + BreakLine;
 {$ELSE}
   BreakLine = #13;
+  NewLine = #13#10;
 {$ENDIF}
-  NewLine = BreakLine + BreakLine;
 
 const
   {$IFDEF UIBLANG_EN}

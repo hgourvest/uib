@@ -16,7 +16,11 @@
 unit kbUIBLoader;
 
 interface
-uses Classes, kbmMemTable, jvuiblib, PDGUtils, DB;
+
+uses
+  SysUtils, Windows, Classes,
+  DB, FmtBcd,
+  kbmMemTable, jvuiblib;
 
 type
   TkbUIBLoader = class(TkbmMemTable)
@@ -27,17 +31,18 @@ type
 procedure Register;
 
 implementation
-uses SysUtils, jvuibase, jvuibconst, FmtBcd, Windows;
+
+uses jvuibase, jvuibconst;
 
 procedure Register;
 begin
-  RegisterComponents('jv UIB', [TkbUIBLoader]);
+  RegisterComponents('Jv UIB', [TkbUIBLoader]);
 end;
 
 { TkbUIBLoader }
 
 type
-  TBufferVarData = record
+  TUIBBuffer = record
     case byte of
       0: (Currency: Currency);
       1: (BCD: TBCD);
@@ -53,9 +58,9 @@ var
   i, j: Integer;
   fcount: Integer;
   TmpName: string;
+  Buffer: TUIBBuffer;
   FieldNo: integer;
   FieldType: TUIBFieldType;
-  Buffer: TBufferVarData;
   Str: string;
   Stream: TMemoryStream;
   Accept: boolean;
@@ -77,7 +82,7 @@ begin
         TmpName := AliasName[i];
         while TDefCollection(Collection).IndexOf(TmpName) >= 0 do
         begin
-          TmpName := TmpName + inttostr(fcount);
+          TmpName := TmpName + IntToStr(fcount);
           inc(fcount);
         end;
         Name := TmpName;
@@ -172,12 +177,12 @@ begin
                 begin
                   case F.SQLType[FieldNo] of
                     SQL_SHORT:
-                      Buffer.bcd := strToBcd(FloatToStr(PSmallint(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
+                      Buffer.bcd := StrToBcd(FloatToStr(PSmallint(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
                     SQL_LONG:
-                      Buffer.BCD := strToBcd(FloatToStr(PInteger(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
+                      Buffer.BCD := StrToBcd(FloatToStr(PInteger(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
                     SQL_INT64,
                       SQL_QUAD:
-                      Buffer.BCD := strToBcd(FloatToStr(PInt64(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
+                      Buffer.BCD := StrToBcd(FloatToStr(PInt64(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
                     SQL_DOUBLE:
                       Buffer.Double := PDouble(SqlVar.sqldata)^;
                   else

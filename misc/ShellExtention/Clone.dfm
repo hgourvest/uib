@@ -1,10 +1,10 @@
 object CloneForm: TCloneForm
   Left = 529
   Top = 335
-  Width = 539
-  Height = 412
   ActiveControl = btStart
   Caption = 'Clone'
+  ClientHeight = 378
+  ClientWidth = 531
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -12,13 +12,12 @@ object CloneForm: TCloneForm
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
-  Position = poDefaultPosOnly
   OnClose = FormClose
   OnCreate = FormCreate
   OnKeyPress = FormKeyPress
   DesignSize = (
     531
-    385)
+    378)
   PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel

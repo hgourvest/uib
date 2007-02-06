@@ -2,17 +2,21 @@ unit main;
 
 interface
 
+{$I JVUIB.INC}
+
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, JvUIB, JVUIBMetaData, StdCtrls, ComCtrls, Menus, ExtCtrls,
-  ImgList;
+  Dialogs, JvUIB, JVUIBMetaData, JvUIBLib, StdCtrls, ComCtrls, Menus, ExtCtrls,
+  ImgList
+{$IFDEF HAVE_SYNEDIT}
+  ,SynEdit, SynMemo, SynHighlighterSQL
+{$ENDIF};
 
 type
   TMainForm = class(TForm)
     DataBase: TJvUIBDataBase;
     Transaction: TJvUIBTransaction;
     TreeView: TTreeView;
-    Memo: TMemo;
     MainMenu: TMainMenu;
     mFile: TMenuItem;
     Open: TMenuItem;
@@ -30,6 +34,11 @@ type
     procedure LoadFromFileClick(Sender: TObject);
   private
     { Private declarations }
+  {$IFDEF HAVE_SYNEDIT}
+    Memo: TSynMemo;
+  {$ELSE}
+    Memo: TMemo;
+  {$ENDIF}
     procedure ShowNodes(node: TMetaNode; from: TTreeNode);
   public
     { Public declarations }
@@ -44,6 +53,8 @@ implementation
 uses Math;
 
 {$R *.dfm}
+
+{ TreeView }
 
 type
   TNodeInfo = record
@@ -75,7 +86,18 @@ const
      (icon: 12; color : clBlack),   //   MetaForeign
      (icon: 17;  color : clBlack),  //   MetaIndex
      (icon: 11; color : clBlack),   //   MetaPrimary
-     (icon: 16; color : clBlack)    //   MetaUnique
+     (icon: 16; color : clBlack),   //   MetaUnique
+     (icon: 9;  color : clBlack),   // MetaGrant
+     (icon: 9;  color : clBlack),   //   MetaRoleGrant
+     (icon: 9;  color : clBlack),   //   MetaTableGrant
+     (icon: 9;  color : clBlack),   //   MetaFieldGrant
+     (icon: 9;  color : clBlack),   //   MetaProcedureGrant
+     (icon: 9;  color : clBlack),   // MetaGrantee
+     (icon: 9;  color : clBlack),   //   MetaUserGrantee
+     (icon: 9;  color : clBlack),   //   MetaRoleGrantee
+     (icon: 9;  color : clBlack),   //   MetaProcedureGrantee
+     (icon: 9;  color : clBlack),   //   MetaTriggerGrantee
+     (icon: 9;  color : clBlack)    //   MetaViewGrantee
    );
 
 procedure TMainForm.ShowNodes(node: TMetaNode; from: TTreeNode);
@@ -107,23 +129,34 @@ begin
     end;
 end;
 
-procedure TMainForm.OpenClick(Sender: TObject);
+procedure TMainForm.TreeViewChange(Sender: TObject; Node: TTreeNode);
 begin
-  if OpenDialog.Execute then
-  begin
-    DataBase.Connected := false;
-    TreeView.Items.Clear;
-    DataBase.DatabaseName := OpenDialog.FileName;
-    MetaData.LoadFromDatabase(Transaction);
-    Transaction.Commit;
-  end;
-
-  ShowNodes(MetaData, nil);
+  If (node.Data <> nil) then
+    memo.Lines.Text := TMetaNode(Node.Data).AsDDL else
+    memo.Lines.Text := '';
 end;
+
+{ Form Events }
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  MetaData := TMetaDataBase.Create(nil, 0);
+  DataBase.LibraryName := jvuiblib.GetClientLibrary;
+
+{$IFDEF HAVE_SYNEDIT}
+  Memo := TSynMemo.Create(Self);
+  Memo.Highlighter := TSynSQLSyn.Create(Self);
+  Memo.Highlighter.CommentAttribute.Foreground := clGreen;
+  TSynSQLSyn(Memo.Highlighter).SQLDialect := sqlInterbase6;
+{$ELSE}
+  Memo := TMemo.Create(Self);
+{$ENDIF}
+
+  with Memo do
+  begin
+    Parent := Self;
+    Align := alClient;
+    ScrollBars := ssBoth;
+  end;
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
@@ -131,11 +164,21 @@ begin
   MetaData.Free;
 end;
 
-procedure TMainForm.TreeViewChange(Sender: TObject; Node: TTreeNode);
+{ MainMenu Events }
+
+procedure TMainForm.OpenClick(Sender: TObject);
 begin
-  If (node.Data <> nil) then
-    memo.Lines.Text := TMetaNode(Node.Data).AsDDL else
-    memo.Lines.Text := '';
+  if OpenDialog.Execute then
+  begin
+    DataBase.Connected := false;
+    TreeView.Items.Clear;
+    DataBase.DatabaseName := OpenDialog.FileName;
+    MetaData.Free;
+    MetaData := TMetaDataBase.Create(nil, 0);
+    MetaData.LoadFromDatabase(Transaction);
+    Transaction.Commit;
+    ShowNodes(MetaData, nil);
+  end;
 end;
 
 procedure TMainForm.SaveToFileClick(Sender: TObject);

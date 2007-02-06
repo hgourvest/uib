@@ -168,13 +168,13 @@ type
     ,hm_isc_blob_set_desc2
 {$ENDIF IB7_UP}
 {$IFDEF IB7ORFB15}
-    ,hm_isc_get_client_version,
-    ,hm_isc_get_client_major_version,
-    ,hm_isc_get_client_minor_version,
+    ,hm_isc_get_client_version
+    ,hm_isc_get_client_major_version
+    ,hm_isc_get_client_minor_version
 {$ENDIF IB7ORFB15}
 {$IFDEF IB71_UP}
-    ,hm_isc_release_savepoint,
-    ,hm_isc_rollback_savepoint,
+    ,hm_isc_release_savepoint
+    ,hm_isc_rollback_savepoint
     ,hm_isc_start_savepoint
 {$ENDIF IB71_UP}
     ,hm_isc_dsql_exec_immed3_m

@@ -119,6 +119,7 @@ type
     FViews: TOIDViews;
     FProcedures: TOIDProcedures;
     FUDFs: TOIDUDFs;
+    FRoles: TOIDRoles;
     FSysInfos: boolean;
   public
    { @exclude }
@@ -134,6 +135,8 @@ type
     property Procedures: TOIDProcedures read FProcedures write FProcedures default AllProcedures;
     { UDFs properties (Fields). }
     property UDFs: TOIDUDFs read FUDFs write FUDFs default AllUDFs;
+    { Roles properties (Grants). }
+    property Roles: TOIDRoles read FRoles write FRoles default AllRoles;
     { Include System tables, triggers and domains. }
     property SysInfos: boolean read FSysInfos write FSysInfos default False;
   end;
@@ -217,7 +220,9 @@ type
     procedure AddEventNotifier(Event: TJvUIBEvents);
 
     function GetInfoIntValue(const item: Integer): integer;
+  {$IFDEF FB20_UP}
     function GetInfoDateTimeValue(const item: Integer): TDateTime;
+  {$ENDIF}
     function GetInfoBooleanValue(const item: Integer): boolean;
     function GetInfoStringValue(const item: integer): string;
     function GetInfoOperationsCount(const item: Integer): Integer;
@@ -1600,6 +1605,7 @@ begin
         OIDViews := FMetaDataOptions.Views;
         OIDProcedures := FMetaDataOptions.Procedures;
         OIDUDFs := FMetaDataOptions.UDFs;
+        OIDRoles := FMetaDataOptions.Roles;
         SysInfos := FMetaDataOptions.FSysInfos
       end;
       try
@@ -1669,6 +1675,7 @@ begin
 {$ENDIF}
 end;
 
+{$IFDEF FB20}
 function TJvUIBDataBase.GetInfoDateTimeValue(const item: Integer): TDateTime;
 begin
   SetConnected(true);
@@ -1683,6 +1690,7 @@ begin
   end;
 {$ENDIF}
 end;
+{$ENDIF}
 
 function TJvUIBDataBase.GetInfoBooleanValue(const item: Integer): boolean;
 begin
@@ -4202,6 +4210,7 @@ begin
   FViews := ALLViews;
   FProcedures := ALLProcedures;
   FUDFs := ALLUDFs;
+  FRoles := ALLRoles;
   FSysInfos := False;
 end;
 

@@ -5203,7 +5203,7 @@ begin
   UnHookApi(@isc_vtov);
   UnHookApi(@isc_wait_for_event);
 {$IFDEF FB15_UP}
-  UnHookApi(PChar(lib), 'isc_reset_fpe', @isc_reset_fpe, @isc_reset_fpe);
+  UnHookApi(@isc_reset_fpe);
 {$ENDIF FB15_UP}
 {$IFDEF IB7_UP}
   UnHookApi(@isc_array_gen_sdl2);
