@@ -59,7 +59,7 @@
 //----------
 // Languages
 //----------
-{.$DEFINE UIBLANG_EN}  // English
+{$DEFINE UIBLANG_EN}  // English
 {.$DEFINE UIBLANG_FR} // French
 {.$DEFINE UIBLANG_CZ} // Czech
 {.$DEFINE UIBLANG_DE} // Deutch

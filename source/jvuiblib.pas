@@ -15,8 +15,6 @@
 (*     Volkan Ceylan <volkance@hotmail.com>                                     *)
 (*                                                                              *)
 (********************************************************************************)
-(* $Id: jvuiblib.pas,v 1.55 2006/04/09 16:20:03 pierrey Exp $                  *)
-(********************************************************************************)
 
 unit jvuiblib;
 
@@ -251,7 +249,7 @@ type
     procedure EncodeString(Code: Smallint; Index: Word; const str: String);
     procedure EncodeWideString(Code: Smallint; Index: Word; const str: WideString);
   {$IFDEF GUID_TYPE}
-    procedure EncodeGUID(Code: Smallint; Index: Word; G: TGUID);
+    procedure EncodeGUID(Code: Smallint; Index: Word; const G: TGUID);
   {$ENDIF}
   protected
     function GetSqlName(const Index: Word): string;
@@ -3229,7 +3227,7 @@ type
   end;
 
 {$IFDEF GUID_TYPE}
-  procedure TSQLDA.EncodeGUID(Code: Smallint; Index: Word; G: TGUID);
+  procedure TSQLDA.EncodeGUID(Code: Smallint; Index: Word; const G: TGUID);
   var
     i: Smallint;
     OldLen: SmallInt;
@@ -3240,7 +3238,7 @@ type
     with FXSQLDA.sqlvar[Index] do
     begin
       // Guid is GuidNull
-      if CompareMem(@G,@GuidNull,SizeOf(TGUID)) and (sqlind <> nil) then
+      if CompareMem(@G, @GuidNull,SizeOf(TGUID)) and (sqlind <> nil) then
         sqlind^ := -1 // NULL
       else
       begin
@@ -5847,12 +5845,9 @@ end;
                 begin
                   inc(Src);
                   while true do
-                    case Src[idlen] of
-                    #0  : Break;
-                    '"' : Break;
-                    else
+                    if (Src[idlen] in [#0, '"']) then
+                      Break else
                       inc(idlen);
-                    end;
                 end else
                 // unquoted identifiers
                   while (Src[idlen] in Identifiers) do inc(idlen);

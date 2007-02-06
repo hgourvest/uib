@@ -13,8 +13,6 @@
 (* Contributor: Olivier Guilbaud <oguilb@free.fr>                               *)
 (*                                                                              *)
 (********************************************************************************)
-(* $Id: jvuib.pas,v 1.53 2006/04/24 22:59:22 progdigy Exp $                     *)
-(********************************************************************************)
 
 unit jvuib;
 
@@ -220,9 +218,9 @@ type
     procedure AddEventNotifier(Event: TJvUIBEvents);
 
     function GetInfoIntValue(const item: Integer): integer;
-  {$IFDEF FB20_UP}
+{$IFDEF FB20_UP}
     function GetInfoDateTimeValue(const item: Integer): TDateTime;
-  {$ENDIF}
+{$ENDIF}
     function GetInfoBooleanValue(const item: Integer): boolean;
     function GetInfoStringValue(const item: integer): string;
     function GetInfoOperationsCount(const item: Integer): Integer;
@@ -1675,7 +1673,7 @@ begin
 {$ENDIF}
 end;
 
-{$IFDEF FB20}
+{$IFDEF FB20_UP}
 function TJvUIBDataBase.GetInfoDateTimeValue(const item: Integer): TDateTime;
 begin
   SetConnected(true);

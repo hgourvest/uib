@@ -14,8 +14,6 @@
 (*     Volkan Ceylan <volkance@hotmail.com>                                     *)
 (*     Olivier Guilbaud <oguilb@free.fr>                                        *)
 (********************************************************************************)
-(* $Id: jvuibdataset.pas,v 1.30 2005/03/21 22:07:35 progdigy Exp $              *)
-(********************************************************************************)
 
 unit jvuibdataset;
 

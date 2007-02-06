@@ -12,8 +12,6 @@
 (* Unit owner : Henri Gourvest <hgourvest@progdigy.com>                         *)
 (*                                                                              *)
 (********************************************************************************)
-(* $Id: jvuibtransactionedit.pas,v 1.5 2004/11/27 01:53:31 progdigy Exp $ *)
-(********************************************************************************)
 
 unit jvuibtransactionedit;
 

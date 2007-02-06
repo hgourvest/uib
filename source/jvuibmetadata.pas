@@ -10,9 +10,8 @@
 (* the specific language governing rights and limitations under the License.    *)
 (*                                                                              *)
 (* Unit owner : Henri Gourvest <hgourvest@progdigy.com>                         *)
+(* Contributor: Pierre Yager                                                    *)
 (*                                                                              *)
-(********************************************************************************)
-(* $Id: jvuibmetadata.pas,v 1.20 2006/04/05 00:38:48 progdigy Exp $              *)
 (********************************************************************************)
 
 {$I jvuib.inc}
@@ -78,13 +77,10 @@ type
   TMetaDomain = class;
   TMetaTable = class;
   TMetaView = class;
-
-{ PrY - Grants }
   TMetaRoleGrant = class;
   TMetaProcedureGrant = class;
   TMetaTableGrant = class;
   TMetaFieldGrant = class;
-{ /PrY }
 
   TMetaNodeClass = class of TMetaNode;
 
@@ -642,8 +638,6 @@ type
     property DefaultCharset: TCharacterSet read FDefaultCharset;
   end;
 
-{ PrY - Grants }
-
   { Used to store temporary grantees }
   TGrantee = record
     User: String[31];
@@ -779,7 +773,6 @@ type
     property Fields[const Index: Integer]: String read GetFields;
     property FieldsCount: Integer read GetFieldsCount;
   end;
-{ /PrY}
 
 implementation
 {$IFNDEF PUREPASCAL}
@@ -808,7 +801,7 @@ implementation
 //  OIDUDF       = 6;
 //    OIDUDFField      = 0;
 //  OIDRole      = 7;
-//    OIDRoleGrantee   = 0;  // PrY
+//    OIDRoleGrantee   = 0;  
 
 const
 
@@ -1703,6 +1696,8 @@ begin
   SaveNode(Stream, Ord(OIDForeign));
   SaveNode(Stream, Ord(OIDCheck));
   SaveNode(Stream, Ord(OIDTableTrigger), NewLine);
+  SaveNode(Stream, Ord(OIDTableGrant), NewLine);
+  SaveNode(Stream, Ord(OIDTableFieldGrant), NewLine);
 end;
 
 function TMetaTable.GetIndices(const Index: Integer): TMetaIndex;
@@ -3939,8 +3934,6 @@ begin
   inherited SaveToStream(Stream);
 end;
 
-{ PrY - Grants }
-
 { TMetaGrant }
 
 procedure TMetaGrant.LoadFromStream(Stream: TStream);
@@ -4426,8 +4419,6 @@ begin
   Stream.WriteString('VIEW ');
   inherited SaveToDDLNode(Stream);
 end;
-
-{ /PrY }
 
 end.
 
