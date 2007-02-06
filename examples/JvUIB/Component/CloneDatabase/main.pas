@@ -297,6 +297,27 @@ begin
       AddLog('Alter Procedure: ' + metadb.Procedures[i].Name);
       ExecuteImmediate(metadb.Procedures[i].AsAlterDDL);
     end;
+
+    // GRANTS TABLE
+    for i := 0 to metadb.TablesCount - 1 do
+    begin
+      AddLog('Grant table: ' + metadb.Tables[i].Name);
+      for j := 0 to metadb.Tables[i].GrantsCount - 1 do
+        ExecuteImmediate(metadb.Tables[i].Grants[j].AsDDLNode);
+      for j := 0 to metadb.Tables[i].FieldsGrantsCount - 1 do
+        ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsDDLNode);
+    end;
+
+    // GRANTS VIEW
+    for i := 0 to metadb.ViewsCount - 1 do
+    begin
+      AddLog('Grant view: ' + metadb.Views[i].Name);
+      for j := 0 to metadb.Views[i].GrantsCount - 1 do
+        ExecuteImmediate(metadb.Views[i].Grants[j].AsDDLNode);
+      for j := 0 to metadb.Views[i].FieldsGrantsCount - 1 do
+        ExecuteImmediate(metadb.Views[i].FieldsGrants[j].AsDDLNode);
+    end;
+
     Transaction2.Commit;
   finally
     metadb.Free;
