@@ -1,9 +1,9 @@
 object MainForm: TMainForm
   Left = 166
   Top = 150
+  Width = 688
+  Height = 474
   Caption = 'Metadata explorer'
-  ClientHeight = 428
-  ClientWidth = 680
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -20,7 +20,6 @@ object MainForm: TMainForm
     Left = 225
     Top = 0
     Height = 428
-    ExplicitHeight = 396
   end
   object TreeView: TTreeView
     Left = 0
