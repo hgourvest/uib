@@ -374,6 +374,13 @@ var
   InputLen: Integer;
   Stub: TSocketStub;
   SO_True: Integer;
+{$IFDEF FPC}
+const
+  SOL_SOCKET    = $ffff;
+  SO_REUSEADDR  = $0004;
+  IPPROTO_TCP   = 6;
+  TCP_NODELAY   = $0001;
+{$ENDIF}
 begin
   SO_True := -1;
 
@@ -385,8 +392,13 @@ begin
   FAddress.sin_family := AF_INET;
   FAddress.sin_port := htons(FPort);
 
+{$IFDEF FPC}
+  fpsetsockopt(FSocketHandle, SOL_SOCKET, SO_REUSEADDR, PChar(@SO_True), SizeOf(SO_True));
+  fpsetsockopt(FSocketHandle, IPPROTO_TCP, TCP_NODELAY, PChar(@SO_True), SizeOf(SO_True));
+{$ELSE}
   SetSockOpt(FSocketHandle, SOL_SOCKET, SO_REUSEADDR, PChar(@SO_True), SizeOf(SO_True));
   SetSockOpt(FSocketHandle, IPPROTO_TCP, TCP_NODELAY, PChar(@SO_True), SizeOf(SO_True));
+{$ENDIF}
 
 {$IFDEF FPC}
   if not bind(FSocketHandle, FAddress, SizeOf(FAddress)) then

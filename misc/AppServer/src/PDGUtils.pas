@@ -114,7 +114,7 @@ type
 const
   bufferSize = 32768;
 
-function receive(s: TSocket; var Buf; len, flags: Integer): Integer;
+function receive(s: longint; var Buf; len, flags: Integer): Integer;
 var
  p: PChar;
  r, l: integer;
@@ -384,7 +384,6 @@ end;
 function TPooledMemoryStream.LoadFromSocket(socket: longint; readsize: boolean = true): boolean;
 var
   s, count, i: integer;
-  p: PChar;
 begin
   Result := False;
   if readsize then
