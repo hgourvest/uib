@@ -229,6 +229,7 @@ type
     function GetInfoDbId(const Index: Integer): string;
     function GetRole: string;
     procedure SetRole(const Value: string);
+    procedure ClearEvents;
   protected
     procedure DoOnConnectionLost(Lib: TUIBLibrary); virtual;
     procedure DoOnGetDBExceptionClass(Number: Integer; out Excep: EUIBExceptionClass); virtual;
@@ -1222,6 +1223,7 @@ begin
 {$ENDIF}
     Connected := False;
     ClearTransactions;
+    ClearEvents;
     TStringList(FParams).Free;
     ClearExceptions;
     FExceptions.Free;
@@ -2020,6 +2022,14 @@ end;
 procedure TJvUIBDataBase.SetRole(const Value: string);
 begin
   WriteParamString('sql_role_name', Value);
+end;
+
+procedure TJvUIBDataBase.ClearEvents;
+var
+  i: integer;
+begin
+  for i := 0 to FEventNotifiers.Count - 1 do
+    TJvUIBEvents(FEventNotifiers[i]).SetDatabase(nil);
 end;
 
 { TJvUIBStatement }
@@ -4352,7 +4362,7 @@ begin
         if Assigned(FDatabase) then
           FDatabase.AddEventNotifier(Self);
       finally
-        if WasRegistered then
+        if WasRegistered and Assigned(FDatabase) then
           RegisterEvents;
       end;
     end;
