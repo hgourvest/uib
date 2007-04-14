@@ -1596,6 +1596,8 @@ const
 {$ENDIF FB15_UP}
 {$IFDEF FB20_UP}
   isc_info_db_impl_freebsd_amd64 = 67;
+  isc_info_db_impl_winnt_amd64 = 68;
+  isc_info_db_impl_linux_ppc = 69;
 {$ENDIF}
 
   isc_info_db_impl_isc_a = isc_info_db_impl_isc_apl_68K;
