@@ -5864,6 +5864,15 @@ end;
                 not (Src[5] in Identifiers) then
                   while (Src^ <> #0) do Next else next;
           end;
+        // declare should also stop param parsing, as a declare cursor statement
+        // may contain variables.
+        'd','D':
+          begin
+            if not ((dest > 0) and ({$IFDEF FPC}PrevChar(src){$ELSE}src[-1]{$ENDIF}
+              in Identifiers)) and (CompareText(copy(Src, 0, 7), 'declare') = 0) and
+                not (Src[7] in Identifiers) then
+                  while (Src^ <> #0) do Next else next;
+          end; 
       else
         next;
       end;
