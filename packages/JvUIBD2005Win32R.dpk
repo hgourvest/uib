@@ -40,7 +40,6 @@ contains
   jvuiblib in '..\source\jvuiblib.pas',
   jvuibmetadata in '..\source\jvuibmetadata.pas',
   jvuibsqlparser in '..\source\jvuibsqlparser.pas',
-  jvuibdataset in '..\source\jvuibdataset.pas',
-  fastcode in '..\source\fastcode.pas';
+  jvuibdataset in '..\source\jvuibdataset.pas';
 
 end.

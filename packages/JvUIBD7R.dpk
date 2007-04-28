@@ -39,7 +39,6 @@ contains
   jvuibconst in '..\source\jvuibconst.pas',
   jvuibsqlparser in '..\source\jvuibsqlparser.pas',
   jvuibdataset in '..\source\jvuibdataset.pas',
-  jvuibmetadata in '..\source\jvuibmetadata.pas',
-  FastCode in '..\source\fastcode.pas';
+  jvuibmetadata in '..\source\jvuibmetadata.pas';
 
 end.
