@@ -775,9 +775,6 @@ type
   end;
 
 implementation
-{$IFNDEF PUREPASCAL}
-  uses fastcode;
-{$ENDIF}
 
 //   Database Tree
 //------------------------

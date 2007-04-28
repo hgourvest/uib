@@ -934,7 +934,7 @@ const
     1000);
 
 implementation
-uses jvuibconst {$IFNDEF PUREPASCAL}, fastcode{$ENDIF}, Math;
+uses jvuibconst, Math;
 
 (******************************************************************************)
 (* Errors handling                                                            *)
@@ -3442,12 +3442,7 @@ type
           SQL_SHORT  : Result := PSmallInt(sqldata)^ div ScaleDivisor[sqlscale];
           SQL_LONG   : Result := PInteger(sqldata)^  div ScaleDivisor[sqlscale];
           SQL_INT64,
-          SQL_QUAD   :
-            {$IFDEF PUREPASCAL}
-              Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
-            {$ELSE}
-              Result := FastInt64Div(PInt64(sqldata), @ScaleDivisor[sqlscale]);
-            {$ENDIF}
+          SQL_QUAD   : Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
           SQL_DOUBLE : Result := Trunc(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3490,12 +3485,7 @@ type
           SQL_SHORT  : Result := PSmallInt(sqldata)^ div ScaleDivisor[sqlscale];
           SQL_LONG   : Result := PInteger(sqldata)^  div ScaleDivisor[sqlscale];
           SQL_INT64,
-          SQL_QUAD   :
-            {$IFDEF PUREPASCAL}
-              Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
-            {$ELSE}
-              Result := FastInt64Div(PInt64(sqldata), @ScaleDivisor[sqlscale]);
-            {$ENDIF}
+          SQL_QUAD   : Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
           SQL_DOUBLE : Result := Trunc(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3581,12 +3571,7 @@ type
           SQL_SHORT  : Result := PSmallInt(sqldata)^ div ScaleDivisor[sqlscale];
           SQL_LONG   : Result := PInteger(sqldata)^  div ScaleDivisor[sqlscale];
           SQL_INT64,
-          SQL_QUAD   :
-            {$IFDEF PUREPASCAL}
-              Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
-            {$ELSE}
-              Result := FastInt64Div(PInt64(sqldata), @ScaleDivisor[sqlscale]);
-            {$ENDIF}
+          SQL_QUAD   : Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
           SQL_DOUBLE : Result := Trunc(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3771,9 +3756,6 @@ type
   function TSQLDA.GetAsCurrency(const Index: Word): Currency;
   var
     ASQLCode: SmallInt;
-  {$IFNDEF PUREPASCAL}
-    DataInt64: int64;
-  {$ENDIF}
   begin
     CheckRange(Index);
     with FXSQLDA.sqlvar[Index] do
@@ -3789,13 +3771,8 @@ type
           SQL_QUAD   : if (SqlScale = -4) then
                         PInt64(@Result)^ := PInt64(sqldata)^ else
                         if SqlScale > -4 then
-                        {$IFDEF PUREPASCAL}
                           PInt64(@Result)^ := PInt64(sqldata)^ * CurrencyDivisor[SqlScale] else
                           PInt64(@Result)^ := PInt64(sqldata)^ div CurrencyDivisor[SqlScale];
-                        {$ELSE}
-                          PInt64(@Result)^ := FastInt64Mul(PInt64(sqldata), @CurrencyDivisor[SqlScale]) else
-                          PInt64(@Result)^ := FastInt64Div(PInt64(sqldata), @CurrencyDivisor[SqlScale]);
-                        {$ENDIF}
           SQL_LONG   : if (SqlScale = -4) then
                         PInt64(@Result)^ := PInteger(sqldata)^ else
                         if SqlScale > -14 then
@@ -3805,17 +3782,9 @@ type
                             PInt64(@Result)^ := PInteger(sqldata)^ div Integer(CurrencyDivisor[SqlScale]);
                         end else
                         begin
-                        {$IFNDEF PUREPASCAL}
-                          DataInt64 :=  PInteger(sqldata)^;
-                        {$ENDIF}
                           if SqlScale > -4 then
-                          {$IFDEF PUREPASCAL}
                             PInt64(@Result)^ := PInteger(sqldata)^ * CurrencyDivisor[SqlScale] else
                             PInt64(@Result)^ := PInteger(sqldata)^ div CurrencyDivisor[SqlScale];
-                          {$ELSE}
-                            PInt64(@Result)^ := FastInt64Mul(@DataInt64, @CurrencyDivisor[SqlScale]) else
-                            PInt64(@Result)^ := FastInt64Div(@DataInt64, @CurrencyDivisor[SqlScale]);
-                          {$ENDIF}
                         end;
           SQL_SHORT  : if (SqlScale = -4) then
                         PInt64(@Result)^ := PSmallint(sqldata)^ else
@@ -3826,17 +3795,9 @@ type
                             PInt64(@Result)^ := PSmallint(sqldata)^ div Integer(CurrencyDivisor[SqlScale]);
                         end else
                         begin
-                        {$IFNDEF PUREPASCAL}
-                          DataInt64 :=  PSmallint(sqldata)^;
-                        {$ENDIF}
                           if SqlScale > -4 then
-                          {$IFDEF PUREPASCAL}
                             PInt64(@Result)^ := PSmallint(sqldata)^ * CurrencyDivisor[SqlScale] else
                             PInt64(@Result)^ := PSmallint(sqldata)^ div CurrencyDivisor[SqlScale];
-                          {$ELSE}
-                            PInt64(@Result)^ := FastInt64Mul(@DataInt64, @CurrencyDivisor[SqlScale]) else
-                            PInt64(@Result)^ := FastInt64Div(@DataInt64, @CurrencyDivisor[SqlScale]);
-                          {$ENDIF}
                         end;
           SQL_DOUBLE : Result := PDouble(sqldata)^;
         else
@@ -3880,13 +3841,7 @@ end;
           SQL_SHORT  : Result := PSmallInt(sqldata)^ div ScaleDivisor[sqlscale] <> 0;
           SQL_LONG   : Result := PInteger(sqldata)^  div ScaleDivisor[sqlscale] <> 0;
           SQL_INT64,
-          SQL_QUAD   :
-            {$IFDEF PUREPASCAL}
-              Result := (PInt64(sqldata)^ div ScaleDivisor[sqlscale]) <> 0;
-            {$ELSE}
-              Result := FastInt64Div(PInt64(sqldata), @ScaleDivisor[sqlscale]) <> 0;
-            {$ENDIF}
-
+          SQL_QUAD   : Result := (PInt64(sqldata)^ div ScaleDivisor[sqlscale]) <> 0;
           SQL_DOUBLE : Result := Trunc(PDouble(sqldata)^) > 0;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3971,12 +3926,7 @@ end;
           SQL_SHORT  : Result := PSmallInt(sqldata)^ div ScaleDivisor[sqlscale];
           SQL_LONG   : Result := PInteger(sqldata)^  div ScaleDivisor[sqlscale];
           SQL_INT64,
-          SQL_QUAD   :
-            {$IFDEF PUREPASCAL}
-              Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
-            {$ELSE}
-              Result := FastInt64Div(PInt64(sqldata), @ScaleDivisor[sqlscale]);
-            {$ENDIF}
+          SQL_QUAD   : Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
           SQL_DOUBLE : Result := Trunc(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4019,12 +3969,7 @@ end;
           SQL_SHORT  : Result := PSmallInt(sqldata)^ div ScaleDivisor[sqlscale];
           SQL_LONG   : Result := PInteger(sqldata)^  div ScaleDivisor[sqlscale];
           SQL_INT64,
-          SQL_QUAD   :
-            {$IFDEF PUREPASCAL}
-              Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
-            {$ELSE}
-              Result := FastInt64Div(PInt64(sqldata), @ScaleDivisor[sqlscale]);
-            {$ENDIF}
+          SQL_QUAD   : Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
           SQL_DOUBLE : Result := Trunc(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4597,13 +4542,8 @@ end;
           SQL_QUAD   : if (sqlscale = -4) then
                          PInt64(sqldata)^ := PInt64(@Value)^ else
                          if sqlscale > -4 then
-            {$IFDEF PUREPASCAL}
                            PInt64(sqldata)^ := PInt64(@Value)^ div CurrencyDivisor[sqlscale] else
                            PInt64(sqldata)^ := PInt64(@Value)^ * CurrencyDivisor[sqlscale];
-            {$ELSE}
-                           PInt64(sqldata)^ := FastInt64Div(PInt64(@Value), @CurrencyDivisor[sqlscale]) else
-                           PInt64(sqldata)^ := FastInt64Mul(PInt64(@Value), @CurrencyDivisor[sqlscale]);
-            {$ENDIF}
           SQL_DOUBLE : PDouble(sqldata)^   := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);

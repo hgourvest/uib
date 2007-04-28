@@ -1158,9 +1158,8 @@ type
   end;
 
 implementation
-uses jvuibmetadata
+uses jvuibmetadata;
 //{$IFDEF FPC}{$IFDEF UNIX},cthreads{$ENDIF}{$ENDIF}
-{$IFNDEF PUREPASCAL}, fastcode{$ENDIF};
 
 type
   PExceptionInfo = ^TExceptionInfo;

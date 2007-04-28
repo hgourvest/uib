@@ -91,9 +91,6 @@ var
   UIBSQLEditForm: TUIBSQLEditForm;
 
 implementation
-{$IFNDEF PUREPASCAL}
-uses fastcode;
-{$ENDIF}
 
 {$IFDEF MSWINDOWS}
   {$R *.dfm}

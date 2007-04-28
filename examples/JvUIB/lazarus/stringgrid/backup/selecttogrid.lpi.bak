@@ -1,11 +1,10 @@
 <?xml version="1.0"?>
 <CONFIG>
   <ProjectOptions>
-    <PathDelim Value="\"/>
     <Version Value="5"/>
     <General>
       <MainUnit Value="0"/>
-      <ActiveEditorIndexAtStart Value="1"/>
+      <ActiveEditorIndexAtStart Value="2"/>
       <IconPath Value="./"/>
       <TargetFileExt Value=".exe"/>
       <Title Value="selecttogrid"/>
@@ -66,7 +65,7 @@
         <UsageCount Value="10"/>
       </Unit2>
       <Unit3>
-        <CursorPos X="17" Y="7"/>
+        <CursorPos X="1" Y="1"/>
         <EditorIndex Value="2"/>
         <Filename Value="D:\developpement\UIB2\source\jvuibdataset.pas"/>
         <Loaded Value="True"/>
@@ -115,7 +114,7 @@
     </RequiredPackages>
   </ProjectOptions>
   <CompilerOptions>
-    <Version Value="4"/>
+    <Version Value="3"/>
     <PathDelim Value="\"/>
     <SearchPaths>
       <SrcPath Value="$(LazarusDir)\lcl\;$(LazarusDir)\lcl\interfaces\$(LCLWidgetType)\"/>

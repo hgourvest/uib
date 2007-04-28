@@ -195,17 +195,7 @@ type
 
 implementation
 {$IFDEF COMPILER6_UP}
-  uses fmtbcd, Variants, Math
-  {$IFNDEF PUREPASCAL}
-  , fastcode
-  {$ENDIF}
-  ;
-{$ELSE}
-  {$IFDEF COMPILER5_UP}
-  {$IFNDEF PUREPASCAL}
-    uses fastcode;
-  {$ENDIF}
-  {$ENDIF}
+  uses fmtbcd, Variants, Math;
 {$ENDIF}
 
 { TJvUIBCustomDataSet }
@@ -713,11 +703,7 @@ begin
                 if (sqlscale = -4) then
                   PInt64(Buffer)^ := PInt64(sqldata)^ else
                   if sqlscale > -4 then
-                  {$IFDEF PUREPASCAL}
                     PInt64(Buffer)^ := PInt64(sqldata)^ * CurrencyDivisor[sqlscale] else
-                  {$ELSE}
-                    PInt64(Buffer)^ := FastInt64Mul(PInt64(sqldata), @CurrencyDivisor[sqlscale]) else
-                  {$ENDIF}
                     TBCD(Buffer^) := strToBcd(FloatToStr(PInt64(sqldata)^ / scaledivisor[sqlscale]));
               {$ELSE}
                 {$IFDEF COMPILER5_UP}

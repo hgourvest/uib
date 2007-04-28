@@ -233,9 +233,6 @@ const
   function AliasToTable(var sql, alias, table: string): boolean;
 
 implementation
-{$IFNDEF PUREPASCAL}
-  uses fastcode;
-{$ENDIF}
 
 const
   TokenName: array[TUIBTokenKind] of string = ('Comment', 'Datatype', 'Function',
