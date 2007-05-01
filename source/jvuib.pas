@@ -2253,7 +2253,7 @@ begin
           FSQL.Text, FTransaction.FSQLDialect, FSQLResult) else
         FStatementType := DSQLPrepare(FDbHandle, FTransaction.FTrHandle, FStHandle,
           FParsedSQL, FTransaction.FSQLDialect, FSQLResult);
-        FCursorName := 'C' + inttostr(Integer(FStHandle));
+        FCursorName := 'C' + inttostr(intptr(FStHandle));
         if FUseCursor then
           DSQLSetCursorName(FStHandle, FCursorName);
     except

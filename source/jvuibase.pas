@@ -18,8 +18,10 @@
 
 {$I jvuib.inc}
 
-{$ALIGN ON}
-{$MINENUMSIZE 4}
+{$IFNDEF CPUX86_64}
+  {$ALIGN ON}
+  {$MINENUMSIZE 4}
+{$ENDIF}
 
 unit jvuibase;
 
@@ -42,6 +44,13 @@ uses
 
 (* Basic data types *)
 type
+
+{$ifdef CPUX86_64}
+  IntPtr = Int64;
+{$ELSE}
+  IntPtr = Longint;
+{$ENDIF}
+
 {$IFNDEF COMPILER6_UP}
 {$IFNDEF FPC}
   PPointer = ^Pointer;
@@ -183,7 +192,7 @@ type
   ISCUShort = ISC_USHORT;
   PISCUShort = ^ISCUShort;
 
-  ISC_STATUS = {$IFDEF TYPE_IDENTITY} type {$ENDIF} Longint;
+  ISC_STATUS = {$IFDEF TYPE_IDENTITY} type {$ENDIF} IntPtr;
   ISCStatus = ISC_STATUS;
   PISCStatus = ^ISCStatus;
   PPISCStatus = ^PISCStatus;
