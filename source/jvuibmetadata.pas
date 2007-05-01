@@ -155,8 +155,9 @@ type
     FBytesPerCharacter: Smallint;
     procedure LoadFromQuery(QField, QCharset, QArrayDim: TJvUIBStatement); virtual;
     procedure LoadFromStream(Stream: TStream); override;
-    property SegmentLength: Smallint read FSegmentLength;
     function GetShortFieldType: string; virtual;
+  protected
+    property SegmentLength: Smallint read FSegmentLength;
   public
     procedure SaveToDDLNode(Stream: TStringStream); override;
     class function NodeClass: string; override;
