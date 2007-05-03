@@ -253,6 +253,8 @@ type
     procedure UnRegisterExceptions(Excpt: EUIBExceptionClass);
     { Create a database with a default page size of 2048. }
     procedure CreateDatabase(PageSize: Integer = 2048);
+    { Drop the database. }
+    procedure DropDatabase;
     { Return a TMetaDatabase class corresponding to the current connection. }
     function GetMetadata(Refresh: boolean = False): TObject;
 
@@ -864,6 +866,10 @@ type
   TOnParse = procedure(Sender: TObject; NodeType: TSQLStatement;
     const Statement: string) of object;
 
+  { Executing error event, occur if executed query is failed. }
+  TOnExecuteError = procedure(Sender: TObject; Error: Exception; SQLText:
+    string; var Handled: Boolean) of object;
+
   { The script component. }
   TJvUIBScript = class(TJvUIBComponent)
   private
@@ -872,9 +878,12 @@ type
     FAutoDDL: boolean;
     FOnParse: TOnParse;
     FOnComment: TOnComment;
+    FOnExecuteError: TOnExecuteError;
     procedure SetTransaction(const Value: TJvUIBTransaction);
     function GetTransaction: TJvUIBTransaction;
     procedure SetScript(const Value: TStrings);
+    procedure SetOnError(const Value: TEndTransMode);
+    function GetOnError: TEndTransMode;
   public
     constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
     destructor Destroy; override;
@@ -885,6 +894,9 @@ type
     property AutoDDL: boolean read FAutoDDL write FAutoDDL default True;
     property OnParse: TOnParse read FOnParse write FOnParse;
     property OnComment: TOnComment read FOnComment write FOnComment;
+    property OnError: TEndTransMode read GetOnError write SetOnError default etmRollback;
+    property OnExecuteError: TOnExecuteError read FOnExecuteError write FOnExecuteError;
+
   end;
 
   TUIBProtocol = (
@@ -1311,6 +1323,14 @@ begin
   FLibrary.DSQLExecuteImmediate(FDbHandle, TrHandle,
     Format(CreateDb, [DatabaseName, UserName, PassWord, PageSize,
     CharacterSetStr[CharacterSet]]), SQLDialect);
+end;
+
+procedure TJvUIBDataBase.DropDatabase;
+begin
+  Connected := True;
+  FLibrary.Load(FLiBraryName);
+  FLibrary.DatabaseDrop(FDbHandle);
+  FDbHandle := nil;
 end;
 
 function TJvUIBDataBase.GetUserName: string;
@@ -4071,10 +4091,30 @@ var
   TrHandle: IscTrHandle;
   str: string;
   Found: boolean;
+  Handled: boolean;
   procedure CheckDatabase;
   begin
     if (Transaction = nil) then
        raise Exception.Create(EUIB_TRANSACTIONNOTDEF);
+  end;
+
+  procedure TryExecute;
+  begin
+    try
+      FQuery.ExecSQL;
+    except
+      on E: Exception do
+      begin
+        if Assigned(FOnExecuteError) then
+        begin
+          Handled := False;
+          FOnExecuteError(Self, E, FQuery.SQL.Text, Handled);
+          if not Handled then
+            raise;
+        end else
+          raise;
+      end;
+    end;
   end;
 
 begin
@@ -4174,13 +4214,13 @@ begin
         ssUpdate:
           begin
             FQuery.SQL.Text := trim(Parser.Statement);
-            FQuery.ExecSQL;
+            TryExecute;
             FQuery.Close(etmStayIn);
           end;
       else
         // DDL ...
         FQuery.SQL.Text := trim(Parser.Statement);
-        FQuery.ExecSQL; // faster for ddl
+        TryExecute;
         if FAutoDDL then
           FQuery.Close(etmCommit) else
           FQuery.Close(etmStayIn);
@@ -4192,9 +4232,19 @@ begin
   end;
 end;
 
+function TJvUIBScript.GetOnError: TEndTransMode;
+begin
+  Result := FQuery.OnError;
+end;
+
 function TJvUIBScript.GetTransaction: TJvUIBTransaction;
 begin
   Result := FQuery.Transaction;
+end;
+
+procedure TJvUIBScript.SetOnError(const Value: TEndTransMode);
+begin
+  FQuery.OnError := Value;
 end;
 
 procedure TJvUIBScript.SetScript(const Value: TStrings);

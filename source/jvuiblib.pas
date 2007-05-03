@@ -238,6 +238,7 @@ type
     function GetFieldCount: Integer;
     function GetSQLType(const Index: Word): Smallint;
     function GetSQLLen(const Index: Word): Smallint;
+    function GetSQLScale(const Index: Word): Smallint;
     procedure ConvertString(const Code: Smallint; Index: Word; out value: Int64); overload;
     procedure ConvertString(const Code: Smallint; Index: Word; out value: Double); overload;
     procedure ConvertString(const Code: Smallint; Index: Word; out value: Integer); overload;
@@ -266,6 +267,7 @@ type
 
     function GetIsNumeric(const Index: Word): boolean;
     function GetIsBlob(const Index: Word): boolean;
+    function GetIsArray(const Index: Word): boolean;
     function GetIsNullable(const Index: Word): boolean;
 
     function GetIsNull(const Index: Word): boolean;
@@ -355,6 +357,7 @@ type
     property FieldCount: Integer read GetFieldCount;
     property SQLType[const Index: Word]: Smallint read GetSQLType;
     property SQLLen[const Index: Word]: Smallint read GetSQLLen;
+    property SQLScale[const Index: Word]: Smallint read GetSQLScale;
     property FieldType[const Index: Word]: TUIBFieldType read GetFieldType;
 
     property IsNull       [const Index: Word]: boolean    read GetIsNull       write SetIsNull;
@@ -671,6 +674,7 @@ type
     function DatabaseInfoIntValue(var DBHandle: IscDbHandle; const item: char): Integer;
     function DatabaseInfoString(var DBHandle: IscDbHandle; item: byte; size: Integer): string;
     function DatabaseInfoDateTime(var DBHandle: IscDbHandle; item: byte): TDateTime;
+    procedure DatabaseDrop(DbHandle: IscDbHandle);
 
     procedure TransactionStart(var TraHandle: IscTrHandle; var DbHandle: IscDbHandle; const TPB: string = '');
     procedure TransactionStartMultiple(var TraHandle: IscTrHandle; DBCount: Smallint; Vector: PISCTEB);
@@ -1403,6 +1407,20 @@ const
             Exit;
       raise Exception.CreateFmt(EUIB_CHARSETNOTFOUND, [CharacterSet]);
     end;
+  end;
+
+  procedure TUIBLibrary.DatabaseDrop(DbHandle: IscDbHandle);
+  begin
+  {$IFDEF UIBTHREADSAFE}
+    FLIBCritSec.Enter;
+    try
+  {$ENDIF}
+      CheckUIBApiCall(isc_drop_database(@FStatusVector, @DbHandle));
+  {$IFDEF UIBTHREADSAFE}
+    finally
+      FLIBCritSec.Leave;
+    end;
+  {$ENDIF}
   end;
 
 //******************************************************************************
@@ -3368,10 +3386,22 @@ type
     result := FXSQLDA.sqlvar[Index].sqllen;
   end;
 
+  function TSQLDA.GetSQLScale(const Index: Word): Smallint;
+  begin
+    CheckRange(Index);
+    result := FXSQLDA.sqlvar[Index].SqlScale;
+  end;
+
   function TSQLDA.GetIsBlob(const Index: Word): boolean;
   begin
     CheckRange(Index);
     result := ((FXSQLDA.sqlvar[Index].sqltype and not(1)) = SQL_BLOB);
+  end;
+
+  function TSQLDA.GetIsArray(const Index: Word): boolean;
+  begin
+    CheckRange(Index);
+    result := ((FXSQLDA.sqlvar[Index].sqltype and not(1)) = SQL_ARRAY);
   end;
 
   function TSQLDA.GetIsNullable(const Index: Word): boolean;
@@ -4823,8 +4853,6 @@ end;
     end;
   end;
 
-
-
 { TSQLResult }
 
   constructor TSQLResult.Create(Fields: SmallInt = 0;
@@ -5224,6 +5252,7 @@ end;
           SQL_TEXT      : DecodeString(SQL_TEXT, Index, Result);
           SQL_VARYING   : DecodeString(SQL_VARYING, Index, Result);
           SQL_BLOB      : ReadBlob(Index, Result);
+          SQL_ARRAY     : Result := '(Array)';
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -5270,6 +5299,7 @@ end;
           SQL_TEXT      : DecodeWideString(SQL_TEXT, Index, Result);
           SQL_VARYING   : DecodeWideString(SQL_VARYING, Index, Result);
           SQL_BLOB      : ReadBlob(Index, Result);
+          SQL_ARRAY     : Result := '(Array)';
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -6010,7 +6040,7 @@ end;
     SetFieldType(Index, SizeOf(TGUID), SQL_TEXT + 1, 0);
   {$ENDIF}
     inherited;
-  end;  
+  end;
 {$ENDIF}
 
 end.
