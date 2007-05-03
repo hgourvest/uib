@@ -1330,6 +1330,9 @@ begin
   Connected := True;
   FLibrary.Load(FLiBraryName);
   FLibrary.DatabaseDrop(FDbHandle);
+  ClearTransactions;
+  ClearEvents;
+  ClearExceptions;
   FDbHandle := nil;
 end;
 
