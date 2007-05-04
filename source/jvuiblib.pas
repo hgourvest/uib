@@ -19,7 +19,7 @@
 unit jvuiblib;
 
 {$I jvuib.inc}
-{$IFNDEF WIN64}
+{$IFNDEF CPU64}
   {$ALIGN ON}
   {$MINENUMSIZE 4}
 {$ENDIF}
