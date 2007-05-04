@@ -18,7 +18,7 @@
 
 {$I jvuib.inc}
 
-{$IFNDEF CPUX86_64}
+{$IFNDEF WIN64}
   {$ALIGN ON}
   {$MINENUMSIZE 4}
 {$ENDIF}
@@ -45,24 +45,20 @@ uses
 (* Basic data types *)
 type
 
-{$ifdef CPUX86_64}
-  IntPtr = Int64;
-{$ELSE}
-  IntPtr = Longint;
-{$ENDIF}
+{$ifndef FPC}
+  PtrInt = Longint;
+{$endif}
 
 {$IFNDEF COMPILER6_UP}
 {$IFNDEF FPC}
   PPointer = ^Pointer;
   PPChar = ^PChar;
 
-  //PWord = ^Word;
   PCardinal = ^Cardinal;
   PSmallInt = ^Smallint;
   PInteger = ^Integer;
   PDouble = ^Double;
   PSingle = ^Single;
-  //PInt64 = ^Int64;
 {$ENDIF FPC}
 {$ELSE}
 {$IFDEF BCB}
@@ -192,7 +188,7 @@ type
   ISCUShort = ISC_USHORT;
   PISCUShort = ^ISCUShort;
 
-  ISC_STATUS = {$IFDEF TYPE_IDENTITY} type {$ENDIF} IntPtr;
+  ISC_STATUS = {$IFDEF TYPE_IDENTITY} type {$ENDIF} PtrInt;
   ISCStatus = ISC_STATUS;
   PISCStatus = ^ISCStatus;
   PPISCStatus = ^PISCStatus;

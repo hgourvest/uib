@@ -230,6 +230,7 @@ type
     function GetRole: string;
     procedure SetRole(const Value: string);
     procedure ClearEvents;
+    procedure DoParamsChange(Sender: TObject);
   protected
     procedure DoOnConnectionLost(Lib: TUIBLibrary); virtual;
     procedure DoOnGetDBExceptionClass(Number: Integer; out Excep: EUIBExceptionClass); virtual;
@@ -1224,6 +1225,7 @@ begin
   FEventNotifiers := TList.Create;
   FMetadata := nil;
   FMetaDataOptions := TMetaDataOptions.Create;
+  TStringList(FParams).OnChange := DoParamsChange;
 end;
 
 destructor TJvUIBDataBase.Destroy;
@@ -2054,6 +2056,18 @@ begin
     TJvUIBEvents(FEventNotifiers[i]).SetDatabase(nil);
 end;
 
+procedure TJvUIBDataBase.DoParamsChange(Sender: TObject);
+var
+  i, Dialect: integer;
+begin
+  if (FTransactions <> nil) then
+  begin
+    Dialect := GetSQLDialect;
+    for i := 0 to FTransactions.Count - 1 do
+      TJvUIBTransaction(FTransactions[i]).FSQLDialect := Dialect;
+  end;
+end;
+
 { TJvUIBStatement }
 
 procedure TJvUIBStatement.SetTransaction(const Transaction: TJvUIBTransaction);
@@ -2276,7 +2290,7 @@ begin
           FSQL.Text, FTransaction.FSQLDialect, FSQLResult) else
         FStatementType := DSQLPrepare(FDbHandle, FTransaction.FTrHandle, FStHandle,
           FParsedSQL, FTransaction.FSQLDialect, FSQLResult);
-        FCursorName := 'C' + inttostr(intptr(FStHandle));
+        FCursorName := 'C' + inttostr(PtrInt(FStHandle));
         if FUseCursor then
           DSQLSetCursorName(FStHandle, FCursorName);
     except

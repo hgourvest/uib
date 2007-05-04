@@ -19,7 +19,7 @@
 unit jvuiblib;
 
 {$I jvuib.inc}
-{$IFNDEF CPUX86_64}
+{$IFNDEF WIN64}
   {$ALIGN ON}
   {$MINENUMSIZE 4}
 {$ENDIF}
@@ -468,7 +468,7 @@ type
     FCachedFetch: boolean;
     FFetchBlobs: boolean;
     FDataBuffer: Pointer;
-    FDataBufferLength: IntPtr;
+    FDataBufferLength: PtrInt;
     FBlobsIndex: array of Word;
     FCurrentRecord: Integer;
     FBufferChunks: Cardinal;
@@ -961,7 +961,7 @@ end;
 
 function SQLQuote(const name: string): string;
 var
-  i, len: IntPtr;
+  i, len: PtrInt;
 begin
   len := Length(name);
   if (len > 1) and (name[1] = '"') and (name[len] = '"') then
@@ -980,7 +980,7 @@ end;
 
 function SQLUnQuote(const name: string): string;
 var
-  i, len: IntPtr;
+  i, len: PtrInt;
 begin
   len := Length(name);
   if (len > 1) and (name[1] = '"') and (name[len] = '"') then
@@ -1138,11 +1138,11 @@ const
     BufferSize: Integer;
     CurPos, NextPos: PChar;
     CurStr, CurValue: String;
-    EqualPos: IntPtr;
+    EqualPos: PtrInt;
     Code: Byte;
     AValue: Integer;
-    FinalSize: IntPtr;
-    function Min(v1, v2: IntPtr): IntPtr;
+    FinalSize: PtrInt;
+    function Min(v1, v2: PtrInt): PtrInt;
     begin
       if v1 > v2 then Result := v2 else Result := v1;
     end;
@@ -1188,7 +1188,7 @@ const
       end;
     end;
     procedure AddString(var AString: String);
-    var l: IntPtr;
+    var l: PtrInt;
     begin
       l := Min(Length(AString), 255);
       inc(FinalSize,l+1);
@@ -1706,7 +1706,7 @@ const
                 if not Sqlda.IsNull[j] then
                 begin
                   destArray := sqlda.FXSQLDA.sqlvar[j].SqlData;
-                  inc(IntPtr(destArray), SizeOf(TISCQuad));
+                  inc(PtrInt(destArray), SizeOf(TISCQuad));
                   SliceLen := sqlda.FArrayInfos[i].size;
                   ArrayGetSlice(DBHandle, TransHandle, sqlda.AsQuad[j],
                     sqlda.FArrayInfos[i].info, destArray, SliceLen);
@@ -1765,7 +1765,7 @@ const
                   if not Sqlda.IsNull[j] then
                   begin
                     destArray := sqlda.FXSQLDA.sqlvar[j].SqlData;
-                    inc(IntPtr(destArray), SizeOf(TISCQuad));
+                    inc(PtrInt(destArray), SizeOf(TISCQuad));
                     SliceLen := sqlda.FArrayInfos[i].size;
                     ArrayGetSlice(DbHandle, TraHandle, sqlda.AsQuad[j],
                       sqlda.FArrayInfos[i].info, destArray, SliceLen);
@@ -2524,7 +2524,7 @@ type
     len := 0;
     while BlobGetSegment(BlobHandle, CurrentLength, BlobInfos[1].CardType - len, Buffer) do
     begin
-      inc(IntPtr(Buffer), CurrentLength);
+      inc(PtrInt(Buffer), CurrentLength);
       inc(len, CurrentLength);
       if len = BlobInfos[1].CardType then
         Break;
@@ -2567,7 +2567,7 @@ type
     Len := 0;
     while BlobGetSegment(BlobHandle, CurrentLength, BlobInfos[1].CardType - len, TMP) do
     begin
-      inc(IntPtr(TMP), CurrentLength);
+      inc(PtrInt(TMP), CurrentLength);
       inc(Len, CurrentLength);
       if len = Size then
         break;
@@ -2598,7 +2598,7 @@ type
     Len := 0;
     while BlobGetSegment(BlobHandle, CurrentLength, BlobInfos[1].CardType - len, TMP) do
     begin
-      inc(IntPtr(TMP), CurrentLength);
+      inc(PtrInt(TMP), CurrentLength);
       inc(Len, CurrentLength);
       if len = BlobInfos[1].CardType then
         break;
@@ -2632,7 +2632,7 @@ type
     Len := 0;
     while BlobGetSegment(BlobHandle, CurrentLength, MaxSize - len, TMP) do
     begin
-      inc(IntPtr(TMP), CurrentLength);
+      inc(PtrInt(TMP), CurrentLength);
       inc(Len, CurrentLength);
       if len = MaxSize then
         break;
@@ -2665,7 +2665,7 @@ type
     try
       while BlobGetSegment(BlobHandle, CurrentLength, BlobInfos[1].CardType - len, Buffer) do
       begin
-        inc(IntPtr(Buffer), CurrentLength);
+        inc(PtrInt(Buffer), CurrentLength);
         inc(Len, CurrentLength);
         if Len = BlobInfos[1].CardType then
           Break;
@@ -4997,9 +4997,9 @@ end;
     for i := 0 to FXSQLDA.sqln - 1 do
     begin
       // I don't use cardinal for FPC compatibility
-      inc(IntPtr(FXSQLDA.sqlvar[i].sqldata), IntPtr(FDataBuffer));
+      inc(PtrInt(FXSQLDA.sqlvar[i].sqldata), PtrInt(FDataBuffer));
       if (FXSQLDA.sqlvar[i].sqlind <> nil) then
-        inc(IntPtr(FXSQLDA.sqlvar[i].sqlind), IntPtr(FDataBuffer));
+        inc(PtrInt(FXSQLDA.sqlvar[i].sqlind), PtrInt(FDataBuffer));
     end;
   end;
 
@@ -5029,7 +5029,7 @@ end;
       Stream.Write(FRecordPool[i]^, FDataBufferLength);
       for j := 0 to Length(FBlobsIndex) - 1 do
       begin
-        BlobData := Pointer(IntPtr(FRecordPool[I]) + (IntPtr(GetDataQuadOffset(FBlobsIndex[J])) - IntPtr(FDataBuffer)));
+        BlobData := Pointer(PtrInt(FRecordPool[I]) + (PtrInt(GetDataQuadOffset(FBlobsIndex[J])) - PtrInt(FDataBuffer)));
         Stream.Write(BlobData.Buffer^,BlobData.Size);
       end;
     end;
@@ -5096,7 +5096,7 @@ end;
   begin
     for I := 0 to Length(FBlobsIndex) - 1 do
     begin
-      BlobData := Pointer(IntPtr(Buffer) + (IntPtr(GetDataQuadOffset(FBlobsIndex[I])) - IntPtr(FDataBuffer)));
+      BlobData := Pointer(PtrInt(Buffer) + (PtrInt(GetDataQuadOffset(FBlobsIndex[I])) - PtrInt(FDataBuffer)));
       if BlobData.Size > 0 then
         FreeMem(BlobData.Buffer);
     end;
@@ -5354,6 +5354,7 @@ end;
           SQL_TEXT      : Result := DecodeString(SQL_TEXT, Index);
           SQL_VARYING   : Result := DecodeString(SQL_VARYING, Index);
           SQL_BLOB      : ReadBlob(Index, Result);
+          SQL_ARRAY     : Result := '(Array)';
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -5377,7 +5378,7 @@ end;
   function TSQLResult.GetDataQuadOffset(const index: word): Pointer;
   begin
     result := FXSQLDA.sqlvar[index].SqlData;
-    inc(IntPtr(result), sizeof(TIscQuad));
+    inc(PtrInt(result), sizeof(TIscQuad));
   end;
 
   function TSQLResult.GetArrayData(const index: word): Pointer;
@@ -5433,7 +5434,7 @@ var
 begin
   item := FItemCount;
   SetSize((item + 1) * FItemSize);
-  Result := Pointer(IntPtr(FPages[item div FItemsInPage]) + (Item mod FItemsInPage) * FItemSize);
+  Result := Pointer(PtrInt(FPages[item div FItemsInPage]) + (Item mod FItemsInPage) * FItemSize);
 end;
 
 procedure TPoolStream.Clear;
@@ -5477,7 +5478,7 @@ end;
 function TPoolStream.Get(Item: Integer): Pointer;
 begin
   assert(Item * FItemSize <= FSize);
-  Result := Pointer(IntPtr(FPages[Item div FItemsInPage]) + (Item mod FItemsInPage) * FItemSize);
+  Result := Pointer(PtrInt(FPages[Item div FItemsInPage]) + (Item mod FItemsInPage) * FItemSize);
 end;
 
 procedure TPoolStream.LoadFromFile(const FileName: string);
@@ -5529,10 +5530,10 @@ begin
       if n > count then n := count;
       while n > 0 do
       begin
-        p := Pointer(IntPtr(FPages[FPosition div FPageSize]) + (FPosition mod FPageSize));
+        p := Pointer(PtrInt(FPages[FPosition div FPageSize]) + (FPosition mod FPageSize));
         Move(p^, c^, n);
         dec(count, n);
-        inc(IntPtr(c), n);
+        inc(PtrInt(c), n);
         inc(FPosition, n);
         if count >= FPageSize then
           n := FPageSize else
@@ -5632,10 +5633,10 @@ begin
       if n > count then n := count;
       while n > 0 do
       begin
-        p := Pointer(IntPtr(FPages[FPosition div FPageSize]) + (FPosition mod FPageSize));
+        p := Pointer(PtrInt(FPages[FPosition div FPageSize]) + (FPosition mod FPageSize));
         Move(c^, p^, n);
         dec(count, n);
-        inc(IntPtr(c), n);
+        inc(PtrInt(c), n);
         inc(FPosition, n);
         if count >= FPageSize then
           n := FPageSize else
