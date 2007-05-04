@@ -105,11 +105,11 @@ begin
     try
       UL.TransactionStart(trans, db);
 
-      UL.DSQLPrepare(trans, stmt, tot_str, SQL_DIALECT, osqlda);
+      UL.DSQLPrepare(DB, trans, stmt, tot_str, SQL_DIALECT, osqlda);
 
       UL.DSQLExecute(trans, stmt, SQL_DIALECT);
 
-      UL.DSQLFetch(stmt, SQL_DIALECT, osqlda);
+      UL.DSQLFetch(DB, trans, stmt, SQL_DIALECT, osqlda);
 
       Writeln(format('Total budget:  %16.2f', [osqlda.AsDouble[0]]));
 
@@ -134,7 +134,7 @@ begin
         stmt := nil;
 
         UL.DSQLAllocateStatement(DB, stmt);
-        UL.DSQLPrepare(trans, stmt, sel_str, SQL_DIALECT, osqlda);
+        UL.DSQLPrepare(DB, trans, stmt, sel_str, SQL_DIALECT, osqlda);
 
         (* Declare the cursor. *)
 
@@ -148,7 +148,7 @@ begin
          *    Fetch and update department budgets.
          *)
 
-        while UL.DSQLFetch(stmt, SQL_DIALECT, osqlda) do
+        while UL.DSQLFetch(DB, trans, stmt, SQL_DIALECT, osqlda) do
         begin
             (* Determine the increase percentage. *)
           budget := osqlda.AsDouble[2];

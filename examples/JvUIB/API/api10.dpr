@@ -92,14 +92,14 @@ begin
       UL.DSQLAllocateStatement(DB, ustmt);
 
       (* Prepare and execute query *)
-      UL.DSQLPrepare(trans, stmt, sel_str, SQL_DIALECT, osqlda);
+      UL.DSQLPrepare(DB, trans, stmt, sel_str, SQL_DIALECT, osqlda);
       UL.DSQLExecute(trans, stmt, SQL_DIALECT);
 
       (* Needed for update current *)
       UL.DSQLSetCursorName(stmt, cursor);
 
       (* Use describe_bind to set up input sqlda *)
-      UL.DSQLPrepare(trans, ustmt, upd_str, SQL_DIALECT);
+      UL.DSQLPrepare(DB, trans, ustmt, upd_str, SQL_DIALECT);
 
       isqlda.AddFieldType('ARRAY',uftQuad);
 
@@ -111,7 +111,7 @@ begin
        *    and save the new head count.
        *)
 
-      while UL.DSQLFetch(stmt, SQL_DIALECT, osqlda) do
+      while UL.DSQLFetch(DB, trans, stmt, SQL_DIALECT, osqlda) do
       begin
         (* Get the current array values. *)
         if not osqlda.IsNull[1] then

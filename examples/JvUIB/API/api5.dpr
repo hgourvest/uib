@@ -76,7 +76,7 @@ begin
       UL.DSQLAllocateStatement(DB, stmt);
 
       (* Prepare the statement. *)
-      UL.DSQLPrepare(trans, stmt, sel_str, SQL_DIALECT, sqlda);  // automaticaly change sqlda size  and describe if necessary
+      UL.DSQLPrepare(DB, trans, stmt, sel_str, SQL_DIALECT, sqlda);  // automaticaly change sqlda size  and describe if necessary
 
       (* This is a select statement, print more information about it. *)
 

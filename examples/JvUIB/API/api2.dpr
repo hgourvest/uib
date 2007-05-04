@@ -114,7 +114,7 @@ begin
 
     (* Prepare the statement. *)
     try
-      UL.DSQLPrepare(trans, double_budget, prep_str, SQL_DIALECT, nil);
+      UL.DSQLPrepare(DB, trans, double_budget, prep_str, SQL_DIALECT, nil);
     except
       on E: Exception do
       begin

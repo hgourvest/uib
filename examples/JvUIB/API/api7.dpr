@@ -73,7 +73,7 @@ begin
     sqlda := TSQLResult.Create(3);
 
     try
-      UL.DSQLPrepare(trans, stmt, sel_str, SQL_DIALECT, sqlda);
+      UL.DSQLPrepare(DB, trans, stmt, sel_str, SQL_DIALECT, sqlda);
 
       UL.DSQLExecute(trans, stmt, SQL_DIALECT);
 
@@ -82,7 +82,7 @@ begin
        *    project descriptions.
        *)
 
-      while UL.DSQLFetch(stmt, SQL_DIALECT, sqlda) do //sqlda
+      while UL.DSQLFetch(DB, trans, stmt, SQL_DIALECT, sqlda) do //sqlda
       begin
         WriteLn(Format('PROJECT:  %s   TYPE:  %s', [sqlda.AsString[0], sqlda.AsString[2]]));
         UL.BlobOpen(DB, trans, blob_handle, sqlda.AsQuad[1]);

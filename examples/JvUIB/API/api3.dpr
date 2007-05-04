@@ -78,7 +78,7 @@ begin
 
     (* Prepare the statement. *)
     try
-      UL.DSQLPrepare(trans, stmt, sel_str, SQL_DIALECT, sqlda);
+      UL.DSQLPrepare(DB, trans, stmt, sel_str, SQL_DIALECT, sqlda);
     except
       on E: Exception do
       begin
@@ -94,7 +94,7 @@ begin
     (*
      *    Fetch and print the records.
      *)
-    while UL.DSQLFetch(stmt, 1, sqlda) do
+    while UL.DSQLFetch(DB, trans, stmt, 1, sqlda) do
       Writeln(format('%s %s %s', [sqlda.AsString[0], sqlda.AsString[1], sqlda.AsString[2]]));
 
     (* Free statement handle. *)
