@@ -14,9 +14,14 @@
 *)
 
 unit PDGUtils;
+{$IFDEF FPC}
+{$mode objfpc}{$H+}
+{$ENDIF}
 
+{$IFNDEF CPU64}
 {$ALIGN ON}
 {$MINENUMSIZE 4}
+{$ENDIF}
 
 interface
 uses Classes, SysUtils, jvuib
@@ -34,6 +39,10 @@ uses Classes, SysUtils, jvuib
 ;
 
 type
+
+{$IFNDEF FPC}
+  PtrInt = Longint;
+{$ENDIF}
 
   ERemoteError = class(Exception)
   end;
@@ -95,13 +104,19 @@ function DecompressStream(inSocket: longint; outStream: TStream): boolean; overl
 
 
 implementation
-{.$IFDEF FPC}
-function InterlockedCompareExchange(var Destination: Pointer; Exchange: Pointer; Comperand: Pointer): Pointer stdcall; external 'kernel32.dll' name 'InterlockedCompareExchange';
-{.$ENDIF}
+{$IF not declared(InterLockedCompareExchange)}
+{$IFDEF MSWINDOWS}
+function InterlockedCompareExchange(var Destination: longint; Exchange: longint; Comperand: longint): longint stdcall; external 'kernel32' name 'InterlockedCompareExchange';
+{$ENDIF}
+{$ifend}
 
 function InterlockedRead(var Value: Integer): Integer;
 begin
+{$IFDEF FPC}
+  Result := InterlockedCompareExchange(Value, 0, 0);
+{$ELSE}
   Result := Integer(InterlockedCompareExchange(Pointer(Value), nil, nil));
+{$ENDIF}
 end;
 
 type
@@ -442,10 +457,10 @@ begin
       if n > count then n := count;
       while n > 0 do
       begin
-        p := Pointer(Integer(FList[FPosition div FPageSize]) + (FPosition mod FPageSize));
+        p := Pointer(PtrInt(FList[FPosition div FPageSize]) + (FPosition mod FPageSize));
         Move(p^, c^, n);
         dec(count, n);
-        inc(Integer(c), n);
+        inc(PtrInt(c), n);
         inc(FPosition, n);
         if count >= FPageSize then
           n := FPageSize else
@@ -576,10 +591,10 @@ begin
       if n > count then n := count;
       while n > 0 do
       begin
-        p := Pointer(Integer(FList[FPosition div FPageSize]) + (FPosition mod FPageSize));
+        p := Pointer(PtrInt(FList[FPosition div FPageSize]) + (FPosition mod FPageSize));
         Move(c^, p^, n);
         dec(count, n);
-        inc(Integer(c), n);
+        inc(PtrInt(c), n);
         inc(FPosition, n);
         if count >= FPageSize then
           n := FPageSize else

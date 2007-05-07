@@ -1,6 +1,8 @@
 { This file is generated automaticaly, do not modify }
 unit TestLib_Intf;
-
+{$IFDEF FPC}
+{$mode objfpc}{$H+}
+{$ENDIF}
 interface
 uses Classes;
 

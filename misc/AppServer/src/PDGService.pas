@@ -12,8 +12,14 @@
     The Initial Developer of the Original Code is
       Henri Gourvest <hgourvest@progdigy.com>.
 *)
+{$IFDEF FPC}
+{$mode objfpc}{$H+}
+{$ENDIF}
+
+{$IFNDEF CPU64}
 {$ALIGN ON}
 {$MINENUMSIZE 4}
+{$ENDIF}
 
 unit PDGService;
 {$I PDGAppServer.inc}

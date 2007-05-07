@@ -4,7 +4,9 @@
 <xsl:template match="/library">
 <xsl:text>{ This file is generated automaticaly, do not modify }</xsl:text>
 unit <xsl:value-of select="@name"/>_Client;
-
+{$IFDEF FPC}
+{$mode objfpc}{$H+}
+{$ENDIF}
 interface
 uses Classes, {$IFDEF FPC}sockets{$ELSE}WinSock{$ENDIF}, PDGUtils, <xsl:value-of select="@name"/>_Intf;
 

@@ -1,6 +1,8 @@
 { This file is generated automaticaly, do not modify }
 unit TestLib_Server;
-
+{$IFDEF FPC}
+{$mode objfpc}{$H+}
+{$ENDIF}
 interface
 uses Classes, {$IFDEF FPC}sockets{$ELSE}WinSock{$ENDIF}, PDGUtils, PDGSocketStub, TestLib_Intf {$ifdef madExcept}, madExcept {$endif};
 

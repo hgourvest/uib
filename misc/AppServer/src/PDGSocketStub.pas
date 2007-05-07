@@ -14,6 +14,9 @@
 *)
 
 unit PDGSocketStub;
+{$IFDEF FPC}
+{$mode objfpc}{$H+}
+{$ENDIF}
 {$I PDGAppServer.inc}
 
 interface
@@ -50,7 +53,7 @@ type
     FChildCount: Integer;
     FChildCapacity: Integer;
     FThreadRefCount: Integer;
-    FStopped: Integer;
+    FStopped: Longint;
     function ChildGet(Index: Integer): TPDGThread;
     procedure ChildSetCapacity(NewCapacity: Integer);
     function ChildAdd(Item: TPDGThread): Integer;
@@ -118,7 +121,7 @@ const
   INVALID_SOCKET = longint(-1);
 {$ENDIF}
 
-function ThreadRun(Thread: Pointer): longint; {$IFNDEF FPC}stdcall;{$ENDIF}
+function ThreadRun(Thread: Pointer): PtrInt; {$IFNDEF FPC}stdcall;{$ENDIF}
 var
   t: TPDGThread;
 begin

@@ -1,5 +1,9 @@
 program AppServer;
 
+{$IFDEF FPC}
+{$mode objfpc}{$H+}
+{$ENDIF}
+
 {$IFDEF CONSOLEAPP}
   {$APPTYPE CONSOLE}
 {$ENDIF}

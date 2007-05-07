@@ -1,6 +1,8 @@
 { This file is generated automaticaly, do not modify }
 unit TestLib_Client;
-
+{$IFDEF FPC}
+{$mode objfpc}{$H+}
+{$ENDIF}
 interface
 uses Classes, {$IFDEF FPC}sockets{$ELSE}WinSock{$ENDIF}, PDGUtils, TestLib_Intf;
 
@@ -51,8 +53,12 @@ var
   p: PHostEnt;
   Address: TSockAddr;
   uid: TGUID;
+  SO_True: Integer;
 begin
+  SO_True := -1;
   FSocketHandle := socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  SetSockOpt(FSocketHandle, SOL_SOCKET, SO_REUSEADDR, PChar(@SO_True), SizeOf(SO_True));
+  SetSockOpt(FSocketHandle, IPPROTO_TCP, TCP_NODELAY, PChar(@SO_True), SizeOf(SO_True));
   Address.sin_family := AF_INET;
   Address.sin_port := htons(port);
   p := gethostbyname(PChar(server));
@@ -122,8 +128,12 @@ var
   p: PHostEnt;
   Address: TSockAddr;
   uid: TGUID;
+  SO_True: Integer;
 begin
+  SO_True := -1;
   FSocketHandle := socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  SetSockOpt(FSocketHandle, SOL_SOCKET, SO_REUSEADDR, PChar(@SO_True), SizeOf(SO_True));
+  SetSockOpt(FSocketHandle, IPPROTO_TCP, TCP_NODELAY, PChar(@SO_True), SizeOf(SO_True));
   Address.sin_family := AF_INET;
   Address.sin_port := htons(port);
   p := gethostbyname(PChar(server));

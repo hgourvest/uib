@@ -1,5 +1,7 @@
 unit TestLib;
-
+{$IFDEF FPC}
+{$mode objfpc}{$H+}
+{$ENDIF}
 interface
 uses
   TestLib_Server, TestLib_Intf, PDGUtils, PDGSocketStub,

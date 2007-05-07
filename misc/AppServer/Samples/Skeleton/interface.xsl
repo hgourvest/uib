@@ -4,7 +4,9 @@
 <xsl:template match="/library">
 <xsl:text>{ This file is generated automaticaly, do not modify }</xsl:text>
 unit <xsl:value-of select="@name"/>_Intf;
-
+{$IFDEF FPC}
+{$mode objfpc}{$H+}
+{$ENDIF}
 interface
 uses Classes;
 
@@ -18,7 +20,9 @@ uses Classes;
   <xsl:if test="position() = 1">type</xsl:if>
   I<xsl:value-of select="@name"/> = interface
   ['<xsl:value-of select="@uid"/><xsl:text>']</xsl:text>
-  <xsl:for-each select="function"><xsl:text>  </xsl:text>    <xsl:choose>
+  <xsl:for-each select="function"><xsl:text>
+  </xsl:text>
+    <xsl:choose>
       <xsl:when test="@return!=''">  function </xsl:when><xsl:otherwise>  procedure </xsl:otherwise></xsl:choose>
     <xsl:value-of select="@name"/>
     <xsl:for-each select="field">
