@@ -147,8 +147,8 @@ begin
             end;
           uftDate: DataType := ftDate;
           uftTime: DataType := ftTime;
-          uftInt64:
-            DataType := ftLargeint;
+          uftInt64: DataType := ftLargeint;
+          uftArray: DataType := ftArray;
         else
           DataType := ftUnknown;
         end;
@@ -157,101 +157,98 @@ begin
     FieldDefs.EndUpdate;
   end;
   Open;
-  Stream := nil;
-  try
-    for j := 0 to F.RecordCount - 1 do
-    begin
-      F.GetRecord(j);
-      Append;
-      for i := 0 to Fields.Count - 1 do
-        if Fields[i].FieldKind = fkData then
-        begin
-          FieldNo := Fields[i].FieldNo - 1;
-          FieldType := F.FieldType[FieldNo];
-          SqlVar := @F.Data.sqlvar[FieldNo];
-          if F.IsNull[FieldNo] then
-            Fields[i].Clear
-          else
-            case FieldType of
-              uftNumeric:
-                begin
-                  case F.SQLType[FieldNo] of
-                    SQL_SHORT:
-                      Buffer.bcd := StrToBcd(FloatToStr(PSmallint(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
-                    SQL_LONG:
-                      Buffer.BCD := StrToBcd(FloatToStr(PInteger(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
-                    SQL_INT64,
-                      SQL_QUAD:
-                      Buffer.BCD := StrToBcd(FloatToStr(PInt64(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
-                    SQL_DOUBLE:
-                      Buffer.Double := PDouble(SqlVar.sqldata)^;
-                  else
-                    raise Exception.Create(EUIB_UNEXPECTEDCASTERROR);
-                  end;
-                  SetFieldData(Fields[i], @Buffer);
+  for j := 0 to F.RecordCount - 1 do
+  begin
+    F.GetRecord(j);
+    Append;
+    for i := 0 to Fields.Count - 1 do
+      if Fields[i].FieldKind = fkData then
+      begin
+        FieldNo := Fields[i].FieldNo - 1;
+        FieldType := F.FieldType[FieldNo];
+        SqlVar := @F.Data.sqlvar[FieldNo];
+        if F.IsNull[FieldNo] then
+          Fields[i].Clear
+        else
+          case FieldType of
+            uftNumeric:
+              begin
+                case F.SQLType[FieldNo] of
+                  SQL_SHORT:
+                    Buffer.bcd := StrToBcd(FloatToStr(PSmallint(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
+                  SQL_LONG:
+                    Buffer.BCD := StrToBcd(FloatToStr(PInteger(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
+                  SQL_INT64,
+                    SQL_QUAD:
+                    Buffer.BCD := StrToBcd(FloatToStr(PInt64(SqlVar.sqldata)^ / scaledivisor[SqlVar.sqlscale]));
+                  SQL_DOUBLE:
+                    Buffer.Double := PDouble(SqlVar.sqldata)^;
+                else
+                  raise Exception.Create(EUIB_UNEXPECTEDCASTERROR);
                 end;
-              uftChar,
-                uftCstring:
-                begin
-                  SetLength(Str, SqlVar.SqlLen);
-                  Move(SqlVar.sqldata^, PChar(Str)^, SqlVar.SqlLen);
-                  SetFieldData(Fields[i], Pointer(Str));
-                end;
-              uftVarchar:
-                begin
-                  SetLength(Str, SqlVar.SqlLen);
-                  Move(PVary(SqlVar.sqldata).vary_string, PChar(Str)^, PVary(SqlVar.sqldata).vary_length);
-                  if (Word(SqlVar.SqlLen)) > PVary(SqlVar.sqldata).vary_length then
-                    PChar(str)[PVary(SqlVar.sqldata).vary_length] := #0;
-                  SetFieldData(Fields[i], Pointer(Str));
-                end;
-              uftSmallint, uftInteger, uftDoublePrecision, uftInt64:
-                SetFieldData(Fields[i], SqlVar.sqldata);
-              uftFloat:
-                begin
-                  Buffer.Double := PSingle(SqlVar.sqldata)^;
-                  SetFieldData(Fields[i], @Buffer);
-                end;
-              uftTimestamp:
-                begin
-                  DecodeTimeStamp(PIscTimeStamp(SqlVar.sqldata), Buffer.TimeStamp);
-                  Buffer.Double := TimeStampToMSecs(Buffer.TimeStamp);
-                  SetFieldData(Fields[i], @Buffer);
-                end;
-              uftBlob, uftBlobId:
-                begin
-                  if Stream = nil then
-                    Stream := TMemoryStream.Create;
+                SetFieldData(Fields[i], @Buffer);
+              end;
+            uftChar,
+              uftCstring:
+              begin
+                SetLength(Str, SqlVar.SqlLen);
+                Move(SqlVar.sqldata^, PChar(Str)^, SqlVar.SqlLen);
+                SetFieldData(Fields[i], Pointer(Str));
+              end;
+            uftVarchar:
+              begin
+                SetLength(Str, SqlVar.SqlLen);
+                Move(PVary(SqlVar.sqldata).vary_string, PChar(Str)^, PVary(SqlVar.sqldata).vary_length);
+                if (Word(SqlVar.SqlLen)) > PVary(SqlVar.sqldata).vary_length then
+                  PChar(str)[PVary(SqlVar.sqldata).vary_length] := #0;
+                SetFieldData(Fields[i], Pointer(Str));
+              end;
+            uftSmallint, uftInteger, uftDoublePrecision, uftInt64:
+              SetFieldData(Fields[i], SqlVar.sqldata);
+            uftFloat:
+              begin
+                Buffer.Double := PSingle(SqlVar.sqldata)^;
+                SetFieldData(Fields[i], @Buffer);
+              end;
+            uftTimestamp:
+              begin
+                DecodeTimeStamp(PIscTimeStamp(SqlVar.sqldata), Buffer.TimeStamp);
+                Buffer.Double := TimeStampToMSecs(Buffer.TimeStamp);
+                SetFieldData(Fields[i], @Buffer);
+              end;
+            uftBlob, uftBlobId:
+              begin
+                Stream := TMemoryStream.Create;
+                try
                   F.ReadBlob(FieldNo, Stream);
                   Stream.Seek(0, soFromBeginning);
-                  SetFieldData(Fields[i], Stream);
+                  TBlobField(Fields[i]).LoadFromStream(Stream);
+                finally
+                  Stream.Free;
                 end;
-              uftDate:
-                begin
-                  Buffer.Integer := PInteger(SqlVar.sqldata)^ - DateOffset + 693594;
-                  SetFieldData(Fields[i], @Buffer);
-                end;
-              uftTime:
-                begin
-                  Buffer.Integer := PCardinal(SqlVar.sqldata)^ div 10;
-                  SetFieldData(Fields[i], @Buffer);
-                end;
-            else
-              raise EUIBError.Create(EUIB_UNEXPECTEDERROR);
-            end;
+              end;
+            uftDate:
+              begin
+                Buffer.Integer := PInteger(SqlVar.sqldata)^ - DateOffset + 693594;
+                SetFieldData(Fields[i], @Buffer);
+              end;
+            uftTime:
+              begin
+                Buffer.Integer := PCardinal(SqlVar.sqldata)^ div 10;
+                SetFieldData(Fields[i], @Buffer);
+              end;
+          else
+            raise EUIBError.Create(EUIB_UNEXPECTEDERROR);
+          end;
 
-          if Assigned(OnLoad) then
-            OnLoadField(Self, i, Fields[i]);
-        end;
+        if Assigned(OnLoad) then
+          OnLoadField(Self, i, Fields[i]);
+      end;
 
-      Accept := True;
-      if Assigned(OnLoadRecord) then
-        OnLoadRecord(Self, Accept);
-      Post;
-    end;
-  finally
-    if Stream <> nil then
-      Stream.Free;
+    Accept := True;
+    if Assigned(OnLoadRecord) then
+      OnLoadRecord(Self, Accept);
+    Post;
   end;
 end;
 
