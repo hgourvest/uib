@@ -314,7 +314,7 @@ type
     property InfoSweepInterval: Integer index isc_info_sweep_interval read GetInfoIntValue;
     { false indicates space is reserved on each database page for holding
         backup versions of modified records [Default]
-    { true indicates no space is reserved for such records. }
+      true indicates no space is reserved for such records. }
     property InfoNoReserve: boolean index isc_info_no_reserve read GetInfoBooleanValue;
     { Specify the mode in which database writes are performed
       (false for asynchronous, true for synchronous). }
