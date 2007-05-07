@@ -475,6 +475,7 @@ type
     FScrollEOF: boolean;
     FInMemoryEOF: boolean;
     FArrayInfos: array of TArrayInfo;
+    FStatBlobsSize: Int64;
     procedure AddCurrentRecord;
     procedure FreeBlobs(Buffer: Pointer);
     function GetRecordCount: Integer;
@@ -1790,6 +1791,7 @@ const
                     BlobOpen(DbHandle, TraHandle, BlobHandle, Sqlda.AsQuad[Sqlda.FBlobsIndex[i]]);
                     try
                       BlobReadBuffer(BlobHandle, BlobData.Size, BlobData.Buffer); // memory allocated here !!
+                      inc(Sqlda.FStatBlobsSize, BlobData.Size);
                     finally
                       BlobClose(BlobHandle);
                     end;
@@ -4861,6 +4863,7 @@ end;
     BufferChunks: Cardinal = 1000);
   begin
     inherited Create;
+    FStatBlobsSize := 0;
     FCachedFetch := CachedFetch;
     FFetchBlobs := FetchBlobs;
     FDataBufferLength := 0;
@@ -4908,6 +4911,7 @@ end;
       FRecordPool.Free;
       FRecordPool := nil;
     end;
+    FStatBlobsSize := 0;
   end;
 
   procedure TSQLResult.GetRecord(const Index: Integer);
@@ -5003,43 +5007,124 @@ end;
     end;
   end;
 
+  // this method must be portable between 32/64 bit os
   procedure TSQLResult.SaveToStream(Stream: TStream);
   var
     Count, i, j: Integer;
     BlobData: PBlobData;
+    ArrayData: Pointer;
+    ArrayIndex: integer;
+    null: boolean;
+    OldRecord: integer;
+    MaxStreamSize: int64;
+
   begin
     Stream.Write(FCachedFetch, SizeOf(FCachedFetch));
     Stream.Write(FFetchBlobs, SizeOf(FFetchBlobs));
+    Stream.Write(FXSQLDA^.sqln, sizeof(FXSQLDA^.sqln));
+    MaxStreamSize := 0;
+    for i := 0 to FXSQLDA.sqln - 1 do
+      with FXSQLDA.sqlvar[i] do
+      begin
+        Stream.Write(SqlType, sizeof(SqlType));
+        Stream.Write(SqlScale, sizeof(SqlScale));
+{$IFDEF IB7_UP}
+        Stream.Write(SqlPrecision, sizeof(SqlPrecision));
+{$ENDIF}
+        Stream.Write(SqlSubType, sizeof(SqlSubType));
+        Stream.Write(SqlLen, sizeof(SqlLen));
+        Stream.Write(SqlNameLength, sizeof(SqlNameLength));
+        Stream.Write(SqlName, sizeof(SqlName));
+        Stream.Write(RelNameLength, sizeof(RelNameLength));
+        Stream.Write(RelName, sizeof(RelName));
+        Stream.Write(OwnNameLength, sizeof(OwnNameLength));
+        Stream.Write(OwnName, sizeof(OwnName));
+        Stream.Write(AliasNameLength, sizeof(AliasNameLength));
+        Stream.Write(AliasName, sizeof(AliasName));
 
-    Stream.Write(FXSQLDA.sqln, SizeOf(FXSQLDA.sqln));
-    Stream.Write(FXSQLDA^, XSQLDA_LENGTH(FXSQLDA.sqln)); // MetaData
+        if (sqltype and not(1)) = SQL_BLOB then
+          inc(MaxStreamSize, Sizeof(Cardinal) + sizeof(null)) else // blob size
+          inc(MaxStreamSize, SqlLen + sizeof(null)); // datalen  property
+      end;
 
     // array informations
     count := length(FArrayInfos);
     Stream.Write(Count, SizeOf(Count));
     for i := 0 to Count - 1 do
-      Stream.Write(FArrayInfos[i], SizeOf(TArrayInfo));
+      with FArrayInfos[i] do
+      begin
+        stream.Write(index, sizeof(index));
+        stream.Write(size, sizeof(size));
+        stream.Write(info.array_desc_dtype, sizeof(info.array_desc_dtype));
+        stream.Write(info.array_desc_scale, sizeof(info.array_desc_scale));
+        stream.Write(info.array_desc_length, sizeof(info.array_desc_length));
+        stream.Write(info.array_desc_field_name, sizeof(info.array_desc_field_name));
+        stream.Write(info.array_desc_relation_name, sizeof(info.array_desc_relation_name));
+        stream.Write(info.array_desc_dimensions, sizeof(info.array_desc_dimensions));
+        stream.Write(info.array_desc_flags, sizeof(info.array_desc_flags));
+        for j := low(info.array_desc_bounds) to high(info.array_desc_bounds) do
+          with info.array_desc_bounds[j] do
+          begin
+            stream.Write(array_bound_lower, sizeof(array_bound_lower));
+            stream.Write(array_bound_upper, sizeof(array_bound_upper));
+          end;
+        inc(MaxStreamSize, size);
+      end;
 
     Count := RecordCount;
     Stream.Write(Count, SizeOf(Count));
-    if (Stream is TCustomMemoryStream) then
-      Stream.Size := Stream.Size + (FDataBufferLength * Count);
-    for i := 0 to Count - 1 do
-    begin
-      Stream.Write(FRecordPool[i]^, FDataBufferLength);
-      for j := 0 to Length(FBlobsIndex) - 1 do
+    OldRecord := FCurrentRecord;
+    try
+      MaxStreamSize := (MaxStreamSize * count) + FStatBlobsSize;
+      Stream.Size := Stream.Size + MaxStreamSize;
+
+      for i := 0 to Count - 1 do
       begin
-        BlobData := Pointer(PtrInt(FRecordPool[I]) + (PtrInt(GetDataQuadOffset(FBlobsIndex[J])) - PtrInt(FDataBuffer)));
-        Stream.Write(BlobData.Buffer^,BlobData.Size);
+        GetRecord(i);
+        ArrayIndex := 0;
+        for j := 0 to FXSQLDA.sqln - 1 do
+          with FXSQLDA.sqlvar[j] do
+            begin
+              null := (sqlind <> nil) and (sqlind^ = -1);
+              stream.Write(null, sizeof(null));
+              case (sqltype and not(1)) of
+                SQL_BLOB:
+                  if not null then
+                  begin
+                    BlobData := GetDataQuadOffset(j);
+                    Stream.Write(BlobData.Size,sizeof(BlobData.Size));
+                    if BlobData.Size > 0 then
+                      Stream.Write(BlobData.Buffer^,BlobData.Size);
+                  end;
+                SQL_ARRAY:
+                  begin
+                    if not null then
+                    begin
+                      ArrayData := GetDataQuadOffset(j);
+                      stream.Write(ArrayData^, FArrayInfos[ArrayIndex].size);
+                    end;
+                    inc(ArrayIndex);
+                  end;
+                else
+                  stream.Write(sqldata^, SqlLen);
+                end;
+            end;
       end;
+    finally
+      GetRecord(OldRecord);
+      Stream.Size := Stream.Position;
     end;
   end;
 
+  // this method must be portable between 32/64 bit os
   procedure TSQLResult.LoadFromStream(Stream: TStream);
   var
     Fields: SmallInt;
     Count, i, j: Integer;
     BlobData: PBlobData;
+    ArrayData: Pointer;
+    ArrayIndex: integer;
+    null: boolean;
   begin
     // CleanUp
     ClearRecords;
@@ -5051,13 +5136,49 @@ end;
 
     Stream.Read(Fields, SizeOf(Fields));
     SetAllocatedFields(Fields);
-    Stream.Read(FXSQLDA^, XSQLDA_LENGTH(Fields));
+
+    for i := 0 to Fields - 1 do
+      with FXSQLDA.sqlvar[i] do
+      begin
+        Stream.Read(SqlType, sizeof(SqlType));
+        Stream.Read(SqlScale, sizeof(SqlScale));
+{$IFDEF IB7_UP}
+        Stream.Read(SqlPrecision, sizeof(SqlPrecision));
+{$ENDIF}
+        Stream.Read(SqlSubType, sizeof(SqlSubType));
+        Stream.Read(SqlLen, sizeof(SqlLen));
+        Stream.Read(SqlNameLength, sizeof(SqlNameLength));
+        Stream.Read(SqlName, sizeof(SqlName));
+        Stream.Read(RelNameLength, sizeof(RelNameLength));
+        Stream.Read(RelName, sizeof(RelName));
+        Stream.Read(OwnNameLength, sizeof(OwnNameLength));
+        Stream.Read(OwnName, sizeof(OwnName));
+        Stream.Read(AliasNameLength, sizeof(AliasNameLength));
+        Stream.Read(AliasName, sizeof(AliasName));
+      end;
 
     // array informations
     Stream.Read(Count, SizeOf(Count));
     SetLength(FArrayInfos, Count);
     for i := 0 to Count - 1 do
-      Stream.Read(FArrayInfos[i], SizeOf(TArrayInfo));
+      with FArrayInfos[i] do
+      begin
+        stream.Read(index, sizeof(index));
+        stream.Read(size, sizeof(size));
+        stream.Read(info.array_desc_dtype, sizeof(info.array_desc_dtype));
+        stream.Read(info.array_desc_scale, sizeof(info.array_desc_scale));
+        stream.Read(info.array_desc_length, sizeof(info.array_desc_length));
+        stream.Read(info.array_desc_field_name, sizeof(info.array_desc_field_name));
+        stream.Read(info.array_desc_relation_name, sizeof(info.array_desc_relation_name));
+        stream.Read(info.array_desc_dimensions, sizeof(info.array_desc_dimensions));
+        stream.Read(info.array_desc_flags, sizeof(info.array_desc_flags));
+        for j := low(info.array_desc_bounds) to high(info.array_desc_bounds) do
+          with info.array_desc_bounds[j] do
+          begin
+            stream.Read(array_bound_lower, sizeof(array_bound_lower));
+            stream.Read(array_bound_upper, sizeof(array_bound_upper));
+          end;
+      end;
 
     // realloc & index buffer
     AllocateDataBuffer;
@@ -5065,17 +5186,48 @@ end;
     FBufferChunks := Count; // Inprove memory allocation
     for i := 0 to Count - 1 do
     begin
-      Stream.Read(FDataBuffer^, FDataBufferLength);
-      for j := 0 to Length(FBlobsIndex) - 1 do
-      begin
-        BlobData := GetDataQuadOffset(FBlobsIndex[j]);
-        if BlobData.Size > 0 then
+      ArrayIndex := 0;
+      for j := 0 to FXSQLDA.sqln - 1 do
+      with FXSQLDA.sqlvar[j] do
         begin
-          GetMem(BlobData.Buffer, BlobData.Size);
-          Stream.Read(BlobData.Buffer^, BlobData.Size);
-        end else
-          BlobData.Buffer := nil;
-      end;
+          stream.Read(null, sizeof(null));
+          if SqlInd <> nil then
+            case null of
+              True  : sqlind^ := -1;
+              False : sqlind^ :=  0;
+            end;
+            case (sqltype and not(1)) of
+              SQL_BLOB:
+                begin
+                BlobData := GetDataQuadOffset(j);
+                if not null then
+                begin
+                  Stream.Read(BlobData.Size, sizeof(BlobData.Size));
+                  if BlobData.Size > 0 then
+                  begin
+                    GetMem(BlobData.Buffer, BlobData.Size);
+                    Stream.Read(BlobData.Buffer^, BlobData.Size);
+                  end else
+                    BlobData.Buffer := nil;
+                end else
+                begin
+                  BlobData.buffer := nil;
+                  BlobData.Size := 0;
+                end;
+                end;
+              SQL_ARRAY:
+                begin
+                  if not null then
+                  begin
+                    ArrayData := GetDataQuadOffset(j);
+                    Stream.Read(ArrayData^, FArrayInfos[ArrayIndex].size)
+                  end;
+                  inc(ArrayIndex);
+                end; // todo
+            else
+              stream.Read(sqldata^, SqlLen);
+            end;
+        end;
       AddCurrentRecord;
     end;
     FScrollEOF := True;

@@ -674,7 +674,7 @@ type
 type
   // Parameter for transaction on multiple Database, see
   PISCTEB = ^TISCTEB;
-  TISCTEB = packed record
+  TISCTEB = record
     Handle: PIscDbHandle;
     Len: Integer;
     Address: PChar;
