@@ -112,11 +112,15 @@ function InterlockedCompareExchange(var Destination: longint; Exchange: longint;
 
 function InterlockedRead(var Value: Integer): Integer;
 begin
+{$IF not declared(InterLockedCompareExchange)}
+  Result := Value;
+{$ELSE}
 {$IFDEF FPC}
   Result := InterlockedCompareExchange(Value, 0, 0);
 {$ELSE}
   Result := Integer(InterlockedCompareExchange(Pointer(Value), nil, nil));
 {$ENDIF}
+{$IFEND}
 end;
 
 type
