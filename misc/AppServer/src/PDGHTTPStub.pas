@@ -14,9 +14,12 @@
 *)
 
 unit PDGHTTPStub;
+{$IFDEF FPC}
+  {$MODE OBJFPC}{$H+}
+{$ENDIF}
 {$I PDGAppServer.inc}
 interface
-uses PDGSocketStub, Winsock, PDGUtils, davl;
+uses PDGSocketStub, {$IFDEF FPC}sockets,{$ELSE}Winsock,{$ENDIF} PDGUtils, classes, davl;
 
 type
   THttpResponseCode = (rc100, rc101, rc200, rc201, rc202, rc203, rc204, rc205,
@@ -37,7 +40,7 @@ type
   public
     property Name: string read FName;
     property Value: string read FValue;
-    constructor Create(const Name, Value: string); virtual;
+    constructor Create(const AName, AValue: string); virtual;
   end;
 
   THTTPFieldList = class(TAvlTree)
@@ -62,11 +65,15 @@ type
     end;
     FParams: THTTPFieldList;
     FContent: TPooledMemoryStream;
+    function GetContentString: string;
   public
     property Method: THttpMethod read FMethod;
-    property URI: string read FURI;
+    property URI: string read FURI write FURI;
     property Params: THTTPFieldList read FParams;
     property Content: TPooledMemoryStream read FContent;
+    property ContentString: string read GetContentString;
+    function GetAuthorization(out user, pass: string): boolean;
+    function GetCookies(const name: string): string;
     procedure Clear; override;
     constructor Create(CaseSensitive: boolean); override;
     destructor Destroy; override;
@@ -83,8 +90,13 @@ type
   public
     property Header: THTTPRequest read FHeader;
     function Run: Cardinal; override;
-    constructor CreateStub(AOwner: TSocketServer; Socket: TSocket;
-      Address: TSockAddrIn); override;
+    procedure WriteLine(str: string);
+    procedure WriteString(const str: string);
+    procedure SendEmpty;
+    procedure SendFile(const filename: string);
+    procedure SendStream(Stream: TStream);
+    procedure SendString(const data: string);
+    constructor CreateStub(AOwner: TSocketServer; ASocket: longint; AAddress: TSockAddr); override;
     destructor Destroy; override;
   end;
 
@@ -154,14 +166,14 @@ const
   DEFAULT_LIMIT_REQUEST_FIELDS = 100;
 
 implementation
-uses SysUtils, Windows, StrUtils;
+uses SysUtils, StrUtils;
 
 { THTTPField }
 
-constructor THTTPField.Create(const Name, Value: string);
+constructor THTTPField.Create(const AName, AValue: string);
 begin
-  FName := Name;
-  FValue := Value;
+  FName := AName;
+  FValue := AValue;
 end;
 
 { THTTPRequest }
@@ -190,6 +202,60 @@ begin
   inherited;
   FParams.Free;
   FContent.Free;
+end;
+
+function THTTPRequest.GetAuthorization(out user, pass: string): boolean;
+var
+  str: string;
+  i: integer;
+begin
+  Result := False;
+  str := GetStringValue('Authorization');
+  if str <> '' then
+  begin
+    i := pos('Basic ', str);
+    if i = 1  then
+    begin
+      str := Base64ToStr(copy(str, 7, Length(str) - 6));
+      i := pos(':', str);
+      if i > 0 then
+      begin
+        user := copy(str, 1, i-1);
+        pass := copy(str, i+1, Length(str)-i);
+        Result := True;
+      end;
+    end;
+  end;
+end;
+
+function THTTPRequest.GetContentString: string;
+begin
+  SetLength(Result, FContent.Size);
+  if FContent.Size > 0 then
+  begin
+    FContent.Seek(0, soFromBeginning);
+    FContent.Read(Result[1], FContent.Size);
+  end;
+end;
+
+function THTTPRequest.GetCookies(const name: string): string;
+var
+  Field: THTTPField;
+  strlist: TStringList;
+begin
+  Field := THTTPField(Search(PChar('Cookie')));
+  if Field <> nil then
+  begin
+    strlist := TStringList.Create;
+    try
+      strlist.Delimiter := ';';
+      strlist.DelimitedText := Field.Value;
+      Result := strlist.Values[name];
+    finally
+      strlist.Free;
+    end;
+  end else
+    Result := '';
 end;
 
 { THTTPFieldList }
@@ -253,12 +319,26 @@ end;
 function THTTPStub.DecodeContent: boolean;
 var
   ContentLength: integer;
+{$IFDEF CONSOLEAPP}
+  buffer: array[0..1023] of char;
+  size: integer;
+{$ENDIF}
 begin
   ContentLength := FHeader.GetIntValue('Content-Length', 0);
   if ContentLength > 0 then
   begin
     FHeader.FContent.Size := ContentLength;
     FHeader.FContent.LoadFromSocket(SocketHandle, false);
+{$IFDEF CONSOLEAPP}
+    repeat
+      size := FHeader.FContent.Read(buffer, sizeof(buffer));
+      if size > 0 then
+      begin
+        if size < sizeof(buffer) then buffer[size] := #0;
+        writeln(buffer);
+      end;
+    until size < sizeof(buffer);
+{$ENDIF}
   end;
   result := true;
 end;
@@ -482,7 +562,7 @@ begin
        (line > DEFAULT_LIMIT_REQUEST_FIELDS) then
       Exit;
 
-    if recv(SocketHandle, c, 1, 0) <> 1 then exit;
+    if receive(SocketHandle, c, 1, 0) <> 1 then exit;
     case c of
     CR: dec(cursor){->LF};
     LF: begin
@@ -490,6 +570,9 @@ begin
           begin
             if not DecodeContent then
               exit;
+            {$IFDEF CONSOLEAPP}
+            writeln('---------------------------------------');
+            {$ENDIF}
             ProcessRequest; // <<<<<<<<<<<<<<<
             line := 0;
             cursor := 0;
@@ -519,8 +602,8 @@ begin
   end;
 end;
 
-constructor THTTPStub.CreateStub(AOwner: TSocketServer; Socket: TSocket;
-  Address: TSockAddrIn);
+constructor THTTPStub.CreateStub(AOwner: TSocketServer; ASocket: longint;
+  AAddress: TSockAddr);
 begin
   inherited;
   FHeader := THTTPRequest.Create(false);
@@ -535,6 +618,62 @@ end;
 procedure THTTPStub.ProcessRequest;
 begin
 
+end;
+
+procedure THTTPStub.SendEmpty;
+begin
+  WriteLine('Content-Length: 0');
+  WriteLine('');
+end;
+
+procedure THTTPStub.SendFile(const filename: string);
+var
+  stream: TFileStream;
+begin
+  if FileExists(filename) then
+  begin
+    stream := TFileStream.Create(filename, fmOpenRead or fmShareDenyWrite);
+    try
+      SendStream(stream);
+    finally
+      stream.Free;
+    end;
+  end else
+    SendEmpty;
+end;
+
+procedure THTTPStub.SendString(const data: string);
+begin
+  WriteLine(format('Content-Length: %d', [length(data)]));
+  WriteLine('');
+  WriteString(data);
+end;
+
+procedure THTTPStub.WriteLine(str: string);
+begin
+  str := str + CRLF;
+  send(SocketHandle, PChar(str)^, length(str), 0);
+end;
+
+procedure THTTPStub.WriteString(const str: string);
+begin
+  send(SocketHandle, PChar(str)^, length(str), 0);
+end;
+
+procedure THTTPStub.SendStream(Stream: TStream);
+var
+  size: Integer;
+  buffer: array[0..1023] of byte;
+begin
+  WriteLine(format('Content-Length: %d', [stream.size]));
+  WriteLine('');
+  Stream.Seek(0, soFromBeginning);
+  size := stream.Read(buffer, sizeof(buffer));
+  while size > 0 do
+  begin
+    send(SocketHandle, buffer, size, 0);
+    size := stream.Read(buffer, sizeof(buffer));
+  end;
 end;
 
 end.

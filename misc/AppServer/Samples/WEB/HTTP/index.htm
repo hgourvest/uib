@@ -1,0 +1,16 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+		<title>Json Rpc demo</title>
+		<script type="text/javascript" src="prototype.js"></script>
+		<script type="text/javascript" src="application.js"></script>
+	</head>
+	<body>
+	    <form action="">
+		    <input type="button" onclick="echo(this, $F('echostr'))" value="echo"/><input id="echostr" type="text" value="something"/><br/>
+		    <input type="button" onclick="getdata($('datatable'), $F('tablename'))" value="get table"/><input id="tablename" type="text" value="employee"/><br/>
+		</form>
+		<div id="datatable"/>
+	</body>
+</html>

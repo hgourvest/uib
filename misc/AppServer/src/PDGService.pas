@@ -415,11 +415,7 @@ tryagain:
       raise Exception.Create('Thread Status');
     except
       on E: Exception do
-    {$if (CMadExceptVersion = '3.0b')}
-      HandleException(etNormal, E);
-    {$else}
-      HandleException(false, E);
-    {$ifend}
+        HandleException(etNormal, E);
     end;
   end else
 {$endif}

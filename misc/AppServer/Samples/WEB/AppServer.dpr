@@ -4,12 +4,11 @@ program AppServer;
   {$APPTYPE CONSOLE}
 {$ENDIF}
 uses
-  madExcept,
-  madLinkDisAsm,
   WinSvc,
   PDGService in '..\..\src\PDGService.pas',
   PDGSocketStub in '..\..\src\PDGSocketStub.pas',
-  WebServer in 'WebServer.pas';
+  WebServer in 'WebServer.pas',
+  PDGHTTPStub in '..\..\src\PDGHTTPStub.pas';
 
 begin
   Application.Name := 'PDGIWEBSRV';

@@ -25,6 +25,15 @@ uses
   {$IFDEF FPC}sockets,{$ELSE}Winsock,{$ENDIF}
   PDGUtils;
 
+{$IFDEF FPC}
+const
+  SOL_SOCKET    = $ffff;
+  SO_REUSEADDR  = $0004;
+  SO_RCVTIMEO   = $1006; 
+  IPPROTO_TCP   = 6;
+  TCP_NODELAY   = $0001;
+{$ENDIF}
+  
 type
   // forward declarations
   TPDGThread = class;
@@ -104,8 +113,7 @@ type
   public
     property SocketHandle: longint read FSocketHandle;
     property Address: TSockAddr read FAddress;
-    constructor CreateStub(AOwner: TSocketServer; ASocket: longint;
-      AAddress: TSockAddr); virtual;
+    constructor CreateStub(AOwner: TSocketServer; ASocket: longint; AAddress: TSockAddr); virtual;
   end;
 
 implementation
@@ -377,13 +385,6 @@ var
   InputLen: Integer;
   Stub: TSocketStub;
   SO_True: Integer;
-{$IFDEF FPC}
-const
-  SOL_SOCKET    = $ffff;
-  SO_REUSEADDR  = $0004;
-  IPPROTO_TCP   = 6;
-  TCP_NODELAY   = $0001;
-{$ENDIF}
 begin
   SO_True := -1;
 

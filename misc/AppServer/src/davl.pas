@@ -8,7 +8,9 @@
 *)
 
 unit davl;
-
+{$IFDEF FPC}
+  {$MODE OBJFPC}{$H+}
+{$ENDIF}
 interface
 
 const
@@ -81,7 +83,7 @@ implementation
 uses SysUtils;
 
 const
-  MASK_HIGH_BIT: integer = not ((not longword(0)) shr 1);
+  MASK_HIGH_BIT = not ((not longword(0)) shr 1);
 
 (* The presumed reason that an instantiation places additional fields
 ** inside the AVL tree structure is that the SET_ and GET_ macros
@@ -234,6 +236,7 @@ begin
   h.FLt := AVL_NULL;
   h.FGt := AVL_NULL;
   h.FBf := 0;
+  branch := [];
 
   if (FRoot = AVL_NULL) then
     FRoot := h
@@ -424,6 +427,7 @@ var
   cmp, cmp_shortened_sub_with_path, reduced_depth, bf: integer;
 begin
   cmp_shortened_sub_with_path := 0;
+  branch := [];
 
   (* Zero-based depth in tree. *)
   depth := 0;
@@ -673,6 +677,9 @@ begin
   (* Number of nodes in current subtree. *)
   numsub := NumNodes;
 
+  rem := [];
+  branch := [];
+
   (* The algorithm relies on a stack of nodes whose less subtree has
   ** been built, but whose greater subtree has not yet been built.
   ** The stack is implemented as linked list.  The nodes are linked
@@ -811,16 +818,19 @@ end;
 
 function TAvlTree.BuildIterVal(p: TAvlBuildIterType): TAvlHandle;
 begin
+//  Result := nil;
   raise Exception.Create('not implemented');
 end;
 
 function TAvlTree.CompareKeyNode(k: TAvlKey; h: TAvlHandle): integer;
 begin
+//  Result := 0;
   raise Exception.Create('not implemented');
 end;
 
 function TAvlTree.CompareNodeNode(node1, node2: TAvlHandle): integer;
 begin
+//  Result := 0;
   raise Exception.Create('not implemented');
 end;
 
