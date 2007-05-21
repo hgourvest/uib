@@ -4,7 +4,7 @@ program AppServer;
   {$APPTYPE CONSOLE}
 {$ENDIF}
 uses
-  WinSvc,
+  json in '..\..\src\json.pas',
   PDGService in '..\..\src\PDGService.pas',
   PDGSocketStub in '..\..\src\PDGSocketStub.pas',
   WebServer in 'WebServer.pas',
