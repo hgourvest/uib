@@ -11,10 +11,24 @@
  *
  * Unit owner : Henri Gourvest <hgourvest@progdigy.com>
  *
- * This unit is inspired from the json c api:
+ * This unit is inspired from the json c lib:
  *   Michael Clark <michael@metaparadigm.com>
  *   http://oss.metaparadigm.com/json-c/
+ *
+ *  CHANGES:
+ *  v0.2
+ *   + Hashed string list replaced with a faster AVL tree
+ *   + JsonInt data type can be changed to int64 
+ *   + JavaToDelphiDateTime and DelphiToJavaDateTime helper fonctions
+ *   + from json-c v0.7
+ *     + Add escaping of backslash to json output
+ *     + Add escaping of foward slash on tokenizing and output
+ *     + Changes to internal tokenizer from using recursion to
+ *       using a depth state structure to allow incremental parsing
+ *  v0.1
+ *   + first release
  *)
+
 
 unit json;
 {$IFDEF FPC}
@@ -25,135 +39,131 @@ uses Classes;
 
 // this option affect case sensitivity.
 {.$DEFINE JSON_CASE_INSENSITIVE}
+{$DEFINE JSON_LARGE_INT}
 
-{$IFNDEF FPC}
 type
+{$IFNDEF FPC}
   PtrInt = longint;
   PtrUInt = Longword;
 {$ENDIF}
+{$IFDEF JSON_LARGE_INT}
+  JsonInt = Int64;
+{$ELSE}
+  JsonInt = Integer;
+{$ENDIF}
 
 const
-  // golden prime used in hash functions
-  LH_PRIME = $9e370001;
+  JSON_ARRAY_LIST_DEFAULT_SIZE = 32;
+  JSON_TOKENER_MAX_DEPTH = 32;
 
-  // sentinel pointer value for empty slots
-  LH_EMPTY = Pointer(-1);
-
-  // sentinel pointer value for freed slots
-  LH_FREED = Pointer(-2);
-
-  ARRAY_LIST_DEFAULT_SIZE = 32;
-
-  JSON_OBJECT_DEF_HASH_ENTIRES = 16;
+  JSON_AVL_MAX_DEPTH = sizeof(longint) * 8;
+  JSON_AVL_MASK_HIGH_BIT = not ((not longword(0)) shr 1);
 
 type
   // forward declarations
   TJsonObject = class;
 
-  // An entry in the hash table
-  PLHEntry = ^TLHEntry;
-  TLHEntry = record
-    k: Pointer; // The key.
-    v: Pointer; // The value.
-    h: cardinal;
-    next: PLHEntry; // The next entry
-    prev: PLHEntry; // The previous entry.
-  end;
-  TLHEntryArray = array[0..(high(PtrInt) div sizeof(TLHEntry))-1] of TLHEntry;
-  PLHEntryArray = ^TLHEntryArray;
+(* AVL Tree
+ *  This is a "special" autobalanced AVL tree
+ *  It use a hash value for fast compare
+ *)
 
-  TObjectArray = array[0..(high(PtrInt) div sizeof(TJsonObject))-1] of TJsonObject;
-  PObjectArray = ^TObjectArray;
+  TJsonAvlSize = longword;
 
-  // The hash table structure.
-  TJsonTable = class
+  TJsonAvlBitArray = set of 0..JSON_AVL_MAX_DEPTH - 1;
+
+  TJsonAvlSearchType = (stEQual, stLess, stGreater);
+  TJsonAvlSearchTypes = set of TJsonAvlSearchType;
+
+  TJsonAvlEntry = class
   private
-    FSize: Cardinal; // Size of our hash.
-    FCount: Integer; // Numbers of entries.
-    FCollisions: Integer; // Number of collisions.
-    FResizes: Integer; // Number of resizes.
-    FLookups: Integer; // Number of lookups.
-    FInserts: Integer; // Number of inserts.
-    FDeletes: Integer; // Number of deletes.
-    FName: PChar; // Name of the hash table.
-    FHead: PLHEntry; // The first entry.
-    FTail: PLHEntry; // The last entry.
-    FTable: PLHEntryArray;
-  protected
-    class function doHash(k: Pointer): Cardinal; virtual; abstract;
-    class function doEqual(k1, k2: Pointer): integer; virtual; abstract;
-    class procedure doDeleteEntry(e: PLHEntry); virtual;
-    procedure InternalResize(new_size: Integer); virtual;
-    function InternalInsert(k, v: Pointer): Integer; virtual;
-    function InternalAdd(k, v: Pointer): Integer; virtual;
-    function InternalDelete(k: Pointer): Integer; virtual;
-    function InternalDeleteEntry(e: PLHEntry): Integer; virtual;
-    function InternalLookup(k: Pointer): Pointer; virtual;
-    function InternalLookupEntry(k: Pointer): PLHEntry; virtual;
+    FGt, FLt: TJsonAvlEntry;
+    FBf: integer;
+    FHash: Cardinal;
+    FName: PChar;
+    FObj: Pointer;
   public
-    constructor Create(AName: PChar; size: Integer = JSON_OBJECT_DEF_HASH_ENTIRES); virtual;
+    class function Hash(k: PChar): Cardinal; virtual;
+    constructor Create(AName: PChar; Obj: Pointer); virtual;
     destructor Destroy; override;
     property Name: PChar read FName;
-    property Count: Integer read FCount;
-    property Head: PLHEntry read FHead;
-    property Tail: PLHEntry read FTail;
+    property Obj: Pointer read FObj;
   end;
 
-  TJsonTableClass = class of TJsonTable;
-
-  TJsonTablePointer = class(TJsonTable)
+  TJsonAvlTree = class
+  private
+    FRoot: TJsonAvlEntry;
+    FCount: Integer;
+    function balance(bal: TJsonAvlEntry): TJsonAvlEntry;
   protected
-    class function doHash(k: Pointer): Cardinal; override;
-    class function doEqual(k1, k2: Pointer): integer; override;
-  end;
-
-  TJsonTableString = class(TJsonTable)
-  protected
-    class function doHash(k: Pointer): Cardinal; override;
-    class function doEqual(k1, k2: Pointer): integer; override;
-  protected
-    function InternalAdd(k, v: Pointer): Integer; override;
+    procedure doDeleteEntry(Entry: TJsonAvlEntry); virtual;
+    function CompareNodeNode(node1, node2: TJsonAvlEntry): integer; virtual;
+    function CompareKeyNode(k: PChar; h: TJsonAvlEntry): integer; virtual;
+    function Insert(h: TJsonAvlEntry): TJsonAvlEntry; virtual;
+    function Search(k: PChar; st: TJsonAvlSearchTypes = [stEqual]): TJsonAvlEntry; virtual;
   public
-    function Delete(k: PChar): Integer;
-    function LookupEntry(k: PChar): PLHEntry; virtual;
+    constructor Create; virtual;
+    destructor Destroy; override;
+    function IsEmpty: boolean;
+    procedure Clear; virtual;
+    procedure Delete(k: PChar);
+    property count: Integer read FCount;
   end;
 
-
-  TJsonTableObject = class(TJsonTableString)
+  TJsonTableString = class(TJsonAvlTree)
   protected
-    class procedure doDeleteEntry(e: PLHEntry); override;
+    procedure doDeleteEntry(Entry: TJsonAvlEntry); override;
   public
-    procedure Put(k: PChar; v: TJsonObject);
+    function Put(k: PChar; Obj: TJsonObject): TJsonObject;
     function Get(k: PChar): TJsonObject;
-    property Items[k: PChar]: TJsonObject read Get write Put; default;
   end;
+
+
+  TJsonAvlIterator = class
+  private
+    FTree: TJsonAvlTree;
+    FBranch: TJsonAvlBitArray;
+    FDepth: longint;
+    FPath: array[0..JSON_AVL_MAX_DEPTH - 2] of TJsonAvlEntry;
+  public
+    constructor Create(tree: TJsonAvlTree); virtual;
+    procedure Search(k: PChar; st: TJsonAvlSearchTypes = [stEQual]);
+    procedure First;
+    procedure Last;
+    function GetIter: TJsonAvlEntry;
+    procedure Next;
+    procedure Prior;
+  end;
+
+  TJsonObjectArray = array[0..(high(PtrInt) div sizeof(TJsonObject))-1] of TJsonObject;
+  PJsonObjectArray = ^TJsonObjectArray;
+
 
   TJsonRpcMethod = procedure(Params: TJsonObject; out Result: TJsonObject) of object;
+  PJsonRpcMethod = ^TJsonRpcMethod;
 
-  TJsonRpcService = class(TJsonTableString)
+  TJsonRpcService = class(TJsonAvlTree)
   protected
-    class procedure doDeleteEntry(e: PLHEntry); override;
+    procedure doDeleteEntry(Entry: TJsonAvlEntry); override;
   public
-    constructor Create(Aname: PChar); reintroduce; virtual;
-    destructor Destroy; override;
     procedure RegisterMethod(Aname: PChar; Sender: TObject; Method: Pointer);
-    procedure Invoke(Obj: TJsonTableObject; out Result: TJsonObject; out error: string);
+    procedure Invoke(Obj: TJsonTableString; out Result: TJsonObject; out error: string);
   end;
 
   TJsonRpcClass = class of TJsonRpcService;
 
-  TJsonRpcServiceList = class(TJsonTableString)
+  TJsonRpcServiceList = class(TJsonAvlTree)
   protected
-    class procedure doDeleteEntry(e: PLHEntry); override;
+    procedure doDeleteEntry(Entry: TJsonAvlEntry); override;
   public
-    procedure RegisterService(obj: TJsonRpcService);
+    procedure RegisterService(AName: PChar; obj: TJsonRpcService);
     function Invoke(service: TJsonRpcService; Obj: TJsonObject; var error: string): TJsonObject; overload;
     function Invoke(service: PChar; s: PChar): TJsonObject; overload;
   end;
 
   TJsonArray = class
   private
-    FArray: PObjectArray;
+    FArray: PJsonObjectArray;
     FLength: Integer;
     FSize: Integer;
     function Expand(max: Integer): Integer;
@@ -231,6 +241,73 @@ type
     property Size: Integer read FSize;
   end;
 
+
+  TJsonTokenerError = (
+    json_tokener_success,
+    json_tokener_continue,
+    json_tokener_error_depth,
+    json_tokener_error_parse_eof,
+    json_tokener_error_parse_unexpected,
+    json_tokener_error_parse_null,
+    json_tokener_error_parse_boolean,
+    json_tokener_error_parse_number,
+    json_tokener_error_parse_array,
+    json_tokener_error_parse_object_key_name,
+    json_tokener_error_parse_object_key_sep,
+    json_tokener_error_parse_object_value_sep,
+    json_tokener_error_parse_string,
+    json_tokener_error_parse_comment
+  );
+
+  TJsonTokenerState = (
+    json_tokener_state_eatws,
+    json_tokener_state_start,
+    json_tokener_state_finish,
+    json_tokener_state_null,
+    json_tokener_state_comment_start,
+    json_tokener_state_comment,
+    json_tokener_state_comment_eol,
+    json_tokener_state_comment_end,
+    json_tokener_state_string,
+    json_tokener_state_string_escape,
+    json_tokener_state_escape_unicode,
+    json_tokener_state_boolean,
+    json_tokener_state_number,
+    json_tokener_state_array,
+    json_tokener_state_array_add,
+    json_tokener_state_array_sep,
+    json_tokener_state_object_field_start,
+    json_tokener_state_object_field,
+    json_tokener_state_object_field_end,
+    json_tokener_state_object_value,
+    json_tokener_state_object_value_add,
+    json_tokener_state_object_sep
+  );
+
+  PJsonTokenerSrec = ^TJsonTokenerSrec;
+  TJsonTokenerSrec = record
+    state, saved_state: TJsonTokenerState;
+    obj: TJsonObject;
+    current: TJsonObject;
+    obj_field_name: PChar;
+  end;
+
+  TJsonTokener = class
+  public
+    str: PChar;
+    pb: TJsonWriterString;
+    depth, is_double, st_pos, char_offset: Integer;
+    err:  TJsonTokenerError;
+    ucs_char: Cardinal;
+    quote_char: char;
+    stack: array[0..JSON_TOKENER_MAX_DEPTH-1] of TJsonTokenerSrec;
+  public
+    constructor Create; virtual;
+    destructor Destroy; override;
+    procedure ResetLevel(adepth: integer);
+    procedure Reset;
+  end;
+
   // supported object types
   TJsonType = (
     json_type_null,
@@ -252,8 +329,8 @@ type
       case TJsonType of
         json_type_boolean: (c_boolean: boolean);
         json_type_double: (c_double: double);
-        json_type_int: (c_int: integer);
-        json_type_object: (c_object: TJsonTableObject);
+        json_type_int: (c_int: JsonInt);
+        json_type_object: (c_object: TJsonTableString);
         json_type_array: (c_array: TJsonArray);
         json_type_string: (c_string: PChar);
       end;
@@ -272,11 +349,12 @@ type
 
     // parser
     class function Parse(s: PChar): TJsonObject;
+    class function ParseEx(tok: TJsonTokener; str: PChar; len: integer): TJsonObject;
 
     // constructors / destructor
     constructor Create(jt: TJsonType = json_type_object); overload; virtual;
     constructor Create(b: boolean); overload; virtual;
-    constructor Create(i: Integer); overload; virtual;
+    constructor Create(i: JsonInt); overload; virtual;
     constructor Create(d: double); overload; virtual;
     constructor Create(p: PChar); overload; virtual;
     constructor Create(const s: string); overload; virtual;
@@ -284,11 +362,11 @@ type
     procedure Free; reintroduce; // objects are refcounted
 
     function AsBoolean: Boolean;
-    function AsInteger: Integer;
+    function AsInteger: JsonInt;
     function AsDouble: Double;
     function AsString: PChar;
     function AsArray: TJsonArray;
-    function AsObject: TJsonTableObject;
+    function AsObject: TJsonTableString;
 
     // clone a node
     function Clone: TJsonObject;
@@ -303,54 +381,18 @@ type
   TJsonObjectIter = record
     key: PChar;
     val: TJsonObject;
-    entry: PLHEntry;
+    Ite: TJsonAvlIterator;
   end;
-
-  TJsonTokenerError = (
-    json_tokener_success,
-    json_tokener_error_parse_unexpected,
-    json_tokener_error_parse_null,
-    json_tokener_error_parse_boolean,
-    json_tokener_error_parse_number,
-    json_tokener_error_parse_array,
-    json_tokener_error_parse_object,
-    json_tokener_error_parse_string,
-    json_tokener_error_parse_comment,
-    json_tokener_error_parse_eof
-  );
-
-  TJsonTokenerState = (
-    json_tokener_state_eatws,
-    json_tokener_state_start,
-    json_tokener_state_finish,
-    json_tokener_state_null,
-    json_tokener_state_comment_start,
-    json_tokener_state_comment,
-    json_tokener_state_comment_eol,
-    json_tokener_state_comment_end,
-    json_tokener_state_string,
-    json_tokener_state_string_escape,
-    json_tokener_state_escape_unicode,
-    json_tokener_state_boolean,
-    json_tokener_state_number,
-    json_tokener_state_array,
-    json_tokener_state_array_sep,
-    json_tokener_state_object,
-    json_tokener_state_object_field_start,
-    json_tokener_state_object_field,
-    json_tokener_state_object_field_end,
-    json_tokener_state_object_value,
-    json_tokener_state_object_sep
-  );
-
-
-
 
 function JsonIsError(obj: TJsonObject): boolean;
 function JsonIsValid(obj: TJsonObject): boolean;
 
 function JsonFindFirst(obj: TJsonObject; var F: TJsonObjectIter): boolean;
 function JsonFindNext(var F: TJsonObjectIter): boolean;
+procedure JsonFindClose(var F: TJsonObjectIter);
+
+function JavaToDelphiDateTime(const dt: int64; gmt: integer): TDateTime;
+function DelphiToJavaDateTime(const dt: TDateTime; gmt: integer): int64;
 
 implementation
 uses sysutils
@@ -372,6 +414,16 @@ const
 {$ifdef MSWINDOWS}
   function sprintf(buffer, format: PChar): longint; varargs; cdecl; external 'msvcrt.dll';
 {$endif}
+
+function JavaToDelphiDateTime(const dt: int64; gmt: integer): TDateTime;
+begin
+  Result := 25569 + ((dt + (gmt*3600000)) / 86400000);
+end;
+
+function DelphiToJavaDateTime(const dt: TDateTime; gmt: integer): int64;
+begin
+  Result := Round((dt - 25569) * 86400000) - (gmt*3600000);
+end;
 
 function FloatToStr(d: Double): string;
 begin
@@ -404,27 +456,39 @@ begin
 end;
 
 function JsonFindFirst(obj: TJsonObject; var F: TJsonObjectIter): boolean;
+var
+  i: TJsonAvlEntry;
 begin
-  F.entry := obj.AsObject.FHead;
-  if F.entry <> nil then
+  F.Ite := TJsonAvlIterator.Create(obj.o.c_object);
+  F.Ite.First;
+  i := F.Ite.GetIter;
+  if i <> nil then
   begin
-    F.key := PChar(F.entry^.k);
-    F.val := TJsonObject(F.entry^.v);
-    Result := True;
+    f.key := i.FName;
+    f.val := TJsonObject(i.FObj);
+    Result := true;
   end else
     Result := False;
 end;
 
 function JsonFindNext(var F: TJsonObjectIter): boolean;
+var
+  i: TJsonAvlEntry;
 begin
-  F.entry := F.entry^.next;
-  if F.entry <> nil then
+  F.Ite.Next;
+  i := F.Ite.GetIter;
+  if i <> nil then
   begin
-    F.key := PChar(F.entry^.k);
-    F.val := TJsonObject(F.entry^.v);
-    Result := True;
+    f.key := i.FName;
+    f.val := TJsonObject(i.FObj);
+    Result := true;
   end else
     Result := False;
+end;
+
+procedure JsonFindClose(var F: TJsonObjectIter);
+begin
+  F.Ite.Free;
 end;
 
 { TJsonObject }
@@ -436,7 +500,7 @@ begin
   FDataPtr := nil;
   FJsonType := jt;
   case FJsonType of
-    json_type_object: o.c_object := TJsonTableObject.Create('', JSON_OBJECT_DEF_HASH_ENTIRES);
+    json_type_object: o.c_object := TJsonTableString.Create;
     json_type_array: o.c_array := TJsonArray.Create;
   else
     o.c_object := nil;
@@ -450,7 +514,7 @@ begin
   o.c_boolean := b;
 end;
 
-constructor TJsonObject.Create(i: Integer);
+constructor TJsonObject.Create(i: JsonInt);
 begin
   Create(json_type_int);
   o.c_int := i;
@@ -521,9 +585,10 @@ begin
     Result := False;
 end;
 
-function TJsonObject.AsInteger: Integer;
+function TJsonObject.AsInteger: JsonInt;
 var
-  cint, code: integer;
+  code: integer;
+  cint: JsonInt;
 begin
   if JsonIsValid(Self) then
   case FJsonType of
@@ -588,7 +653,7 @@ begin
     Result := nil;
 end;
 
-function TJsonObject.AsObject: TJsonTableObject;
+function TJsonObject.AsObject: TJsonTableString;
 begin
   if JsonIsValid(Self) then
   begin
@@ -618,477 +683,513 @@ begin
 end;
 
 class function TJsonObject.Parse(s: PChar): TJsonObject;
-  type
-    PCursor = ^TCursor;
-    TCursor = record
-      source: PChar;
-      pos: integer;
-      pb: TJsonWriterString;
-    end;
-  function json_tokener_do_parse(this: PCursor): TJsonObject;
+var
+  tok: TJsonTokener;
+  obj: TJsonObject;
+begin
+  tok := TJsonTokener.Create;
+  obj := ParseEx(tok, s, -1);
+  if(tok.err <> json_tokener_success) then
+    obj := TJsonObject(-ord(tok.err));
+  tok.Free;
+  Result := obj;
+end;
 
-    function hexdigit(x: char): byte;
-    begin
-      if x <= '9' then
-        Result := byte(x) - byte('0') else
-        Result := (byte(x) and 7) + 9;
-    end;
+class function TJsonObject.ParseEx(tok: TJsonTokener; str: PChar; len: integer): TJsonObject;
 
-    function ReadInteger(p: PChar; var v: integer; stop: integer): boolean;
-    var
-      c: integer;
-    begin
-      Val(p, v, c);
-      Result := (c = stop+1) or (c = 0);
-    end;
-
-    function ReadDouble(p: PChar; var v: Double; stop: integer): boolean;
-    var
-      c: integer;
-    begin
-      Val(p, v, c);
-      Result := (c = stop+1) or (c = 0);
-    end;
-
-  var
-    state, saved_state: TJsonTokenerState;
-    err: TJsonTokenerError;
-    current, obj: TJsonObject;
-    obj_field_name: PChar;
-    quote_char: char;
-    deemed_double, start_offset: Integer;
-    c: char;
-
-    utf_out: array[0..2] of byte;
-    ucs_char: Cardinal;
-
-    numi: integer;
-    numd: double;
-  label out;
+  function hexdigit(x: char): byte;
   begin
-    start_offset := 0;
-    quote_char := #0;
-    deemed_double := 0;
-
-    err := json_tokener_success;
-    current := nil;
-    obj_field_name := nil;
-    state := json_tokener_state_eatws;
-    saved_state := json_tokener_state_start;
-
-    repeat
-      c := this^.source[this^.pos];
-      case state of
-        json_tokener_state_eatws:
-          begin
-            if c in [' ', #8,#10,#13,#9] then
-              inc(this^.pos) else
-              if (c = '/') then
-              begin
-                state := json_tokener_state_comment_start;
-                start_offset := this^.pos;
-                inc(this^.pos);
-              end else
-                state := saved_state;
-          end;
-        json_tokener_state_start:
-          begin
-            case c of
-              '{':
-                begin
-                  state := json_tokener_state_eatws;
-                  saved_state := json_tokener_state_object;
-                  current := TJsonObject.Create(json_type_object);
-                  inc(this^.pos);
-                 end;
-              '[':
-                begin
-                  state := json_tokener_state_eatws;
-                  saved_state := json_tokener_state_array;
-                  current := TJsonObject.Create(json_type_array);
-                  inc(this^.pos);
-                end;
-              'N', 'n':
-                begin
-                  state := json_tokener_state_null;
-                  start_offset := this^.pos;
-                  inc(this^.pos)
-                end;
-              '"','''':
-                begin
-                  quote_char := c;
-                  this^.pb.Reset;
-                  state := json_tokener_state_string;
-                  inc(this^.pos);
-                  start_offset := this^.pos;
-                end;
-              'T','t','F','f':
-                begin
-                  state := json_tokener_state_boolean;
-                  start_offset := this^.pos;
-                  inc(this^.pos);
-                end;
-              '0'..'9','-':
-                begin
-                  deemed_double := 0;
-                  state := json_tokener_state_number;
-                  start_offset := this^.pos;
-                  inc(this^.pos);
-                end;
-            else
-              err := json_tokener_error_parse_unexpected;
-              goto out;
-            end;
-          end;
-        json_tokener_state_finish: goto out;
-        json_tokener_state_null:
-          begin
-            if(StrLIComp('null', this^.source + start_offset, this^.pos - start_offset) <> 0) then
-            begin
-              Result := TJsonObject(-ord(json_tokener_error_parse_null));
-              Exit;
-            end;
-            if(this^.pos - start_offset = 4) then
-            begin
-              current := nil;
-              saved_state := json_tokener_state_finish;
-              state := json_tokener_state_eatws;
-            end else
-              inc(this^.pos);
-          end;
-
-        json_tokener_state_comment_start:
-          begin
-            if (c = '*') then state := json_tokener_state_comment else
-            if (c = '/') then state := json_tokener_state_comment_eol else
-            begin
-              err := json_tokener_error_parse_comment;
-              goto out;
-            end;
-            inc(this^.pos);
-          end;
-
-        json_tokener_state_comment:
-          begin
-            if (c = '*') then state := json_tokener_state_comment_end;
-            inc(this^.pos);
-          end;
-
-        json_tokener_state_comment_eol:
-          begin
-            if (c = #10) then
-              state := json_tokener_state_eatws;
-            inc(this^.pos);
-          end;
-
-        json_tokener_state_comment_end:
-          begin
-            if (c = '/') then
-              state := json_tokener_state_eatws else
-              state := json_tokener_state_comment;
-            inc(this^.pos);
-          end;
-
-        json_tokener_state_string:
-          begin
-            if (c = quote_char) then
-            begin
-              this^.pb.Append(this^.source + start_offset, this^.pos - start_offset);
-              current := TJsonObject.Create(this^.pb.FBuf);
-              saved_state := json_tokener_state_finish;
-              state := json_tokener_state_eatws;
-            end else
-            if (c = '\') then
-            begin
-              saved_state := json_tokener_state_string;
-              state := json_tokener_state_string_escape;
-            end;
-            inc(this^.pos);
-          end;
-
-        json_tokener_state_string_escape:
-          begin
-            case c of
-              '"','\':
-                begin
-                  this^.pb.Append(this^.source + start_offset, this^.pos - start_offset - 1);
-                  start_offset := this^.pos;
-                  inc(this^.pos);
-                  state := saved_state;
-                end;
-              'b','n','r','t':
-                begin
-                  this^.pb.Append(this^.source + start_offset, this^.pos - start_offset - 1);
-                  if(c = 'b') then this^.pb.Append(#8, 1) else
-                  if(c = 'n') then this^.pb.Append(#10, 1) else
-                  if(c = 'r') then this^.pb.Append(#13, 1) else
-                  if(c = 't') then this^.pb.Append(#9, 1);
-                  inc(this^.pos);
-                  start_offset := this^.pos;
-                  state := saved_state;
-                 end;
-              'u':
-                begin
-                  this^.pb.Append(this^.source + start_offset, this^.pos - start_offset - 1);
-                  inc(this^.pos);
-                  start_offset := this^.pos;
-                  state := json_tokener_state_escape_unicode;
-                end;
-            else
-              err := json_tokener_error_parse_string;
-              goto out;
-            end;
-          end;
-
-        json_tokener_state_escape_unicode:
-          begin
-            if c in json_hex_chars_set then
-            begin
-              inc(this^.pos);
-              if(this^.pos - start_offset = 4) then
-              begin
-                ucs_char :=
-                (hexdigit((this^.source + start_offset)^) shl 12) +
-                (hexdigit((this^.source + start_offset + 1)^) shl 8) +
-                (hexdigit((this^.source + start_offset + 2)^) shl 4) +
-                hexdigit((this^.source + start_offset + 3)^);
-                if (ucs_char < $80) then
-                begin
-                  utf_out[0] := ucs_char;
-                  this^.pb.Append(@utf_out, 1);
-                end else
-                if (ucs_char < $800) then
-                begin
-                  utf_out[0] := $c0 or (ucs_char shr 6);
-                  utf_out[1] := $80 or (ucs_char and $3f);
-                  this^.pb.Append(@utf_out, 2);
-                end else
-                begin
-                  utf_out[0] := $e0 or (ucs_char shr 12);
-                  utf_out[1] := $80 or ((ucs_char shr 6) and $3f);
-                  utf_out[2] := $80 or (ucs_char and $3f);
-                  this^.pb.Append(@utf_out, 3);
-                end;
-                start_offset := this^.pos;
-                state := saved_state;
-              end;
-            end else
-            begin
-              err := json_tokener_error_parse_string;
-              goto out;
-            end;
-          end;
-
-        json_tokener_state_boolean:
-          begin
-            if(StrLIComp('true', this^.source + start_offset, this^.pos - start_offset) = 0) then
-            begin
-              if(this^.pos - start_offset = 4) then
-              begin
-                current := TJsonObject.Create(true);
-                saved_state := json_tokener_state_finish;
-                state := json_tokener_state_eatws;
-              end else
-              inc(this^.pos);
-            end else if(StrLIComp('false', this^.source + start_offset, this^.pos - start_offset) = 0) then
-            begin
-              if(this^.pos - start_offset = 5) then
-              begin
-                current := TJsonObject.Create(false);
-                saved_state := json_tokener_state_finish;
-                state := json_tokener_state_eatws;
-              end else
-                inc(this^.pos);
-            end else
-            begin
-              err := json_tokener_error_parse_boolean;
-              goto out;
-            end;
-          end;
-        json_tokener_state_number:
-          begin
-            if (c = #0) or (not (c in json_number_chars_set)) then
-            begin
-              if (deemed_double = 0) and ReadInteger(this^.source + start_offset, numi, this^.pos - start_offset) then
-                current := TJsonObject.Create(numi) else
-                if(deemed_double <> 0) and ReadDouble(this^.source + start_offset, numd, this^.pos - start_offset) then
-                  current := TJsonObject.Create(numd) else
-                  begin
-                    err := json_tokener_error_parse_number;
-                    goto out;
-                  end;
-              saved_state := json_tokener_state_finish;
-              state := json_tokener_state_eatws;
-            end else
-            begin
-              if(c = '.') or (c = 'e') then deemed_double := 1;
-              inc(this^.pos);
-            end;
-          end;
-
-        json_tokener_state_array:
-          begin
-            if (c = ']') then
-            begin
-              inc(this^.pos);
-              saved_state := json_tokener_state_finish;
-              state := json_tokener_state_eatws;
-            end else
-            begin
-              obj := json_tokener_do_parse(this);
-              if (JsonIsError(obj)) then
-              begin
-                err := TJsonTokenerError(-PtrInt(obj));
-                goto out;
-              end;
-              current.o.c_array.Add(obj);
-              saved_state := json_tokener_state_array_sep;
-              state := json_tokener_state_eatws;
-            end;
-          end;
-
-        json_tokener_state_array_sep:
-          begin
-            if (c = ']') then
-            begin
-              inc(this^.pos);
-              saved_state := json_tokener_state_finish;
-              state := json_tokener_state_eatws;
-            end else if (c = ',') then
-            begin
-              inc(this^.pos);
-              saved_state := json_tokener_state_array;
-              state := json_tokener_state_eatws;
-            end else
-            begin
-              if current <> nil then
-                current.Release;
-              Result := TJsonObject(-ord(json_tokener_error_parse_array));
-              Exit;
-            end;
-          end;
-
-        json_tokener_state_object:
-          begin
-            state := json_tokener_state_object_field_start;
-            start_offset := this^.pos;
-          end;
-
-        json_tokener_state_object_field_start:
-          begin
-            if (c = '}') then
-            begin
-              inc(this^.pos);
-              saved_state := json_tokener_state_finish;
-              state := json_tokener_state_eatws;
-            end else
-            if (c = '"') or (c = '''') then
-            begin
-              quote_char := c;
-              this^.pb.Reset;
-              state := json_tokener_state_object_field;
-              inc(this^.pos);
-              start_offset := this^.pos;
-            end else
-            begin
-              err := json_tokener_error_parse_object;
-              goto out;
-            end;
-          end;
-
-        json_tokener_state_object_field:
-          begin
-            if (c = quote_char) then
-            begin
-              this^.pb.Append(this^.source + start_offset, this^.pos - start_offset);
-              obj_field_name := strdup(this^.pb.FBuf);
-              saved_state := json_tokener_state_object_field_end;
-              state := json_tokener_state_eatws;
-            end else
-            if (c = '\') then
-            begin
-              saved_state := json_tokener_state_object_field;
-              state := json_tokener_state_string_escape;
-            end;
-            inc(this^.pos);
-          end;
-
-        json_tokener_state_object_field_end:
-          begin
-            if (c = ':') then
-            begin
-              inc(this^.pos);
-              saved_state := json_tokener_state_object_value;
-              state := json_tokener_state_eatws;
-            end else
-            begin
-              Result := TJsonObject(-ord(json_tokener_error_parse_object));
-              Exit;
-            end;
-          end;
-
-        json_tokener_state_object_value:
-          begin
-            obj := json_tokener_do_parse(this);
-            if (JsonIsError(obj)) then
-            begin
-              err := TJsonTokenerError(-PtrInt(obj));
-              goto out;
-            end;
-            current.o.c_object.InternalAdd(obj_field_name, obj);
-            FreeMem(obj_field_name);
-            obj_field_name := nil;
-            saved_state := json_tokener_state_object_sep;
-            state := json_tokener_state_eatws;
-          end;
-
-        json_tokener_state_object_sep:
-          begin
-            if (c = '}') then
-            begin
-              inc(this^.pos);
-              saved_state := json_tokener_state_finish;
-              state := json_tokener_state_eatws;
-            end else
-            if (c = ',') then
-            begin
-              inc(this^.pos);
-              saved_state := json_tokener_state_object;
-              state := json_tokener_state_eatws;
-            end else
-            begin
-              err := json_tokener_error_parse_object;
-              goto out;
-            end;
-          end;
-      end;
-    until c = #0;
-
-    if(state <> json_tokener_state_finish) and
-       (saved_state <> json_tokener_state_finish) then
-      err := json_tokener_error_parse_eof;
-
-  out:
-    FreeMem(obj_field_name);
-    if(err = json_tokener_success) then
-    begin
-      Result := current;
-      Exit;
-    end;
-    if current <> nil then
-      current.Release;
-    Result := TJsonObject(-ord(err));
+    if x <= '9' then
+      Result := byte(x) - byte('0') else
+      Result := (byte(x) and 7) + 9;
   end;
+  function min(v1, v2: integer): integer; begin if v1 < v2 then result := v1 else result := v2 end;
+
 var
   obj: TJsonObject;
-  cur: TCursor;
+  c: char;
+  utf_out: array[0..2] of byte;
+
+  numi: JsonInt;
+  numd: double;
+  code: integer;
+  TokRec: PJsonTokenerSrec;
+label out, redo_char;
 begin
-  cur.source := s;
-  cur.pos := 0;
-  cur.pb := TJsonWriterString.Create;
-  obj := json_tokener_do_parse(@cur);
-  cur.pb.Free;
-  Result := obj;
+  obj := nil;
+  TokRec := @tok.stack[tok.depth];
+
+  tok.char_offset := 0;
+  tok.err := json_tokener_success;
+
+  repeat
+    if (tok.char_offset = len) then
+    begin
+      if (tok.depth = 0) and (TokRec^.state = json_tokener_state_eatws) and
+         (TokRec^.saved_state = json_tokener_state_finish) then
+        tok.err := json_tokener_success else
+        tok.err := json_tokener_continue;
+      goto out;
+    end;
+
+    c := str^;
+redo_char:
+    case TokRec^.state of
+    json_tokener_state_eatws:
+      begin
+        if c in [' ', #8,#10,#13,#9] then {nop} else
+        if (c = '/') then
+        begin
+          tok.pb.Reset;
+          tok.pb.Append(@c, 1);
+          TokRec^.state := json_tokener_state_comment_start;
+        end else begin
+          TokRec^.state := TokRec^.saved_state;
+          goto redo_char;
+        end
+      end;
+
+    json_tokener_state_start:
+      case c of
+      '"',
+      '''':
+        begin
+          TokRec^.state := json_tokener_state_string;
+          tok.pb.Reset;
+          tok.quote_char := c;
+        end;
+      '0'..'9',
+      '-':
+        begin
+          TokRec^.state := json_tokener_state_number;
+          tok.pb.Reset;
+          tok.is_double := 0;
+          goto redo_char;
+        end;
+      '{':
+        begin
+          TokRec^.state := json_tokener_state_eatws;
+          TokRec^.saved_state := json_tokener_state_object_field_start;
+          TokRec^.current := TJsonObject.Create(json_type_object);
+        end;
+      '[':
+        begin
+          TokRec^.state := json_tokener_state_eatws;
+          TokRec^.saved_state := json_tokener_state_array;
+          TokRec^.current := TJsonObject.Create(json_type_array);
+        end;
+      'N',
+      'n':
+        begin
+          TokRec^.state := json_tokener_state_null;
+          tok.pb.Reset;
+          tok.st_pos := 0;
+          goto redo_char;
+        end;
+      'T',
+      't',
+      'F',
+      'f':
+        begin
+          TokRec^.state := json_tokener_state_boolean;
+          tok.pb.Reset;
+          tok.st_pos := 0;
+          goto redo_char;
+        end;
+      else
+        tok.err := json_tokener_error_parse_unexpected;
+        goto out;
+      end;
+
+    json_tokener_state_finish:
+      begin
+        if(tok.depth = 0) then goto out;
+        TokRec^.current.AddRef;
+        obj := TokRec^.current;
+        tok.ResetLevel(tok.depth);
+        dec(tok.depth);
+        TokRec := @tok.stack[tok.depth]; 
+        goto redo_char;
+      end;
+    json_tokener_state_null:
+      begin
+        tok.pb.Append(@c, 1);
+{$IFDEF JSON_CASE_INSENSITIVE}
+        if (StrLIComp('null', tok.pb.FBuf, min(tok.st_pos + 1, 4)) = 0) then
+{$ELSE}
+        if (StrLComp('null', tok.pb.FBuf, min(tok.st_pos + 1, 4)) = 0) then
+{$ENDIF}
+        begin
+          if (tok.st_pos = 4) then
+          begin
+            TokRec^.current := nil;
+            TokRec^.saved_state := json_tokener_state_finish;
+            TokRec^.state := json_tokener_state_eatws;
+            goto redo_char;
+          end;
+        end else
+        begin
+          tok.err := json_tokener_error_parse_null;
+          goto out;
+        end;
+        inc(tok.st_pos);
+      end;
+
+    json_tokener_state_comment_start:
+      begin
+        if(c = '*') then
+        begin
+          TokRec^.state := json_tokener_state_comment;
+        end else
+        if (c = '/') then
+        begin
+          TokRec^.state := json_tokener_state_comment_eol;
+        end else
+        begin
+          tok.err := json_tokener_error_parse_comment;
+          goto out;
+        end;
+        tok.pb.Append(@c, 1);
+      end;
+
+    json_tokener_state_comment:
+      begin
+        if(c = '*') then
+          TokRec^.state := json_tokener_state_comment_end;
+        tok.pb.Append(@c, 1);
+      end;
+
+    json_tokener_state_comment_eol:
+      begin
+        if (c = #10) then
+        begin
+          //mc_debug("json_tokener_comment: %s\n", tok.pb.buf);
+          TokRec^.state := json_tokener_state_eatws;
+        end else
+        begin
+          tok.pb.Append(@c, 1);
+        end
+      end;
+
+    json_tokener_state_comment_end:
+      begin
+        tok.pb.Append(@c, 1);
+        if (c = '/') then
+        begin
+          //mc_debug("json_tokener_comment: %s\n", tok.pb.buf);
+          TokRec^.state := json_tokener_state_eatws;
+        end else
+        begin
+          TokRec^.state := json_tokener_state_comment;
+        end
+      end;
+
+    json_tokener_state_string:
+      begin
+        if (c = tok.quote_char) then
+        begin
+          TokRec^.current := TJsonObject.Create(tok.pb.Fbuf);
+          TokRec^.saved_state := json_tokener_state_finish;
+          TokRec^.state := json_tokener_state_eatws;
+        end else
+        if (c = '\') then
+        begin
+          TokRec^.saved_state := json_tokener_state_string;
+          TokRec^.state := json_tokener_state_string_escape;
+        end else
+        begin
+          tok.pb.Append(@c, 1);
+        end
+      end;
+
+    json_tokener_state_string_escape:
+      case c of
+      '"',
+      '\',
+      '/':
+        begin
+          tok.pb.Append(@c, 1);
+          TokRec^.state := TokRec^.saved_state;
+        end;
+      'b',
+      'n',
+      'r',
+      't':
+        begin
+          if(c = 'b') then tok.pb.Append(#8, 1)
+          else if(c = 'n') then tok.pb.Append(#10, 1)
+          else if(c = 'r') then tok.pb.Append(#13, 1)
+          else if(c = 't') then tok.pb.Append(#9, 1);
+          TokRec^.state := TokRec^.saved_state;
+        end;
+      'u':
+        begin
+          tok.ucs_char := 0;
+          tok.st_pos := 0;
+          TokRec^.state := json_tokener_state_escape_unicode;
+        end;
+      else
+        tok.err := json_tokener_error_parse_string;
+        goto out;
+      end;
+
+    json_tokener_state_escape_unicode:
+      begin
+        if (c in json_hex_chars_set) then
+        begin
+          inc(tok.ucs_char, (cardinal(hexdigit(c)) shl ((3-tok.st_pos)*4)));
+          inc(tok.st_pos);
+          if (tok.st_pos = 4) then
+          begin
+            if (tok.ucs_char < $80) then
+            begin
+              utf_out[0] := tok.ucs_char;
+              tok.pb.Append(@utf_out, 1);
+            end else
+            if (tok.ucs_char < $800) then
+            begin
+              utf_out[0] := $c0 or (tok.ucs_char shr 6);
+              utf_out[1] := $80 or (tok.ucs_char and $3f);
+              tok.pb.Append(@utf_out, 2);
+            end else
+            begin
+              utf_out[0] := $e0 or (tok.ucs_char shr 12);
+              utf_out[1] := $80 or ((tok.ucs_char shr 6) and $3f);
+              utf_out[2] := $80 or (tok.ucs_char and $3f);
+              tok.pb.Append(@utf_out, 3);
+            end;
+            TokRec^.state := TokRec^.saved_state;
+          end
+        end else
+        begin
+          tok.err := json_tokener_error_parse_string;
+          goto out;
+        end
+      end;
+
+    json_tokener_state_boolean:
+      begin
+        tok.pb.Append(@c, 1);
+{$IFDEF JSON_CASE_INSENSITIVE}
+        if (StrLIComp('true', tok.pb.FBuf, min(tok.st_pos + 1, 4)) = 0) then
+{$ELSE}
+        if (StrLComp('true', tok.pb.FBuf, min(tok.st_pos + 1, 4)) = 0) then
+{$ENDIF}
+        begin
+          if (tok.st_pos = 4) then
+          begin
+            TokRec^.current := TJsonObject.Create(true);
+            TokRec^.saved_state := json_tokener_state_finish;
+            TokRec^.state := json_tokener_state_eatws;
+            goto redo_char;
+          end
+        end else
+{$IFDEF JSON_CASE_INSENSITIVE}
+        if (StrLIComp('false', tok.pb.FBuf, min(tok.st_pos + 1, 5)) = 0) then
+{$ELSE}
+        if (StrLComp('false', tok.pb.FBuf, min(tok.st_pos + 1, 5)) = 0) then
+{$ENDIF}
+        begin
+          if (tok.st_pos = 5) then
+          begin
+            TokRec^.current := TJsonObject.Create(false);
+            TokRec^.saved_state := json_tokener_state_finish;
+            TokRec^.state := json_tokener_state_eatws;
+            goto redo_char;
+          end
+        end else
+        begin
+          tok.err := json_tokener_error_parse_boolean;
+          goto out;
+        end;
+        inc(tok.st_pos);
+      end;
+
+    json_tokener_state_number:
+      begin
+        if (c in json_number_chars_set) then
+        begin
+          tok.pb.Append(@c, 1);
+          if (c in ['.','e']) then tok.is_double := 1;
+        end else
+        begin
+          if (tok.is_double = 0) then
+          begin
+            val(tok.pb.FBuf, numi, code);
+            TokRec^.current := TJsonObject.Create(numi);
+          end else
+          if (tok.is_double <> 0) then
+          begin
+            val(tok.pb.FBuf, numd, code);
+            TokRec^.current := TJsonObject.Create(numd);
+          end else
+          begin
+            tok.err := json_tokener_error_parse_number;
+            goto out;
+          end;
+          TokRec^.saved_state := json_tokener_state_finish;
+          TokRec^.state := json_tokener_state_eatws;
+          goto redo_char;
+        end
+      end;
+
+    json_tokener_state_array:
+      begin
+        if (c = ']') then
+        begin
+          TokRec^.saved_state := json_tokener_state_finish;
+          TokRec^.state := json_tokener_state_eatws;
+        end else
+        begin
+          if(tok.depth >= JSON_TOKENER_MAX_DEPTH-1) then
+          begin
+            tok.err := json_tokener_error_depth;
+            goto out;
+          end;
+          TokRec^.state := json_tokener_state_array_add;
+          inc(tok.depth);
+          tok.ResetLevel(tok.depth);
+          TokRec := @tok.stack[tok.depth];
+          goto redo_char;
+        end
+      end;
+
+    json_tokener_state_array_add:
+      begin
+        TokRec^.current.AsArray.Add(obj);
+        TokRec^.saved_state := json_tokener_state_array_sep;
+        TokRec^.state := json_tokener_state_eatws;
+        goto redo_char;
+      end;  
+
+    json_tokener_state_array_sep:
+      begin
+        if (c = ']') then
+        begin
+          TokRec^.saved_state := json_tokener_state_finish;
+          TokRec^.state := json_tokener_state_eatws;
+        end else
+        if (c = ',') then
+        begin
+          TokRec^.saved_state := json_tokener_state_array;
+          TokRec^.state := json_tokener_state_eatws;
+        end else
+        begin
+          tok.err := json_tokener_error_parse_array;
+          goto out;
+        end
+      end;
+
+    json_tokener_state_object_field_start:
+      begin
+        if (c = '}') then
+        begin
+          TokRec^.saved_state := json_tokener_state_finish;
+          TokRec^.state := json_tokener_state_eatws;
+        end else
+        if (c in ['"', '''']) then
+        begin
+          tok.quote_char := c;
+          tok.pb.Reset;
+          TokRec^.state := json_tokener_state_object_field;
+        end else
+        begin
+          tok.err := json_tokener_error_parse_object_key_name;
+          goto out;
+        end
+      end;
+
+    json_tokener_state_object_field:
+      begin
+        if (c = tok.quote_char) then
+        begin
+          TokRec^.obj_field_name := strdup(tok.pb.FBuf);
+          TokRec^.saved_state := json_tokener_state_object_field_end;
+          TokRec^.state := json_tokener_state_eatws;
+        end else
+        if (c = '\') then
+        begin
+          TokRec^.saved_state := json_tokener_state_object_field;
+          TokRec^.state := json_tokener_state_string_escape;
+        end else
+        begin
+          tok.pb.Append(@c, 1);
+        end
+      end;
+
+    json_tokener_state_object_field_end:
+      begin
+        if (c = ':') then
+        begin
+          TokRec^.saved_state := json_tokener_state_object_value;
+          TokRec^.state := json_tokener_state_eatws;
+        end else
+        begin
+          tok.err := json_tokener_error_parse_object_key_sep;
+          goto out;
+        end
+      end;
+
+    json_tokener_state_object_value:
+      begin
+        if (tok.depth >= JSON_TOKENER_MAX_DEPTH-1) then
+        begin
+          tok.err := json_tokener_error_depth;
+          goto out;
+        end;
+        TokRec^.state := json_tokener_state_object_value_add;
+        inc(tok.depth);
+        tok.ResetLevel(tok.depth);
+        TokRec := @tok.stack[tok.depth];
+        goto redo_char;
+      end;
+
+    json_tokener_state_object_value_add:
+      begin
+        TokRec^.current.AsObject.Put(TokRec^.obj_field_name, obj);
+        FreeMem(TokRec^.obj_field_name);
+        TokRec^.obj_field_name := nil;
+        TokRec^.saved_state := json_tokener_state_object_sep;
+        TokRec^.state := json_tokener_state_eatws;
+        goto redo_char;
+      end;
+
+    json_tokener_state_object_sep:
+      begin
+        if (c = '}') then
+        begin
+          TokRec^.saved_state := json_tokener_state_finish;
+          TokRec^.state := json_tokener_state_eatws;
+        end else
+        if (c = ',') then
+        begin
+          TokRec^.saved_state := json_tokener_state_object_field_start;
+          TokRec^.state := json_tokener_state_eatws;
+        end else
+        begin
+          tok.err := json_tokener_error_parse_object_value_sep;
+          goto out;
+        end
+      end;
+    end;
+    inc(str);
+    inc(tok.char_offset);
+  until c = #0;
+
+  if(TokRec^.state <> json_tokener_state_finish) and
+     (TokRec^.saved_state <> json_tokener_state_finish) then
+    tok.err := json_tokener_error_parse_eof;
+
+ out:
+  if(tok.err = json_tokener_success) then
+  begin
+    TokRec^.current.AddRef;
+    Result := TokRec^.current;
+    Exit;
+  end;
+  //mc_debug("json_tokener_parse_ex: error %s at offset %d\n",
+  //json_tokener_errors[tok.err], tok.char_offset);
+  Result := nil;
 end;
 
 function TJsonObject.SaveTo(stream: TStream; format: boolean): integer;
@@ -1169,6 +1270,7 @@ begin
         repeat
           Put(ite.key, ite.val.Clone);
         until not JsonFindNext(ite);
+        JsonFindClose(ite);
       end;
     json_type_array:
       begin
@@ -1213,7 +1315,7 @@ end;
 constructor TJsonArray.Create;
 begin
   inherited Create;
-  FSize := ARRAY_LIST_DEFAULT_SIZE;
+  FSize := JSON_ARRAY_LIST_DEFAULT_SIZE;
   FLength := 0;
   GetMem(FArray, sizeof(Pointer) * FSize);
   FillChar(FArray^, sizeof(Pointer) * FSize, 0);
@@ -1265,332 +1367,31 @@ begin
   if(FLength <= i) then FLength := i + 1;
 end;
 
-{ TJsonTable }
-
-constructor TJsonTable.Create(AName: PChar; size: Integer);
-var
-  i: Integer;
-begin
-  FCount := 0;
-  FSize := size;
-  FName := name;
-  GetMem(FTable, size * sizeof(TLHEntry));
-  FillChar(FTable^, size * sizeof(TLHEntry), 0);
-  for i := 0 to size - 1 do
-    FTable^[i].k := LH_EMPTY;
-  FCollisions := 0;
-  FResizes := 0;
-  FLookups := 0;
-  FInserts := 0;
-  FDeletes := 0;
-  FHead := nil;
-  FTail := nil;
-end;
-
-class procedure TJsonTable.doDeleteEntry(e: PLHEntry);
-begin
-  FreeMem(e^.k);
-end;
-
-destructor TJsonTable.Destroy;
-var
-  c: PLHEntry;
-begin
-  c := FHead;
-  while c <> nil do
-  begin
-      doDeleteEntry(c);
-    c := c^.next;
-  end;
-  if FTable <> nil then
-    FreeMem(FTable);
-  inherited;
-end;
-
-function TJsonTable.InternalInsert(k, v: Pointer): Integer;
-var
-  h, n, f: Cardinal;
-begin
-// INSERT
-  inc(FInserts);
-  if(FCount > FSize * 0.66) then
-    InternalResize(FSize * 2);
-
-
-  // lookup and delete
-  h := doHash(k);
-  n := h mod FSize;
-  f := 0; // free entry
-
-  inc(FLookups);
-  while true do
-  begin
-    if FTable^[n].k = LH_EMPTY then
-      begin
-        f := n;
-        Break
-      end else
-    if (FTable^[n].k = LH_FREED) then f := n else
-    if (FTable^[n].h = h) and (doEqual(FTable^[n].k, k) <> 0) then
-    begin
-      f := n;
-      // delete entry
-      InternalDeleteEntry(@FTable^[n]);
-      Break;
-    end;
-    inc(n);
-    if(n = FSize) then n := 0;
-  end;
-
-  if f > 0 then
-    n := f else
-    n := h mod FSize;
-
-  while true do
-  begin
-    if (FTable^[n].k = LH_EMPTY) or (FTable^[n].k = LH_FREED) then Break;
-    inc(FCollisions);
-    inc(n);
-    if(n = FSize) then n := 0;
-  end;
-  FTable^[n].k := k;
-  FTable^[n].v := v;
-  FTable^[n].h := h;
-
-  inc(FCount);
-
-  if(FHead = nil) then
-  begin
-    FTail := @FTable^[n];
-    FHead := FTail;
-    FTable^[n].prev := nil;
-    FTable^[n].next := nil;
-  end else
-  begin
-    FTail^.next := @FTable^[n];
-    FTable^[n].prev := FTail;
-    FTable^[n].next := nil;
-    FTail := @FTable^[n];
-  end;
-  Result := 0;
-end;
-
-function TJsonTable.InternalDelete(k: Pointer): Integer;
-var
-  e: PLHEntry;
-begin
-  e := InternalLookupEntry(k);
-  if(e = nil) then
-    Result := -1 else
-    Result := InternalDeleteEntry(e);
-end;
-
-function TJsonTable.InternalDeleteEntry(e: PLHEntry): Integer;
-var
-  n: PtrInt;
-begin
-  n := (PtrInt(e) - PtrInt(FTable)) div sizeof(TLHEntry);
-  if (n < 0) then
-  begin
-    Result := -2;
-    Exit;
-  end;
-
-  if(FTable^[n].k = LH_EMPTY) or (FTable^[n].k = LH_FREED) then
-  begin
-    Result := -1;
-    Exit;
-  end;
-  dec(FCount);
-  doDeleteEntry(e);
-  FTable^[n].v := nil;
-  FTable^[n].k := LH_FREED;
-  FTable^[n].h := 0;
-
-  if(FTail = @FTable^[n]) and (FHead = @FTable^[n]) then
-  begin
-    FHead := nil;
-    FTail := nil;
-  end else if (FHead = @FTable^[n]) then
-  begin
-    FHead^.next^.prev := nil;
-    FHead := FHead^.next;
-  end else if (FTail = @FTable^[n]) then
-  begin
-    FTail^.prev^.next := nil;
-    FTail := FTail^.prev;
-  end else
-  begin
-    FTable^[n].prev^.next := FTable^[n].next;
-    FTable^[n].next^.prev := FTable^[n].prev;
-  end;
-  FTable^[n].next := nil;
-  FTable^[n].prev := nil;
-  Result := 0;
-end;
-
-
-function TJsonTable.InternalLookup(k: Pointer): Pointer;
-var
-  e: PLHEntry;
-begin
-  e := InternalLookupEntry(k);
-  if (e <> nil) then
-    Result := e^.v else
-    Result := nil;
-end;
-
-procedure TJsonTable.InternalResize(new_size: Integer);
-var
-  new_t: TJsonTable;
-  ent: PLHEntry;
-begin
-  new_t := TJsonTableClass(ClassType).Create(FName, new_size);
-  ent := FHead;
-  while(ent <> nil) do
-  begin
-    new_t.Internalinsert(ent^.k, ent^.v);
-    ent := ent^.next;
-  end;
-  FreeMem(FTable);
-  FTable := new_t.FTable;
-  new_t.FTable := nil;
-  FSize := new_size;
-  FHead := new_t.FHead;
-  FTail := new_t.FTail;
-  new_t.FHead := nil;
-  new_t.FTail := nil;
-  inc(FResizes);
-  new_t.Free;
-end;
-
-function TJsonTable.InternalLookupEntry(k: Pointer): PLHEntry;
-var
-  h, n: Cardinal;
-begin
-  h := doHash(k);
-  n := h mod FSize;
-
-  inc(FLookups);
-  while true do
-  begin
-    if FTable^[n].k = LH_EMPTY then
-      begin
-        Result := nil;
-        Exit;
-      end else
-    if (FTable^[n].k = LH_FREED) then {nop} else
-    if (FTable^[n].h = h) and (doEqual(FTable^[n].k, k) <> 0) then
-    begin
-      Result := @FTable^[n];
-      Exit;
-    end;
-    inc(n);
-    if(n = FSize) then n := 0;
-  end;
-  Result := nil;
-end;
-
-function TJsonTable.InternalAdd(k, v: Pointer): Integer;
-begin
-  Result := InternalInsert(k, v);
-end;
-
-{ TJsonTableString }
-
-function TJsonTableString.Delete(k: PChar): Integer;
-begin
-  Result := InternalDelete(k);
-end;
-
-class function TJsonTableString.doEqual(k1, k2: Pointer): integer;
-begin
-{$IFDEF JSON_CASE_INSENSITIVE}
-  Result := Integer(StrIComp(k1, k2) = 0);
-{$ELSE}
-  Result := Integer(StrComp(k1, k2) = 0);
-{$ENDIF}
-end;
-
-class function TJsonTableString.doHash(k: Pointer): Cardinal;
-var
-  h: Cardinal;
-  data: PChar;
-begin
-  h := 0;
-  data := k;
-  if data <> nil then
-    while(data^ <> #0 ) do
-    begin
-  {$IFDEF JSON_CASE_INSENSITIVE}
-      h := h*129 + byte(UpCase(data^)) + LH_PRIME;
-  {$ELSE}
-      h := h*129 + byte(data^) + LH_PRIME;
-  {$ENDIF}
-      inc(data);
-    end;
-  Result := h;
-end;
-
-function TJsonTableString.LookupEntry(k: PChar): PLHEntry;
-begin
-  Result := InternalLookupEntry(k)
-end;
-
-function TJsonTableString.InternalAdd(k, v: Pointer): Integer;
-begin
-  result := Internalinsert(strdup(k), v);
-end;
-
-{ TJsonTablePointer }
-
-class function TJsonTablePointer.doEqual(k1, k2: Pointer): integer;
-begin
-  Result := Integer(k1 = k2);
-end;
-
-class function TJsonTablePointer.doHash(k: Pointer): Cardinal;
-begin
-  Result := Cardinal(((PtrUInt(k) * LH_PRIME) shr 4) and High(Cardinal));
-end;
-
-{ TJsonTableObject }
-
-class procedure TJsonTableObject.doDeleteEntry(e: PLHEntry);
-begin
-  inherited;
-  if e^.v <> nil then
-    TJsonObject(e^.v).Release;
-end;
-
-procedure TJsonTableObject.Put(k: PChar; v: TJsonObject);
-begin
-  InternalAdd(k, v);
-end;
-
-function TJsonTableObject.Get(k: PChar): TJsonObject;
-begin
-   Result := TJsonObject(InternalLookup(k));
-end;
-
 { TJsonWriterString }
 
 function TJsonWriterString.Append(buf: PChar; Size: Integer): Integer;
-var
-  new_size: Integer;
   function max(a, b: Integer): integer; begin if a > b then  Result := a else Result := b end;
 begin
   Result := size;
-  if Size = 0 then exit;
-  if(FSize - FBPos <= size) then
+  if Size > 0 then
   begin
-    new_size := max(FSize * 2, FBPos + size + 8);
-    ReallocMem(FBuf, new_size);
-    FSize := new_size;
+    if (FSize - FBPos <= size) then
+    begin
+      FSize := max(FSize * 2, FBPos + size + 8);
+      ReallocMem(FBuf, FSize);
+    end;
+    // fast move
+    case size of
+    1: FBuf[FBPos] := buf^;
+    2: PWord(@FBuf[FBPos])^ := PWord(buf)^;
+    4: PInteger(@FBuf[FBPos])^ := PInteger(buf)^;
+    8: PInt64(@FBuf[FBPos])^ := PInt64(buf)^;
+    else
+      move(buf^, FBuf[FBPos], size);
+    end;
+    inc(FBPos, size);
+    FBuf[FBPos] := #0;
   end;
-  move(PChar(buf)^, Pointer(PtrInt(FBuf) + FBPos)^, size);
-  inc(FBPos, size);
-  FBuf[FBPos] := #0;
 end;
 
 function TJsonWriterString.Append(buf: PChar): Integer;
@@ -1695,54 +1496,27 @@ end;
 
 { TJsonRpcService }
 
-type
-  PRpcMethod = ^TRpcMethod;
-  TRpcMethod = record
-    name: PChar;
-    method: TJsonRpcMethod;
-  end;
-
-constructor TJsonRpcService.Create(Aname: PChar);
+procedure TJsonRpcService.doDeleteEntry(Entry: TJsonAvlEntry);
 begin
-  inherited Create(name, JSON_OBJECT_DEF_HASH_ENTIRES);
-  FName := strdup(Aname);
-end;
-
-destructor TJsonRpcService.Destroy;
-begin
-  FreeMem(FName);
+  Freemem(Entry.FObj);
   inherited;
 end;
 
-class procedure TJsonRpcService.doDeleteEntry(e: PLHEntry);
-var
-  p: PRpcMethod;
-begin
-  inherited;
-  p := PRpcMethod(e^.v);
-  if p <> nil then
-  begin
-    if p^.name <> nil then
-      FreeMem(p^.name);
-    FreeMem(p);
-  end;
-end;
-
-procedure TJsonRpcService.Invoke(Obj: TJsonTableObject; out Result: TJsonObject; out error: string);
+procedure TJsonRpcService.Invoke(Obj: TJsonTableString; out Result: TJsonObject; out error: string);
 var
   Method: TJsonObject;
   Params: TJsonObject;
-  p: PRpcMethod;
+  p: TJsonAvlEntry;
 begin
   Result := nil;
   // find Method
-  Method := TJsonObject(obj.InternalLookup(PChar('method')));
+  Method := TJsonObject(obj.Get(PChar('method')));
   if Method = nil then
   begin
     Error := 'Procedure not found.';
     Exit;
   end;
-  p := InternalLookup(Method.AsString);
+  p := search(Method.AsString);
   if p = nil then
   begin
     error := format('Method %s not found.', [Method.AsString]);
@@ -1750,7 +1524,7 @@ begin
   end;
 
   // find params
-  Params := TJsonObject(obj.InternalLookup(PChar('params')));
+  Params := obj.Get(PChar('params'));
   if not (JsonIsValid(Params) and (Params.JsonType = json_type_array)) then
   begin
     Error := 'Params must be an array.';
@@ -1759,7 +1533,7 @@ begin
 
   // Call method
   try
-    p^.method(Params, Result);
+    PJsonRpcMethod(p.FObj)^(Params, Result);
   except
     on E: Exception do
     begin
@@ -1771,27 +1545,25 @@ end;
 procedure TJsonRpcService.RegisterMethod(Aname: PChar;
   Sender: TObject; Method: Pointer);
 var
-  p: PRpcMethod;
+  p: PJsonRpcMethod;
 begin
-  GetMem(p, sizeof(TRpcMethod));
-  p^.name := strdup(AName);
-  TMethod(p^.method).Code := Method;
-  TMethod(p^.method).Data := sender;
-  InternalAdd(p^.name, p);
+  GetMem(p, sizeof(TJsonRpcMethod));
+  TMethod(p^).Code := Method;
+  TMethod(p^).Data := sender;
+  Insert(TJsonAvlEntry.Create(Aname, p));
 end;
 
 { TJsonRpcServiceList }
 
-class procedure TJsonRpcServiceList.doDeleteEntry(e: PLHEntry);
+procedure TJsonRpcServiceList.doDeleteEntry(Entry: TJsonAvlEntry);
 begin
+  TObject(Entry.FObj).Free;
   inherited;
-  if (e^.v) <> nil then
-    TJsonRpcService(e^.v).Free;
 end;
 
 function TJsonRpcServiceList.Invoke(service: TJsonRpcService; Obj: TJsonObject; var error: string): TJsonObject;
 var
-  Table: TJsonTableObject;
+  Table: TJsonTableString;
 begin
   Result := nil;
   if (Obj.JsonType <> json_type_object) then
@@ -1813,12 +1585,12 @@ end;
 function TJsonRpcServiceList.Invoke(service: PChar; s: PChar): TJsonObject;
 var
   js, ret, id: TJsonObject;
-  p: TJsonRpcService;
+  p: TJsonAvlEntry;
   error: string;
 begin
 
-  p := TJsonRpcService(InternalLookup(service));
-  if p = nil then
+  p := Search(service);
+  if (p = nil) then
   begin
     Result := TJsonObject.Create(json_type_object);
     with Result.AsObject do
@@ -1833,7 +1605,7 @@ begin
   js := TJsonObject.Parse(s);
   if JsonIsValid(js) then
   begin
-    ret := Invoke(p, js, error);
+    ret := Invoke(TJsonRpcService(p.FObj), js, error);
     Result := TJsonObject.Create(json_type_object);
     with Result.AsObject do
     begin
@@ -1858,9 +1630,9 @@ begin
   end;
 end;
 
-procedure TJsonRpcServiceList.RegisterService(obj: TJsonRpcService);
+procedure TJsonRpcServiceList.RegisterService(AName: PChar; obj: TJsonRpcService);
 begin
-  InternalAdd(obj.FName, obj);
+  Insert(TJsonAvlEntry.Create(AName, obj));
 end;
 
 { TJsonWriter }
@@ -1877,7 +1649,7 @@ function TJsonWriter.Write(obj: TJsonObject; format: boolean; level: integer): I
       c := str[pos];
       case c of
         #0: break;
-        #8,#10,#13,#9,'"':
+        #8,#10,#13,#9,'"','\','/':
           begin
             if(pos - start_offset > 0) then
               Append(str + start_offset, pos - start_offset);
@@ -1885,22 +1657,25 @@ function TJsonWriter.Write(obj: TJsonObject; format: boolean; level: integer): I
             else if (c = #10) then Append('\n', 2)
             else if (c = #13) then Append('\r', 2)
             else if (c = #9) then Append('\t', 2)
-            else if (c = '"') then Append('\"', 2);
+            else if (c = '"') then Append('\"', 2)
+            else if (c = '\') then Append('\\', 2)
+            else if (c = '/') then Append('\/', 2);
             inc(pos);
             start_offset := pos;
           end;
       else
         if (c < ' ') then
         begin
-    if(pos - start_offset > 0) then
-      Append(str + start_offset, pos - start_offset);
-      buf := '\u00';
-      buf[4] := json_hex_chars[ord(c) shr 4];
-      buf[5] := json_hex_chars[ord(c) and $f];
-      Append(buf, 6);
-      inc(pos);
-      start_offset := pos;
-    end else inc(pos);
+          if(pos - start_offset > 0) then
+            Append(str + start_offset, pos - start_offset);
+          buf := '\u00';
+          buf[4] := json_hex_chars[ord(c) shr 4];
+          buf[5] := json_hex_chars[ord(c) and $f];
+          Append(buf, 6);
+          inc(pos);
+          start_offset := pos;
+        end else
+          inc(pos);
       end;
     until c = #0;
     if(pos - start_offset > 0) then
@@ -1945,6 +1720,7 @@ begin
             write(iter.val, format, level);
           inc(i);
         until not JsonFindNext(iter);
+        JsonFindClose(iter);
         if format then Indent(-1, true);
         Result := Append('}', 1);
       end;
@@ -1992,6 +1768,779 @@ begin
   else
     Result := 0;
   end;
+end;
+
+{ TJsonTokener }
+
+constructor TJsonTokener.Create;
+begin
+  pb := TJsonWriterString.Create;
+  Reset;
+end;
+
+destructor TJsonTokener.Destroy;
+begin
+  Reset;
+  pb.Free;
+  inherited;
+end;
+
+procedure TJsonTokener.Reset;
+var
+  i: integer;
+begin
+  for i := depth downto 0 do
+    ResetLevel(i);
+  depth := 0;
+  err := json_tokener_success;
+end;
+
+procedure TJsonTokener.ResetLevel(adepth: integer);
+begin
+  stack[adepth].state := json_tokener_state_eatws;
+  stack[adepth].saved_state := json_tokener_state_start;
+  stack[adepth].current.Release;
+  stack[adepth].current := nil;
+  FreeMem(stack[adepth].obj_field_name);
+  stack[adepth].obj_field_name := nil;
+end;
+
+{ TJsonAvlTree }
+
+constructor TJsonAvlTree.Create;
+begin
+  FRoot := nil;
+  FCount := 0;
+end;
+
+destructor TJsonAvlTree.Destroy;
+begin
+  Clear;
+  inherited;
+end;
+
+function TJsonAvlTree.IsEmpty: boolean;
+begin
+  result := FRoot = nil;
+end;
+
+function TJsonAvlTree.balance(bal: TJsonAvlEntry): TJsonAvlEntry;
+var
+  deep, old: TJsonAvlEntry;
+  bf: integer;
+begin
+  if (bal.FBf > 0) then
+  begin
+    deep := bal.FGt;
+    if (deep.FBf < 0) then
+    begin
+      old := bal;
+      bal := deep.FLt;
+      old.FGt := bal.FLt;
+      deep.FLt := bal.FGt;
+      bal.FLt := old;
+      bal.FGt := deep;
+      bf := bal.FBf;
+      if (bf <> 0) then
+      begin
+        if (bf > 0) then
+        begin
+          old.FBf := -1;
+          deep.FBf := 0;
+        end else
+        begin
+          deep.FBf := 1;
+          old.FBf := 0;
+        end;
+        bal.FBf := 0;
+      end else
+      begin
+        old.FBf := 0;
+        deep.FBf := 0;
+      end;
+    end else
+    begin
+      bal.FGt := deep.FLt;
+      deep.FLt := bal;
+      if (deep.FBf = 0) then
+      begin
+        deep.FBf := -1;
+        bal.FBf := 1;
+      end else
+      begin
+        deep.FBf := 0;
+        bal.FBf := 0;
+      end;
+      bal := deep;
+    end;
+  end else
+  begin
+    (* "Less than" subtree is deeper. *)
+
+    deep := bal.FLt;
+    if (deep.FBf > 0) then
+    begin
+      old := bal;
+      bal := deep.FGt;
+      old.FLt := bal.FGt;
+      deep.FGt := bal.FLt;
+      bal.FGt := old;
+      bal.FLt := deep;
+
+      bf := bal.FBf;
+      if (bf <> 0) then
+      begin
+        if (bf < 0) then
+        begin
+          old.FBf := 1;
+          deep.FBf := 0;
+        end else
+        begin
+          deep.FBf := -1;
+          old.FBf := 0;
+        end;
+        bal.FBf := 0;
+      end else
+      begin
+        old.FBf := 0;
+        deep.FBf := 0;
+      end;
+    end else
+    begin
+      bal.FLt := deep.FGt;
+      deep.FGt := bal;
+      if (deep.FBf = 0) then
+      begin
+        deep.FBf := 1;
+        bal.FBf := -1;
+      end else
+      begin
+        deep.FBf := 0;
+        bal.FBf := 0;
+      end;
+      bal := deep;
+    end;
+  end;
+  Result := bal;
+end;
+
+function TJsonAvlTree.Insert(h: TJsonAvlEntry): TJsonAvlEntry;
+var
+  unbal, parentunbal, hh, parent: TJsonAvlEntry;
+  depth, unbaldepth: longint;
+  cmp: integer;
+  unbalbf: integer;
+  branch: TJsonAvlBitArray;
+begin
+  inc(FCount);
+  h.FLt := nil;
+  h.FGt := nil;
+  h.FBf := 0;
+  branch := [];
+
+  if (FRoot = nil) then
+    FRoot := h
+  else
+  begin
+    unbal := nil;
+    parentunbal := nil;
+    depth := 0;
+    unbaldepth := 0;
+    hh := FRoot;
+    parent := nil;
+    repeat
+      if (hh.FBf <> 0) then
+      begin
+        unbal := hh;
+        parentunbal := parent;
+        unbaldepth := depth;
+      end;
+      if hh.FHash <> h.FHash then
+        cmp := hh.FHash - h.FHash else
+        cmp := CompareNodeNode(h, hh);
+      if (cmp = 0) then
+      begin
+        Result := hh;
+        doDeleteEntry(h);
+        dec(FCount);
+        exit;
+      end;
+      parent := hh;
+      if (cmp > 0) then
+      begin
+        hh := hh.FGt;
+        include(branch, depth);
+      end else
+      begin
+        hh := hh.FLt;
+        exclude(branch, depth);
+      end;
+      inc(depth);
+    until (hh = nil);
+
+    if (cmp < 0) then
+      parent.FLt := h else
+      parent.FGt := h;
+
+    depth := unbaldepth;
+
+    if (unbal = nil) then
+      hh := FRoot
+    else
+    begin
+      if depth in branch then
+        cmp := 1 else
+        cmp := -1;
+      inc(depth);
+      unbalbf := unbal.FBf;
+      if (cmp < 0) then
+        dec(unbalbf) else
+        inc(unbalbf);
+      if cmp < 0 then
+        hh := unbal.FLt else
+        hh := unbal.FGt;
+      if ((unbalbf <> -2) and (unbalbf <> 2)) then
+      begin
+        unbal.FBf := unbalbf;
+        unbal := nil;
+      end;
+    end;
+
+    if (hh <> nil) then
+      while (h <> hh) do
+      begin
+        if depth in branch then
+          cmp := 1 else
+          cmp := -1;
+        inc(depth);
+        if (cmp < 0) then
+        begin
+          hh.FBf := -1;
+          hh := hh.FLt;
+        end else (* cmp > 0 *)
+        begin
+          hh.FBf := 1;
+          hh := hh.FGt;
+        end;
+      end;
+
+    if (unbal <> nil) then
+    begin
+      unbal := balance(unbal);
+      if (parentunbal = nil) then
+        FRoot := unbal
+      else
+      begin
+        depth := unbaldepth - 1;
+        if depth in branch then
+          cmp := 1 else
+          cmp := -1;
+        if (cmp < 0) then
+          parentunbal.FLt := unbal else
+          parentunbal.FGt := unbal;
+      end;
+    end;
+  end;
+  result := h;
+end;
+
+function TJsonAvlTree.Search(k: PChar; st: TJsonAvlSearchTypes): TJsonAvlEntry;
+var
+  cmp, target_cmp: integer;
+  match_h, h: TJsonAvlEntry;
+  ha: Cardinal;
+begin
+  ha := TJsonAvlEntry.Hash(k);
+
+  match_h := nil;
+  h := FRoot;
+
+  if (stLess in st) then
+    target_cmp := 1 else
+    if (stGreater in st) then
+      target_cmp := -1 else
+      target_cmp := 0;
+
+  while (h <> nil) do
+  begin
+    cmp := h.FHash - ha;
+    if cmp = 0 then
+      cmp := CompareKeyNode(k, h);
+    if (cmp = 0) then
+    begin
+      if (stEqual in st) then
+      begin
+        match_h := h;
+        break;
+      end;
+      cmp := -target_cmp;
+    end
+    else
+    if (target_cmp <> 0) then
+      if ((cmp xor target_cmp) and JSON_AVL_MASK_HIGH_BIT) = 0 then
+        match_h := h;
+    if cmp < 0 then
+      h := h.FLt else
+      h := h.FGt;
+  end;
+  result := match_h;
+end;
+
+procedure TJsonAvlTree.Delete(k: PChar);
+var
+  depth, rm_depth: longint;
+  branch: TJsonAvlBitArray;
+  h, parent, child, path, rm, parent_rm: TJsonAvlEntry;
+  cmp, cmp_shortened_sub_with_path, reduced_depth, bf: integer;
+  ha: Cardinal;
+begin
+  ha := TJsonAvlEntry.Hash(k);
+  cmp_shortened_sub_with_path := 0;
+  branch := [];
+
+  depth := 0;
+  h := FRoot;
+  parent := nil;
+  while true do
+  begin
+    if (h = nil) then
+      exit;
+    cmp := h.FHash - ha;
+    if cmp = 0 then
+      cmp := CompareKeyNode(k, h);
+    if (cmp = 0) then
+      break;
+    parent := h;
+    if (cmp > 0) then
+    begin
+      h := h.FGt;
+      include(branch, depth)
+    end else
+    begin
+      h := h.FLt;
+      exclude(branch, depth)
+    end;
+    inc(depth);
+    cmp_shortened_sub_with_path := cmp;
+  end;
+  rm := h;
+  parent_rm := parent;
+  rm_depth := depth;
+
+  if (h.FBf < 0) then
+  begin
+    child := h.FLt;
+    exclude(branch, depth);
+    cmp := -1;
+  end else
+  begin
+    child := h.FGt;
+    include(branch, depth);
+    cmp := 1;
+  end;
+  inc(depth);
+
+  if (child <> nil) then
+  begin
+    cmp := -cmp;
+    repeat
+      parent := h;
+      h := child;
+      if (cmp < 0) then
+      begin
+        child := h.FLt;
+        exclude(branch, depth);
+      end else
+      begin
+        child := h.FGt;
+        include(branch, depth);
+      end;
+      inc(depth);
+    until (child = nil);
+
+    if (parent = rm) then
+      cmp_shortened_sub_with_path := -cmp else
+      cmp_shortened_sub_with_path := cmp;
+
+    if cmp > 0 then
+      child := h.FLt else
+      child := h.FGt;
+  end;
+
+  if (parent = nil) then
+    FRoot := child else
+    if (cmp_shortened_sub_with_path < 0) then
+      parent.FLt := child else
+      parent.FGt := child;
+
+  if parent = rm then
+    path := h else
+    path := parent;
+
+  if (h <> rm) then
+  begin
+    h.FLt := rm.FLt;
+    h.FGt := rm.FGt;
+    h.FBf := rm.FBf;
+    if (parent_rm = nil) then
+      FRoot := h
+    else
+    begin
+      depth := rm_depth - 1;
+      if (depth in branch) then
+        parent_rm.FGt := h else
+        parent_rm.FLt := h;
+    end;
+  end;
+
+  if (path <> nil) then
+  begin
+    h := FRoot;
+    parent := nil;
+    depth := 0;
+    while (h <> path) do
+    begin
+      if (depth in branch) then
+      begin
+        child := h.FGt;
+        h.FGt := parent;
+      end else
+      begin
+        child := h.FLt;
+        h.FLt := parent;
+      end;
+      inc(depth);
+      parent := h;
+      h := child;
+    end;
+
+    reduced_depth := 1;
+    cmp := cmp_shortened_sub_with_path;
+    while true do
+    begin
+      if (reduced_depth <> 0) then
+      begin
+        bf := h.FBf;
+        if (cmp < 0) then
+          inc(bf) else
+          dec(bf);
+        if ((bf = -2) or (bf = 2)) then
+        begin
+          h := balance(h);
+          bf := h.FBf;
+        end else
+          h.FBf := bf;
+        reduced_depth := integer(bf = 0);
+      end;
+      if (parent = nil) then
+        break;
+      child := h;
+      h := parent;
+      dec(depth);
+      if depth in branch then
+        cmp := 1 else
+        cmp := -1;
+      if (cmp < 0) then
+      begin
+        parent := h.FLt;
+        h.FLt := child;
+      end else
+      begin
+        parent := h.FGt;
+        h.FGt := child;
+      end;
+    end;
+    FRoot := h;
+  end;
+  if rm <> nil then
+  begin
+    doDeleteEntry(rm);
+    dec(FCount);
+  end;
+end;
+
+procedure TJsonAvlTree.Clear;
+var
+  node1, node2: TJsonAvlEntry;
+begin
+  node1 := FRoot;
+  while node1 <> nil do
+  begin
+    if (node1.FLt = nil) then
+    begin
+      node2 := node1.FGt;
+      doDeleteEntry(node1);
+    end
+    else
+    begin
+      node2 := node1.FLt;
+      node1.FLt := node2.FGt;
+      node2.FGt := node1;
+    end;
+    node1 := node2;
+  end;
+  FRoot := nil;
+  FCount := 0;
+end;
+
+function TJsonAvlTree.CompareKeyNode(k: PChar; h: TJsonAvlEntry): integer;
+begin
+{$IFDEF JSON_CASE_INSENSITIVE}
+    Result := StrIComp(k, h.FName);
+{$ELSE}
+    Result := StrComp(k, h.FName);
+{$ENDIF}
+end;
+
+function TJsonAvlTree.CompareNodeNode(node1, node2: TJsonAvlEntry): integer;
+begin
+{$IFDEF JSON_CASE_INSENSITIVE}
+    Result := StrIComp(node1.FName, node2.FName);
+{$ELSE}
+    Result := StrComp(node1.FName, node2.FName);
+{$ENDIF}
+end;
+
+{ TJsonAvlIterator }
+
+(* Initialize depth to invalid value, to indicate iterator is
+** invalid.   (Depth is zero-base.)  It's not necessary to initialize
+** iterators prior to passing them to the "start" function.
+*)
+
+constructor TJsonAvlIterator.Create(tree: TJsonAvlTree);
+begin
+  FDepth := not 0;
+  FTree := tree;
+end;
+
+procedure TJsonAvlIterator.Search(k: PChar; st: TJsonAvlSearchTypes);
+var
+  h: TJsonAvlEntry;
+  d: longint;
+  cmp, target_cmp: integer;
+  ha: Cardinal;
+begin
+  ha := TJsonAvlEntry.Hash(k);
+  h := FTree.FRoot;
+  d := 0;
+  FDepth := not 0;
+  if (h = nil) then
+    exit;
+
+  if (stLess in st) then
+    target_cmp := 1 else
+      if (stGreater in st) then
+        target_cmp := -1 else
+          target_cmp := 0;
+
+  while true do
+  begin
+    cmp := h.FHash - ha;
+    if cmp = 0 then
+      cmp := FTree.CompareKeyNode(k, h);
+    if (cmp = 0) then
+    begin
+      if (stEqual in st) then
+      begin
+        FDepth := d;
+        break;
+      end;
+      cmp := -target_cmp;
+    end
+    else
+    if (target_cmp <> 0) then
+      if ((cmp xor target_cmp) and JSON_AVL_MASK_HIGH_BIT) = 0 then
+        FDepth := d;
+    if cmp < 0 then
+      h := h.FLt else
+      h := h.FGt;
+    if (h = nil) then
+      break;
+    if (cmp > 0) then
+      include(FBranch, d) else
+      exclude(FBranch, d);
+    FPath[d] := h;
+    inc(d);
+  end;
+end;
+
+procedure TJsonAvlIterator.First;
+var
+  h: TJsonAvlEntry;
+begin
+  h := FTree.FRoot;
+  FDepth := not 0;
+  FBranch := [];
+  while (h <> nil) do
+  begin
+    if (FDepth <> not 0) then
+      FPath[FDepth] := h;
+    inc(FDepth);
+    h := h.FLt;
+  end;
+end;
+
+procedure TJsonAvlIterator.Last;
+var
+  h: TJsonAvlEntry;
+begin
+  h := FTree.FRoot;
+  FDepth := not 0;
+  FBranch := [0..JSON_AVL_MAX_DEPTH - 1];
+  while (h <> nil) do
+  begin
+    if (FDepth <> not 0) then
+      FPath[FDepth] := h;
+    inc(FDepth);
+    h := h.FGt;
+  end;
+end;
+
+function TJsonAvlIterator.GetIter: TJsonAvlEntry;
+begin
+  if (FDepth = not 0) then
+  begin
+    result := nil;
+    exit;
+  end;
+  if FDepth = 0 then
+    Result := FTree.FRoot else
+    Result := FPath[FDepth - 1];
+end;
+
+procedure TJsonAvlIterator.Next;
+var
+  h: TJsonAvlEntry;
+begin
+  if (FDepth <> not 0) then
+  begin
+    if FDepth = 0 then
+      h := FTree.FRoot.FGt else
+      h := FPath[FDepth - 1].FGt;
+
+    if (h = nil) then
+      repeat
+        if (FDepth = 0) then
+        begin
+          FDepth := not 0;
+          break;
+        end;
+        dec(FDepth);
+      until (not (FDepth in FBranch))
+    else
+    begin
+      include(FBranch, FDepth);
+      FPath[FDepth] := h;
+      inc(FDepth);
+      while true do
+      begin
+        h := h.FLt;
+        if (h = nil) then
+          break;
+        exclude(FBranch, FDepth);
+        FPath[FDepth] := h;
+        inc(FDepth);
+      end;
+    end;
+  end;
+end;
+
+procedure TJsonAvlIterator.Prior;
+var
+  h: TJsonAvlEntry;
+begin
+  if (FDepth <> not 0) then
+  begin
+    if FDepth = 0 then
+      h := FTree.FRoot.FLt else
+      h := FPath[FDepth - 1].FLt;
+    if (h = nil) then
+      repeat
+        if (FDepth = 0) then
+        begin
+          FDepth := not 0;
+          break;
+        end;
+        dec(FDepth);
+      until (FDepth in FBranch)
+    else
+    begin
+      exclude(FBranch, FDepth);
+      FPath[FDepth] := h;
+      inc(FDepth);
+      while true do
+      begin
+        h := h.FGt;
+        if (h = nil) then
+          break;
+        include(FBranch, FDepth);
+        FPath[FDepth] := h;
+        inc(FDepth);
+      end;
+    end;
+  end;
+end;
+
+procedure TJsonAvlTree.doDeleteEntry(Entry: TJsonAvlEntry);
+begin
+  Entry.Free;
+end;
+
+{ TJsonAvlEntry }
+
+constructor TJsonAvlEntry.Create(AName: PChar; Obj: Pointer);
+begin
+  FName := strdup(AName);
+  FObj := Obj;
+  FHash := Hash(FName);
+end;
+
+destructor TJsonAvlEntry.Destroy;
+begin
+  FreeMem(FName);
+  inherited;
+end;
+
+class function TJsonAvlEntry.Hash(k: PChar): Cardinal;
+var
+  h: Cardinal;
+begin
+  h := 0;
+  if k <> nil then
+    while(k^ <> #0 ) do
+    begin
+  {$IFDEF JSON_CASE_INSENSITIVE}
+      h := h*129 + byte(UpCase(k^)) + $9e370001;
+  {$ELSE}
+      h := h*129 + byte(k^) + $9e370001;
+  {$ENDIF}
+      inc(k);
+    end;
+  Result := h;
+end;
+
+{ TJsonTableString }
+
+procedure TJsonTableString.doDeleteEntry(Entry: TJsonAvlEntry);
+begin
+  TJsonObject(Entry.FObj).Release;
+  inherited;
+end;
+
+function TJsonTableString.Get(k: PChar): TJsonObject;
+var
+  e: TJsonAvlEntry;
+begin
+  e := Search(k);
+  if e <> nil then
+    Result := TJsonObject(e.FObj) else
+    Result := nil
+end;
+
+function TJsonTableString.Put(k: PChar; Obj: TJsonObject): TJsonObject;
+begin
+  Result := TJsonObject(Insert(TJsonAvlEntry.Create(k, obj)).FObj);
 end;
 
 end.

@@ -28,7 +28,6 @@ type
     FHttpDir: string;
     FPasswordNeeded: boolean;
     FJsonRPCServices: TJsonRpcServiceList;
-    procedure rpc_echo(Params: TJsonObject; out Result: TJsonObject);
     procedure rpc_getdata(Params: TJsonObject; out Result: TJsonObject);
   protected
     function AddRef: integer;
@@ -348,7 +347,7 @@ begin
   FCessionId := ACookie;
   FPasswordNeeded := true;
   FRefCount := 1;
-  FJsonRPCServices := TJsonRpcServiceList.Create('application');
+  FJsonRPCServices := TJsonRpcServiceList.Create;
 {$IFDEF FPC}
   InitCriticalSection(FCriticalSection);
 {$ELSE}
@@ -356,10 +355,9 @@ begin
 {$ENDIF}
   FHttpDir := ExtractFilePath(ParamStr(0)) + 'HTTP';
 
-  srv := TJsonRpcService.Create('application');
-  srv.RegisterMethod('echo', self, @THTTPSession.rpc_echo);
+  srv := TJsonRpcService.Create;
   srv.RegisterMethod('getdata', self, @THTTPSession.rpc_getdata);
-  FJsonRPCServices.RegisterService(srv);
+  FJsonRPCServices.RegisterService('application', srv);
 
 end;
 
@@ -484,13 +482,6 @@ begin
   end;
 end;
 
-procedure THTTPSession.rpc_echo(Params: TJsonObject;
-  out Result: TJsonObject);
-begin
-  Result := Params;
-  Result.AddRef;
-end;
-
 function QueryToJson(qr: TJvUIBQuery): TJsonObject;
 var
   meta, data, rec: TJsonObject;
@@ -557,7 +548,7 @@ initialization
   pool := TMyPool.Create(0);
   SessionList := THTTPSessionList.Create;
   Application.CreateThread(THTTPSessionCleaner);
-  Application.CreateServer(THTTPServer, 80);
+  Application.CreateServer(THTTPServer, 81);
 
 finalization
   while TPDGThread.ThreadCount > 0 do sleep(100);
