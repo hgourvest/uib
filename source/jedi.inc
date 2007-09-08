@@ -46,7 +46,7 @@
 {                                                                              }
 {******************************************************************************}
 
-// Last modified: $Date: 2006/01/29 23:25:36 $
+// Last modified: $Date: 2007-07-06 18:50:24 +0200 (ven., 06 juil. 2007) $
 // For history see end of file
 
 (*
@@ -91,8 +91,6 @@
 
   Directive           Description
   ------------------------------------------------------------------------------
-  COMPLIB_VCL         Obsolete synonym to VCL
-  COMPLIB_CLX         Obsolete synonym to VisualCLX
   VCL                 Defined for Delphi/BCB (Win32) exactly if VisualCLX is not defined
   VisualCLX           Defined for Kylix; needs to be defined for Delphi/BCB to
                       use JCL with VisualCLX applications.
@@ -128,6 +126,9 @@
   DELPHI2005          Defined when compiling with Delphi 2005
   DELPHI9             Alias for DELPHI2005
   DELPHI10            Defined when compiling with Delphi Personality of BDS 4.0
+  DELPHI2006          Alias for DELPHI10
+  DELPHI11            Defined when compiling with Delphi for Win32 2007 
+  DELPHI2007          Alias for DELPHI11
   DELPHI1_UP          Defined when compiling with Delphi 1 or higher
   DELPHI2_UP          Defined when compiling with Delphi 2 or higher
   DELPHI3_UP          Defined when compiling with Delphi 3 or higher
@@ -138,7 +139,10 @@
   DELPHI8_UP          Defined when compiling with Delphi 8 or higher
   DELPHI2005_UP       Defined when compiling with Delphi 2005 or higher
   DELPHI9_UP          Alias for DELPHI2005_UP
-  DELPHI10_UP         Defined when compiling with Delphi Personality of BDS 4.0
+  DELPHI10_UP         Defined when compiling with Delphi Personality of BDS 4.0 or higher
+  DELPHI2006_UP       Alias for DELPHI10_UP
+  DELPHI11_UP         Defined when compiling with Delphi for Win32 2007 or higher
+  DELPHI2007_UP       Alias for DELPHI11_UP
 
 
 - Kylix Versions
@@ -161,26 +165,28 @@
 
   Directive           Description
   ------------------------------------------------------------------------------
-  DELPHICOMPILER1     Defined when compiling with Delphi 1
-  DELPHICOMPILER2     Defined when compiling with Delphi 2
-  DELPHICOMPILER3     Defined when compiling with Delphi 3
-  DELPHICOMPILER4     Defined when compiling with Delphi 4
-  DELPHICOMPILER5     Defined when compiling with Delphi 5
-  DELPHICOMPILER6     Defined when compiling with Delphi 6 or Kylix 1, 2 or 3
-  DELPHICOMPILER7     Defined when compiling with Delphi 7
-  DELPHICOMPILER8     Defined when compiling with Delphi 8
-  DELPHICOMPILER9     Defined when compiling with Delphi 2005
-  DELPHICOMPILER10    Defined when compiling with Delphi Personality of BDS 4.0
-  DELPHICOMPILER1_UP  Defined when compiling with Delphi 1 or higher
-  DELPHICOMPILER2_UP  Defined when compiling with Delphi 2 or higher
-  DELPHICOMPILER3_UP  Defined when compiling with Delphi 3 or higher
-  DELPHICOMPILER4_UP  Defined when compiling with Delphi 4 or higher
-  DELPHICOMPILER5_UP  Defined when compiling with Delphi 5 or higher
-  DELPHICOMPILER6_UP  Defined when compiling with Delphi 6 or Kylix 1, 2 or 3 or higher
-  DELPHICOMPILER7_UP  Defined when compiling with Delphi 7 or higher
-  DELPHICOMPILER8_UP  Defined when compiling with Delphi 8 or higher
-  DELPHICOMPILER9_UP  Defined when compiling with Delphi 2005
-  DELPHICOMPILER10_UP Defined when compiling with Delphi Personality of BDS 4.0 or higher
+  DELPHICOMPILER1      Defined when compiling with Delphi 1
+  DELPHICOMPILER2      Defined when compiling with Delphi 2
+  DELPHICOMPILER3      Defined when compiling with Delphi 3
+  DELPHICOMPILER4      Defined when compiling with Delphi 4
+  DELPHICOMPILER5      Defined when compiling with Delphi 5
+  DELPHICOMPILER6      Defined when compiling with Delphi 6 or Kylix 1, 2 or 3
+  DELPHICOMPILER7      Defined when compiling with Delphi 7
+  DELPHICOMPILER8      Defined when compiling with Delphi 8
+  DELPHICOMPILER9      Defined when compiling with Delphi 2005
+  DELPHICOMPILER10     Defined when compiling with Delphi Personality of BDS 4.0
+  DELPHICOMPILER11     Defined when compiling with Delphi for Win32 2007
+  DELPHICOMPILER1_UP   Defined when compiling with Delphi 1 or higher
+  DELPHICOMPILER2_UP   Defined when compiling with Delphi 2 or higher
+  DELPHICOMPILER3_UP   Defined when compiling with Delphi 3 or higher
+  DELPHICOMPILER4_UP   Defined when compiling with Delphi 4 or higher
+  DELPHICOMPILER5_UP   Defined when compiling with Delphi 5 or higher
+  DELPHICOMPILER6_UP   Defined when compiling with Delphi 6 or Kylix 1, 2 or 3 or higher
+  DELPHICOMPILER7_UP   Defined when compiling with Delphi 7 or higher
+  DELPHICOMPILER8_UP   Defined when compiling with Delphi 8 or higher
+  DELPHICOMPILER9_UP   Defined when compiling with Delphi 2005
+  DELPHICOMPILER10_UP  Defined when compiling with Delphi Personality of BDS 4.0 or higher
+  DELPHICOMPILER11_UP  Defined when compiling with Delphi for Win32 2007 or higher
 
 
 - C++ Builder Versions
@@ -220,9 +226,11 @@
   BDS2         Defined when compiling with BDS 2.0 (Delphi 8)
   BDS3         Defined when compiling with BDS 3.0 (Delphi 2005)
   BDS4         Defined when compiling with BDS 4.0 (Borland Developer Studio 2006)
+  BDS5         Defined when compiling with BDS 5.0 (CodeGear RAD Studio 2007)
   BDS2_UP      Defined when compiling with BDS 2.0 or higher
   BDS3_UP      Defined when compiling with BDS 3.0 or higher
   BDS4_UP      Defined when compiling with BDS 4.0 or higher
+  BDS5_UP      Defined when compiling with BDS 5.0 or higher
 
 - Compiler Versions
 
@@ -234,28 +242,30 @@
 
   Directive     Description
   ------------------------------------------------------------------------------
-  COMPILER1     Defined when compiling with Delphi 1
-  COMPILER2     Defined when compiling with Delphi 2 or C++ Builder 1
-  COMPILER3     Defined when compiling with Delphi 3
-  COMPILER35    Defined when compiling with C++ Builder 3
-  COMPILER4     Defined when compiling with Delphi 4 or C++ Builder 4
-  COMPILER5     Defined when compiling with Delphi 5 or C++ Builder 5
-  COMPILER6     Defined when compiling with Delphi 6 or C++ Builder 6
-  COMPILER7     Defined when compiling with Delphi 7
-  COMPILER8     Defined when compiling with Delphi 8
-  COMPILER9     Defined when compiling with Delphi 9
-  COMPILER10    Defined when compiling with Delphi or C++ Builder Personalities of BDS 4.0
-  COMPILER1_UP  Defined when compiling with Delphi 1 or higher
-  COMPILER2_UP  Defined when compiling with Delphi 2 or C++ Builder 1 or higher
-  COMPILER3_UP  Defined when compiling with Delphi 3 or higher
-  COMPILER35_UP Defined when compiling with C++ Builder 3 or higher
-  COMPILER4_UP  Defined when compiling with Delphi 4 or C++ Builder 4 or higher
-  COMPILER5_UP  Defined when compiling with Delphi 5 or C++ Builder 5 or higher
-  COMPILER6_UP  Defined when compiling with Delphi 6 or C++ Builder 6 or higher
-  COMPILER7_UP  Defined when compiling with Delphi 7
-  COMPILER8_UP  Defined when compiling with Delphi 8
-  COMPILER9_UP  Defined when compiling with Delphi Personalities of BDS 3.0
-  COMPILER10_UP Defined when compiling with Delphi or C++ Builder Personalities of BDS 4.0 or higher
+  COMPILER1      Defined when compiling with Delphi 1
+  COMPILER2      Defined when compiling with Delphi 2 or C++ Builder 1
+  COMPILER3      Defined when compiling with Delphi 3
+  COMPILER35     Defined when compiling with C++ Builder 3
+  COMPILER4      Defined when compiling with Delphi 4 or C++ Builder 4
+  COMPILER5      Defined when compiling with Delphi 5 or C++ Builder 5
+  COMPILER6      Defined when compiling with Delphi 6 or C++ Builder 6
+  COMPILER7      Defined when compiling with Delphi 7
+  COMPILER8      Defined when compiling with Delphi 8
+  COMPILER9      Defined when compiling with Delphi 9
+  COMPILER10     Defined when compiling with Delphi or C++ Builder Personalities of BDS 4.0
+  COMPILER11     Defined when compiling with Delphi for Win32 2007
+  COMPILER1_UP   Defined when compiling with Delphi 1 or higher
+  COMPILER2_UP   Defined when compiling with Delphi 2 or C++ Builder 1 or higher
+  COMPILER3_UP   Defined when compiling with Delphi 3 or higher
+  COMPILER35_UP  Defined when compiling with C++ Builder 3 or higher
+  COMPILER4_UP   Defined when compiling with Delphi 4 or C++ Builder 4 or higher
+  COMPILER5_UP   Defined when compiling with Delphi 5 or C++ Builder 5 or higher
+  COMPILER6_UP   Defined when compiling with Delphi 6 or C++ Builder 6 or higher
+  COMPILER7_UP   Defined when compiling with Delphi 7
+  COMPILER8_UP   Defined when compiling with Delphi 8
+  COMPILER9_UP   Defined when compiling with Delphi Personalities of BDS 3.0
+  COMPILER10_UP  Defined when compiling with Delphi or C++ Builder Personalities of BDS 4.0 or higher
+  COMPILER11_UP  Defined when compiling with Delphi for Win32 2007 ir higher
 
 
 - RTL Versions
@@ -283,6 +293,7 @@
   RTL160_UP     Defined when compiling with Delphi 8 or later
   RTL170_UP     Defined when compiling with Delphi Personalities of BDS 3.0 or later
   RTL180_UP     Defined when compiling with Delphi or C++ Builder Personalities of BDS 4.0 or later
+  RTL185_UP     Defined when compiling with Delphi for Win32 2007 or later
 
 
 - Feature Directives
@@ -384,7 +395,7 @@
 { Set FreePascal to Delphi mode }
 {$IFDEF FPC}
   {$MODE DELPHI}
-  {.$ASMMODE Intel}
+  {$ASMMODE Intel}
   {$UNDEF BORLAND}
 {$ENDIF}
 
@@ -403,67 +414,61 @@
     {$I kylix.inc} // FPC incompatible stuff
   {$ELSE ~KYLIX}
 
-    {$IFDEF VER190}
-      {$DEFINE BDS5}
-      {$DEFINE BDS}
-      {$DEFINE COMPILER11}
-      {$IFDEF BCB}
-        {$DEFINE BCB11}
-      {$ELSE}
-        {$DEFINE DELPHI11}
-        {$DEFINE DELPHICOMPILER11}
-      {$ENDIF}
-      {$DEFINE RTL190_UP}
+    {$DEFINE UNKNOWN_COMPILER_VERSION}
+
+    {$IFDEF VER80}
+      {$DEFINE COMPILER1}
+      {$DEFINE DELPHI1}
+      {$DEFINE DELPHICOMPILER1}
+      {$DEFINE RTL80_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
-    {$IFDEF VER180}
-      {$DEFINE BDS4}
-      {$DEFINE BDS}
-      {$DEFINE COMPILER10}
-      {$IFDEF BCB}
-        {$DEFINE BCB10}
-      {$ELSE}
-        {$DEFINE DELPHI10}
-        {$DEFINE DELPHICOMPILER10}
-      {$ENDIF}
-      {$DEFINE RTL180_UP}
+    {$IFDEF VER90}
+      {$DEFINE COMPILER2}
+      {$DEFINE DELPHI2}
+      {$DEFINE DELPHICOMPILER2}
+      {$DEFINE RTL90_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
-    {$IFDEF VER170}
-      {$DEFINE BDS3}
-      {$DEFINE BDS}
-      {$DEFINE COMPILER9}
-      {$DEFINE DELPHI9}
-      {$DEFINE DELPHI2005} // synonym to DELPHI9
-      {$DEFINE DELPHICOMPILER9}
-      {$DEFINE RTL170_UP}
+    {$IFDEF VER93}
+      {$DEFINE COMPILER2}
+      {$DEFINE BCB1}
+      {$DEFINE BCB}
+      {$DEFINE RTL93_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
-    {$IFDEF VER160}
-      {$DEFINE BDS2}
-      {$DEFINE BDS}
-      {$DEFINE COMPILER8}
-      {$DEFINE DELPHI8}
-      {$DEFINE DELPHICOMPILER8}
-      {$DEFINE RTL160_UP}
+    {$IFDEF VER100}
+      {$DEFINE COMPILER3}
+      {$DEFINE DELPHI3}
+      {$DEFINE DELPHICOMPILER3}
+      {$DEFINE RTL100_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
-    {$IFDEF VER150}
-      {$DEFINE COMPILER7}
-      {$DEFINE DELPHI7}
-      {$DEFINE DELPHICOMPILER7}
-      {$DEFINE RTL150_UP}
+    {$IFDEF VER110}
+      {$DEFINE COMPILER35}
+      {$DEFINE BCB3}
+      {$DEFINE RTL110_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
-    {$IFDEF VER140}
-      {$DEFINE COMPILER6}
-      {$IFDEF BCB}
-        {$DEFINE BCB6}
-      {$ELSE}
-        {$DEFINE DELPHI6}
-        {$DEFINE DELPHICOMPILER6}
-      {$ENDIF}
-      {$DEFINE RTL140_UP}
+    {$IFDEF VER120}
+      {$DEFINE COMPILER4}
+      {$DEFINE DELPHI4}
+      {$DEFINE DELPHICOMPILER4}
+      {$DEFINE RTL120_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
+    {$ENDIF}
+
+    {$IFDEF VER125}
+      {$DEFINE COMPILER4}
+      {$DEFINE BCB4}
+      {$DEFINE BCB}
+      {$DEFINE RTL125_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
     {$IFDEF VER130}
@@ -475,54 +480,87 @@
         {$DEFINE DELPHICOMPILER5}
       {$ENDIF}
       {$DEFINE RTL130_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
-    {$IFDEF VER125}
-      {$DEFINE COMPILER4}
-      {$DEFINE BCB4}
-      {$DEFINE BCB}
-      {$DEFINE RTL125_UP}
+    {$IFDEF VER140}
+      {$DEFINE COMPILER6}
+      {$IFDEF BCB}
+        {$DEFINE BCB6}
+      {$ELSE}
+        {$DEFINE DELPHI6}
+        {$DEFINE DELPHICOMPILER6}
+      {$ENDIF}
+      {$DEFINE RTL140_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
-    {$IFDEF VER120}
-      {$DEFINE COMPILER4}
-      {$DEFINE DELPHI4}
-      {$DEFINE DELPHICOMPILER4}
-      {$DEFINE RTL120_UP}
+    {$IFDEF VER150}
+      {$DEFINE COMPILER7}
+      {$DEFINE DELPHI7}
+      {$DEFINE DELPHICOMPILER7}
+      {$DEFINE RTL150_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
-    {$IFDEF VER110}
-      {$DEFINE COMPILER35}
-      {$DEFINE BCB3}
-      {$DEFINE RTL110_UP}
+    {$IFDEF VER160}
+      {$DEFINE BDS2}
+      {$DEFINE BDS}
+      {$DEFINE COMPILER8}
+      {$DEFINE DELPHI8}
+      {$DEFINE DELPHICOMPILER8}
+      {$DEFINE RTL160_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
-    {$IFDEF VER100}
-      {$DEFINE COMPILER3}
-      {$DEFINE DELPHI3}
-      {$DEFINE DELPHICOMPILER3}
-      {$DEFINE RTL100_UP}
+    {$IFDEF VER170}
+      {$DEFINE BDS3}
+      {$DEFINE BDS}
+      {$DEFINE COMPILER9}
+      {$DEFINE DELPHI9}
+      {$DEFINE DELPHI2005} // synonym to DELPHI9
+      {$DEFINE DELPHICOMPILER9}
+      {$DEFINE RTL170_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
-    {$IFDEF VER93}
-      {$DEFINE COMPILER2}
-      {$DEFINE BCB1}
-      {$DEFINE BCB}
-      {$DEFINE RTL93_UP}
+    {$IFDEF VER180}
+      {$DEFINE BDS}
+      {$IFDEF VER185}
+        {$DEFINE BDS5}
+        {$DEFINE COMPILER11}
+        {$IFDEF BCB}
+          {$DEFINE BCB11}
+        {$ELSE}
+          {$DEFINE DELPHI11}
+          {$DEFINE DELPHI2007} // synonym to DELPHI11
+          {$DEFINE DELPHICOMPILER11}
+        {$ENDIF}
+        {$DEFINE RTL185_UP}
+      {$ELSE ~~VER185}
+        {$DEFINE BDS4}
+        {$DEFINE COMPILER10}
+        {$IFDEF BCB}
+          {$DEFINE BCB10}
+        {$ELSE}
+          {$DEFINE DELPHI10}
+          {$DEFINE DELPHI2006} // synonym to DELPHI10
+          {$DEFINE DELPHICOMPILER10}
+        {$ENDIF}
+        {$DEFINE RTL180_UP}
+      {$ENDIF ~VER185}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
-    {$IFDEF VER90}
-      {$DEFINE COMPILER2}
-      {$DEFINE DELPHI2}
-      {$DEFINE DELPHICOMPILER2}
-      {$DEFINE RTL90_UP}
-    {$ENDIF}
-
-    {$IFDEF VER80}
-      {$DEFINE COMPILER1}
-      {$DEFINE DELPHI1}
-      {$DEFINE DELPHICOMPILER1}
-      {$DEFINE RTL80_UP}
+    {$IFDEF UNKNOWN_COMPILER_VERSION} // adjust for newer version
+      {$DEFINE BDS5}
+      {$DEFINE BDS}
+      {$DEFINE COMPILER11}
+      {$DEFINE DELPHI11}
+      {$DEFINE DELPHI2007} // synonym to DELPHI11
+      {$DEFINE DELPHICOMPILER11}
+      {$DEFINE RTL185_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
   {$ENDIF ~KYLIX}
@@ -541,426 +579,169 @@
 { DELPHIX_UP from DELPHIX mappings                                             }
 {------------------------------------------------------------------------------}
 
-{$IFDEF DELPHI11}
-  {$DEFINE DELPHI11_UP}
+{$IFDEF DELPHI11} {$DEFINE DELPHI11_UP} {$ENDIF}
+{$IFDEF DELPHI10} {$DEFINE DELPHI10_UP} {$ENDIF}
+{$IFDEF DELPHI9}  {$DEFINE DELPHI9_UP}  {$ENDIF}
+{$IFDEF DELPHI8}  {$DEFINE DELPHI8_UP}  {$ENDIF}
+{$IFDEF DELPHI7}  {$DEFINE DELPHI7_UP}  {$ENDIF}
+{$IFDEF DELPHI6}  {$DEFINE DELPHI6_UP}  {$ENDIF}
+{$IFDEF DELPHI5}  {$DEFINE DELPHI5_UP}  {$ENDIF}
+{$IFDEF DELPHI4}  {$DEFINE DELPHI4_UP}  {$ENDIF}
+{$IFDEF DELPHI3}  {$DEFINE DELPHI3_UP}  {$ENDIF}
+{$IFDEF DELPHI2}  {$DEFINE DELPHI2_UP}  {$ENDIF}
+{$IFDEF DELPHI1}  {$DEFINE DELPHI1_UP}  {$ENDIF}
+
+{------------------------------------------------------------------------------}
+{ DELPHIX_UP from DELPHIX_UP mappings                                          }
+{------------------------------------------------------------------------------}
+
+{$IFDEF DELPHI11_UP}
+  {$DEFINE DELPHI2007_UP} // synonym to DELPHI11_UP
   {$DEFINE DELPHI10_UP}
-  {$DEFINE DELPHI2005_UP // synonym to DELPHI9_UP }
-  {$DEFINE DELPHI9_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI1_UP}
 {$ENDIF}
 
-{$IFDEF DELPHI10}
-  {$DEFINE DELPHI10_UP}
-  {$DEFINE DELPHI2005_UP // synonym to DELPHI9_UP }
+{$IFDEF DELPHI10_UP}
+  {$DEFINE DELPHI2006_UP} // synonym to DELPHI10_UP
   {$DEFINE DELPHI9_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI1_UP}
 {$ENDIF}
 
-{$IFDEF DELPHI9}
+{$IFDEF DELPHI9_UP}
   {$DEFINE DELPHI2005_UP} // synonym to DELPHI9_UP
-  {$DEFINE DELPHI9_UP}
   {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI1_UP}
 {$ENDIF}
 
-{$IFDEF DELPHI8}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHI7}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHI6}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHI5}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHI4}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHI3}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHI2}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHI1}
-  {$DEFINE DELPHI1_UP}
-{$ENDIF}
-
-{------------------------------------------------------------------------------}
-{ KYLIXX_UP from KYLIXX mappings                                               }
-{------------------------------------------------------------------------------}
-
-{$IFDEF KYLIX3}
-  {$DEFINE KYLIX3_UP}
-  {$DEFINE KYLIX2_UP}
-  {$DEFINE KYLIX1_UP}
-{$ENDIF}
-
-{$IFDEF KYLIX2}
-  {$DEFINE KYLIX2_UP}
-  {$DEFINE KYLIX1_UP}
-{$ENDIF}
-
-{$IFDEF KYLIX1}
-  {$DEFINE KYLIX1_UP}
-{$ENDIF}
+{$IFDEF DELPHI8_UP} {$DEFINE DELPHI7_UP} {$ENDIF}
+{$IFDEF DELPHI7_UP} {$DEFINE DELPHI6_UP} {$ENDIF}
+{$IFDEF DELPHI6_UP} {$DEFINE DELPHI5_UP} {$ENDIF}
+{$IFDEF DELPHI5_UP} {$DEFINE DELPHI4_UP} {$ENDIF}
+{$IFDEF DELPHI4_UP} {$DEFINE DELPHI3_UP} {$ENDIF}
+{$IFDEF DELPHI3_UP} {$DEFINE DELPHI2_UP} {$ENDIF}
+{$IFDEF DELPHI2_UP} {$DEFINE DELPHI1_UP} {$ENDIF}
 
 {------------------------------------------------------------------------------}
 { BCBX_UP from BCBX mappings                                                   }
 {------------------------------------------------------------------------------}
 
-{$IFDEF BCB11}
-  {$DEFINE BCB11_UP}
-  {$DEFINE BCB10_UP}
-  {$DEFINE BCB6_UP}
-  {$DEFINE BCB5_UP}
-  {$DEFINE BCB4_UP}
-  {$DEFINE BCB3_UP}
-  {$DEFINE BCB1_UP}
-{$ENDIF}
+{$IFDEF BCB11} {$DEFINE BCB11_UP} {$ENDIF}
+{$IFDEF BCB10} {$DEFINE BCB10_UP} {$ENDIF}
+{$IFDEF BCB6}  {$DEFINE BCB6_UP}  {$ENDIF}
+{$IFDEF BCB5}  {$DEFINE BCB5_UP}  {$ENDIF}
+{$IFDEF BCB4}  {$DEFINE BCB4_UP}  {$ENDIF}
+{$IFDEF BCB3}  {$DEFINE BCB3_UP}  {$ENDIF}
+{$IFDEF BCB1}  {$DEFINE BCB1_UP}  {$ENDIF}
 
-{$IFDEF BCB10}
-  {$DEFINE BCB10_UP}
-  {$DEFINE BCB6_UP}
-  {$DEFINE BCB5_UP}
-  {$DEFINE BCB4_UP}
-  {$DEFINE BCB3_UP}
-  {$DEFINE BCB1_UP}
-{$ENDIF}
+{------------------------------------------------------------------------------}
+{ BCBX_UP from BCBX_UP mappings                                                }
+{------------------------------------------------------------------------------}
 
-{$IFDEF BCB6}
-  {$DEFINE BCB6_UP}
-  {$DEFINE BCB5_UP}
-  {$DEFINE BCB4_UP}
-  {$DEFINE BCB3_UP}
-  {$DEFINE BCB1_UP}
-{$ENDIF}
-
-{$IFDEF BCB5}
-  {$DEFINE BCB5_UP}
-  {$DEFINE BCB4_UP}
-  {$DEFINE BCB3_UP}
-  {$DEFINE BCB1_UP}
-{$ENDIF}
-
-{$IFDEF BCB4}
-  {$DEFINE BCB4_UP}
-  {$DEFINE BCB3_UP}
-  {$DEFINE BCB1_UP}
-{$ENDIF}
-
-{$IFDEF BCB3}
-  {$DEFINE BCB3_UP}
-  {$DEFINE BCB1_UP}
-{$ENDIF}
-
-{$IFDEF BCB1}
-  {$DEFINE BCB1_UP}
-{$ENDIF}
+{$IFDEF BCB11_UP} {$DEFINE BCB10_UP} {$ENDIF}
+{$IFDEF BCB10_UP} {$DEFINE BCB6_UP}  {$ENDIF}
+{$IFDEF BCB6_UP}  {$DEFINE BCB5_UP}  {$ENDIF}
+{$IFDEF BCB5_UP}  {$DEFINE BCB4_UP}  {$ENDIF}
+{$IFDEF BCB4_UP}  {$DEFINE BCB3_UP}  {$ENDIF}
+{$IFDEF BCB3_UP}  {$DEFINE BCB1_UP}  {$ENDIF}
 
 {------------------------------------------------------------------------------}
 { BDSX_UP from BDSX mappings                                                   }
 {------------------------------------------------------------------------------}
 
-{$IFDEF BDS5}
-  {$DEFINE BDS5_UP}
-  {$DEFINE BDS4_UP}
-  {$DEFINE BDS3_UP}
-  {$DEFINE BDS2_UP}
-{$ENDIF}
+{$IFDEF BDS5} {$DEFINE BDS5_UP} {$ENDIF}
+{$IFDEF BDS4} {$DEFINE BDS4_UP} {$ENDIF}
+{$IFDEF BDS3} {$DEFINE BDS3_UP} {$ENDIF}
+{$IFDEF BDS2} {$DEFINE BDS2_UP} {$ENDIF}
 
-{$IFDEF BDS4}
-  {$DEFINE BDS4_UP}
-  {$DEFINE BDS3_UP}
-  {$DEFINE BDS2_UP}
-{$ENDIF}
+{------------------------------------------------------------------------------}
+{ BDSX_UP from BDSX_UP mappings                                                }
+{------------------------------------------------------------------------------}
 
-{$IFDEF BDS3}
-  {$DEFINE BDS3_UP}
-  {$DEFINE BDS2_UP}
-{$ENDIF}
-
-{$IFDEF BDS2}
-  {$DEFINE BDS2_UP}
-{$ENDIF}
+{$IFDEF BDS5_UP} {$DEFINE BDS4_UP} {$ENDIF}
+{$IFDEF BDS4_UP} {$DEFINE BDS3_UP} {$ENDIF}
+{$IFDEF BDS3_UP} {$DEFINE BDS2_UP} {$ENDIF}
 
 {------------------------------------------------------------------------------}
 { DELPHICOMPILERX_UP from DELPHICOMPILERX mappings                             }
 {------------------------------------------------------------------------------}
 
-{$IFDEF DELPHICOMPILER11}
-  {$DEFINE DELPHICOMPILER11_UP}
-  {$DEFINE DELPHICOMPILER10_UP}
-  {$DEFINE DELPHICOMPILER9_UP}
-  {$DEFINE DELPHICOMPILER8_UP}
-  {$DEFINE DELPHICOMPILER7_UP}
-  {$DEFINE DELPHICOMPILER6_UP}
-  {$DEFINE DELPHICOMPILER5_UP}
-  {$DEFINE DELPHICOMPILER4_UP}
-  {$DEFINE DELPHICOMPILER3_UP}
-  {$DEFINE DELPHICOMPILER2_UP}
-  {$DEFINE DELPHICOMPILER1_UP}
-{$ENDIF}
+{$IFDEF DELPHICOMPILER11} {$DEFINE DELPHICOMPILER11_UP} {$ENDIF}
+{$IFDEF DELPHICOMPILER10} {$DEFINE DELPHICOMPILER10_UP} {$ENDIF}
+{$IFDEF DELPHICOMPILER9}  {$DEFINE DELPHICOMPILER9_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER8}  {$DEFINE DELPHICOMPILER8_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER7}  {$DEFINE DELPHICOMPILER7_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER6}  {$DEFINE DELPHICOMPILER6_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER5}  {$DEFINE DELPHICOMPILER5_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER4}  {$DEFINE DELPHICOMPILER4_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER3}  {$DEFINE DELPHICOMPILER3_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER2}  {$DEFINE DELPHICOMPILER2_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER1}  {$DEFINE DELPHICOMPILER1_UP}  {$ENDIF}
 
-{$IFDEF DELPHICOMPILER10}
-  {$DEFINE DELPHICOMPILER10_UP}
-  {$DEFINE DELPHICOMPILER9_UP}
-  {$DEFINE DELPHICOMPILER8_UP}
-  {$DEFINE DELPHICOMPILER7_UP}
-  {$DEFINE DELPHICOMPILER6_UP}
-  {$DEFINE DELPHICOMPILER5_UP}
-  {$DEFINE DELPHICOMPILER4_UP}
-  {$DEFINE DELPHICOMPILER3_UP}
-  {$DEFINE DELPHICOMPILER2_UP}
-  {$DEFINE DELPHICOMPILER1_UP}
-{$ENDIF}
+{------------------------------------------------------------------------------}
+{ DELPHICOMPILERX_UP from DELPHICOMPILERX_UP mappings                          }
+{------------------------------------------------------------------------------}
 
-{$IFDEF DELPHICOMPILER9}
-  {$DEFINE DELPHICOMPILER9_UP}
-  {$DEFINE DELPHICOMPILER8_UP}
-  {$DEFINE DELPHICOMPILER7_UP}
-  {$DEFINE DELPHICOMPILER6_UP}
-  {$DEFINE DELPHICOMPILER5_UP}
-  {$DEFINE DELPHICOMPILER4_UP}
-  {$DEFINE DELPHICOMPILER3_UP}
-  {$DEFINE DELPHICOMPILER2_UP}
-  {$DEFINE DELPHICOMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHICOMPILER8}
-  {$DEFINE DELPHICOMPILER8_UP}
-  {$DEFINE DELPHICOMPILER7_UP}
-  {$DEFINE DELPHICOMPILER6_UP}
-  {$DEFINE DELPHICOMPILER5_UP}
-  {$DEFINE DELPHICOMPILER4_UP}
-  {$DEFINE DELPHICOMPILER3_UP}
-  {$DEFINE DELPHICOMPILER2_UP}
-  {$DEFINE DELPHICOMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHICOMPILER7}
-  {$DEFINE DELPHICOMPILER7_UP}
-  {$DEFINE DELPHICOMPILER6_UP}
-  {$DEFINE DELPHICOMPILER5_UP}
-  {$DEFINE DELPHICOMPILER4_UP}
-  {$DEFINE DELPHICOMPILER3_UP}
-  {$DEFINE DELPHICOMPILER2_UP}
-  {$DEFINE DELPHICOMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHICOMPILER6}
-  {$DEFINE DELPHICOMPILER6_UP}
-  {$DEFINE DELPHICOMPILER5_UP}
-  {$DEFINE DELPHICOMPILER4_UP}
-  {$DEFINE DELPHICOMPILER3_UP}
-  {$DEFINE DELPHICOMPILER2_UP}
-  {$DEFINE DELPHICOMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHICOMPILER5}
-  {$DEFINE DELPHICOMPILER5_UP}
-  {$DEFINE DELPHICOMPILER4_UP}
-  {$DEFINE DELPHICOMPILER3_UP}
-  {$DEFINE DELPHICOMPILER2_UP}
-  {$DEFINE DELPHICOMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHICOMPILER4}
-  {$DEFINE DELPHICOMPILER4_UP}
-  {$DEFINE DELPHICOMPILER3_UP}
-  {$DEFINE DELPHICOMPILER2_UP}
-  {$DEFINE DELPHICOMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHICOMPILER3}
-  {$DEFINE DELPHICOMPILER3_UP}
-  {$DEFINE DELPHICOMPILER2_UP}
-  {$DEFINE DELPHICOMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHICOMPILER2}
-  {$DEFINE DELPHICOMPILER2_UP}
-  {$DEFINE DELPHICOMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF DELPHICOMPILER1}
-  {$DEFINE DELPHICOMPILER1_UP}
-{$ENDIF}
+{$IFDEF DELPHICOMPILER11_UP} {$DEFINE DELPHICOMPILER10_UP} {$ENDIF}
+{$IFDEF DELPHICOMPILER10_UP} {$DEFINE DELPHICOMPILER9_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER9_UP}  {$DEFINE DELPHICOMPILER8_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER8_UP}  {$DEFINE DELPHICOMPILER7_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER8_UP}  {$DEFINE DELPHICOMPILER7_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER7_UP}  {$DEFINE DELPHICOMPILER6_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER6_UP}  {$DEFINE DELPHICOMPILER5_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER5_UP}  {$DEFINE DELPHICOMPILER4_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER4_UP}  {$DEFINE DELPHICOMPILER3_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER3_UP}  {$DEFINE DELPHICOMPILER2_UP}  {$ENDIF}
+{$IFDEF DELPHICOMPILER2_UP}  {$DEFINE DELPHICOMPILER1_UP}  {$ENDIF}
 
 {------------------------------------------------------------------------------}
 { COMPILERX_UP from COMPILERX mappings                                         }
 {------------------------------------------------------------------------------}
 
-{$IFDEF COMPILER11}
-  {$DEFINE COMPILER11_UP}
-  {$DEFINE COMPILER10_UP}
-  {$DEFINE COMPILER9_UP}
-  {$DEFINE COMPILER8_UP}
-  {$DEFINE COMPILER7_UP}
-  {$DEFINE COMPILER6_UP}
-  {$DEFINE COMPILER5_UP}
-  {$DEFINE COMPILER4_UP}
-  {$DEFINE COMPILER35_UP}
-  {$DEFINE COMPILER3_UP}
-  {$DEFINE COMPILER2_UP}
-  {$DEFINE COMPILER1_UP}
-{$ENDIF}
+{$IFDEF COMPILER11} {$DEFINE COMPILER11_UP} {$ENDIF}
+{$IFDEF COMPILER10} {$DEFINE COMPILER10_UP} {$ENDIF}
+{$IFDEF COMPILER9}  {$DEFINE COMPILER9_UP}  {$ENDIF}
+{$IFDEF COMPILER8}  {$DEFINE COMPILER8_UP}  {$ENDIF}
+{$IFDEF COMPILER7}  {$DEFINE COMPILER7_UP}  {$ENDIF}
+{$IFDEF COMPILER6}  {$DEFINE COMPILER6_UP}  {$ENDIF}
+{$IFDEF COMPILER5}  {$DEFINE COMPILER5_UP}  {$ENDIF}
+{$IFDEF COMPILER4}  {$DEFINE COMPILER4_UP}  {$ENDIF}
+{$IFDEF COMPILER35} {$DEFINE COMPILER35_UP} {$ENDIF}
+{$IFDEF COMPILER3}  {$DEFINE COMPILER3_UP}  {$ENDIF}
+{$IFDEF COMPILER2}  {$DEFINE COMPILER2_UP}  {$ENDIF}
+{$IFDEF COMPILER1}  {$DEFINE COMPILER1_UP}  {$ENDIF}
 
-{$IFDEF COMPILER10}
-  {$DEFINE COMPILER10_UP}
-  {$DEFINE COMPILER9_UP}
-  {$DEFINE COMPILER8_UP}
-  {$DEFINE COMPILER7_UP}
-  {$DEFINE COMPILER6_UP}
-  {$DEFINE COMPILER5_UP}
-  {$DEFINE COMPILER4_UP}
-  {$DEFINE COMPILER35_UP}
-  {$DEFINE COMPILER3_UP}
-  {$DEFINE COMPILER2_UP}
-  {$DEFINE COMPILER1_UP}
-{$ENDIF}
+{------------------------------------------------------------------------------}
+{ COMPILERX_UP from COMPILERX_UP mappings                                      }
+{------------------------------------------------------------------------------}
 
-{$IFDEF COMPILER9}
-  {$DEFINE COMPILER9_UP}
-  {$DEFINE COMPILER8_UP}
-  {$DEFINE COMPILER7_UP}
-  {$DEFINE COMPILER6_UP}
-  {$DEFINE COMPILER5_UP}
-  {$DEFINE COMPILER4_UP}
-  {$DEFINE COMPILER35_UP}
-  {$DEFINE COMPILER3_UP}
-  {$DEFINE COMPILER2_UP}
-  {$DEFINE COMPILER1_UP}
-{$ENDIF}
+{$IFDEF COMPILER11_UP} {$DEFINE COMPILER10_UP} {$ENDIF}
+{$IFDEF COMPILER10_UP} {$DEFINE COMPILER9_UP}  {$ENDIF}
+{$IFDEF COMPILER9_UP}  {$DEFINE COMPILER8_UP}  {$ENDIF}
+{$IFDEF COMPILER8_UP}  {$DEFINE COMPILER7_UP}  {$ENDIF}
+{$IFDEF COMPILER7_UP}  {$DEFINE COMPILER6_UP}  {$ENDIF}
+{$IFDEF COMPILER6_UP}  {$DEFINE COMPILER5_UP}  {$ENDIF}
+{$IFDEF COMPILER5_UP}  {$DEFINE COMPILER4_UP}  {$ENDIF}
+{$IFDEF COMPILER4_UP}  {$DEFINE COMPILER35_UP} {$ENDIF}
+{$IFDEF COMPILER35_UP} {$DEFINE COMPILER3_UP}  {$ENDIF}
+{$IFDEF COMPILER3_UP}  {$DEFINE COMPILER2_UP}  {$ENDIF}
+{$IFDEF COMPILER2_UP}  {$DEFINE COMPILER1_UP}  {$ENDIF}
 
-{$IFDEF COMPILER8}
-  {$DEFINE COMPILER8_UP}
-  {$DEFINE COMPILER7_UP}
-  {$DEFINE COMPILER6_UP}
-  {$DEFINE COMPILER5_UP}
-  {$DEFINE COMPILER4_UP}
-  {$DEFINE COMPILER35_UP}
-  {$DEFINE COMPILER3_UP}
-  {$DEFINE COMPILER2_UP}
-  {$DEFINE COMPILER1_UP}
-{$ENDIF}
+{------------------------------------------------------------------------------}
+{ RTLX_UP from RTLX_UP mappings                                                }
+{------------------------------------------------------------------------------}
 
-{$IFDEF COMPILER7}
-  {$DEFINE COMPILER7_UP}
-  {$DEFINE COMPILER6_UP}
-  {$DEFINE COMPILER5_UP}
-  {$DEFINE COMPILER4_UP}
-  {$DEFINE COMPILER35_UP}
-  {$DEFINE COMPILER3_UP}
-  {$DEFINE COMPILER2_UP}
-  {$DEFINE COMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF COMPILER6}
-  {$DEFINE COMPILER6_UP}
-  {$DEFINE COMPILER5_UP}
-  {$DEFINE COMPILER4_UP}
-  {$DEFINE COMPILER35_UP}
-  {$DEFINE COMPILER3_UP}
-  {$DEFINE COMPILER2_UP}
-  {$DEFINE COMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF COMPILER5}
-  {$DEFINE COMPILER5_UP}
-  {$DEFINE COMPILER4_UP}
-  {$DEFINE COMPILER35_UP}
-  {$DEFINE COMPILER3_UP}
-  {$DEFINE COMPILER2_UP}
-  {$DEFINE COMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF COMPILER4}
-  {$DEFINE COMPILER4_UP}
-  {$DEFINE COMPILER35_UP}
-  {$DEFINE COMPILER3_UP}
-  {$DEFINE COMPILER2_UP}
-  {$DEFINE COMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF COMPILER35}
-  {$DEFINE COMPILER35_UP}
-  {$DEFINE COMPILER3_UP}
-  {$DEFINE COMPILER2_UP}
-  {$DEFINE COMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF COMPILER3}
-  {$DEFINE COMPILER3_UP}
-  {$DEFINE COMPILER2_UP}
-  {$DEFINE COMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF COMPILER2}
-  {$DEFINE COMPILER2_UP}
-  {$DEFINE COMPILER1_UP}
-{$ENDIF}
-
-{$IFDEF COMPILER1}
-  {$DEFINE COMPILER1_UP}
-{$ENDIF}
+{$IFDEF RTL185_UP} {$DEFINE RTL180_UP} {$ENDIF}
+{$IFDEF RTL180_UP} {$DEFINE RTL170_UP} {$ENDIF}
+{$IFDEF RTL170_UP} {$DEFINE RTL160_UP} {$ENDIF}
+{$IFDEF RTL160_UP} {$DEFINE RTL150_UP} {$ENDIF}
+{$IFDEF RTL150_UP} {$DEFINE RTL145_UP} {$ENDIF}
+{$IFDEF RTL145_UP} {$DEFINE RTL142_UP} {$ENDIF}
+{$IFDEF RTL142_UP} {$DEFINE RTL140_UP} {$ENDIF}
+{$IFDEF RTL140_UP} {$DEFINE RTL130_UP} {$ENDIF}
+{$IFDEF RTL130_UP} {$DEFINE RTL125_UP} {$ENDIF}
+{$IFDEF RTL125_UP} {$DEFINE RTL120_UP} {$ENDIF}
+{$IFDEF RTL120_UP} {$DEFINE RTL110_UP} {$ENDIF}
+{$IFDEF RTL110_UP} {$DEFINE RTL100_UP} {$ENDIF}
+{$IFDEF RTL100_UP} {$DEFINE RTL93_UP}  {$ENDIF}
+{$IFDEF RTL93_UP}  {$DEFINE RTL90_UP}  {$ENDIF}
+{$IFDEF RTL90_UP}  {$DEFINE RTL80_UP}  {$ENDIF}
 
 {------------------------------------------------------------------------------}
 
@@ -973,68 +754,19 @@
 {$ENDIF}
 
 {------------------------------------------------------------------------------}
-{ RTLX_UP from RTLX_UP mappings                                                }
+{ KYLIXX_UP from KYLIXX mappings                                               }
 {------------------------------------------------------------------------------}
 
-{$IFDEF RTL190_UP}
-  {$DEFINE RTL180_UP}
-{$ENDIF}
+{$IFDEF KYLIX3} {$DEFINE KYLIX3_UP} {$ENDIF}
+{$IFDEF KYLIX2} {$DEFINE KYLIX2_UP} {$ENDIF}
+{$IFDEF KYLIX1} {$DEFINE KYLIX1_UP} {$ENDIF}
 
-{$IFDEF RTL180_UP}
-  {$DEFINE RTL170_UP}
-{$ENDIF}
+{------------------------------------------------------------------------------}
+{ KYLIXX_UP from KYLIXX_UP mappings                                            }
+{------------------------------------------------------------------------------}
 
-{$IFDEF RTL170_UP}
-  {$DEFINE RTL160_UP}
-{$ENDIF}
-
-{$IFDEF RTL160_UP}
-  {$DEFINE RTL150_UP}
-{$ENDIF}
-
-{$IFDEF RTL150_UP}
-  {$DEFINE RTL145_UP}
-{$ENDIF}
-
-{$IFDEF RTL145_UP}
-  {$DEFINE RTL142_UP}
-{$ENDIF}
-
-{$IFDEF RTL142_UP}
-  {$DEFINE RTL140_UP}
-{$ENDIF}
-
-{$IFDEF RTL140_UP}
-  {$DEFINE RTL130_UP}
-{$ENDIF}
-
-{$IFDEF RTL130_UP}
-  {$DEFINE RTL125_UP}
-{$ENDIF}
-
-{$IFDEF RTL125_UP}
-  {$DEFINE RTL120_UP}
-{$ENDIF}
-
-{$IFDEF RTL120_UP}
-  {$DEFINE RTL110_UP}
-{$ENDIF}
-
-{$IFDEF RTL110_UP}
-  {$DEFINE RTL100_UP}
-{$ENDIF}
-
-{$IFDEF RTL100_UP}
-  {$DEFINE RTL93_UP}
-{$ENDIF}
-
-{$IFDEF RTL93_UP}
-  {$DEFINE RTL90_UP}
-{$ENDIF}
-
-{$IFDEF RTL90_UP}
-  {$DEFINE RTL80_UP}
-{$ENDIF}
+{$IFDEF KYLIX3_UP} {$DEFINE KYLIX2_UP} {$ENDIF}
+{$IFDEF KYLIX2_UP} {$DEFINE KYLIX1_UP} {$ENDIF}
 
 {------------------------------------------------------------------------------}
 { Map COMPILERX_UP to friendly feature names                                   }
@@ -1218,14 +950,6 @@
       {$DEFINE VCL}
     {$ENDIF}
   {$ENDIF ~CONSOLE}
-
-  {$IFDEF VisualCLX}
-    {$DEFINE COMPLIB_CLX} // kept for backward compatibility, use VisualCLX instead
-  {$ENDIF}
-
-  {$IFDEF VCL}
-    {$DEFINE COMPLIB_VCL} // kept for backward compatibility, use VCL instead
-  {$ENDIF}
 {$ENDIF DELPHILANGUAGE}
 
 {------------------------------------------------------------------------------}
@@ -1242,7 +966,8 @@
 {$IFDEF COMPILER2_UP}
   {$IFOPT H+} {$DEFINE LONGSTRINGS_ON} {$ENDIF}
 {$ENDIF}
-{ HINTS }
+
+// Hints
 {$IFOPT I+} {$DEFINE IOCHECKS_ON} {$ENDIF}
 {$IFDEF COMPILER2_UP}
   {$IFOPT J+} {$DEFINE WRITEABLECONST_ON} {$ENDIF}
@@ -1253,121 +978,17 @@
 {$IFOPT P+} {$DEFINE OPENSTRINGS_ON} {$ENDIF}
 {$IFOPT Q+} {$DEFINE OVERFLOWCHECKS_ON} {$ENDIF}
 {$IFOPT R+} {$DEFINE RANGECHECKS_ON} {$ENDIF}
-{ REALCOMPATIBILITY }
+
+// Real compatibility
 {$IFOPT T+} {$DEFINE TYPEDADDRESS_ON} {$ENDIF}
 {$IFOPT U+} {$DEFINE SAFEDIVIDE_ON} {$ENDIF}
 {$IFOPT V+} {$DEFINE VARSTRINGCHECKS_ON} {$ENDIF}
 {$IFOPT W+} {$DEFINE STACKFRAMES_ON} {$ENDIF}
-{ WARNINGS }
+
+// Warnings
 {$IFOPT X+} {$DEFINE EXTENDEDSYNTAX_ON} {$ENDIF}
 
 // for Delphi/BCB trial versions remove the point from the line below
 {.$UNDEF SUPPORTS_WEAKPACKAGEUNIT}
-
-// History:
-
-// $Log: jedi.inc,v $
-// Revision 1.4  2006/01/29 23:25:36  progdigy
-// no message
-//
-// Revision 1.28  2005/10/28 04:33:17  rrossmair
-// - added BDS and BDSX_UP symbols
-//
-// Revision 1.27  2005/10/12 21:18:43  ahuser
-// Moved comments out of the compiler directives.
-//
-// Revision 1.26  2005/09/03 15:46:42  marquardt
-// new SUPPORTS_ added to description section
-//
-// Revision 1.25  2005/09/03 15:22:24  rrossmair
-// - support for Delphi.NET personality syntax
-//
-// Revision 1.24  2005/08/22 01:43:02  rrossmair
-// - added symbols Win32API, PUREPASCAL, DELPHI2005, DELPHI2005_UP
-// - reworked/reformated some comments
-//
-// Revision 1.23  2005/04/15 08:27:38  marquardt
-// introduced SUPPORTS_DISPID for FPC
-//
-// Revision 1.22  2005/04/07 00:41:35  rrossmair
-// - changed for FPC 1.9.8
-//
-// Revision 1.21  2005/02/22 07:36:46  marquardt
-// introduced SUPPORTS_INLINE, minor cleanups in JclRegistry
-//
-// Revision 1.20  2004/11/18 00:57:13  rrossmair
-// - check-in for release 1.93
-//
-// Revision 1.19  2004/11/06 02:11:20  mthoma
-// history cleaning.
-//
-// Revision 1.18  2004/08/10 02:52:02  rrossmair
-// - moved {$ENDIF ~JEDI_INC} to EOF.
-//
-// Revision 1.17  2004/08/09 06:38:08  peter3
-// - D8 support added
-// - D9 support added (guesswork)
-//
-// Revision 1.16  2004/07/29 17:12:28  rrossmair
-// fixed comment ("KYLIXX_UP from KYLIXX mappings")
-//
-// Revision 1.15  2004/07/29 07:58:21  marquardt
-// inc files updated
-//
-// Revision 1.14  2004/06/21 01:10:17  rrossmair
-// - $IFDEFed contents (to prevent from repeated inclusion)
-// - introduced symbols SUPPORTS_DEPRECATED_WARNINGS, SUPPORTS_LIBRARY_WARNINGS, SUPPORTS_PLATFORM_WARNINGS, SUPPORTS_COMPILETIME_MESSAGES
-// - reordered pre-CVS history
-//
-// Revision 1.13  2004/05/08 08:44:20  rrossmair
-// introduced & applied symbol HAS_UNIT_LIBC
-//
-// Revision 1.12  2004/05/06 05:03:59  rrossmair
-// SUPPORTS_ENUMVALUE definition fixed for Free Pascal Compiler
-//
-// Revision 1.11  2004/05/05 03:20:13  rrossmair
-// jedi.inc: moved FPC-incompatible Kylix-related code to separate include file "kylix.inc", disposed of FPC-related TODOs
-//
-// Revision 1.10  2004/05/01 00:03:59  rrossmair
-// FPC workaround removed; didn't work with Kylix
-//
-// Revision 1.9  2004/04/30 18:25:15  rrossmair
-// added symbols BORLAND, CPPBUILDER, BCBCOMPILER
-// removed symbol NONBORLAND
-// cleanup (reduced redundancy)
-// corrected embarrassing typo "widestring's" (for the 3rd time, I believe)
-//
-// Revision 1.8  2004/04/14 20:26:33  mthoma
-// Changed data to date
-// Local is Delphi 6 - removed todo comment
-// Replaced CLX with VisualCLX to be consistent with Borlands current definition of what "CLX" is.
-//
-// Revision 1.7  2004/04/06 05:06:12
-// add support for Kylix, FPC, RTL, versions, some speaking directives
-//
-// 2004-03-22,
-//  - add SUPPORTS_WEAKPACKAGEUNIT
-//
-// 2004-03-20,
-//  - add SUPPORTS_LOCAL
-//
-// 2004-03-18,
-//  - add SUPPORTS_LONGWORD
-//
-// 2004-03-16,
-//  - add HAS_UNIT_STRUTILS
-//  - add XPLATFORM_RTL
-//
-// 2003-12-03,
-//  - add SUPPORTS_ENUMVALUE
-//
-// 2003-11-14,
-//  - add SUPPORTS_VARARGS
-//
-// 2003-10-30,
-//  - correct and complete comments
-//  - add Kylix definitions
-//  - add RTL definitions
-//  - add FPC definitions
 
 {$ENDIF ~JEDI_INC}
