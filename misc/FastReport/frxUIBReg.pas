@@ -1,9 +1,9 @@
 {******************************************}
 {                                          }
-{             FastReport v3.0              }
+{             FastReport v4.x              }
 {       UIB components registration        }
 {                                          }
-{            Copyright (c) 2005            }
+{          Copyright (c) 2005-2007         }
 {             by Pierre Yager,             }
 {            Fast Reports Inc.             }
 {                                          }
@@ -30,7 +30,7 @@ uses
 
 procedure Register;
 begin
-  RegisterComponents('FastReport 3.0', [TfrxUIBComponents]);
+  RegisterComponents('FastReport 4.0', [TfrxUIBComponents]);
 end;
 
 end.

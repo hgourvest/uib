@@ -1,11 +1,10 @@
 {******************************************}
 {                                          }
-{             FastReport v3.0              }
+{             FastReport v4.x              }
 {          Language resource file          }
 {                                          }
-{         Copyright (c) 1998-2005          }
-{         by Alexander Tzyganenko,         }
-{            Fast Reports Inc.             }
+{         Copyright (c) 2005-2007          }
+{            by Pierre Yager.              }
 {                                          }
 {******************************************}
 

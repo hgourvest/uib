@@ -1,9 +1,9 @@
 {******************************************}
 {                                          }
-{             FastReport v3.0              }
+{             FastReport v4.x              }
 {          UIB enduser components          }
 {                                          }
-{         Copyright (c) 1998-2005          }
+{         Copyright (c) 2005-2007          }
 {            by Pierre Yager.              }
 {                                          }
 {******************************************}
@@ -151,7 +151,7 @@ uses
 {$ENDIF}
   frxDsgnIntf, frxRes;
 
-{$R frxUIB.res}
+{$R frxUIB_FR4.res}
 
 { frxParamsToUIBParams }
 
@@ -502,7 +502,7 @@ begin
     begin
       Objects := [OIDTable, OIDView];
       Tables := [OIDTableField];
-      Views := [OIDViewFields];
+      Views := [OIDViewField];
       SysInfos := ShowSystemTables;
     end;
   end;

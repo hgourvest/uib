@@ -1,9 +1,9 @@
 {******************************************}
 {                                          }
-{             FastReport v3.0              }
+{             FastReport v4.x              }
 {      UIB components design editors       }
 {                                          }
-{         Copyright (c) 1998-2005          }
+{         Copyright (c) 2005-2007          }
 {            by Pierre Yager.              }
 {                                          }
 {******************************************}
