@@ -23,9 +23,12 @@ type
     SrcQuery: TJvUIBQuery;
     GroupBox1: TGroupBox;
     cbReplace: TCheckBox;
-    cbCloseWhenDone: TCheckBox;
-    cbVerbose: TCheckBox;
     cbMetadataOnly: TCheckBox;
+    GroupBox2: TGroupBox;
+    cbVerbose: TCheckBox;
+    cbCloseWhenDone: TCheckBox;
+    cbPageSize: TComboBox;
+    cbOverrideSourcePageSize: TCheckBox;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure btBrowseClick(Sender: TObject);
@@ -33,16 +36,34 @@ type
     procedure ConfigChange(Sender: TObject);
     procedure btStartClick(Sender: TObject);
     procedure FormKeyPress(Sender: TObject; var Key: Char);
+    procedure cbOverrideSourcePageSizeClick(Sender: TObject);
   private
     { Déclarations privées }
+    function GetDestPageSize: Integer;
   public
     { Déclarations publiques }
   end;
+
+type
+  TPageSize = record
+    PageSize: Integer;
+    Comment: String;
+  end;
+
+const
+  PAGE_SIZES : array[0..4] of TPageSize = (
+    (PageSize: 1024;  Comment: 'deprecated'),
+    (PageSize: 2048;  Comment: 'default'),
+    (PageSize: 4096;  Comment: 'recommanded'),
+    (PageSize: 8192;  Comment: ''),
+    (PageSize: 16384; Comment: '')
+  );
 
 var
   CloneForm: TCloneForm;
 
 implementation
+
 uses inifiles, jvuiblib, jvuibmetadata, jvuibase;
 
 {$R *.dfm}
@@ -50,6 +71,7 @@ uses inifiles, jvuiblib, jvuibmetadata, jvuibase;
 procedure TCloneForm.FormClose(Sender: TObject; var Action: TCloseAction);
 var
   ini: TIniFile;
+  pageSize: Integer;
 begin
   if not btStart.Enabled then
   begin
@@ -64,6 +86,9 @@ begin
       ini.WriteBool('CLONE', 'CloseWhenDone', cbCloseWhenDone.Checked);
       ini.WriteBool('CLONE', 'Verbose', cbVerbose.Checked);
       ini.WriteBool('CLONE', 'MetadataOnly', cbMetadataOnly.Checked);
+      ini.WriteBool('CLONE', 'OverridePageSize', cbOverrideSourcePageSize.Checked);
+      pageSize := Integer(cbPageSize.Items.Objects[cbPageSize.ItemIndex]);
+      ini.WriteInteger('CLONE', 'PageSize', pageSize);
     finally
       ini.Free;
     end;
@@ -75,6 +100,9 @@ end;
 procedure TCloneForm.FormCreate(Sender: TObject);
 var
   ini: TIniFile;
+  defaultPageSize: Integer;
+  selected: Integer;
+  I: Integer;
 begin
   ini := TIniFile.Create(ExtractFilePath(GetModuleName(HInstance)) + 'config.ini');
   try
@@ -89,9 +117,27 @@ begin
     cbCloseWhenDone.Checked := ini.ReadBool('CLONE', 'CloseWhenDone', false);
     cbVerbose.Checked := ini.ReadBool('CLONE', 'Verbose', true);
     cbMetadataOnly.Checked := ini.ReadBool('CLONE', 'MetadataOnly', false);
+
+    cbOverrideSourcePageSize.Checked := ini.ReadBool('CLONE','OverridePageSize',false);
+    defaultPageSize := ini.ReadInteger('CLONE','PageSize', 2048);
   finally
     ini.Free;
   end;
+
+  selected := 1;
+  cbPageSize.Clear;
+  for I := 0 to High(PAGE_SIZES) do
+  begin
+    if PAGE_SIZES[I].Comment <> '' then
+      cbPageSize.AddItem(Format('%d (%s)', [PAGE_SIZES[I].PageSize, PAGE_SIZES[I].Comment]), TObject(PAGE_SIZES[I].PageSize))
+    else
+      cbPageSize.AddItem(Format('%d', [PAGE_SIZES[I].PageSize]), TObject(PAGE_SIZES[I].PageSize));
+
+    if PAGE_SIZES[I].PageSize = defaultPageSize then
+      selected := I;
+  end;
+  cbPageSize.ItemIndex := selected;
+
 end;
 
 procedure TCloneForm.btBrowseClick(Sender: TObject);
@@ -139,6 +185,8 @@ var
       on e: Exception do
       begin
         AddLog('--- failed ---');
+        Log.Lines.Add(sql);
+        AddLog('---  exception  ---');
         Log.Lines.Add(e.Message);
         inc(errorscount);
       end;
@@ -163,7 +211,8 @@ begin
     Destination.CharacterSet := metadb.DefaultCharset;
     Destination.SQLDialect := Source.InfoDbSqlDialect;
 
-    Destination.CreateDatabase(Source.InfoPageSize);
+    AddLog('Create database (page_size ' + IntToStr(GetDestPageSize) + ')');
+    Destination.CreateDatabase(GetDestPageSize);
 
     // ROLES
     for i := 0 to metadb.RolesCount - 1 do
@@ -437,6 +486,11 @@ begin
     Close;
 end;
 
+procedure TCloneForm.cbOverrideSourcePageSizeClick(Sender: TObject);
+begin
+  cbPageSize.Enabled := cbOverrideSourcePageSize.Checked;
+end;
+
 procedure TCloneForm.FormKeyPress(Sender: TObject; var Key: Char);
 begin
   case key of
@@ -444,6 +498,14 @@ begin
     #27: Close;
   end;
   if (sender is TEdit) and (Key = #13) then abort;
+end;
+
+function TCloneForm.GetDestPageSize: Integer;
+begin
+  if cbOverrideSourcePageSize.Checked then
+    Result := Integer(cbPageSize.Items.Objects[cbPageSize.ItemIndex])
+  else
+    Result := Source.InfoPageSize;
 end;
 
 end.

@@ -3,7 +3,7 @@ object CloneForm: TCloneForm
   Top = 335
   ActiveControl = btStart
   Caption = 'Clone'
-  ClientHeight = 378
+  ClientHeight = 382
   ClientWidth = 531
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -17,7 +17,7 @@ object CloneForm: TCloneForm
   OnKeyPress = FormKeyPress
   DesignSize = (
     531
-    378)
+    382)
   PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
@@ -32,6 +32,7 @@ object CloneForm: TCloneForm
     Top = 120
     Width = 513
     Height = 225
+    ScrollBars = ssVertical
     TabOrder = 0
   end
   object btStart: TButton
@@ -57,13 +58,14 @@ object CloneForm: TCloneForm
   end
   object cbSave: TCheckBox
     Left = 8
-    Top = 351
+    Top = 355
     Width = 105
     Height = 17
     Anchors = [akLeft, akBottom]
     Caption = 'Save as default'
     TabOrder = 3
     OnKeyPress = FormKeyPress
+    ExplicitTop = 351
   end
   object edCloneFile: TEdit
     Left = 8
@@ -86,8 +88,8 @@ object CloneForm: TCloneForm
   end
   object GroupBox1: TGroupBox
     Left = 8
-    Top = 48
-    Width = 185
+    Top = 49
+    Width = 338
     Height = 65
     Caption = 'Options '
     TabOrder = 6
@@ -102,33 +104,61 @@ object CloneForm: TCloneForm
     end
     object cbMetadataOnly: TCheckBox
       Left = 8
-      Top = 32
+      Top = 39
       Width = 97
       Height = 17
       Caption = 'Metadata Only'
       TabOrder = 1
       OnKeyPress = FormKeyPress
     end
+    object cbPageSize: TComboBox
+      Left = 178
+      Top = 35
+      Width = 145
+      Height = 21
+      Style = csDropDownList
+      Enabled = False
+      ItemHeight = 13
+      TabOrder = 2
+    end
+    object cbOverrideSourcePageSize: TCheckBox
+      Left = 160
+      Top = 16
+      Width = 161
+      Height = 17
+      Caption = 'Override source page size'
+      TabOrder = 3
+      OnClick = cbOverrideSourcePageSizeClick
+      OnKeyPress = FormKeyPress
+    end
   end
-  object cbCloseWhenDone: TCheckBox
-    Left = 200
-    Top = 96
-    Width = 113
-    Height = 17
-    Caption = 'Close after finished'
+  object GroupBox2: TGroupBox
+    Left = 352
+    Top = 48
+    Width = 171
+    Height = 65
+    Caption = 'Clone Options'
     TabOrder = 7
-    OnKeyPress = FormKeyPress
-  end
-  object cbVerbose: TCheckBox
-    Left = 200
-    Top = 56
-    Width = 97
-    Height = 17
-    Caption = 'Verbose'
-    Checked = True
-    State = cbChecked
-    TabOrder = 8
-    OnKeyPress = FormKeyPress
+    object cbVerbose: TCheckBox
+      Left = 11
+      Top = 16
+      Width = 97
+      Height = 17
+      Caption = 'Verbose'
+      Checked = True
+      State = cbChecked
+      TabOrder = 0
+      OnKeyPress = FormKeyPress
+    end
+    object cbCloseWhenDone: TCheckBox
+      Left = 11
+      Top = 39
+      Width = 113
+      Height = 17
+      Caption = 'Close after finished'
+      TabOrder = 1
+      OnKeyPress = FormKeyPress
+    end
   end
   object Source: TJvUIBDataBase
     Params.Strings = (
@@ -153,11 +183,13 @@ object CloneForm: TCloneForm
   end
   object SrcTransaction: TJvUIBTransaction
     DataBase = Source
+    Options = [tpConcurrency, tpWait, tpRead]
     Left = 48
     Top = 128
   end
   object DstTransaction: TJvUIBTransaction
     DataBase = Destination
+    Options = [tpConcurrency, tpWait, tpWrite, tpNoAutoUndo]
     Left = 48
     Top = 160
   end

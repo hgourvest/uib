@@ -1,9 +1,9 @@
 object MainForm: TMainForm
   Left = 198
   Top = 107
-  Width = 509
-  Height = 476
   Caption = 'Clone Database'
+  ClientHeight = 442
+  ClientWidth = 501
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -14,7 +14,7 @@ object MainForm: TMainForm
   PixelsPerInch = 96
   TextHeight = 13
   object CopyButton: TButton
-    Left = 160
+    Left = 168
     Top = 8
     Width = 75
     Height = 25
@@ -24,9 +24,9 @@ object MainForm: TMainForm
   end
   object Log: TListBox
     Left = 0
-    Top = 40
+    Top = 39
     Width = 501
-    Height = 409
+    Height = 403
     Align = alBottom
     Anchors = [akLeft, akTop, akRight, akBottom]
     ItemHeight = 13
@@ -35,7 +35,7 @@ object MainForm: TMainForm
     TabOrder = 1
   end
   object Source: TButton
-    Left = 0
+    Left = 6
     Top = 8
     Width = 75
     Height = 25
@@ -44,7 +44,7 @@ object MainForm: TMainForm
     OnClick = SourceClick
   end
   object Destination: TButton
-    Left = 80
+    Left = 87
     Top = 8
     Width = 75
     Height = 25

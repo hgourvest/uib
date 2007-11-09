@@ -4098,7 +4098,7 @@ end;
 procedure TMetaProcedureGrant.SaveToDDLNode(Stream: TStringStream);
 begin
   inherited SaveToDDLNode(Stream);
-  Stream.WriteString('EXECUTE ON ' + FName + ' TO ');
+  Stream.WriteString('EXECUTE ON PROCEDURE ' + FName + ' TO ');
   inherited SaveGranteesToDDLNode(Stream, 'GRANT');
 end;
 
@@ -4120,7 +4120,7 @@ begin
     if tpDelete in FPrivileges then
       Result := Result + 'DELETE,';
     if tpReference in FPrivileges then
-      Result := Result + 'REFERENCE,';
+      Result := Result + 'REFERENCES,';
   end;
   Delete(Result,Length(Result),1);
   if FOption then
@@ -4162,7 +4162,7 @@ begin
     if tpDelete in FPrivileges then
       Grants := Grants + 'DELETE,';
     if tpReference in FPrivileges then
-      Grants := Grants + 'REFERENCE,';
+      Grants := Grants + 'REFERENCES,';
     Delete(Grants,Length(Grants),1);
   end;
   Stream.WriteString(Grants + ' ON ' + FName + ' TO ');
