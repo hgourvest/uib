@@ -332,18 +332,24 @@ type
     procedure LoadFromQuery(Q: TJvUIBStatement);
     procedure LoadFromStream(Stream: TStream); override;
     function GetAsAlterDDL: string;
+    function GetAsAlterToActiveDDL: string;
+    function GetAsAlterToInactiveDDL: string;
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     procedure SaveToStream(Stream: TStream); override;
     procedure SaveToDDLNode(Stream: TStringStream); override;
     procedure SaveToAlterDDL(Stream: TStringStream);
+    procedure SaveToAlterToActiveDDL(Stream: TStringStream);
+    procedure SaveToAlterToInactiveDDL(Stream: TStringStream);
     property Prefix: TTriggerPrefix read FPrefix;
     property Suffix: TTriggerSuffixes read FSuffix;
     property Position: Smallint read FPosition;
     property Active: Boolean read FActive;
     property Source: string read FSource;
     property AsAlterDDL: string read GetAsAlterDDL;
+    property AsAlterToActiveDDL: string read GetAsAlterToActiveDDL;
+    property AsAlterToInactiveDDL: string read GetAsAlterToInactiveDDL;
   end;
 
   TMetaBaseTable = class(TMetaNode)
@@ -773,6 +779,19 @@ type
     property Privilege: TFieldPrivilege read FPrivilege;
     property Fields[const Index: Integer]: String read GetFields;
     property FieldsCount: Integer read GetFieldsCount;
+  end;
+
+  TMetaTablesSorter = class
+  private
+    FSortedTables: TList;
+    function GetTables(const Index: Integer): TMetaTable;
+    function GetTablesCount: Integer;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure SortFromMetaDataBase(MetaDB: TMetaDatabase);
+    property Tables[const Index: Integer]: TMetaTable read GetTables; default;
+    property TablesCount: Integer read GetTablesCount;
   end;
 
 implementation
@@ -2954,6 +2973,11 @@ begin
   Stream.WriteString(Format(' POSITION %d%s%s;', [FPosition, NewLine, FSource]));
 end;
 
+procedure TMetaTrigger.SaveToAlterToInactiveDDL(Stream: TStringStream);
+begin
+  Stream.WriteString('ALTER TRIGGER ' + Name + ' INACTIVE;');
+end;
+
 procedure TMetaTrigger.SaveToStream(Stream: TStream);
 begin
   WriteString(Stream, FName);
@@ -2969,9 +2993,26 @@ begin
   Result := MetaTrigger;
 end;
 
+procedure TMetaTrigger.SaveToAlterToActiveDDL(Stream: TStringStream);
+begin
+  Stream.WriteString('ALTER TRIGGER ' + Name + ' ACTIVE;');
+end;
+
 procedure TMetaTrigger.SaveToAlterDDL(Stream: TStringStream);
 begin
   Stream.WriteString(Format('ALTER TRIGGER %s%s%s', [Name, NewLine, FSource]));
+end;
+
+function TMetaTrigger.GetAsAlterToActiveDDL: string;
+var stream: TStringStream;
+begin
+  stream := TStringStream.Create('');
+  try
+    SaveToAlterToActiveDDL(stream);
+    result := stream.DataString;
+  finally
+    stream.Free;
+  end;
 end;
 
 function TMetaTrigger.GetAsAlterDDL: string;
@@ -2980,6 +3021,18 @@ begin
   stream := TStringStream.Create('');
   try
     SaveToAlterDDL(stream);
+    result := stream.DataString;
+  finally
+    stream.Free;
+  end;
+end;
+
+function TMetaTrigger.GetAsAlterToInactiveDDL: string;
+var stream: TStringStream;
+begin
+  stream := TStringStream.Create('');
+  try
+    SaveToAlterToInactiveDDL(stream);
     result := stream.DataString;
   finally
     stream.Free;
@@ -4416,6 +4469,87 @@ procedure TMetaViewGrantee.SaveToDDLNode(Stream: TStringStream);
 begin
   Stream.WriteString('VIEW ');
   inherited SaveToDDLNode(Stream);
+end;
+
+{ TMetaTablesSorter }
+
+constructor TMetaTablesSorter.Create;
+begin
+  inherited Create;
+  FSortedTables := TList.Create;
+end;
+
+destructor TMetaTablesSorter.Destroy;
+begin
+  FSortedTables.Free;
+  inherited;
+end;
+
+function TMetaTablesSorter.GetTables(const Index: Integer): TMetaTable;
+begin
+  Result := TMetaTable(FSortedTables[Index]);
+end;
+
+function TMetaTablesSorter.GetTablesCount: Integer;
+begin
+  Result := FSortedTables.Count;
+end;
+
+procedure TMetaTablesSorter.SortFromMetaDataBase(MetaDB: TMetaDatabase);
+var
+  I, F: Integer;
+  CanAdd: Boolean;
+  ToAdd: TList;
+  Current: TMetaTable;
+begin
+  { Commence par ajouter les tables qui n'ont pas de dépendences }
+  ToAdd := TList.Create;
+  try
+    for I := 0 to MetaDB.TablesCount - 1 do
+    begin
+      if MetaDB.Tables[i].ForeignCount = 0 then
+        FSortedTables.Add(MetaDB.Tables[i])
+      else
+        ToAdd.Add(MetaDB.Tables[i]);
+    end;
+
+    { Ajoute ensuite les tables qui ont uniquement des dépendences sur les tables
+      qui sont déjà dans la liste }
+    I := 0;
+    while ToAdd.Count > 0 do
+    begin
+      { Boucle sur la liste ToAdd }
+      if I >= ToAdd.Count then
+        I := 0;
+
+      Current := TMetaTable(ToAdd[I]);
+
+      CanAdd := true;
+      for F := 0 to Current.ForeignCount - 1 do
+      begin
+        { Il faut que toutes les dépendances de Current soient dans
+          FSortedTables. Ne tient pas compte des jointures auto-réflexives }
+        if (Current.Foreign[F].ForTable <> Current)
+          and (FSortedTables.IndexOf(Current.Foreign[F].ForTable) < 0) then
+        begin
+          CanAdd := false;
+          Break;
+        end;
+      end;
+      if CanAdd then
+      begin
+        FSortedTables.Add(Current);
+        ToAdd.Remove(Current);
+        { Ne change pas I, comme on a supprimé un item, la même valeur de I
+          permettra d'avoir le suivant dans la liste }
+      end
+      else
+        Inc(I);
+    end;
+  finally
+    ToAdd.Free;
+  end;
+
 end;
 
 end.

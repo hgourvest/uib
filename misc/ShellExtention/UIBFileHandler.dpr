@@ -10,7 +10,8 @@ uses
   Infos in 'Infos.pas' {InfosForm},
   Shutdown in 'Shutdown.pas' {ShutDownForm},
   Clone in 'Clone.pas' {CloneForm},
-  Options in 'Options.pas' {OptionsForm};
+  Options in 'Options.pas' {OptionsForm},
+  Pump in 'Pump.pas' {PumpForm};
 
 exports
   DllGetClassObject,

@@ -29,6 +29,7 @@ type
     cbCloseWhenDone: TCheckBox;
     cbPageSize: TComboBox;
     cbOverrideSourcePageSize: TCheckBox;
+    cbIgnoreConstraints: TCheckBox;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure btBrowseClick(Sender: TObject);
@@ -89,6 +90,7 @@ begin
       ini.WriteBool('CLONE', 'OverridePageSize', cbOverrideSourcePageSize.Checked);
       pageSize := Integer(cbPageSize.Items.Objects[cbPageSize.ItemIndex]);
       ini.WriteInteger('CLONE', 'PageSize', pageSize);
+      ini.WriteBool('CLONE', 'IgnoreConstraints', cbIgnoreConstraints.Checked);
     finally
       ini.Free;
     end;
@@ -117,6 +119,7 @@ begin
     cbCloseWhenDone.Checked := ini.ReadBool('CLONE', 'CloseWhenDone', false);
     cbVerbose.Checked := ini.ReadBool('CLONE', 'Verbose', true);
     cbMetadataOnly.Checked := ini.ReadBool('CLONE', 'MetadataOnly', false);
+    cbIgnoreConstraints.Checked := ini.ReadBool('CLONE', 'IgnoreConstraints', false);
 
     cbOverrideSourcePageSize.Checked := ini.ReadBool('CLONE','OverridePageSize',false);
     defaultPageSize := ini.ReadInteger('CLONE','PageSize', 2048);
@@ -360,45 +363,50 @@ begin
       end;
     end;
 
-    // UNIQUE
-    for i := 0 to metadb.TablesCount - 1 do
-    for j := 0 to metadb.Tables[i].UniquesCount - 1 do
+    if not cbIgnoreConstraints.Checked then
     begin
-      AddLog('Create Unique: ' + metadb.Tables[i].Uniques[j].Name);
-      ExecuteImmediate(metadb.Tables[i].Uniques[j].AsDDL);
-    end;
 
-    // PRIMARY
-    for i := 0 to metadb.TablesCount - 1 do
-    for j := 0 to metadb.Tables[i].PrimaryCount - 1 do
-    begin
-      AddLog('Create Primary: ' + metadb.Tables[i].Primary[j].Name);
-      ExecuteImmediate(metadb.Tables[i].Primary[j].AsDDL);
-    end;
+      // UNIQUE
+      for i := 0 to metadb.TablesCount - 1 do
+      for j := 0 to metadb.Tables[i].UniquesCount - 1 do
+      begin
+        AddLog('Create Unique: ' + metadb.Tables[i].Uniques[j].Name);
+        ExecuteImmediate(metadb.Tables[i].Uniques[j].AsDDL);
+      end;
 
-    // FOREIGN
-    for i := 0 to metadb.TablesCount - 1 do
-    for j := 0 to metadb.Tables[i].ForeignCount - 1 do
-    begin
-      AddLog('Create Foreign: ' + metadb.Tables[i].Foreign[j].Name);
-      ExecuteImmediate(metadb.Tables[i].Foreign[j].AsDDL);
-    end;
+      // PRIMARY
+      for i := 0 to metadb.TablesCount - 1 do
+      for j := 0 to metadb.Tables[i].PrimaryCount - 1 do
+      begin
+        AddLog('Create Primary: ' + metadb.Tables[i].Primary[j].Name);
+        ExecuteImmediate(metadb.Tables[i].Primary[j].AsDDL);
+      end;
 
-    // INDICES
-    for i := 0 to metadb.TablesCount - 1 do
-    for j := 0 to metadb.Tables[i].IndicesCount - 1 do
-    begin
-      AddLog('Create Indice: ' + metadb.Tables[i].Indices[j].Name);
-      ExecuteImmediate(metadb.Tables[i].Indices[j].AsDDL);
-    end;
+      // FOREIGN
+      for i := 0 to metadb.TablesCount - 1 do
+      for j := 0 to metadb.Tables[i].ForeignCount - 1 do
+      begin
+        AddLog('Create Foreign: ' + metadb.Tables[i].Foreign[j].Name);
+        ExecuteImmediate(metadb.Tables[i].Foreign[j].AsDDL);
+      end;
 
-    // CHECKS
-    for i := 0 to metadb.TablesCount - 1 do
-    for j := 0 to metadb.Tables[i].ChecksCount - 1 do
-    begin
-      AddLog('Create Check: ' + metadb.Tables[i].Checks[j].Name);
-      ExecuteImmediate(metadb.Tables[i].Checks[j].AsDDL);
-    end;
+      // INDICES
+      for i := 0 to metadb.TablesCount - 1 do
+      for j := 0 to metadb.Tables[i].IndicesCount - 1 do
+      begin
+        AddLog('Create Indice: ' + metadb.Tables[i].Indices[j].Name);
+        ExecuteImmediate(metadb.Tables[i].Indices[j].AsDDL);
+      end;
+
+      // CHECKS
+      for i := 0 to metadb.TablesCount - 1 do
+      for j := 0 to metadb.Tables[i].ChecksCount - 1 do
+      begin
+        AddLog('Create Check: ' + metadb.Tables[i].Checks[j].Name);
+        ExecuteImmediate(metadb.Tables[i].Checks[j].AsDDL);
+      end;
+
+    end; // IgnoreConstraints
 
     // TABLE TRIGGERS
     for i := 0 to metadb.TablesCount - 1 do
@@ -406,8 +414,6 @@ begin
     begin
       AddLog('Create Trigger: ' + metadb.Tables[i].Triggers[j].Name);
       ExecuteImmediate(metadb.Tables[i].Triggers[j].AsDDL);
-      if not metadb.Tables[i].Triggers[j].Active then
-        metadb.Tables[i].Triggers[j]
     end;
 
     // VIEW TRIGGERS

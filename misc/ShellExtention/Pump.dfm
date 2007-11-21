@@ -1,4 +1,4 @@
-object CloneForm: TCloneForm
+object PumpForm: TPumpForm
   Left = 529
   Top = 335
   ActiveControl = btStart
@@ -20,18 +20,18 @@ object CloneForm: TCloneForm
     382)
   PixelsPerInch = 96
   TextHeight = 13
-  object Label1: TLabel
+  object Label2: TLabel
     Left = 8
     Top = 8
-    Width = 43
+    Width = 93
     Height = 13
-    Caption = 'Clone file'
+    Caption = 'Pump data into file :'
   end
   object Log: TMemo
     Left = 8
-    Top = 143
+    Top = 119
     Width = 513
-    Height = 202
+    Height = 226
     ScrollBars = ssVertical
     TabOrder = 0
   end
@@ -66,87 +66,13 @@ object CloneForm: TCloneForm
     TabOrder = 3
     OnKeyPress = FormKeyPress
   end
-  object edCloneFile: TEdit
-    Left = 8
-    Top = 24
-    Width = 457
-    Height = 21
-    TabOrder = 4
-    OnChange = ConfigChange
-    OnKeyPress = FormKeyPress
-  end
-  object btBrowse: TButton
-    Left = 464
-    Top = 24
-    Width = 25
-    Height = 21
-    Caption = '...'
-    TabOrder = 5
-    OnClick = btBrowseClick
-    OnKeyPress = FormKeyPress
-  end
-  object GroupBox1: TGroupBox
-    Left = 8
-    Top = 49
-    Width = 338
-    Height = 88
-    Caption = 'Options '
-    TabOrder = 6
-    object cbReplace: TCheckBox
-      Left = 8
-      Top = 16
-      Width = 73
-      Height = 17
-      Caption = 'Replace'
-      TabOrder = 0
-      OnKeyPress = FormKeyPress
-    end
-    object cbMetadataOnly: TCheckBox
-      Left = 8
-      Top = 39
-      Width = 97
-      Height = 17
-      Caption = 'Metadata Only'
-      TabOrder = 1
-      OnKeyPress = FormKeyPress
-    end
-    object cbPageSize: TComboBox
-      Left = 178
-      Top = 35
-      Width = 145
-      Height = 21
-      Style = csDropDownList
-      Enabled = False
-      ItemHeight = 13
-      TabOrder = 2
-    end
-    object cbOverrideSourcePageSize: TCheckBox
-      Left = 160
-      Top = 16
-      Width = 161
-      Height = 17
-      Caption = 'Override source page size'
-      TabOrder = 3
-      OnClick = cbOverrideSourcePageSizeClick
-      OnKeyPress = FormKeyPress
-    end
-    object cbIgnoreConstraints: TCheckBox
-      Left = 8
-      Top = 62
-      Width = 321
-      Height = 17
-      Caption = 'Do not restore indices and relational constraints'
-      TabOrder = 4
-      OnKeyPress = FormKeyPress
-    end
-  end
   object GroupBox2: TGroupBox
-    Left = 352
-    Top = 48
-    Width = 171
-    Height = 89
-    Caption = 'Clone Options'
-    TabOrder = 7
+    Left = 362
+    Top = 51
+    Width = 161
+    Height = 62
+    Caption = 'Pump Options'
+    TabOrder = 4
     object cbVerbose: TCheckBox
       Left = 11
       Top = 16
@@ -168,13 +94,51 @@ object CloneForm: TCloneForm
       OnKeyPress = FormKeyPress
     end
   end
+  object edPumpFile: TEdit
+    Left = 8
+    Top = 24
+    Width = 457
+    Height = 21
+    TabOrder = 5
+    OnChange = ConfigChange
+    OnKeyPress = FormKeyPress
+  end
+  object Button1: TButton
+    Left = 464
+    Top = 24
+    Width = 25
+    Height = 21
+    Caption = '...'
+    TabOrder = 6
+    OnClick = btBrowseClick
+    OnKeyPress = FormKeyPress
+  end
+  object GroupBox1: TGroupBox
+    Left = 8
+    Top = 51
+    Width = 348
+    Height = 62
+    Caption = 'Options'
+    TabOrder = 7
+    object cbEmptyTables: TCheckBox
+      Left = 11
+      Top = 16
+      Width = 97
+      Height = 17
+      Caption = 'Empty tables'
+      Checked = True
+      State = cbChecked
+      TabOrder = 0
+      OnKeyPress = FormKeyPress
+    end
+  end
   object Source: TJvUIBDataBase
     Params.Strings = (
       'sql_dialect=3'
       'lc_ctype=NONE')
     LibraryName = 'gds32.dll'
     Left = 16
-    Top = 152
+    Top = 160
   end
   object Destination: TJvUIBDataBase
     Params.Strings = (
@@ -182,30 +146,30 @@ object CloneForm: TCloneForm
       'lc_ctype=NONE')
     LibraryName = 'gds32.dll'
     Left = 16
-    Top = 184
+    Top = 192
   end
   object SaveDialog: TSaveDialog
     Filter = 'Backup file|*.gdb;*.fdb;*.ib'
     Left = 16
-    Top = 216
+    Top = 224
   end
   object SrcTransaction: TJvUIBTransaction
     DataBase = Source
     Options = [tpConcurrency, tpWait, tpRead]
     Left = 48
-    Top = 152
+    Top = 160
   end
   object DstTransaction: TJvUIBTransaction
     DataBase = Destination
     Options = [tpConcurrency, tpWait, tpWrite, tpNoAutoUndo]
     Left = 48
-    Top = 184
+    Top = 192
   end
   object SrcQuery: TJvUIBQuery
     Transaction = SrcTransaction
     CachedFetch = False
     FetchBlobs = True
     Left = 80
-    Top = 152
+    Top = 160
   end
 end

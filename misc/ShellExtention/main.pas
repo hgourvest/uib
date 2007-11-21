@@ -63,6 +63,7 @@ function Restore(Sender: TShellFile; var lpici: TCMInvokeCommandInfo): HResult;
 function DBInfos(Sender: TShellFile; var lpici: TCMInvokeCommandInfo): HResult;
 function Shutdown(Sender: TShellFile; var lpici: TCMInvokeCommandInfo): HResult;
 function Clone(Sender: TShellFile; var lpici: TCMInvokeCommandInfo): HResult;
+function Pump(Sender: TShellFile; var lpici: TCMInvokeCommandInfo): HResult;
 function Options(Sender: TShellFile; var lpici: TCMInvokeCommandInfo): HResult;
 
 
@@ -73,9 +74,10 @@ const
   DatabaseNameSpace = 'UIBDatabase';
   BackupNameSpace = 'UIBBackup';
 
-  DatabaseItems: array[0..4] of TShellMenuItem = (
+  DatabaseItems: array[0..5] of TShellMenuItem = (
     (Name: 'Backup'; Verb: ''; Help: 'Backup database'; Command: Backup),
     (Name: 'Clone'; Verb: ''; Help: 'Clone database'; Command: Clone),
+    (Name: 'Pump'; Verb: ''; Help: 'Pump database'; Command: Pump),
     (Name: 'Informations'; Verb: ''; Help: 'Database informations'; Command: DBInfos),
     (Name: 'Shutdown'; Verb: ''; Help: 'Shutdown database'; Command: Shutdown),
     (Name: 'Options'; Verb: ''; Help: 'Options'; Command: Options));
@@ -86,7 +88,7 @@ const
 
 implementation
 
-uses ComServ, ComConst, Backup, Restore, Infos, Shutdown, Clone, Options;
+uses ComServ, ComConst, Backup, Restore, Infos, Shutdown, Clone, Pump, Options;
 
 function Backup(Sender: TShellFile; var lpici: TCMInvokeCommandInfo): HResult;
 var
@@ -180,6 +182,28 @@ begin
   end;
   Result := NOERROR;
 end;
+
+function Pump(Sender: TShellFile; var lpici: TCMInvokeCommandInfo): HResult;
+var
+  f: TPumpForm;
+  s, e: string;
+  i: integer;
+begin
+  for i := 0 to Length(Sender.FFilenames) - 1 do
+  begin
+    f := TPumpForm.Create(Application);
+    s := sender.FFilenames[i];
+    f.Source.DatabaseName := s;
+    f.Caption := 'Pump from ' + s;
+
+    e := ExtractFileExt(s);
+    s := copy(s, 1, length(s) - length(e)) + '_Empty' + e;
+    f.edPumpFile.Text := s;
+    f.Show;
+  end;
+  Result := NOERROR;
+end;
+
 
 function Options(Sender: TShellFile; var lpici: TCMInvokeCommandInfo): HResult;
 var
