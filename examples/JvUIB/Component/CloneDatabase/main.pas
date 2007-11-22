@@ -53,6 +53,8 @@ type
     procedure AddLog(const FmtStr: String; const Args: array of const); overload;
     function GetDestPageSize: Integer;
 
+    function NormalizeName(const Name: String): String;
+
     procedure ExecuteImmediate(const SQL: String);
     procedure EmptyTables(dbhandle: IscDbHandle; mdb: TMetaDataBase);
     procedure PumpData(dbhandle: IscDbHandle; mdb: TMetaDataBase; failsafe: Boolean);
@@ -82,7 +84,7 @@ var
 implementation
 
 uses
-  jvuibdatabaseedit;
+  jvuibdatabaseedit, jvuibkeywords;
 
 {$R *.dfm}
 
@@ -510,6 +512,14 @@ begin
     Result := SrcDatabase.InfoPageSize;
 end;
 
+function TMainForm.NormalizeName(const Name: String): String;
+begin
+  if IsValidIdentifier(Name) then
+    Result := Name
+  else
+    Result := '"' + Name + '"';
+end;
+
 procedure TMainForm.EmptyTables(dbhandle: IscDbHandle; mdb: TMetaDataBase);
 var
   sthandle: PPointer;
@@ -590,9 +600,9 @@ begin
 
     if not (SrcQuery.Eof) then
     begin
-      sql := format('INSERT INTO %s (%s', [mdb.SortedTables[T].Name, SrcQuery.Fields.SqlName[0]]);
+      sql := format('INSERT INTO %s (%s', [mdb.SortedTables[T].Name, NormalizeName(SrcQuery.Fields.SqlName[0])]);
       for F := 1 to SrcQuery.Fields.FieldCount - 1 do
-        sql := sql + ', ' + SrcQuery.Fields.SqlName[F];
+        sql := sql + ', ' + NormalizeName(SrcQuery.Fields.SqlName[F]);
       sql := sql + ') VALUES (?';
       for F := 1 to SrcQuery.Fields.FieldCount - 1 do
         sql := sql + ',?';

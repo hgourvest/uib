@@ -134,6 +134,22 @@ object UIBDatabaseEditForm: TUIBDatabaseEditForm
       TabOrder = 4
       OnClick = BrowseClick
     end
+    object LibraryName: TEdit
+      Left = 8
+      Top = 112
+      Width = 295
+      Height = 21
+      TabOrder = 5
+    end
+    object BrowseLib: TButton
+      Left = 303
+      Top = 112
+      Width = 25
+      Height = 21
+      Caption = '...'
+      TabOrder = 6
+      OnClick = BrowseLibClick
+    end
   end
   object OkBtn: TButton
     Left = 8
@@ -141,6 +157,7 @@ object UIBDatabaseEditForm: TUIBDatabaseEditForm
     Width = 75
     Height = 25
     Caption = '&Ok'
+    Default = True
     ModalResult = 1
     TabOrder = 6
     OnClick = OkBtnClick
@@ -150,6 +167,7 @@ object UIBDatabaseEditForm: TUIBDatabaseEditForm
     Top = 316
     Width = 75
     Height = 25
+    Cancel = True
     Caption = '&Cancel'
     ModalResult = 2
     TabOrder = 8
@@ -208,22 +226,6 @@ object UIBDatabaseEditForm: TUIBDatabaseEditForm
     Caption = '&Test'
     TabOrder = 7
     OnClick = TestClick
-  end
-  object LibraryName: TEdit
-    Left = 8
-    Top = 112
-    Width = 295
-    Height = 21
-    TabOrder = 9
-  end
-  object BrowseLib: TButton
-    Left = 303
-    Top = 112
-    Width = 25
-    Height = 21
-    Caption = '...'
-    TabOrder = 10
-    OnClick = BrowseLibClick
   end
   object OpenDialog: TOpenDialog
     Left = 152
