@@ -135,7 +135,7 @@ const
   EUIB_DATABASENOTDEF      = 'La base de données n''est pas définie.';
   EUIB_QUERYNOTOPEN        = 'La requête n''est pas encore ouverte.';
   EUIB_CASTERROR           = 'Transtypage incorrect.';
-  EUIB_UNEXPECTEDERROR     = 'Erreur innatendue.';
+  EUIB_UNEXPECTEDERROR     = 'Erreur inattendue.';
   EUIB_FIELDNUMNOTFOUND    = 'Le champ numéro: %d ''esxiste pas.';
   EUIB_FIELDSTRNOTFOUND    = 'Le champ "%s" n''existe pas.';
   EUIB_PARAMSTRNOTFOUND    = 'Le Parametre "%s" n''existe pas.';

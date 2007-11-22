@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls,
+  Dialogs, StdCtrls, XPMan,
   jvuibase, jvuiblib, jvuib, jvuibmetadata;
 
 type
@@ -36,6 +36,7 @@ type
     Label1: TLabel;
     cbFailsafePump: TCheckBox;
     cbFailsafeClone: TCheckBox;
+    XPManifest1: TXPManifest;
     procedure FormCreate(Sender: TObject);
     procedure btStartCloneClick(Sender: TObject);
     procedure btSrcDatabaseClick(Sender: TObject);
@@ -194,7 +195,7 @@ begin
   FErrorsCount := 0;
   DstDatabase.Connected := false;
   if FileExists(DstDatabase.DatabaseName) then
-    if cbReplace.Checked or (MessageDlg('Destination file allready exist, delete ?', mtWarning, [mbOK, mbCancel], 0) = 1) then
+    if cbReplace.Checked or (MessageDlg('Destination file already exist, delete ?', mtWarning, [mbOK, mbCancel], 0) = 1) then
     begin
       if not DeleteFile(DstDatabase.DatabaseName) then
         RaiseLastOSError;
@@ -397,7 +398,7 @@ begin
     DstDatabase.Connected := false;
     SrcDatabase.Connected := False;
     if FErrorsCount > 0 then
-      AddLog('--- There is %d errors ! ---', [FErrorsCount]);
+      AddLog('--- %d error(s) ! ---', [FErrorsCount]);
   end;
   AddLog('done :)');
 

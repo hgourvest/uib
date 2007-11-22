@@ -275,4 +275,8 @@ object MainForm: TMainForm
     Left = 56
     Top = 336
   end
+  object XPManifest1: TXPManifest
+    Left = 56
+    Top = 400
+  end
 end

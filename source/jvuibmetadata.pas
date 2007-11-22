@@ -22,7 +22,7 @@ interface
 
 uses
   Classes, SysUtils,
-  jvuibase, jvuiblib, jvuib, jvuibconst;
+  jvuibase, jvuiblib, jvuib, jvuibconst, jvuibkeywords;
 
 type
   TTriggerPrefix = (tpBefore, tpAfter);
@@ -998,7 +998,7 @@ const
     'WHERE (RDB$USER <> RDB$GRANTOR) AND (RDB$OBJECT_TYPE = ?) AND (RDB$RELATION_NAME = ?) AND (RDB$FIELD_NAME IS NOT NULL) ' +
     'ORDER BY RDB$PRIVILEGE, RDB$GRANT_OPTION, RDB$USER_TYPE, RDB$USER, RDB$GRANTOR, RDB$FIELD_NAME';
 
-procedure WriteString(Stream: TStream; var Str: string);
+procedure WriteString(Stream: TStream; const Str: string);
 var
   Len: Integer;
 begin
@@ -1130,7 +1130,10 @@ end;
 
 function TMetaNode.GetName: String;
 begin
-  Result := FName;
+  if IsValidIdentifier(FName) then
+    Result := FName
+  else
+    Result := '"' + FName + '"';
 end;
 
 function TMetaNode.GetNodes(const Index: Integer): TNodeItem;
@@ -1180,7 +1183,7 @@ begin
   Query.CachedFetch := False;
   try
     FName := Name;
-    Query.SQL.Text := Format('select gen_id(%s, 0) from rdb$database', [FName]);
+    Query.SQL.Text := Format('select gen_id(%s, 0) from rdb$database', [Self.Name]);
     Query.Open;
     if not Query.Eof then
       FValue := Query.Fields.AsInteger[0]
@@ -1222,12 +1225,12 @@ end;
 
 procedure TMetaGenerator.SaveToAlterDDLNode(Stream: TStringStream);
 begin
-  Stream.WriteString(Format('SET GENERATOR %s TO %d;', [FName, FValue]));
+  Stream.WriteString(Format('SET GENERATOR %s TO %d;', [Name, FValue]));
 end;
 
 procedure TMetaGenerator.SaveToCreateDDLNode(Stream: TStringStream);
 begin
-  Stream.WriteString(Format('CREATE GENERATOR %s;', [FName]));
+  Stream.WriteString(Format('CREATE GENERATOR %s;', [Name]));
 end;
 
 function TMetaGenerator.GetAsAlterDDL: string;
@@ -1769,7 +1772,7 @@ procedure TMetaTable.SaveToDDLNode(Stream: TStringStream);
 var
   I: Integer;
 begin
-  Stream.WriteString(Format('CREATE TABLE %s (', [FName]));
+  Stream.WriteString(Format('CREATE TABLE %s (', [Name]));
   for I := 0 to FieldsCount - 1 do
   begin
     Stream.WriteString(NewLine + '   ');
@@ -1897,6 +1900,8 @@ begin
           FPrecision := 7;
         blr_int64, blr_quad, blr_double:
           FPrecision := 15;
+        blr_blob:
+          FFieldType := uftBlob;
       else
         raise EUIBError.Create(EUIB_UNEXPECTEDERROR);
       end;
@@ -2596,7 +2601,7 @@ var
 begin
   Result := nil;
   for I := 0 to UDFSCount - 1 do
-    if CompareText(UDFS[I].Name, UDFName) = 0 then
+    if CompareText(UDFS[I].FName, UDFName) = 0 then
     begin
       Result := UDFS[I];
       Exit;
@@ -2743,9 +2748,9 @@ var
 begin
   if copy(FName, 0, 6) = 'INTEG_' then
     Stream.WriteString(Format('ALTER TABLE %s ADD UNIQUE (',
-      [TMetaTable(FOwner).FName])) else
+      [TMetaTable(FOwner).Name])) else
     Stream.WriteString(Format('ALTER TABLE %s ADD CONSTRAINT %s UNIQUE (',
-      [TMetaTable(FOwner).FName, FName]));
+      [TMetaTable(FOwner).Name, Name]));
   for I := 0 to FieldsCount - 1 do
   begin
     Stream.WriteString(Fields[I].Name);
@@ -2783,10 +2788,10 @@ var
 begin
   if copy(FName, 0, 6) = 'INTEG_' then
     Stream.WriteString(Format('ALTER TABLE %s ADD PRIMARY KEY (',
-      [TMetaTable(FOwner).FName]))
+      [TMetaTable(FOwner).Name]))
   else
     Stream.WriteString(Format('ALTER TABLE %s ADD CONSTRAINT %s PRIMARY KEY (',
-      [TMetaTable(FOwner).FName, FName]));
+      [TMetaTable(FOwner).Name, Name]));
   for I := 0 to FieldsCount - 1 do
   begin
     Stream.WriteString(Fields[I].Name);
@@ -2827,7 +2832,7 @@ begin
     ORDER := ' DESCENDING';
 
   Stream.WriteString(Format('CREATE%s%s INDEX %s ON %s (',
-    [ORDER, UNIQUE, FName, TMetaTable(FOwner).FName]));
+    [ORDER, UNIQUE, Name, TMetaTable(FOwner).Name]));
 
   for I := 0 to FieldsCount - 1 do
   begin
@@ -2837,7 +2842,7 @@ begin
   end;
   Stream.WriteString(');');
   if not FActive then
-    Stream.WriteString(Format('%sALTER INDEX %s INACTIVE;', [NewLine, FName]));
+    Stream.WriteString(Format('%sALTER INDEX %s INACTIVE;', [NewLine, Name]));
 end;
 
 procedure TMetaIndex.SaveToStream(Stream: TStream);
@@ -2896,10 +2901,10 @@ var
 begin
   if copy(FName, 0, 6) = 'INTEG_' then
     Stream.WriteString(Format('ALTER TABLE %s ADD FOREIGN KEY (',
-      [TMetaTable(FOwner).FName]))
+      [TMetaTable(FOwner).Name]))
   else
     Stream.WriteString(Format('ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (',
-      [TMetaTable(FOwner).FName, FName]));
+      [TMetaTable(FOwner).Name, Name]));
 
   for I := 0 to FieldsCount - 1 do
   begin
@@ -2971,7 +2976,7 @@ begin
     Stream.WriteString(Format('ALTER TABLE %s ADD %s;',
       [TMetaTable(FOwner).Name, FConstraint])) else
     Stream.WriteString(Format('ALTER TABLE %s ADD CONSTRAINT %s %s;',
-      [TMetaTable(FOwner).Name, FName, FConstraint]));
+      [TMetaTable(FOwner).Name, Name, FConstraint]));
 end;
 
 procedure TMetaCheck.SaveToStream(Stream: TStream);
@@ -3268,7 +3273,7 @@ end;
 
 procedure TMetaDomain.SaveToDDLNode(Stream: TStringStream);
 begin
-  Stream.WriteString(Format('CREATE DOMAIN %s AS ', [FName]));
+  Stream.WriteString(Format('CREATE DOMAIN %s AS ', [Name]));
   inherited SaveToDDLNode(Stream);
   Stream.WriteString(';');
 end;
@@ -3323,7 +3328,7 @@ procedure TMetaProcedure.InternalSaveToDDL(Stream: TStringStream;
 var
   I: Integer;
 begin
-  Stream.WriteString(Format('%s PROCEDURE %s', [Operation, FName]));
+  Stream.WriteString(Format('%s PROCEDURE %s', [Operation, Name]));
   if InputFieldsCount > 0 then
   begin
     Stream.WriteString(' (');
@@ -3562,7 +3567,7 @@ end;
 
 procedure TMetaException.SaveToDDLNode(Stream: TStringStream);
 begin
-  Stream.WriteString(Format('CREATE EXCEPTION %s ''%s'';', [FName, FMessage]));
+  Stream.WriteString(Format('CREATE EXCEPTION %s %s;', [Name, QuotedStr(FMessage)]));
 end;
 
 procedure TMetaException.SaveToStream(Stream: TStream);
@@ -3603,7 +3608,7 @@ procedure TMetaUDF.SaveToDDLNode(Stream: TStringStream);
 var
   I, C: Integer;
 begin
-  Stream.WriteString(Format('DECLARE EXTERNAL FUNCTION %s', [Fname]));
+  Stream.WriteString(Format('DECLARE EXTERNAL FUNCTION %s', [Name]));
   C := 0;
 
   if FReturn = 0 then
@@ -3887,7 +3892,7 @@ end;
 
 procedure TMetaField.SaveToDDL(Stream: TStringStream);
 begin
-  Stream.WriteString(FName + ' ');
+  Stream.WriteString(Name + ' ');
   inherited SaveToDDL(Stream);
 end;
 
@@ -4055,7 +4060,7 @@ end;
 
 procedure TMetaRole.SaveToDDLNode(Stream: TStringStream);
 begin
-  Stream.WriteString(Format('CREATE ROLE %s; /* By user %s */', [FName, Trim(FOwner)]));
+  Stream.WriteString(Format('CREATE ROLE %s; /* By user %s */', [Name, Trim(FOwner)]));
 end;
 
 procedure TMetaRole.SaveToStream(Stream: TStream);
@@ -4231,7 +4236,10 @@ end;
 procedure TMetaProcedureGrant.SaveToDDLNode(Stream: TStringStream);
 begin
   inherited SaveToDDLNode(Stream);
-  Stream.WriteString('EXECUTE ON PROCEDURE ' + FName + ' TO ');
+  if IsValidIdentifier(FName) then
+    Stream.WriteString('EXECUTE ON PROCEDURE ' + FName + ' TO ')
+  else
+    Stream.WriteString('EXECUTE ON PROCEDURE "' + FName + '" TO ');
   inherited SaveGranteesToDDLNode(Stream, 'GRANT');
 end;
 
@@ -4412,7 +4420,7 @@ begin
   for I := 0 to FFields.Count - 1 do
     Grants := Grants + FFields[i] + ', ';
   Grants[Length(Grants) - 1] := ')';
-  Stream.WriteString(Grants + 'ON ' + FName + ' TO ');
+  Stream.WriteString(Grants + 'ON ' + Name + ' TO ');
   inherited SaveGranteesToDDLNode(Stream, 'GRANT');
 end;
 
@@ -4459,7 +4467,7 @@ end;
 procedure TMetaGrantee.SaveToDDLNode(Stream: TStringStream);
 begin
   inherited SaveToDDLNode(Stream);
-  Stream.WriteString(FName);
+  Stream.WriteString(Name);
 (*
   { Add some comments for debugging purposes }
   Stream.WriteString(' /* Grantor : ' + FGrantor + ' */');

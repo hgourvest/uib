@@ -3,6 +3,7 @@ program CloneDB;
 uses
   FastMM4,
   Forms,
+  exceptionform in 'exceptionform.pas' {ExceptionDialog},
   main in 'main.pas' {MainForm};
 
 {$R *.res}
