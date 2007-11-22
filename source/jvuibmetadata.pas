@@ -572,13 +572,19 @@ type
     FOIDRoles: TOIDRoles;
     FSysInfos: Boolean;
     FDefaultCharset: TCharacterSet;
+
+    FSortedTables: TList;
+
+    procedure SortTablesByForeignKeys;
+
     function GetGenerators(const Index: Integer): TMetaGenerator;
     function GetGeneratorsCount: Integer;
 
-    function GetTables(const Index: Integer): TMetaTable;
-    function GetTablesCount: Integer;
     function FindTableIndex(const TableName: string): Integer;
     function FindDomainIndex(const DomainName: string): Integer;
+
+    function GetTables(const Index: Integer): TMetaTable;
+    function GetTablesCount: Integer;
     function GetViews(const Index: Integer): TMetaView;
     function GetViewsCount: Integer;
     function GetDomains(const Index: Integer): TMetaDomain;
@@ -593,6 +599,8 @@ type
     function GetUDFSCount: Integer;
     function GetRoles(const Index: Integer): TMetaRole;
     function GetRolesCount: Integer;
+    function GetSortedTables(const Index: Integer): TMetaTable;
+    function GetSortedTablesCount: Integer;
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
@@ -608,6 +616,8 @@ type
     function FindTriggerName(const TriggerName: string): TMetaTrigger;
 
     constructor Create(AOwner: TMetaNode; ClassIndex: Integer); override;
+    destructor Destroy; override;
+    
     procedure LoadFromDatabase(Transaction: TJvUIBTransaction);
     procedure SaveToDDL(Stream: TStringStream); override;
     property OIDDatabases: TOIDDatabases read FOIDDatabases write FOIDDatabases;
@@ -618,6 +628,9 @@ type
     property Tables[const Index: Integer]: TMetaTable read GetTables;
     property TablesCount: Integer read GetTablesCount;
     property OIDTables: TOIDTables read FOIDTables write FOIDTables;
+
+    property SortedTables[const Index: Integer]: TMetaTable read GetSortedTables;
+    property SortedTablesCount: Integer read GetSortedTablesCount;
 
     property Views[const Index: Integer]: TMetaView read GetViews;
     property ViewsCount: Integer read GetViewsCount;
@@ -779,19 +792,6 @@ type
     property Privilege: TFieldPrivilege read FPrivilege;
     property Fields[const Index: Integer]: String read GetFields;
     property FieldsCount: Integer read GetFieldsCount;
-  end;
-
-  TMetaTablesSorter = class
-  private
-    FSortedTables: TList;
-    function GetTables(const Index: Integer): TMetaTable;
-    function GetTablesCount: Integer;
-  public
-    constructor Create;
-    destructor Destroy; override;
-    procedure SortFromMetaDataBase(MetaDB: TMetaDatabase);
-    property Tables[const Index: Integer]: TMetaTable read GetTables; default;
-    property TablesCount: Integer read GetTablesCount;
   end;
 
 implementation
@@ -2014,6 +2014,8 @@ begin
   FOIDRoles := ALLRoles;
   FSysInfos := False;
   FDefaultCharset := csNONE;
+
+  FSortedTables := TList.Create;
 end;
 
 procedure TMetaDataBase.LoadFromDatabase(Transaction: TJvUIBTransaction);
@@ -2378,6 +2380,12 @@ begin
   raise Exception.CreateFmt(EUIB_TABLESTRNOTFOUND, [TableName]);
 end;
 
+destructor TMetaDataBase.Destroy;
+begin
+  FSortedTables.Free;
+  inherited;
+end;
+
 function TMetaDataBase.FindDomainIndex(const DomainName: string): Integer;
 begin
   for Result := 0 to DomainsCount - 1 do
@@ -2454,6 +2462,64 @@ begin
   inherited SaveToStream(Stream);
 end;
 
+procedure TMetaDataBase.SortTablesByForeignKeys;
+var
+  I, F: Integer;
+  CanAdd: Boolean;
+  ToAdd: TList;
+  Current: TMetaTable;
+begin
+  FSortedTables.Clear;
+
+  { Commence par ajouter les tables qui n'ont pas de dépendences }
+  ToAdd := TList.Create;
+  try
+    for I := 0 to GetTablesCount - 1 do
+    begin
+      if GetTables(i).ForeignCount = 0 then
+        FSortedTables.Add(GetTables(i))
+      else
+        ToAdd.Add(GetTables(i));
+    end;
+
+    { Ajoute ensuite les tables qui ont uniquement des dépendences sur les tables
+      qui sont déjà dans la liste }
+    I := 0;
+    while ToAdd.Count > 0 do
+    begin
+      { Boucle sur la liste ToAdd }
+      if I >= ToAdd.Count then
+        I := 0;
+
+      Current := TMetaTable(ToAdd[I]);
+
+      CanAdd := true;
+      for F := 0 to Current.ForeignCount - 1 do
+      begin
+        { Il faut que toutes les dépendances de Current soient dans
+          FSortedTables. Ne tient pas compte des jointures auto-réflexives }
+        if (Current.Foreign[F].ForTable <> Current)
+          and (FSortedTables.IndexOf(Current.Foreign[F].ForTable) < 0) then
+        begin
+          CanAdd := false;
+          Break;
+        end;
+      end;
+      if CanAdd then
+      begin
+        FSortedTables.Add(Current);
+        ToAdd.Remove(Current);
+        { Ne change pas I, comme on a supprimé un item, la même valeur de I
+          permettra d'avoir le suivant dans la liste }
+      end
+      else
+        Inc(I);
+    end;
+  finally
+    ToAdd.Free;
+  end;
+end;
+
 function TMetaDataBase.GetRoles(const Index: Integer): TMetaRole;
 begin
   Result := TMetaRole(GetItems(Ord(OIDRole), Index));
@@ -2462,6 +2528,20 @@ end;
 function TMetaDataBase.GetRolesCount: Integer;
 begin
   Result := FNodeItems[Ord(OIDRole)].Childs.Count
+end;
+
+function TMetaDataBase.GetSortedTables(const Index: Integer): TMetaTable;
+begin
+  if FSortedTables.Count <> GetTablesCount then
+    SortTablesByForeignKeys;
+  Result := TMetaTable(FSortedTables[Index]);
+end;
+
+function TMetaDataBase.GetSortedTablesCount: Integer;
+begin
+  if FSortedTables.Count <> GetTablesCount then
+    SortTablesByForeignKeys;
+  Result := FSortedTables.Count;
 end;
 
 class function TMetaDataBase.NodeType: TMetaNodeType;
@@ -4469,87 +4549,6 @@ procedure TMetaViewGrantee.SaveToDDLNode(Stream: TStringStream);
 begin
   Stream.WriteString('VIEW ');
   inherited SaveToDDLNode(Stream);
-end;
-
-{ TMetaTablesSorter }
-
-constructor TMetaTablesSorter.Create;
-begin
-  inherited Create;
-  FSortedTables := TList.Create;
-end;
-
-destructor TMetaTablesSorter.Destroy;
-begin
-  FSortedTables.Free;
-  inherited;
-end;
-
-function TMetaTablesSorter.GetTables(const Index: Integer): TMetaTable;
-begin
-  Result := TMetaTable(FSortedTables[Index]);
-end;
-
-function TMetaTablesSorter.GetTablesCount: Integer;
-begin
-  Result := FSortedTables.Count;
-end;
-
-procedure TMetaTablesSorter.SortFromMetaDataBase(MetaDB: TMetaDatabase);
-var
-  I, F: Integer;
-  CanAdd: Boolean;
-  ToAdd: TList;
-  Current: TMetaTable;
-begin
-  { Commence par ajouter les tables qui n'ont pas de dépendences }
-  ToAdd := TList.Create;
-  try
-    for I := 0 to MetaDB.TablesCount - 1 do
-    begin
-      if MetaDB.Tables[i].ForeignCount = 0 then
-        FSortedTables.Add(MetaDB.Tables[i])
-      else
-        ToAdd.Add(MetaDB.Tables[i]);
-    end;
-
-    { Ajoute ensuite les tables qui ont uniquement des dépendences sur les tables
-      qui sont déjà dans la liste }
-    I := 0;
-    while ToAdd.Count > 0 do
-    begin
-      { Boucle sur la liste ToAdd }
-      if I >= ToAdd.Count then
-        I := 0;
-
-      Current := TMetaTable(ToAdd[I]);
-
-      CanAdd := true;
-      for F := 0 to Current.ForeignCount - 1 do
-      begin
-        { Il faut que toutes les dépendances de Current soient dans
-          FSortedTables. Ne tient pas compte des jointures auto-réflexives }
-        if (Current.Foreign[F].ForTable <> Current)
-          and (FSortedTables.IndexOf(Current.Foreign[F].ForTable) < 0) then
-        begin
-          CanAdd := false;
-          Break;
-        end;
-      end;
-      if CanAdd then
-      begin
-        FSortedTables.Add(Current);
-        ToAdd.Remove(Current);
-        { Ne change pas I, comme on a supprimé un item, la même valeur de I
-          permettra d'avoir le suivant dans la liste }
-      end
-      else
-        Inc(I);
-    end;
-  finally
-    ToAdd.Free;
-  end;
-
 end;
 
 end.
