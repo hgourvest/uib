@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
-    <DCC_DependencyCheckOutputName>D:\RAD Studio\5.0\Bpl\JvUIBD11Win32D.bpl</DCC_DependencyCheckOutputName>
+    <DCC_DependencyCheckOutputName>C:\Documents and Settings\All Users\Documents\RAD Studio\5.0\Bpl\JvUIBD11Win32D.bpl</DCC_DependencyCheckOutputName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Version>7.0</Version>
@@ -28,22 +28,22 @@
     <DelphiCompile Include="JvUIBD11Win32D.dpk">
       <MainSource>MainSource</MainSource>
     </DelphiCompile>
+    <DCCReference Include="..\..\..\SynEdit\Packages\dbrtl.dcp" />
+    <DCCReference Include="..\..\..\SynEdit\Packages\dcldb.dcp" />
+    <DCCReference Include="..\..\..\SynEdit\Packages\dclstd.dcp" />
+    <DCCReference Include="..\..\..\SynEdit\Packages\designide.dcp" />
+    <DCCReference Include="..\..\..\SynEdit\Packages\JvUIBD11Win32R.dcp" />
+    <DCCReference Include="..\..\..\SynEdit\Packages\rtl.dcp" />
+    <DCCReference Include="..\..\..\SynEdit\Packages\SynEdit_R2007.dcp" />
+    <DCCReference Include="..\..\..\SynEdit\Packages\vcl.dcp" />
+    <DCCReference Include="..\..\..\SynEdit\Packages\vclactnband.dcp" />
+    <DCCReference Include="..\..\..\SynEdit\Packages\vcldb.dcp" />
+    <DCCReference Include="..\..\..\SynEdit\Packages\vcldesigner.dcp" />
+    <DCCReference Include="..\..\..\SynEdit\Packages\vclx.dcp" />
+    <DCCReference Include="..\..\..\SynEdit\Packages\xmlrtl.dcp" />
     <DCCReference Include="..\source\jvuibreg.pas" />
     <DCCReference Include="..\source\jvuibsqledit.pas" />
     <DCCReference Include="..\source\jvuibsynedit.pas" />
     <DCCReference Include="..\source\jvuibtransactionedit.pas" />
-    <DCCReference Include="dbrtl.dcp" />
-    <DCCReference Include="dcldb.dcp" />
-    <DCCReference Include="dclstd.dcp" />
-    <DCCReference Include="designide.dcp" />
-    <DCCReference Include="JvUIBD11Win32R.dcp" />
-    <DCCReference Include="rtl.dcp" />
-    <DCCReference Include="SynEdit_R2007.dcp" />
-    <DCCReference Include="vcl.dcp" />
-    <DCCReference Include="vclactnband.dcp" />
-    <DCCReference Include="vcldb.dcp" />
-    <DCCReference Include="vcldesigner.dcp" />
-    <DCCReference Include="vclx.dcp" />
-    <DCCReference Include="xmlrtl.dcp" />
   </ItemGroup>
 </Project>

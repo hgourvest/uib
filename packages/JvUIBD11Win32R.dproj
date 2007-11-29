@@ -6,7 +6,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
-    <DCC_DependencyCheckOutputName>D:\RAD Studio\5.0\Bpl\JvUIBD11Win32R.bpl</DCC_DependencyCheckOutputName>
+    <DCC_DependencyCheckOutputName>C:\Documents and Settings\All Users\Documents\RAD Studio\5.0\Bpl\JvUIBD11Win32R.bpl</DCC_DependencyCheckOutputName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Version>7.0</Version>
@@ -32,18 +32,19 @@
     <DelphiCompile Include="JvUIBD11Win32R.dpk">
       <MainSource>MainSource</MainSource>
     </DelphiCompile>
+    <DCCReference Include="..\source\dbrtl.dcp" />
     <DCCReference Include="..\source\jvuib.pas" />
     <DCCReference Include="..\source\jvuibase.pas" />
     <DCCReference Include="..\source\jvuibconst.pas" />
     <DCCReference Include="..\source\jvuibdatabaseedit.pas" />
     <DCCReference Include="..\source\jvuibdataset.pas" />
     <DCCReference Include="..\source\jvuiberror.pas" />
+    <DCCReference Include="..\source\jvuibkeywords.pas" />
     <DCCReference Include="..\source\jvuiblib.pas" />
     <DCCReference Include="..\source\jvuibmetadata.pas" />
     <DCCReference Include="..\source\jvuibsqlparser.pas" />
-    <DCCReference Include="dbrtl.dcp" />
-    <DCCReference Include="rtl.dcp" />
-    <DCCReference Include="vcl.dcp" />
-    <DCCReference Include="vclx.dcp" />
+    <DCCReference Include="..\source\rtl.dcp" />
+    <DCCReference Include="..\source\vcl.dcp" />
+    <DCCReference Include="..\source\vclx.dcp" />
   </ItemGroup>
 </Project>

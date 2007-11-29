@@ -40,6 +40,7 @@ contains
   jvuiblib in '..\source\jvuiblib.pas',
   jvuibmetadata in '..\source\jvuibmetadata.pas',
   jvuibsqlparser in '..\source\jvuibsqlparser.pas',
-  jvuibdataset in '..\source\jvuibdataset.pas';
+  jvuibdataset in '..\source\jvuibdataset.pas',
+  jvuibkeywords in '..\source\jvuibkeywords.pas';
 
 end.
