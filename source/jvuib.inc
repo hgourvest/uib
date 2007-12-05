@@ -35,7 +35,7 @@
 //----------
 {.$DEFINE FB102}
 {.$DEFINE FB103}
-{$DEFINE FB15}
+{.$DEFINE FB15}
 {.$DEFINE FB20}
 {.$DEFINE FBEMBED}
 
@@ -59,8 +59,8 @@
 //----------
 // Languages
 //----------
-{.$DEFINE UIBLANG_EN}  // English
-{$DEFINE UIBLANG_FR} // French
+{$DEFINE UIBLANG_EN}  // English
+{.$DEFINE UIBLANG_FR} // French
 {.$DEFINE UIBLANG_CZ} // Czech
 {.$DEFINE UIBLANG_DE} // Deutch
 {.$DEFINE UIBLANG_RU} // Russian
