@@ -18,8 +18,8 @@
 		<Compiler>
 			<Compiler Name="A">8</Compiler>
 			<Compiler Name="B">0</Compiler>
-			<Compiler Name="C">0</Compiler>
-			<Compiler Name="D">0</Compiler>
+			<Compiler Name="C">1</Compiler>
+			<Compiler Name="D">1</Compiler>
 			<Compiler Name="E">0</Compiler>
 			<Compiler Name="F">0</Compiler>
 			<Compiler Name="G">1</Compiler>
@@ -27,10 +27,10 @@
 			<Compiler Name="I">0</Compiler>
 			<Compiler Name="J">0</Compiler>
 			<Compiler Name="K">0</Compiler>
-			<Compiler Name="L">0</Compiler>
+			<Compiler Name="L">1</Compiler>
 			<Compiler Name="M">0</Compiler>
 			<Compiler Name="N">1</Compiler>
-			<Compiler Name="O">1</Compiler>
+			<Compiler Name="O">0</Compiler>
 			<Compiler Name="P">1</Compiler>
 			<Compiler Name="Q">0</Compiler>
 			<Compiler Name="R">0</Compiler>
@@ -38,9 +38,9 @@
 			<Compiler Name="T">0</Compiler>
 			<Compiler Name="U">0</Compiler>
 			<Compiler Name="V">1</Compiler>
-			<Compiler Name="W">0</Compiler>
+			<Compiler Name="W">1</Compiler>
 			<Compiler Name="X">1</Compiler>
-			<Compiler Name="Y">0</Compiler>
+			<Compiler Name="Y">2</Compiler>
 			<Compiler Name="Z">1</Compiler>
 			<Compiler Name="ShowHints">True</Compiler>
 			<Compiler Name="ShowWarnings">True</Compiler>
@@ -124,7 +124,7 @@
 			<Directories Name="PackageDLLOutputDir"></Directories>
 			<Directories Name="PackageDCPOutputDir"></Directories>
 			<Directories Name="SearchPath"></Directories>
-			<Directories Name="Packages"></Directories>
+			<Directories Name="Packages">vcl;rtl;vclx;dbrtl;vcldb;adortl;dbxcds;dbexpress;vclib;ibxpress;xmlrtl;vclactnband;inet;IntrawebDB_80_100;Intraweb_80_100;vclie;inetdbbde;inetdbxpress;IndyCore;IndySystem;dclOfficeXP;VclSmp;soaprtl;dsnap;IndyProtocols;bdertl;vcldbx;dsnapcon;websnap;webdsnap;SynEdit_R2006;TiersD10;CPortLib10;Jv3rdD10R;MiniZipD10;kbmMemD2006Run;SdfDataD10;GJLComponentsR10;ComboBoxPlusR10;fsTee10;fs10;frx10;frxADO10;frxBDE10;frxDB10;frxDBX10;frxe10;frxIBX10;frxTee10;fsADO10;fsBDE10;fsDB10;fsIBX10;PrYComponentsR10;OverbyteIcsSslDel100Package;Jcl;IBClientDatasetD10;tb2k_d10;tbx_d10;GDIPlus;PNG_D10;TMSD2006;TMSXLSD2006;tmswizd2006;FB_IB_DataSets;JvUIBD10Win32R;CxLibR10;frxUIB10;GrizzlyBaseR10;teeui;teedb;tee;JvCoreD10R;JclVcl;JvSystemD10R;JvStdCtrlsD10R;JvAppFrmD10R;JvBandsD10R;JvDBD10R;JvDlgsD10R;JvBDED10R;JvCmpD10R;JvCryptD10R;JvCtrlsD10R;JvCustomD10R;JvDockingD10R;JvDotNetCtrlsD10R;JvEDID10R;JvGlobusD10R;JvHMID10R;JvInterpreterD10R;JvJansD10R;JvManagedThreadsD10R;JvMMD10R;JvNetD10R;JvPageCompsD10R;JvPluginD10R;JvPrintPreviewD10R;JvRuntimeDesignD10R;JvTimeFrameworkD10R;JvValidatorsD10R;JvWizardD10R;JvXPCtrlsD10R;PrYComponentsD10</Directories>
 			<Directories Name="Conditionals">RELEASE</Directories>
 			<Directories Name="DebugSourceDirs"></Directories>
 			<Directories Name="UsePackages">False</Directories>
@@ -150,7 +150,7 @@
 			<VersionInfo Name="MajorVer">1</VersionInfo>
 			<VersionInfo Name="MinorVer">1</VersionInfo>
 			<VersionInfo Name="Release">0</VersionInfo>
-			<VersionInfo Name="Build">4</VersionInfo>
+			<VersionInfo Name="Build">6</VersionInfo>
 			<VersionInfo Name="Debug">False</VersionInfo>
 			<VersionInfo Name="PreRelease">False</VersionInfo>
 			<VersionInfo Name="Special">False</VersionInfo>
@@ -162,7 +162,7 @@
 		<VersionInfoKeys>
 			<VersionInfoKeys Name="CompanyName">Progdigy</VersionInfoKeys>
 			<VersionInfoKeys Name="FileDescription"></VersionInfoKeys>
-			<VersionInfoKeys Name="FileVersion">1.1.0.4</VersionInfoKeys>
+			<VersionInfoKeys Name="FileVersion">1.1.0.6</VersionInfoKeys>
 			<VersionInfoKeys Name="InternalName">Clony&amp;Pumpy</VersionInfoKeys>
 			<VersionInfoKeys Name="LegalCopyright"></VersionInfoKeys>
 			<VersionInfoKeys Name="LegalTrademarks"></VersionInfoKeys>

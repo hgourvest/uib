@@ -21,8 +21,8 @@ unit jvuibmetadata;
 interface
 
 uses
-  Classes, SysUtils,
-  jvuibase, jvuiblib, jvuib, jvuibconst, jvuibkeywords;
+  Windows, Classes, SysUtils,
+  jvuibase, jvuiblib, jvuib, jvuibconst, jvuibkeywords, jvuibavl;
 
 type
   TTriggerPrefix = (tpBefore, tpAfter);
@@ -81,6 +81,7 @@ type
   TMetaProcedureGrant = class;
   TMetaTableGrant = class;
   TMetaFieldGrant = class;
+  TMetaDatabase = class;
 
   TMetaNodeClass = class of TMetaNode;
 
@@ -115,6 +116,8 @@ type
     destructor Destroy; override;
     procedure SaveToStream(Stream: TStream); virtual;
     procedure SaveToDDL(Stream: TStringStream); virtual;
+    function GetDatabase: TMetaDatabase;
+    function MetaQuote(const str: string): string;    
     property Name: string read GetName;
     property AsDDL: string read GetAsDDL;
     property AsDDLNode: string read GetAsDDLNode;
@@ -242,6 +245,7 @@ type
 
   TMetaConstraint = class(TMetaNode)
   private
+    FOrder: TIndexOrder;
     FFields: array of Integer;
     function GetFields(const Index: Word): TMetaTableField;
     function GetFieldsCount: Word;
@@ -252,26 +256,35 @@ type
     procedure SaveToStream(Stream: TStream); override;
     property Fields[const Index: Word]: TMetaTableField read GetFields;
     property FieldsCount: Word read GetFieldsCount;
+    property Order: TIndexOrder read FOrder;
   end;
 
   TMetaPrimary = class(TMetaConstraint)
   private
-    procedure LoadFromQuery(Q: TJvUIBStatement);
+   FIndexName: string;
+   procedure LoadFromQuery(Q: TJvUIBStatement);
+   procedure LoadFromStream(Stream: TStream); override;
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToStream(Stream: TStream); override;
   end;
 
   TMetaUnique = class(TMetaConstraint)
+  private
+    FIndexName: string;
+    procedure LoadFromStream(Stream: TStream); override;
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     procedure SaveToDDL(Stream: TStringStream); override;
+    procedure SaveToStream(Stream: TStream); override;
   end;
 
   TMetaForeign = class(TMetaConstraint)
   private
+    FIndexName: string;
     FForTable: Integer;
     FForFields: array of Integer;
     FOnDelete: TUpdateRule;
@@ -292,6 +305,20 @@ type
     property OnUpdate: TUpdateRule read FOnUpdate;
   end;
 
+  TMetaIndex = class(TMetaConstraint)
+  private
+    FUnique: Boolean;
+    FActive: Boolean;
+    procedure LoadFromStream(Stream: TStream); override;
+  public
+    class function NodeClass: string; override;
+    class function NodeType: TMetaNodeType; override;
+    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToStream(Stream: TStream); override;
+    property Unique: Boolean read FUnique;
+    property Active: Boolean read FActive;
+  end;
+
   TMetaCheck = class(TMetaNode)
   private
     FConstraint: string;
@@ -302,22 +329,6 @@ type
     procedure SaveToDDLNode(Stream: TStringStream); override;
     procedure SaveToStream(Stream: TStream); override;
     property Constraint: string read FConstraint;
-  end;
-
-  TMetaIndex = class(TMetaConstraint)
-  private
-    FUnique: Boolean;
-    FActive: Boolean;
-    FOrder: TIndexOrder;
-    procedure LoadFromStream(Stream: TStream); override;
-  public
-    class function NodeClass: string; override;
-    class function NodeType: TMetaNodeType; override;
-    procedure SaveToDDLNode(Stream: TStringStream); override;
-    procedure SaveToStream(Stream: TStream); override;
-    property Unique: Boolean read FUnique;
-    property Active: Boolean read FActive;
-    property Order: TIndexOrder read FOrder;
   end;
 
   TMetaTrigger = class(TMetaNode)
@@ -574,6 +585,7 @@ type
     FDefaultCharset: TCharacterSet;
 
     FSortedTables: TList;
+    FIdentifiers: TAvlTree;
 
     procedure SortTablesByForeignKeys;
 
@@ -617,7 +629,7 @@ type
 
     constructor Create(AOwner: TMetaNode; ClassIndex: Integer); override;
     destructor Destroy; override;
-    
+
     procedure LoadFromDatabase(Transaction: TJvUIBTransaction);
     procedure SaveToDDL(Stream: TStringStream); override;
     property OIDDatabases: TOIDDatabases read FOIDDatabases write FOIDDatabases;
@@ -818,7 +830,7 @@ implementation
 //  OIDUDF       = 6;
 //    OIDUDFField      = 0;
 //  OIDRole      = 7;
-//    OIDRoleGrantee   = 0;  
+//    OIDRoleGrantee   = 0;
 
 const
 
@@ -873,9 +885,18 @@ const
 
   QRYUnique =
     'SELECT RC.RDB$CONSTRAINT_NAME, IDX.RDB$FIELD_NAME ' +
+{.$IFDEF FB15_UP}
+    ',RC.RDB$INDEX_NAME AS PK_INDEX, I.RDB$INDEX_TYPE AS PK_INDEX_TYPE '+
+{.$ENDIF}
     'FROM RDB$RELATION_CONSTRAINTS RC, RDB$INDEX_SEGMENTS IDX ' +
+{.$IFDEF FB15_UP}
+    ',RDB$INDICES I ' +
+{.$ENDIF}
     'WHERE (IDX.RDB$INDEX_NAME = RC.RDB$INDEX_NAME) AND ' +
     '(RC.RDB$CONSTRAINT_TYPE = ?) ' +
+{.$IFDEF FB15_UP}
+    'AND (I.RDB$INDEX_NAME = RC.RDB$INDEX_NAME) ' +
+{.$ENDIF}
     'AND (RC.RDB$RELATION_NAME = ?) ' +
     'ORDER BY RC.RDB$RELATION_NAME, IDX.RDB$FIELD_POSITION';
 
@@ -889,17 +910,27 @@ const
 
   QRYForeign =
     'SELECT A.RDB$CONSTRAINT_NAME, B.RDB$UPDATE_RULE, B.RDB$DELETE_RULE, ' +
-    'C.RDB$RELATION_NAME AS FK_TABLE, D.RDB$FIELD_NAME AS FK_FIELD, ' +
-    'E.RDB$FIELD_NAME AS ONFIELD ' +
+    '  C.RDB$RELATION_NAME AS FK_TABLE, D.RDB$FIELD_NAME AS FK_FIELD, ' +
+    '  E.RDB$FIELD_NAME AS ONFIELD ' +
+{.$IFDEF FB15_UP}
+    '  ,A.RDB$INDEX_NAME AS FK_INDEX, I.RDB$INDEX_TYPE AS FK_INDEX_TYPE ' +
+{.$ENDIF}
     'FROM RDB$REF_CONSTRAINTS B, RDB$RELATION_CONSTRAINTS A, RDB$RELATION_CONSTRAINTS C, ' +
     'RDB$INDEX_SEGMENTS D, RDB$INDEX_SEGMENTS E ' +
+{.$IFDEF FB15_UP}
+    '  ,RDB$INDICES I ' +
+{.$ENDIF}
     'WHERE (A.RDB$CONSTRAINT_TYPE = ''FOREIGN KEY'') AND ' +
-    '(A.RDB$CONSTRAINT_NAME = B.RDB$CONSTRAINT_NAME) AND ' +
-    '(B.RDB$CONST_NAME_UQ=C.RDB$CONSTRAINT_NAME) AND (C.RDB$INDEX_NAME=D.RDB$INDEX_NAME) AND ' +
-    '(A.RDB$INDEX_NAME=E.RDB$INDEX_NAME) AND ' +
-    '(D.RDB$FIELD_POSITION = E.RDB$FIELD_POSITION) ' +
-    'AND (A.RDB$RELATION_NAME = ?) ' +
-    'ORDER BY A.RDB$CONSTRAINT_NAME, A.RDB$RELATION_NAME, D.RDB$FIELD_POSITION, E.RDB$FIELD_POSITION';
+    '  (A.RDB$CONSTRAINT_NAME = B.RDB$CONSTRAINT_NAME) AND ' +
+    '  (B.RDB$CONST_NAME_UQ=C.RDB$CONSTRAINT_NAME) AND (C.RDB$INDEX_NAME=D.RDB$INDEX_NAME) AND ' +
+    '  (A.RDB$INDEX_NAME=E.RDB$INDEX_NAME) AND ' +
+    '  (D.RDB$FIELD_POSITION = E.RDB$FIELD_POSITION) AND ' +
+{.$IFDEF FB15_UP}
+    '  (I.RDB$INDEX_NAME = A.RDB$INDEX_NAME) AND ' +
+{.$ENDIF}
+    '  (A.RDB$RELATION_NAME = ?) ' +
+    'ORDER BY  A.RDB$CONSTRAINT_NAME, A.RDB$RELATION_NAME, D.RDB$FIELD_POSITION, ' +
+    '  E.RDB$FIELD_POSITION ';
 
   QRYCheck =
     'SELECT A.RDB$CONSTRAINT_NAME, C.RDB$TRIGGER_SOURCE ' +
@@ -1018,6 +1049,39 @@ begin
     Stream.Read(PChar(Str)^, Len);
 end;
 
+{ TAVLString }
+type
+  TAVLString = class(TAvlHandle)
+  private
+    FName: string;
+  public
+    constructor Create(const AName: string); 
+  end;
+
+constructor TAVLString.Create(const AName: string);
+begin
+  FName := AName;
+end;
+
+{ TAvlStringTree }
+
+type
+  TAvlStringTree = class(TAvlTree)
+  protected
+    function CompareNodeNode(node1, node2: TAvlHandle): integer; override;
+    function CompareKeyNode(k: TAvlKey; h: TAvlHandle): integer; override;
+  end;
+
+function TAvlStringTree.CompareKeyNode(k: TAvlKey; h: TAvlHandle): integer;
+begin
+  Result := CompareText(PChar(k), TAVLString(h).FName);
+end;
+
+function TAvlStringTree.CompareNodeNode(node1, node2: TAvlHandle): integer;
+begin
+  Result := CompareText(TAVLString(node1).FName, TAVLString(node2).FName);
+end;
+
 { TMetaNode }
 
 constructor TMetaNode.Create(AOwner: TMetaNode; ClassIndex: Integer);
@@ -1130,16 +1194,20 @@ end;
 
 function TMetaNode.GetName: String;
 begin
-  if IsValidIdentifier(FName) then
-    Result := FName
-  else
-    Result := '"' + FName + '"';
+  Result := FName;
 end;
 
 function TMetaNode.GetNodes(const Index: Integer): TNodeItem;
 begin
   Assert((Index >= 0) and (FNodeItemsCount > 0) and (Index < FNodeItemsCount));
   Result := FNodeItems[Index];
+end;
+
+function TMetaNode.MetaQuote(const str: string): string;
+begin
+  if (GetDatabase.FIdentifiers.Search(PChar(str)) <> nil) then
+    Result := '"' + str + '"' else
+    Result := SQLQuote(str);
 end;
 
 class function TMetaNode.NodeClass: string;
@@ -1165,6 +1233,17 @@ begin
   end;
 end;
 
+function TMetaNode.GetDatabase: TMetaDatabase;
+begin
+  case NodeType of
+    MetaDatabase: Result := TMetaDatabase(Self);
+    MetaDomain, MetaTable, MetaView, MetaProcedure, MetaGenerator,
+      MetaException, MetaUDF, MetaRole: Result := TMetaDatabase(FOwner);
+  else
+    Result := TMetaDatabase(FOwner.FOwner);
+  end;
+end;
+
 class function TMetaNode.NodeType: TMetaNodeType;
 begin
   Result := MetaNode;
@@ -1182,7 +1261,7 @@ begin
   Query.Transaction := Transaction;
   Query.CachedFetch := False;
   try
-    FName := Name;
+    FName := MetaQuote(Name);
     Query.SQL.Text := Format('select gen_id(%s, 0) from rdb$database', [Self.Name]);
     Query.Open;
     if not Query.Eof then
@@ -1566,11 +1645,11 @@ var
   Unk: string;
 begin
   // Fields
-  FName := Trim(QNames.Fields.AsString[0]);
+  FName := MetaQuote(Trim(QNames.Fields.AsString[0]));
 
   if OIDTableField in OIDs then
   begin
-    QFields.Params.AsString[0] := FName;
+    QFields.Params.AsString[0] := SQLUnQuote(FName);
     QFields.Open;
     while not QFields.Eof do
     begin
@@ -1582,7 +1661,7 @@ begin
     // PRIMARY
     if OIDPrimary in OIDs then
     begin
-      QPrimary.Params.AsString[1] := FName;
+      QPrimary.Params.AsString[1] := SQLUnQuote(FName);
       QPrimary.Params.AsString[0] := 'PRIMARY KEY';
       QPrimary.Open;
       if not QPrimary.Eof then
@@ -1593,7 +1672,7 @@ begin
     if OIDIndex in OIDs then
     begin
       Unk := '';
-      QIndex.Params.AsString[0] := FName;
+      QIndex.Params.AsString[0] := SQLUnQuote(FName);
       QIndex.Open;
       while not QIndex.Eof do
       begin
@@ -1601,7 +1680,7 @@ begin
           with TMetaIndex.Create(Self, Ord(OIDIndex)) do
           begin
             SetLength(FFields, 1);
-            FName := Trim(QIndex.Fields.AsString[0]);
+            FName := MetaQuote(Trim(QIndex.Fields.AsString[0]));
             FFields[0] := FindFieldIndex(Trim(QIndex.Fields.AsString[1]));
             FUnique := QIndex.Fields.AsSingle[2] = 1;
             FActive := QIndex.Fields.AsSingle[3] = 0;
@@ -1609,7 +1688,7 @@ begin
               FOrder := IoAscending
             else
               FOrder := IoDescending;
-            Unk := FName;
+            Unk := SQLUnQuote(FName);
           end
         else
           with Indices[IndicesCount - 1] do
@@ -1627,7 +1706,7 @@ begin
     begin
       QPrimary.Params.AsString[0] := 'UNIQUE';
       if not (OIDPrimary in OIDs) then
-        QPrimary.Params.AsString[1] := FName;
+        QPrimary.Params.AsString[1] := SQLUnquote(FName);
       QPrimary.Open;
       while not QPrimary.Eof do
       begin
@@ -1635,9 +1714,16 @@ begin
           with TMetaUnique.Create(Self, Ord(OIDUnique)) do
           begin
             SetLength(FFields, 1);
-            FName := Trim(QPrimary.Fields.AsString[0]);
+            FName := MetaQuote(Trim(QPrimary.Fields.AsString[0]));
             FFields[0] := FindFieldIndex(Trim(QPrimary.Fields.AsString[1]));
-            Unk := FName;
+
+            // FB15up
+            FIndexName := MetaQuote(Trim(QPrimary.Fields.AsString[2]));
+            if QPrimary.Fields.AsSingle[3] = 0 then
+              FOrder := IoAscending else
+              FOrder := IoDescending;
+
+            Unk := SQLUnQuote(FName);
           end
         else
           with Uniques[UniquesCount - 1] do
@@ -1655,12 +1741,12 @@ begin
   // Check
   if OIDCheck in OIDs then
   begin
-    QCheck.Params.AsString[0] := FName;
+    QCheck.Params.AsString[0] := SQLUnQuote(FName);
     QCheck.Open;
     while not QCheck.Eof do
       with TMetaCheck.Create(Self, Ord(OIDCheck)) do
       begin
-        FName := Trim(QCheck.Fields.AsString[0]);
+        FName := MetaQuote(Trim(QCheck.Fields.AsString[0]));
         QCheck.ReadBlob(1, FConstraint);
         QCheck.Next;
       end;
@@ -1669,7 +1755,7 @@ begin
   // TRIGGER
   if OIDTableTrigger in OIDs then
   begin
-    QTrigger.Params.AsString[0] := FName;
+    QTrigger.Params.AsString[0] := SQLUnQuote(FName);
     QTrigger.Open;
     while not QTrigger.Eof do
     begin
@@ -1682,7 +1768,7 @@ begin
   if OIDTableGrant in OIDs then
   begin
     QGrants.Params.AsInteger[0] := 0;
-    QGrants.Params.AsString[1] := FName;
+    QGrants.Params.AsString[1] := SQLUnQuote(FName);
     QGrants.Open;
     LoadGrantsFromQuery(QGrants);
   end;
@@ -1690,7 +1776,7 @@ begin
   if OIDTableFieldGrant in OIDs then
   begin
     QFieldGrants.Params.AsInteger[0] := 0;
-    QFieldGrants.Params.AsString[1] := FName;
+    QFieldGrants.Params.AsString[1] := SQLUnQuote(FName);
     QFieldGrants.Open;
     LoadFieldsGrantsFromQuery(QFieldGrants);
   end;
@@ -1900,8 +1986,10 @@ begin
           FPrecision := 7;
         blr_int64, blr_quad, blr_double:
           FPrecision := 15;
+      // I already seen a case where FScale = 3 and the field was a blob - PrY -
         blr_blob:
           FFieldType := uftBlob;
+
       else
         raise EUIBError.Create(EUIB_UNEXPECTEDERROR);
       end;
@@ -2000,8 +2088,11 @@ end;
 { TMetaDataBase }
 
 constructor TMetaDataBase.Create(AOwner: TMetaNode; ClassIndex: Integer);
+var
+  i: integer;
 begin
   inherited Create(nil, -1);
+
   AddClass(TMetaDomain);
   AddClass(TMetaTable);
   AddClass(TMetaView);
@@ -2021,6 +2112,9 @@ begin
   FDefaultCharset := csNONE;
 
   FSortedTables := TList.Create;
+  FIdentifiers := TAvlStringTree.Create;
+  for i := low(SQLToKens) to high(SQLToKens) do
+    FIdentifiers.Insert(TAvlString.Create(SQLToKens[i]))
 end;
 
 procedure TMetaDataBase.LoadFromDatabase(Transaction: TJvUIBTransaction);
@@ -2131,8 +2225,8 @@ begin
             begin
               with TMetaForeign.Create(Tables[I], Ord(OIDForeign)) do
               begin
-                FName := Trim(QForeign.Fields.AsString[0]);
-                ConStr := FName;
+                ConStr := Trim(QForeign.Fields.AsString[0]);
+                FName := MetaQuote(ConStr);
                 FForTable := FindTableIndex(Trim(QForeign.Fields.AsString[3]));
                 SetLength(FFields, 1);
                 FFields[0] := Tables[I].FindFieldIndex(Trim(QForeign.Fields.AsString[5]));
@@ -2153,6 +2247,12 @@ begin
                 if Str = 'SET NULL'  then FOnDelete := urSetNull  else
                 if Str = 'NO ACTION' then FOnDelete := urNoAction else
                   FOnDelete := urSetDefault;
+
+                // FB15up
+                FIndexName := MetaQuote(Trim(QForeign.Fields.AsString[6]));
+                if QForeign.Fields.AsSingle[7] = 0 then
+                  FOrder := IoAscending else
+                  FOrder := IoDescending;
               end;
             end
             else
@@ -2388,6 +2488,7 @@ end;
 destructor TMetaDataBase.Destroy;
 begin
   FSortedTables.Free;
+  FIdentifiers.Free;
   inherited;
 end;
 
@@ -2469,7 +2570,7 @@ end;
 
 procedure TMetaDataBase.SortTablesByForeignKeys;
 var
-  I, F: Integer;
+  I, F, O: Integer;
   CanAdd: Boolean;
   ToAdd: TList;
   Current: TMetaTable;
@@ -2489,12 +2590,19 @@ begin
 
     { Ajoute ensuite les tables qui ont uniquement des dépendences sur les tables
       qui sont déjà dans la liste }
-    I := 0;
+    I := 0; O := 0;
     while ToAdd.Count > 0 do
     begin
       { Boucle sur la liste ToAdd }
       if I >= ToAdd.Count then
+      begin
+        if (O > 0) and (ToAdd.Count = O) then
+          raise EUIBError.Create('Cycle detected, I can''t do anything for bad databases designers :-)')
+        else
+          O := ToAdd.Count;
+
         I := 0;
+      end;
 
       Current := TMetaTable(ToAdd[I]);
 
@@ -2709,6 +2817,7 @@ begin
       end;
     end;
   end;
+  Stream.Read(FOrder, SizeOf(FOrder));
 end;
 
 procedure TMetaConstraint.SaveToStream(Stream: TStream);
@@ -2723,6 +2832,7 @@ begin
     for I := 0 to I - 1 do
       Stream.Write(FFields[I], SizeOf(FFields[I]));
   end;
+  Stream.Write(FOrder, SizeOf(FOrder));
 end;
 
 class function TMetaConstraint.NodeType: TMetaNodeType;
@@ -2731,6 +2841,12 @@ begin
 end;
 
 { TMetaUnique }
+
+procedure TMetaUnique.LoadFromStream(Stream: TStream);
+begin
+  inherited;
+  ReadString(Stream, FIndexName);
+end;
 
 class function TMetaUnique.NodeClass: string;
 begin
@@ -2757,10 +2873,34 @@ begin
     if I <> FieldsCount - 1 then
       Stream.WriteString(', ');
   end;
-  Stream.WriteString(');');
+  Stream.WriteString(')');
+
+  // fb15up
+
+  if not ((FIndexName = '') or (Copy(FIndexName, 1, 4) = 'RDB$')) then
+  begin
+    Stream.WriteString(' USING');
+    if FOrder = ioDescending then
+      Stream.WriteString(' DESC');
+    Stream.WriteString(' INDEX ' + FIndexName);
+  end;
+
+  Stream.WriteString(';');
+end;
+
+procedure TMetaUnique.SaveToStream(Stream: TStream);
+begin
+  inherited;
+  WriteString(Stream, FIndexName);
 end;
 
 { TMetaPrimary }
+
+procedure TMetaPrimary.LoadFromStream(Stream: TStream);
+begin
+  inherited;
+  ReadString(Stream, FIndexName);
+end;
 
 class function TMetaPrimary.NodeClass: string;
 begin
@@ -2771,7 +2911,7 @@ procedure TMetaPrimary.LoadFromQuery(Q: TJvUIBStatement);
 var
   I: Integer;
 begin
-  FName := Trim(Q.Fields.AsString[0]);
+  FName := MetaQuote(Trim(Q.Fields.AsString[0]));
   Q.FetchAll;
   SetLength(FFields, Q.Fields.RecordCount);
   for I := 0 to Q.Fields.RecordCount - 1 do
@@ -2780,6 +2920,12 @@ begin
     FFields[I] := TMetaTable(FOwner).FindFieldIndex(Trim(Q.Fields.AsString[1]));
     Include(TMetaTable(FOwner).Fields[FFields[I]].FInfos, fiPrimary);
   end;
+
+  // FB15up
+  FIndexName := MetaQuote(Trim(Q.Fields.AsString[2]));
+  if Q.Fields.AsSingle[3] = 0 then
+    FOrder := IoAscending else
+    FOrder := IoDescending;
 end;
 
 procedure TMetaPrimary.SaveToDDLNode(Stream: TStringStream);
@@ -2798,7 +2944,24 @@ begin
     if I <> FieldsCount - 1 then
       Stream.WriteString(', ');
   end;
-  Stream.WriteString(');');
+  Stream.WriteString(')');
+
+  // fb15up
+  if not ((FIndexName = '') or (Copy(FIndexName, 1, 4) = 'RDB$')) then
+  begin
+    Stream.WriteString(' USING');
+    if FOrder = ioDescending then
+      Stream.WriteString(' DESC');
+    Stream.WriteString(' INDEX ' + FIndexName);
+  end;
+  Stream.WriteString(';');
+
+end;
+
+procedure TMetaPrimary.SaveToStream(Stream: TStream);
+begin
+  inherited;
+  WriteString(Stream, FIndexName);
 end;
 
 class function TMetaPrimary.NodeType: TMetaNodeType;
@@ -2818,7 +2981,6 @@ begin
   inherited LoadFromStream(Stream);
   Stream.Read(FUnique, SizeOf(FUnique));
   Stream.Read(FActive, SizeOf(FActive));
-  Stream.Read(FOrder, SizeOf(FOrder));
 end;
 
 procedure TMetaIndex.SaveToDDLNode(Stream: TStringStream);
@@ -2850,7 +3012,6 @@ begin
   inherited SaveToStream(Stream);
   Stream.Write(FUnique, SizeOf(FUnique));
   Stream.Write(FActive, SizeOf(FActive));
-  Stream.Write(FOrder, SizeOf(FOrder));
 end;
 
 class function TMetaIndex.NodeType: TMetaNodeType;
@@ -2893,6 +3054,7 @@ begin
   SetLength(FForFields, I);
   for I := 0 to I - 1 do
     Stream.Read(FForFields[I], SizeOf(FForFields[I]));
+  ReadString(Stream, FIndexName);
 end;
 
 procedure TMetaForeign.SaveToDDLNode(Stream: TStringStream);
@@ -2935,6 +3097,15 @@ begin
     urSetDefault: Stream.WriteString(' ON UPDATE SET DEFAULT');
   end;
 
+  // fb15up
+  if not ((FIndexName = '') or (Copy(FIndexName, 1, 4) = 'RDB$')) then
+  begin
+    Stream.WriteString(' USING');
+    if FOrder = ioDescending then
+      Stream.WriteString(' DESC');
+    Stream.WriteString(' INDEX ' + FIndexName);
+  end;
+
   Stream.WriteString(';');
 end;
 
@@ -2950,6 +3121,7 @@ begin
   Stream.Write(I, SizeOf(I));
   for I := 0 to I - 1 do
     Stream.Write(FForFields[I], SizeOf(FForFields[I]));
+  WriteString(Stream, FIndexName);
 end;
 
 class function TMetaForeign.NodeType: TMetaNodeType;
@@ -3017,7 +3189,7 @@ end;
 
 procedure TMetaTrigger.LoadFromQuery(Q: TJvUIBStatement);
 begin
-  FName := Trim(Q.Fields.AsString[0]);
+  FName := MetaQuote(Trim(Q.Fields.AsString[0]));
   Q.ReadBlob(1, FSource);
   FPosition := Q.Fields.AsSmallint[2];
   FPrefix := DecodePrefix(Q.Fields.AsSmallint[3]);
@@ -3166,14 +3338,14 @@ end;
 procedure TMetaView.LoadFromDataBase(QName, QFields, QTriggers,
   QCharset, QArrayDim, QGrants, QFieldGrants: TJvUIBStatement; OIDs: TOIDViews);
 begin
-  FName := Trim(QName.Fields.AsString[0]);
+  FName := MetaQuote(Trim(QName.Fields.AsString[0]));
   QName.ReadBlob(1, FSource);
   FSource := Trim(FSource);
 
   // FIELD
   if OIDViewField in OIDs then
   begin
-    QFields.Params.AsString[0] := FName;
+    QFields.Params.AsString[0] := SQLUnQuote(FName);
     QFields.Open;
     while not QFields.Eof do
     begin
@@ -3185,7 +3357,7 @@ begin
   // TRIGGER
   if OIDViewTrigers in OIDs then
   begin
-    QTriggers.Params.AsString[0] := FName;
+    QTriggers.Params.AsString[0] := SQLUnQuote(FName);
     QTriggers.Open;
     while not QTriggers.Eof do
     begin
@@ -3198,7 +3370,7 @@ begin
   if OIDViewGrant in OIDs then
   begin
     QGrants.Params.AsInteger[0] := 0;
-    QGrants.Params.AsString[1] := FName;
+    QGrants.Params.AsString[1] := SQLUnQuote(FName);
     QGrants.Open;
     LoadGrantsFromQuery(QGrants);
   end;
@@ -3207,7 +3379,7 @@ begin
   if OIDViewFieldGrant in OIDs then
   begin
     QFieldGrants.Params.AsInteger[0] := 0;
-    QFieldGrants.Params.AsString[1] := FName;
+    QFieldGrants.Params.AsString[1] := SQLUnQuote(FName);
     QFieldGrants.Open;
 
     LoadFieldsGrantsFromQuery(QFieldGrants);
@@ -3359,9 +3531,9 @@ end;
 procedure TMetaProcedure.LoadFromQuery(QNames, QFields,
   QCharset, QArrayDim, QGrants: TJvUIBStatement; OIDs: TOIDProcedures);
 begin
-  FName := Trim(QNames.Fields.AsString[0]);
+  FName := MetaQuote(Trim(QNames.Fields.AsString[0]));
   QNames.ReadBlob(1, FSource);
-  QFields.Params.AsString[0] := FName;
+  QFields.Params.AsString[0] := SQLUnQuote(FName);
 
   if OIDProcFieldIn in OIDs then
   begin
@@ -3389,7 +3561,7 @@ begin
   begin
     { Load Procedure Grants }
     QGrants.Params.AsInteger[0] := 5;
-    QGrants.Params.AsString[1] := FName;
+    QGrants.Params.AsString[1] := SQLUnQuote(FName);
     QGrants.Open;
     LoadGrantsFromQuery(QGrants);
   end;
@@ -3553,7 +3725,7 @@ end;
 
 procedure TMetaException.LoadFromQuery(QName: TJvUIBStatement);
 begin
-  FName := Trim(QName.Fields.AsString[0]);
+  FName := MetaQuote(Trim(QName.Fields.AsString[0]));
   FMessage := QName.Fields.AsString[1];
   FNumber := QName.Fields.AsInteger[2];
 end;
@@ -3665,7 +3837,7 @@ begin
 
   if OIDUDFField in OIDs then
   begin
-    QFields.Params.AsString[0] := FName;
+    QFields.Params.AsString[0] := SQLUnQuote(FName);
     QFields.Open;
     while not QFields.Eof do
     begin
@@ -3746,7 +3918,7 @@ begin
     if OIDDomain in TMetaDataBase(FOwner.FOwner).FOIDDatabases then
       if not (Q.Fields.IsNull[12] or (Copy(Q.Fields.AsString[12], 1, 4) = 'RDB$')) then
         FDomain :=
-          TMetaDataBase(FOwner.FOwner).FindDomainIndex(Trim(Q.Fields.AsString[12]));
+          TMetaDataBase(FOwner.FOwner).FindDomainIndex(MetaQuote(Trim(Q.Fields.AsString[12])));
     Q.ReadBlob(13, FComputedSource);
   end;
 
@@ -3881,7 +4053,7 @@ end;
 procedure TMetaField.LoadFromQuery(Q, C, A: TJvUIBStatement);
 begin
   inherited LoadFromQuery(Q, C, A);
-  FName := Trim(Q.Fields.AsString[6]);
+  FName := MetaQuote(Trim(Q.Fields.AsString[6]));
   FSegmentLength := Q.Fields.AsSmallint[7];
 end;
 
@@ -3972,14 +4144,14 @@ end;
 
 procedure TMetaRole.LoadFromQuery(QName, QGrants: TJvUIBStatement; OIDs: TOIDRoles);
 begin
-  FName := Trim(QName.Fields.AsString[0]);
+  FName := MetaQuote(Trim(QName.Fields.AsString[0]));
   FOwner := QName.Fields.AsString[1];
 
   if OIDRoleGrant in OIDs then
   begin
     { Load Role Grants }
     QGrants.Params.AsInteger[0] := 13;
-    QGrants.Params.AsString[1] := FName;
+    QGrants.Params.AsString[1] := SQLUnQuote(FName);
     QGrants.Open;
     LoadGrantsFromQuery(QGrants);
   end;
@@ -4236,10 +4408,7 @@ end;
 procedure TMetaProcedureGrant.SaveToDDLNode(Stream: TStringStream);
 begin
   inherited SaveToDDLNode(Stream);
-  if IsValidIdentifier(FName) then
-    Stream.WriteString('EXECUTE ON PROCEDURE ' + FName + ' TO ')
-  else
-    Stream.WriteString('EXECUTE ON PROCEDURE "' + FName + '" TO ');
+  Stream.WriteString('EXECUTE ON PROCEDURE ' + MetaQuote(FName) + ' TO ');
   inherited SaveGranteesToDDLNode(Stream, 'GRANT');
 end;
 

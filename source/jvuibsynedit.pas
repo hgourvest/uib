@@ -162,6 +162,7 @@ const
      (icon: 9;  color : clBlack;   Token: tkUnknown)    //   MetaViewGrantee
    );
 
+  (* See jvuibkeywords.pas
   SQLToKens: array[0..273] of string =
    ('ACTION','ACTIVE','ADD','ADMIN','AFTER','ALL','ALTER','AND','ANY','AS','ASC',
     'ASCENDING','AT','AUTO','AVG','BACKUP','BASE_NAME','BEFORE','BEGIN','BETWEEN',
@@ -197,6 +198,7 @@ const
     'UNION','UNIQUE','UPDATE','UPDATING','UPPER','USER','USING','VALUE','VALUES',
     'VARCHAR','VARIABLE','VARYING','VIEW','WAIT','WEEKDAY','WHEN','WHERE','WHILE',
     'WITH','WORK','WRITE','YEAR','YEARDAY','FALSE','TRUE');
+   *)
 
    SQLComp: array[0..20] of TSQLCompInfo =
    ((Token: 'GEN_ID'; Comp: '"<generator>,", "<step>"'),
@@ -234,11 +236,25 @@ const
 
 implementation
 
+uses
+  jvuibkeywords;
+
 const
   TokenName: array[TUIBTokenKind] of string = ('Comment', 'Datatype', 'Function',
     'Identifier', 'Key', 'Null', 'Number', 'Space', 'String', 'Symbol',
     'Unknown', 'Variable', 'Exception', 'Generator', 'UDF', 'View', 'Procedure',
     'Role', 'Table', 'Domain', 'Trigger');
+
+  SQLFunctions : array[0..13] of String = (
+    'AVG','CAST','COUNT','GEN_ID','MAX','MIN','SUM','UPPER','LOWER','TRIM',
+    'BIT_LENGTH','OCTET_LENGTH','CHARACTER_LENGTH','CHAR_LENGTH');
+
+  // types
+  SQLTypes : array[0..14] of String = ('BLOB','CHAR','CHARACTER','DATE',
+    'DECIMAL','DOUBLE','FLOAT','INTEGER','NUMERIC','SMALLINT','TIME','TIMESTAMP',
+    'VARCHAR','BIGINT','BOOLEAN');
+
+(*
 
   // functions
   InterbaseFunctions = 'AVG,CAST,COUNT,GEN_ID,MAX,MIN,SUM,UPPER,LOWER,TRIM,BIT_LENGTH,OCTET_LENGTH,CHARACTER_LENGTH,CHAR_LENGTH';
@@ -282,6 +298,7 @@ const
     'UNION,UNIQUE,UPDATE,UPDATING,USER,USING,VALUE,VALUES,'+
     'VARIABLE,VARYING,VIEW,WAIT,WEEKDAY,WHEN,WHERE,WHILE,'+
     'WITH,WORK,WRITE,YEAR,YEARDAY,FALSE,TRUE';
+  *)
 
   function AliasToTable(var sql, alias, table: string): boolean;
   var
@@ -903,17 +920,32 @@ var
   HashValue: integer;
 begin
   HashValue := KeyHash(PChar(AKeyword));
-  FKeywords[HashValue] := TSynHashEntry.Create(AKeyword, AKind);
+  if FKeywords[HashValue] = nil then
+    FKeywords[HashValue] := TSynHashEntry.Create(AKeyword, AKind);
 end;
 
 procedure TUIBSQLHighliter.BeginUpdate;
+var
+  i: Integer;
 begin
   FKeywords.Clear;
   FIdentifiersPtr := @FIdentifiers;
   FHashTablePtr := @FHashTable;
+
+  for i := Low(SQLTypes) to High(SQLTypes) do
+    DoAddKeyword(SQLTypes[I],Ord(tkDatatype));
+
+  for i := Low(SQLFunctions) to High(SQLFunctions) do
+    DoAddKeyword(SQLFunctions[I],Ord(tkFunction));
+
+  for i := Low(SQLToKens) to High(SQLToKens) do
+    DoAddKeyword(SQLToKens[I],Ord(tkKey));
+
+(*
   EnumerateKeywords(Ord(tkDatatype), InterbaseTypes, IdentChars, DoAddKeyword);
   EnumerateKeywords(Ord(tkFunction), InterbaseFunctions, IdentChars, DoAddKeyword);
   EnumerateKeywords(Ord(tkKey), InterbaseKW, IdentChars, DoAddKeyword);
+*)
 end;
 
 procedure TUIBSQLHighliter.EnUpdate;

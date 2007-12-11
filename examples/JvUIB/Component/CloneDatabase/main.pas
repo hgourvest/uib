@@ -52,12 +52,9 @@ type
     procedure AddLog(const What: String); overload;
     procedure AddLog(const FmtStr: String; const Args: array of const); overload;
     function GetDestPageSize: Integer;
-
-    function NormalizeName(const Name: String): String;
-
     procedure ExecuteImmediate(const SQL: String);
     procedure EmptyTables(dbhandle: IscDbHandle; mdb: TMetaDataBase);
-    procedure PumpData(dbhandle: IscDbHandle; mdb: TMetaDataBase; failsafe: Boolean);
+    procedure PumpData(dbhandle: IscDbHandle; mdb: TMetaDataBase; failsafe: Boolean; sorttables: Boolean);
   public
     { Déclarations publiques }
   end;
@@ -278,7 +275,7 @@ begin
     begin
       dbhandle := DstDatabase.DbHandle;
       DstTransaction.Commit;
-      PumpData(dbhandle, metadb, cbFailsafeClone.Checked);
+      PumpData(dbhandle, metadb, cbFailsafeClone.Checked, false);
     end;
 
     if not cbIgnoreConstraints.Checked then
@@ -458,7 +455,7 @@ begin
     if cbEmptyTables.Checked then
       EmptyTables(dbhandle, metadb);
 
-    PumpData(dbhandle, metadb, cbFailsafePump.Checked);
+    PumpData(dbhandle, metadb, cbFailsafePump.Checked, true);
 
     for i := 0 to metadb.TablesCount - 1 do
     for j := 0 to metadb.Tables[i].TriggersCount - 1 do
@@ -512,14 +509,6 @@ begin
     Result := SrcDatabase.InfoPageSize;
 end;
 
-function TMainForm.NormalizeName(const Name: String): String;
-begin
-  if IsValidIdentifier(Name) then
-    Result := Name
-  else
-    Result := '"' + Name + '"';
-end;
-
 procedure TMainForm.EmptyTables(dbhandle: IscDbHandle; mdb: TMetaDataBase);
 var
   sthandle: PPointer;
@@ -555,7 +544,7 @@ begin
 end;
 
 procedure TMainForm.PumpData(dbhandle: IscDbHandle; mdb: TMetaDataBase;
-  failsafe: Boolean);
+  failsafe: Boolean; sorttables: Boolean);
 var
   T,F,c,l: Integer;
   done: Integer;
@@ -563,35 +552,54 @@ var
   trhandle: IscTrHandle;
   sthandle: IscStmtHandle;
   blhandle: IscBlobHandle;
+  Table: TMetaTable;
+
+  function TablesCount: Integer;
+  begin
+    if sorttables then
+      Result := mdb.SortedTablesCount
+    else
+      Result := mdb.TablesCount;
+  end;
+
+  function Tables(const Index: Integer): TMetaTable;
+  begin
+    if sorttables then
+      Result := mdb.SortedTables[Index]
+    else
+      Result := mdb.Tables[Index];
+  end;
+
 begin
   DstTransaction.StartTransaction;
   trhandle := DstTransaction.TrHandle;
 
-  for T := 0 to mdb.SortedTablesCount - 1 do
+  for T := 0 to TablesCount - 1 do
   try
-    AddLog('Filling Table: %s', [mdb.SortedTables[T].Name]);
+    Table := Tables(T);
+    AddLog('Filling Table: %s', [Table.Name]);
     sql := 'select ';
     c := 0;
-    for F := 0 to mdb.SortedTables[T].FieldsCount - 1 do
-      if mdb.SortedTables[T].Fields[F].ComputedSource = '' then
+    for F := 0 to Table.FieldsCount - 1 do
+      if Table.Fields[F].ComputedSource = '' then
       begin
         if (c = 0) then
-          sql := sql + mdb.SortedTables[T].Fields[F].Name
+          sql := sql + Table.Fields[F].Name
         else
-          sql := sql + ', ' + mdb.SortedTables[T].Fields[F].Name;
+          sql := sql + ', ' + Table.Fields[F].Name;
         inc(c);
       end;
-    sql := sql + ' from ' + mdb.SortedTables[T].Name;
-    if mdb.SortedTables[T].PrimaryCount > 0 then
+    sql := sql + ' from ' + Table.Name;
+    if Table.PrimaryCount > 0 then
     begin
       c := 0;
-      for F := 0 to mdb.SortedTables[T].Primary[0].FieldsCount - 1 do
+      for F := 0 to Table.Primary[0].FieldsCount - 1 do
       begin
         if (c = 0) then
           sql := sql + ' order by '
         else
           sql := sql + ', ';
-        sql := sql + mdb.SortedTables[T].Primary[0].Fields[F].Name;
+        sql := sql + Table.Primary[0].Fields[F].Name;
         Inc(c);
       end;
     end;
@@ -600,9 +608,9 @@ begin
 
     if not (SrcQuery.Eof) then
     begin
-      sql := format('INSERT INTO %s (%s', [mdb.SortedTables[T].Name, NormalizeName(SrcQuery.Fields.SqlName[0])]);
+      sql := format('INSERT INTO %s (%s', [Table.Name, Table.MetaQuote(SrcQuery.Fields.SqlName[0])]);
       for F := 1 to SrcQuery.Fields.FieldCount - 1 do
-        sql := sql + ', ' + NormalizeName(SrcQuery.Fields.SqlName[F]);
+        sql := sql + ', ' + Table.MetaQuote(SrcQuery.Fields.SqlName[F]);
       sql := sql + ') VALUES (?';
       for F := 1 to SrcQuery.Fields.FieldCount - 1 do
         sql := sql + ',?';

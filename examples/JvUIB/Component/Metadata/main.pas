@@ -144,8 +144,10 @@ begin
 
 {$IFDEF HAVE_SYNEDIT}
   Memo := TSynMemo.Create(Self);
+  Memo.WordWrap := true;
   Memo.Highlighter := TSynSQLSyn.Create(Self);
   Memo.Highlighter.CommentAttribute.Foreground := clGreen;
+
   TSynSQLSyn(Memo.Highlighter).SQLDialect := sqlInterbase6;
 {$ELSE}
   Memo := TMemo.Create(Self);

@@ -6,7 +6,7 @@ uses
   SysUtils;
 
 const
-  RESERVED_WORDS : array[0..327] of String = (
+  SQLToKens : array[0..327] of String = (
     'ABS', 'ACCENT', 'ACOS', 'ACTION', 'ACTIVE', 'ADD', 'ADMIN', 'AFTER', 'ALL',
     'ALTER', 'ALWAYS', 'AND', 'ANY', 'AS', 'ASC', 'ASCENDING', 'ASCII_CHAR',
     'ASCII_VAL', 'ASIN', 'AT', 'ATAN', 'ATAN2', 'AUTO', 'AVG', 'BACKUP',
@@ -55,34 +55,6 @@ const
     'WEEKDAY', 'WHEN', 'WHERE', 'WHILE', 'WITH', 'WORK', 'WRITE', 'YEAR',
     'YEARDAY');
 
-function IsValidIdentifier(const AWord: String): Boolean;
-
 implementation
-
-function IsValidIdentifier(const AWord: String): Boolean;
-var
-  I: Integer;
-begin
-  Result := true;
-
-  if (Length(AWord) > 0) then
-  begin
-    case (AWord[1]) of
-    '"': Exit;
-    '0'..'9':
-      begin
-        Result := false;
-        Exit;
-      end;
-    end;
-  end;
-
-  for I := Low(RESERVED_WORDS) to High(RESERVED_WORDS) do
-    if UpperCase(AWord) = RESERVED_WORDS[I] then
-    begin
-      Result := false;
-      Break;
-    end;
-end;
 
 end.

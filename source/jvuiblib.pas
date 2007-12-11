@@ -944,7 +944,9 @@ const
     1000);
 
 implementation
-uses jvuibconst, Math;
+
+uses
+  Math, jvuibconst, jvuibkeywords;
 
 (******************************************************************************)
 (* Errors handling                                                            *)
@@ -970,8 +972,15 @@ begin
     Result := name;
     Exit;
   end;
+
+  if (len > 1) and (not (name[1] in ['A'..'Z'])) then
+  begin // non standard carracter: keep case
+    Result := '"' + name + '"';
+    Exit;
+  end;
+
   for i := 1 to len do
-    if not (name[i] in ['a'..'z','A'..'Z', '0'..'9', '_', '$']) then
+    if not (name[i] in ['A'..'Z', '0'..'9', '_', '$']) then
     begin // non standard carracter: keep case
       Result := '"' + name + '"';
       Exit;
@@ -989,8 +998,15 @@ begin
     Result := copy(name, 2, len-2);
     Exit;
   end;
+
+  if (len > 1) and (not (name[1] in ['A'..'Z'])) then
+  begin // non standard carracter: keep case
+    Result := name;
+    Exit;
+  end;
+
   for i := 1 to len do
-    if not (name[i] in ['a'..'z','A'..'Z', '0'..'9', '_', '$']) then
+    if not (name[i] in ['A'..'Z', '0'..'9', '_', '$']) then
     begin // non standard carracter: keep case
       Result := name;
       Exit;

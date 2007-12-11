@@ -92,6 +92,9 @@ var
 
 implementation
 
+uses
+  jvuibkeywords;
+
 {$IFDEF MSWINDOWS}
   {$R *.dfm}
 {$ELSE}

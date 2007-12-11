@@ -11,7 +11,7 @@
     <Borland.Personality>Default.Personality</Borland.Personality>
     <Borland.ProjectType />
     <BorlandProject>
-  <BorlandProject xmlns=""> <Default.Personality> </Default.Personality> </BorlandProject></BorlandProject>
+<BorlandProject xmlns=""><Default.Personality></Default.Personality></BorlandProject></BorlandProject>
   </ProjectExtensions>
   <Target Name="JvUIBD11Win32R">
     <MSBuild Projects="JvUIBD11Win32R.dproj" Targets="" />

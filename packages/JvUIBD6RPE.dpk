@@ -31,12 +31,14 @@ requires
   vcl;
 
 contains
+  jvuib in '..\source\jvuib.pas',
   jvuibase in '..\source\jvuibase.pas',
+  jvuibconst in '..\source\jvuibconst.pas',  
   jvuiberror in '..\source\jvuiberror.pas',
   jvuiblib in '..\source\jvuiblib.pas',
-  jvuib in '..\source\jvuib.pas',
-  jvuibconst in '..\source\jvuibconst.pas',
+  jvuibmetadata in '..\source\jvuibmetadata.pas',
   jvuibsqlparser in '..\source\jvuibsqlparser.pas',
-  jvuibmetadata in '..\source\jvuibmetadata.pas';
+  jvuibkeywords in '..\source\jvuibkeywords.pas',
+  jvuibavl in '..\source\jvuibavl.pas';
 
 end.
