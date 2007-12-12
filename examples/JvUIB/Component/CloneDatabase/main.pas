@@ -37,6 +37,7 @@ type
     cbFailsafePump: TCheckBox;
     cbFailsafeClone: TCheckBox;
     XPManifest1: TXPManifest;
+    cbInternalNames: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure btStartCloneClick(Sender: TObject);
     procedure btSrcDatabaseClick(Sender: TObject);
@@ -216,21 +217,27 @@ begin
     for i := 0 to metadb.RolesCount - 1 do
     begin
       AddLog('Create role: %s', [metadb.Roles[i].Name]);
-      ExecuteImmediate(metadb.Roles[i].AsDDL);
+      if cbInternalNames.Checked then
+        ExecuteImmediate(metadb.Roles[i].AsFullDDL) else
+        ExecuteImmediate(metadb.Roles[i].AsDDL);
     end;
 
     // UDF
     for i := 0 to metadb.UDFSCount - 1 do
     begin
       AddLog('Create UDF: %s', [metadb.UDFS[i].Name]);
-      ExecuteImmediate(metadb.UDFS[i].AsDDL);
+      if cbInternalNames.Checked then
+        ExecuteImmediate(metadb.UDFS[i].AsFullDDL) else
+        ExecuteImmediate(metadb.UDFS[i].AsDDL);
     end;
 
     // DOMAINS
     for i := 0 to metadb.DomainsCount - 1 do
     begin
       AddLog('Create Domain: %s', [metadb.Domains[i].Name]);
-      ExecuteImmediate(metadb.Domains[i].AsDDL);
+      if cbInternalNames.Checked then
+        ExecuteImmediate(metadb.Domains[i].AsFullDDL) else
+        ExecuteImmediate(metadb.Domains[i].AsDDL);
     end;
 
     // GENERATORS
@@ -246,7 +253,9 @@ begin
     for i := 0 to metadb.ExceptionsCount - 1 do
     begin
       AddLog('Create Exception: %s', [metadb.Exceptions[i].Name]);
-      ExecuteImmediate(metadb.Exceptions[i].AsDDL);
+      if cbInternalNames.Checked then
+        ExecuteImmediate(metadb.Exceptions[i].AsFullDDL) else
+        ExecuteImmediate(metadb.Exceptions[i].AsDDL);
     end;
 
     // EMPTY PROCEDURES
@@ -260,14 +269,18 @@ begin
     for i := 0 to metadb.TablesCount - 1 do
     begin
       AddLog('Create Table: %s', [metadb.Tables[i].Name]);
-      ExecuteImmediate(metadb.Tables[i].AsDDLNode);
+      if cbInternalNames.Checked then
+        ExecuteImmediate(metadb.Tables[i].AsFullDDLNode) else
+        ExecuteImmediate(metadb.Tables[i].AsDDLNode);
     end;
 
     // VIEWS
     for i := 0 to metadb.ViewsCount - 1 do
     begin
       AddLog('Create View: %s', [metadb.Views[i].Name]);
-      ExecuteImmediate(metadb.Views[i].AsDDLNode);
+      if cbInternalNames.Checked then
+        ExecuteImmediate(metadb.Views[i].AsFullDDLNode) else
+        ExecuteImmediate(metadb.Views[i].AsDDLNode);
     end;
 
     // TABLES DATA
@@ -285,7 +298,9 @@ begin
       for j := 0 to metadb.Tables[i].UniquesCount - 1 do
       begin
         AddLog('Create Unique: %s', [metadb.Tables[i].Uniques[j].Name]);
-        ExecuteImmediate(metadb.Tables[i].Uniques[j].AsDDL);
+        if cbInternalNames.Checked then
+          ExecuteImmediate(metadb.Tables[i].Uniques[j].AsFullDDL) else
+          ExecuteImmediate(metadb.Tables[i].Uniques[j].AsDDL);
       end;
 
       // PRIMARY
@@ -293,7 +308,9 @@ begin
       for j := 0 to metadb.Tables[i].PrimaryCount - 1 do
       begin
         AddLog('Create Primary: %s', [metadb.Tables[i].Primary[j].Name]);
-        ExecuteImmediate(metadb.Tables[i].Primary[j].AsDDL);
+        if cbInternalNames.Checked then
+          ExecuteImmediate(metadb.Tables[i].Primary[j].AsFullDDL) else
+          ExecuteImmediate(metadb.Tables[i].Primary[j].AsDDL);
       end;
 
       // FOREIGN
@@ -301,7 +318,9 @@ begin
       for j := 0 to metadb.Tables[i].ForeignCount - 1 do
       begin
         AddLog('Create Foreign: %s', [metadb.Tables[i].Foreign[j].Name]);
-        ExecuteImmediate(metadb.Tables[i].Foreign[j].AsDDL);
+        if cbInternalNames.Checked then
+          ExecuteImmediate(metadb.Tables[i].Foreign[j].AsFullDDL) else
+          ExecuteImmediate(metadb.Tables[i].Foreign[j].AsDDL);
       end;
 
       // INDICES
@@ -309,7 +328,9 @@ begin
       for j := 0 to metadb.Tables[i].IndicesCount - 1 do
       begin
         AddLog('Create Indice: %s', [metadb.Tables[i].Indices[j].Name]);
-        ExecuteImmediate(metadb.Tables[i].Indices[j].AsDDL);
+        if cbInternalNames.Checked then
+          ExecuteImmediate(metadb.Tables[i].Indices[j].AsFullDDL) else
+          ExecuteImmediate(metadb.Tables[i].Indices[j].AsDDL)
       end;
 
       // CHECKS
@@ -317,7 +338,9 @@ begin
       for j := 0 to metadb.Tables[i].ChecksCount - 1 do
       begin
         AddLog('Create Check: %s', [metadb.Tables[i].Checks[j].Name]);
-        ExecuteImmediate(metadb.Tables[i].Checks[j].AsDDL);
+        if cbInternalNames.Checked then
+          ExecuteImmediate(metadb.Tables[i].Checks[j].AsFullDDL) else
+          ExecuteImmediate(metadb.Tables[i].Checks[j].AsDDL);
       end;
     end; // IgnoreConstraints
 
@@ -326,7 +349,9 @@ begin
     for j := 0 to metadb.Tables[i].TriggersCount - 1 do
     begin
       AddLog('Create Trigger: %s', [metadb.Tables[i].Triggers[j].Name]);
-      ExecuteImmediate(metadb.Tables[i].Triggers[j].AsDDL);
+      if cbInternalNames.Checked then
+        ExecuteImmediate(metadb.Tables[i].Triggers[j].AsFullDDL) else
+        ExecuteImmediate(metadb.Tables[i].Triggers[j].AsDDL);
     end;
 
     // VIEW TRIGGERS
@@ -334,7 +359,9 @@ begin
     for j := 0 to metadb.Views[i].TriggersCount - 1 do
     begin
       AddLog('Create Trigger: %s', [metadb.Views[i].Triggers[j].Name]);
-      ExecuteImmediate(metadb.Views[i].Triggers[j].AsDDL);
+      if cbInternalNames.Checked then
+        ExecuteImmediate(metadb.Views[i].Triggers[j].AsFullDDL) else
+        ExecuteImmediate(metadb.Views[i].Triggers[j].AsDDL);
     end;
 
     // ALTER PROCEDURES
@@ -350,7 +377,9 @@ begin
       for j := 0 to metadb.Roles[i].GrantsCount - 1 do
       begin
          AddLog('Grant To Role: %s', [metadb.Roles[i].Grants[j].Name]);
-         ExecuteImmediate(metadb.Roles[i].Grants[j].AsDDL);
+         if cbInternalNames.Checked then
+           ExecuteImmediate(metadb.Roles[i].Grants[j].AsFullDDL) else
+           ExecuteImmediate(metadb.Roles[i].Grants[j].AsDDL);
       end;
     end;
 
@@ -359,12 +388,16 @@ begin
       for j := 0 to metadb.Tables[i].GrantsCount - 1 do
       begin
         AddLog('Grant To Table: %s', [metadb.Tables[i].Grants[j].Name]);
-        ExecuteImmediate(metadb.Tables[i].Grants[j].AsDDL);
+        if cbInternalNames.Checked then
+          ExecuteImmediate(metadb.Tables[i].Grants[j].AsFullDDL) else
+          ExecuteImmediate(metadb.Tables[i].Grants[j].AsDDL);
       end;
       for j := 0 to metadb.Tables[i].FieldsGrantsCount - 1 do
       begin
         AddLog('Grant To TableField: %s', [metadb.Tables[i].FieldsGrants[j].Name]);
-        ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsDDL);
+        if cbInternalNames.Checked then
+          ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsFullDDL) else
+          ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsDDL);
       end;
     end;
 
@@ -373,12 +406,16 @@ begin
       for j := 0 to metadb.Views[i].GrantsCount - 1 do
       begin
         AddLog('Grant To View: %s', [metadb.Views[i].Grants[j].Name]);
-        ExecuteImmediate(metadb.Views[i].Grants[j].AsDDL);
+        if cbInternalNames.Checked then
+          ExecuteImmediate(metadb.Views[i].Grants[j].AsFullDDL) else
+          ExecuteImmediate(metadb.Views[i].Grants[j].AsDDL);
       end;
       for j := 0 to metadb.Views[i].FieldsGrantsCount - 1 do
       begin
         AddLog('Grant To ViewField: %s', [metadb.Views[i].FieldsGrants[j].Name]);
-        ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsDDL);
+        if cbInternalNames.Checked then
+          ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsFullDDL) else
+          ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsDDL);
       end;
     end;
 
@@ -387,7 +424,9 @@ begin
       for j := 0 to metadb.Procedures[i].GrantsCount - 1 do
       begin
         AddLog('Grant To Procedure: %s', [metadb.Procedures[i].Grants[j].Name]);
-        ExecuteImmediate(metadb.Procedures[i].Grants[j].AsDDL);
+        if cbInternalNames.Checked then
+          ExecuteImmediate(metadb.Procedures[i].Grants[j].AsFullDDL) else
+          ExecuteImmediate(metadb.Procedures[i].Grants[j].AsDDL);
       end;
     end;
   finally

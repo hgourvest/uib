@@ -108,6 +108,14 @@ object MainForm: TMainForm
       Caption = 'Close after finished'
       TabOrder = 1
     end
+    object cbInternalNames: TCheckBox
+      Left = 9
+      Top = 62
+      Width = 97
+      Height = 17
+      Caption = 'Internal Names'
+      TabOrder = 2
+    end
   end
   object Log: TMemo
     Left = 8
