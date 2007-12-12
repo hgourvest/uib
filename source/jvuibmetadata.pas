@@ -90,6 +90,9 @@ type
     ClassID: TMetaNodeClass;
   end;
 
+  TDDLOption = (ddlFull);
+  TDDLOptions = set of TDDLOption;
+
   TMetaNode = class(TObject)
   private
     FName: string;
@@ -98,29 +101,33 @@ type
     FNodeItemsCount: Integer;
     FData: Pointer;
     function GetItems(const ClassIndex, Index: Integer): TMetaNode;
-    function GetAsDDL: string;
     procedure AddClass(ClassID: TMetaNodeClass);
     procedure CheckTransaction(Transaction: TJvUIBTransaction);
-    procedure SaveNode(Stream: TStringStream; OID: Integer; Separator: string = NewLine);
+    procedure SaveNode(Stream: TStringStream; OID: Integer; options: TDDLOptions; Separator: string = NewLine);
     procedure LoadFromStream(Stream: TStream); virtual; abstract;
+    function GetAsDDL: string;
     function GetAsDDLNode: string;
+    function GetAsFullDDL: string;
+    function GetAsFullDDLNode: string;
   protected
     function GetName: String; virtual;
   public
-    procedure SaveToDDLNode(Stream: TStringStream); virtual;
-    function GetNodes(const Index: Integer): TNodeItem;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); virtual;
+    procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); virtual;
+   function GetNodes(const Index: Integer): TNodeItem;
     class function NodeClass: string; virtual;
     class function NodeType: TMetaNodeType; virtual;
     constructor Create(AOwner: TMetaNode; ClassIndex: Integer); virtual;
     constructor CreateFromStream(AOwner: TMetaNode; ClassIndex: Integer; Stream: TStream); virtual;
     destructor Destroy; override;
     procedure SaveToStream(Stream: TStream); virtual;
-    procedure SaveToDDL(Stream: TStringStream); virtual;
     function GetDatabase: TMetaDatabase;
     function MetaQuote(const str: string): string;    
     property Name: string read GetName;
     property AsDDL: string read GetAsDDL;
     property AsDDLNode: string read GetAsDDLNode;
+    property AsFullDDL: string read GetAsFullDDL;
+    property AsFullDDLNode: string read GetAsFullDDLNode;
     property NodeCount: Integer read FNodeItemsCount;
     property Nodes[const Index: Integer]: TNodeItem read GetNodes;
     property Parent: TMetaNode read FOwner;
@@ -137,7 +144,7 @@ type
   public
     procedure SaveToCreateDDLNode(Stream: TStringStream);
     procedure SaveToAlterDDLNode(Stream: TStringStream);
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     procedure SaveToStream(Stream: TStream); override;
@@ -162,7 +169,7 @@ type
   protected
     property SegmentLength: Smallint read FSegmentLength;
   public
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     procedure SaveToStream(Stream: TStream); override;
@@ -181,7 +188,7 @@ type
     procedure LoadFromQuery(Q, C, A: TJvUIBStatement); override;
   public
     class function NodeType: TMetaNodeType; override;
-    procedure SaveToDDL(Stream: TStringStream); override;
+    procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); override;
     property SegmentLength;
   end;
 
@@ -220,7 +227,7 @@ type
     function GetShortFieldType: string; override;
   public
     class function NodeType: TMetaNodeType; override;
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     procedure SaveToStream(Stream: TStream); override;
     property DefaultValue: string read FDefaultValue;
     property NotNull: Boolean read FNotNull;
@@ -237,8 +244,8 @@ type
     property Domain; // hidden
     property ComputedSource; // hidden
   public
-    procedure SaveToDDLNode(Stream: TStringStream); override;
-    procedure SaveToDDL(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
+    procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
   end;
@@ -267,8 +274,9 @@ type
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     procedure SaveToStream(Stream: TStream); override;
+    property IndexName: string read FIndexName;
   end;
 
   TMetaUnique = class(TMetaConstraint)
@@ -278,8 +286,9 @@ type
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
-    procedure SaveToDDL(Stream: TStringStream); override;
+    procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); override;
     procedure SaveToStream(Stream: TStream); override;
+    property IndexName: string read FIndexName;
   end;
 
   TMetaForeign = class(TMetaConstraint)
@@ -297,12 +306,14 @@ type
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     procedure SaveToStream(Stream: TStream); override;
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     property ForTable: TMetaTable read GetForTable;
     property ForFields[const Index: Word]: TMetaTableField read GetForFields;
     property ForFieldsCount: Word read GetForFieldsCount;
     property OnDelete: TUpdateRule read FOnDelete;
     property OnUpdate: TUpdateRule read FOnUpdate;
+    property IndexName: string read FIndexName;
+    //property
   end;
 
   TMetaIndex = class(TMetaConstraint)
@@ -313,7 +324,7 @@ type
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     procedure SaveToStream(Stream: TStream); override;
     property Unique: Boolean read FUnique;
     property Active: Boolean read FActive;
@@ -326,7 +337,7 @@ type
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     procedure SaveToStream(Stream: TStream); override;
     property Constraint: string read FConstraint;
   end;
@@ -349,7 +360,7 @@ type
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     procedure SaveToStream(Stream: TStream); override;
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     procedure SaveToAlterDDL(Stream: TStringStream);
     procedure SaveToAlterToActiveDDL(Stream: TStringStream);
     procedure SaveToAlterToInactiveDDL(Stream: TStringStream);
@@ -406,13 +417,13 @@ type
     function GetTriggersCount: Integer;
     procedure LoadFromStream(Stream: TStream); override;
   public
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     function FindFieldName(const Name: string): TMetaTableField;
     constructor Create(AOwner: TMetaNode; ClassIndex: Integer); override;
     procedure SaveToStream(Stream: TStream); override;
-    procedure SaveToDDL(Stream: TStringStream); override;
+    procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); override;
 
     property Fields[const Index: Integer]: TMetaTableField read GetFields;
     property FieldsCount: Integer read GetFieldsCount;
@@ -447,12 +458,12 @@ type
       QCharset, QArrayDim, QGrants, QFieldGrants: TJvUIBStatement; OIDs: TOIDViews);
     procedure LoadFromStream(Stream: TStream); override;
   public
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     constructor Create(AOwner: TMetaNode; ClassIndex: Integer); override;
     procedure SaveToStream(Stream: TStream); override;
-    procedure SaveToDDL(Stream: TStringStream); override;
+    procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); override;
     property Source: string read FSource;
     property Fields[const Index: Integer]: TMetaField read GetFields;
     property FieldsCount: Integer read GetFieldsCount;
@@ -470,8 +481,8 @@ type
     function GetOutputFields(const Index: Integer): TMetaProcOutField;
     function GetOutputFieldsCount: Integer;
     procedure LoadFromStream(Stream: TStream); override;
-    procedure InternalSaveToDDL(Stream: TStringStream; Operation: string);
-    procedure SaveToCreateEmptyDDL(Stream: TStringStream);
+    procedure InternalSaveToDDL(Stream: TStringStream; Operation: string; options: TDDLOptions);
+    procedure SaveToCreateEmptyDDL(Stream: TStringStream; options: TDDLOptions);
     function GetAsAlterDDL: string;
     function GetAsCreateEmptyDDL: string;
     function GetProcedureGrants(const Index: Integer): TMetaProcedureGrant;
@@ -479,12 +490,12 @@ type
   protected
     function FindGrant(Option: Boolean): TMetaProcedureGrant;
   public
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     constructor Create(AOwner: TMetaNode; ClassIndex: Integer); override;
     procedure SaveToStream(Stream: TStream); override;
-    procedure SaveToAlterDDL(Stream: TStringStream);
+    procedure SaveToAlterDDL(Stream: TStringStream; options: TDDLOptions);
 
     property Source: string read FSource;
     property AsCreateEmptyDDL: string read GetAsCreateEmptyDDL;
@@ -507,7 +518,7 @@ type
     procedure LoadFromStream(Stream: TStream); override;
     procedure LoadFromQuery(QName: TJvUIBStatement);
   public
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     procedure SaveToStream(Stream: TStream); override;
@@ -523,7 +534,7 @@ type
     procedure LoadFromStream(Stream: TStream); override;
   public
     class function NodeType: TMetaNodeType; override;
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     procedure SaveToStream(Stream: TStream); override;
     property Position: Smallint read FPosition;
     property Mechanism: Smallint read FMechanism;
@@ -539,7 +550,7 @@ type
     function GetFields(const Index: Integer): TMetaUDFField;
     function GetFieldsCount: Integer;
   public
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     constructor Create(AOwner: TMetaNode; ClassIndex: Integer); override;
@@ -562,7 +573,7 @@ type
   protected
     function FindGrant(Option: Boolean): TMetaRoleGrant;
   public
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     constructor Create(AOwner: TMetaNode; ClassIndex: Integer); override;
@@ -631,7 +642,7 @@ type
     destructor Destroy; override;
 
     procedure LoadFromDatabase(Transaction: TJvUIBTransaction);
-    procedure SaveToDDL(Stream: TStringStream); override;
+    procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); override;
     property OIDDatabases: TOIDDatabases read FOIDDatabases write FOIDDatabases;
 
     property Generators[const Index: Integer]: TMetaGenerator read GetGenerators;
@@ -687,7 +698,7 @@ type
     procedure LoadFromStream(Stream: TStream); override;    
   public
     procedure SaveToStream(Stream: TStream); override;
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     property Grantor: String read FGrantor;
@@ -707,21 +718,21 @@ type
 
   TMetaProcedureGrantee = class(TMetaGrantee)
   public
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
   end;
 
   TMetaTriggerGrantee = class(TMetaGrantee)
   public
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
   end;
 
   TMetaViewGrantee = class(TMetaGrantee)
   public
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
   end;
@@ -734,8 +745,8 @@ type
     procedure LoadFromStream(Stream: TStream); override;
   public
     procedure SaveToStream(Stream: TStream); override;
-    procedure SaveToDDLNode(Stream: TStringStream); override;
-    procedure SaveGranteesToDDLNode(Stream: TStringStream; OptionKeyWord: String);
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
+    procedure SaveGranteesToDDLNode(Stream: TStringStream; OptionKeyWord: String; options: TDDLOptions);
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     property Option: Boolean read FOption;
@@ -747,7 +758,7 @@ type
   protected
     function GetName: String; override;
   public
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     constructor Create(AOwner: TMetaNode; ClassIndex: Integer); override;
@@ -764,7 +775,7 @@ type
   protected
     function GetName: String; override;
   public
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
   end;
@@ -777,7 +788,7 @@ type
     procedure LoadFromStream(Stream: TStream); override;
   public
     procedure SaveToStream(Stream: TStream); override;
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     property Privileges: TTablePrivileges read FPrivileges;
@@ -794,7 +805,7 @@ type
     procedure LoadFromStream(Stream: TStream); override;    
   public
     procedure SaveToStream(Stream: TStream); override;
-    procedure SaveToDDLNode(Stream: TStringStream); override;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     constructor Create(AOwner: TMetaNode; ClassIndex: Integer); override;
@@ -1127,7 +1138,7 @@ var
 begin
   Stream := TStringStream.Create('');
   try
-    SaveToDDL(Stream);
+    SaveToDDL(Stream, []);
     Result := Stream.DataString;
   finally
     Stream.Free;
@@ -1174,7 +1185,7 @@ begin
 end;
 
 procedure TMetaNode.SaveNode(Stream: TStringStream; OID: Integer;
-  Separator: string);
+  options: TDDLOptions; Separator: string);
 var
   I: Integer;
 begin
@@ -1184,11 +1195,11 @@ begin
       Stream.WriteString(NewLine)
     else
       Stream.WriteString(Separator);
-    TMetaNode(FNodeItems[OID].Childs[I]).SaveToDDL(Stream);
+    TMetaNode(FNodeItems[OID].Childs[I]).SaveToDDL(Stream, options);
   end;
 end;
 
-procedure TMetaNode.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaNode.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
 end;
 
@@ -1215,9 +1226,9 @@ begin
   Result := 'Node'
 end;
 
-procedure TMetaNode.SaveToDDL(Stream: TStringStream);
+procedure TMetaNode.SaveToDDL(Stream: TStringStream; options: TDDLOptions);
 begin
-  SaveToDDLNode(Stream);
+  SaveToDDLNode(Stream, options);
 end;
 
 function TMetaNode.GetAsDDLNode: string;
@@ -1226,7 +1237,33 @@ var
 begin
   Stream := TStringStream.Create('');
   try
-    SaveToDDLNode(Stream);
+    SaveToDDLNode(Stream, []);
+    Result := Stream.DataString;
+  finally
+    Stream.Free;
+  end;
+end;
+
+function TMetaNode.GetAsFullDDL: string;
+var
+  Stream: TStringStream;
+begin
+  Stream := TStringStream.Create('');
+  try
+    SaveToDDL(Stream, [ddlFull]);
+    Result := Stream.DataString;
+  finally
+    Stream.Free;
+  end;
+end;
+
+function TMetaNode.GetAsFullDDLNode: string;
+var
+  Stream: TStringStream;
+begin
+  Stream := TStringStream.Create('');
+  try
+    SaveToDDLNode(Stream, [ddlFull]);
     Result := Stream.DataString;
   finally
     Stream.Free;
@@ -1285,7 +1322,7 @@ begin
   Stream.Write(FValue, SizeOf(FValue));
 end;
 
-procedure TMetaGenerator.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaGenerator.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
   SaveToCreateDDLNode(Stream);
   Stream.WriteString(NewLine);
@@ -1793,17 +1830,17 @@ begin
   inherited SaveToStream(Stream);
 end;
 
-procedure TMetaTable.SaveToDDL(Stream: TStringStream);
+procedure TMetaTable.SaveToDDL(Stream: TStringStream; options: TDDLOptions);
 begin
-  inherited SaveToDDL(Stream);
-  SaveNode(Stream, Ord(OIDPrimary));
-  SaveNode(Stream, Ord(OIDUnique));
-  SaveNode(Stream, Ord(OIDIndex));
-  SaveNode(Stream, Ord(OIDForeign));
-  SaveNode(Stream, Ord(OIDCheck));
-  SaveNode(Stream, Ord(OIDTableTrigger), NewLine);
-  SaveNode(Stream, Ord(OIDTableGrant), NewLine);
-  SaveNode(Stream, Ord(OIDTableFieldGrant), NewLine);
+  inherited SaveToDDL(Stream, options);
+  SaveNode(Stream, Ord(OIDPrimary), options);
+  SaveNode(Stream, Ord(OIDUnique), options);
+  SaveNode(Stream, Ord(OIDIndex), options);
+  SaveNode(Stream, Ord(OIDForeign), options);
+  SaveNode(Stream, Ord(OIDCheck), options);
+  SaveNode(Stream, Ord(OIDTableTrigger), options, NewLine);
+  SaveNode(Stream, Ord(OIDTableGrant), options, NewLine);
+  SaveNode(Stream, Ord(OIDTableFieldGrant), options, NewLine);
 end;
 
 function TMetaTable.GetIndices(const Index: Integer): TMetaIndex;
@@ -1854,7 +1891,7 @@ begin
   Result := FNodeItems[Ord(OIDTableTrigger)].Childs.Count;
 end;
 
-procedure TMetaTable.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaTable.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 var
   I: Integer;
 begin
@@ -1862,7 +1899,7 @@ begin
   for I := 0 to FieldsCount - 1 do
   begin
     Stream.WriteString(NewLine + '   ');
-    Fields[I].SaveToDDL(Stream);
+    Fields[I].SaveToDDL(Stream, options);
     if I <> FieldsCount - 1 then
       Stream.WriteString(',');
   end;
@@ -2038,7 +2075,7 @@ begin
   FSubType := QField.Fields.AsSmallint[5];
 end;
 
-procedure TMetaBaseField.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaBaseField.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
   case FFieldType of
     uftNumeric:
@@ -2358,7 +2395,7 @@ begin
   end;
 end;
 
-procedure TMetaDataBase.SaveToDDL(Stream: TStringStream);
+procedure TMetaDataBase.SaveToDDL(Stream: TStringStream; options: TDDLOptions);
 var
   I: Integer;
 
@@ -2372,9 +2409,9 @@ var
       for I := 0 to FNodeItems[OID].Childs.Count - 1 do
       begin
         if GetItems(OID, I) is TMetaProcedure then
-          TMetaProcedure(GetItems(OID, I)).SaveToCreateEmptyDDL(Stream)
+          TMetaProcedure(GetItems(OID, I)).SaveToCreateEmptyDDL(Stream, options)
         else
-          GetItems(OID, I).SaveToDDLNode(Stream);
+          GetItems(OID, I).SaveToDDLNode(Stream, options);
         Stream.WriteString(NewLine + Separator);
       end;
 
@@ -2398,7 +2435,7 @@ var
       for I := 0 to FNodeItems[OIDParent].Childs.Count - 1 do
         for J := 0 to GetItems(OIDParent, I).FNodeItems[OIDChild].Childs.Count - 1 do
         begin
-          TMetaNode(GetItems(OIDParent, I).FNodeItems[OIDChild].Childs[J]).SaveToDDL(Stream);
+          TMetaNode(GetItems(OIDParent, I).FNodeItems[OIDChild].Childs[J]).SaveToDDL(Stream, options);
           Stream.WriteString(NewLine + Separator);
           Inc(Done);
         end;
@@ -2430,7 +2467,7 @@ begin
     Stream.WriteString('/* PROCEDURES (Code) */' + NewLine);
     for I := 0 to ProceduresCount - 1 do
     begin
-      Procedures[I].SaveToAlterDDL(Stream);
+      Procedures[I].SaveToAlterDDL(Stream, options);
       Stream.WriteString(NewLine + NewLine);
     end;
   end;
@@ -2858,11 +2895,11 @@ begin
   Result := MetaUnique;
 end;
 
-procedure TMetaUnique.SaveToDDL(Stream: TStringStream);
+procedure TMetaUnique.SaveToDDL(Stream: TStringStream; options: TDDLOptions);
 var
   I: Integer;
 begin
-  if copy(FName, 0, 6) = 'INTEG_' then
+  if (copy(FName, 0, 6) = 'INTEG_') and not (ddlFull in options) then
     Stream.WriteString(Format('ALTER TABLE %s ADD UNIQUE (',
       [TMetaTable(FOwner).Name])) else
     Stream.WriteString(Format('ALTER TABLE %s ADD CONSTRAINT %s UNIQUE (',
@@ -2876,8 +2913,7 @@ begin
   Stream.WriteString(')');
 
   // fb15up
-
-  if not ((FIndexName = '') or (Copy(FIndexName, 1, 4) = 'RDB$')) then
+  if not ((FIndexName = '') or (not (ddlFull in options) and (Copy(FIndexName, 1, 4) = 'RDB$'))) then
   begin
     Stream.WriteString(' USING');
     if FOrder = ioDescending then
@@ -2928,11 +2964,11 @@ begin
     FOrder := IoDescending;
 end;
 
-procedure TMetaPrimary.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaPrimary.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 var
   I: Integer;
 begin
-  if copy(FName, 0, 6) = 'INTEG_' then
+  if (copy(FName, 0, 6) = 'INTEG_') and not (ddlFull in options) then
     Stream.WriteString(Format('ALTER TABLE %s ADD PRIMARY KEY (',
       [TMetaTable(FOwner).Name]))
   else
@@ -2947,7 +2983,7 @@ begin
   Stream.WriteString(')');
 
   // fb15up
-  if not ((FIndexName = '') or (Copy(FIndexName, 1, 4) = 'RDB$')) then
+  if not ((FIndexName = '') or (not (ddlFull in options) and (Copy(FIndexName, 1, 4) = 'RDB$'))) then
   begin
     Stream.WriteString(' USING');
     if FOrder = ioDescending then
@@ -2983,7 +3019,7 @@ begin
   Stream.Read(FActive, SizeOf(FActive));
 end;
 
-procedure TMetaIndex.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaIndex.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 var
   I: Integer;
   UNIQUE, ORDER: string;
@@ -3057,11 +3093,11 @@ begin
   ReadString(Stream, FIndexName);
 end;
 
-procedure TMetaForeign.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaForeign.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 var
   I: Integer;
 begin
-  if copy(FName, 0, 6) = 'INTEG_' then
+  if (copy(FName, 0, 6) = 'INTEG_') and not (ddlFull in options) then
     Stream.WriteString(Format('ALTER TABLE %s ADD FOREIGN KEY (',
       [TMetaTable(FOwner).Name]))
   else
@@ -3098,7 +3134,7 @@ begin
   end;
 
   // fb15up
-  if not ((FIndexName = '') or (Copy(FIndexName, 1, 4) = 'RDB$')) then
+  if not ((FIndexName = '') or (not (ddlFull in options) and (Copy(FIndexName, 1, 4) = 'RDB$'))) then
   begin
     Stream.WriteString(' USING');
     if FOrder = ioDescending then
@@ -3142,9 +3178,9 @@ begin
   ReadString(Stream, FConstraint);
 end;
 
-procedure TMetaCheck.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaCheck.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
-  if copy(FName, 0, 6) = 'INTEG_' then
+  if (copy(FName, 0, 6) = 'INTEG_') and not (ddlFull in options) then
     Stream.WriteString(Format('ALTER TABLE %s ADD %s;',
       [TMetaTable(FOwner).Name, FConstraint])) else
     Stream.WriteString(Format('ALTER TABLE %s ADD CONSTRAINT %s %s;',
@@ -3207,7 +3243,7 @@ begin
   ReadString(Stream, FSource);
 end;
 
-procedure TMetaTrigger.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaTrigger.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 var
   Count: Smallint;
   Suf: TTriggerSuffix;
@@ -3392,13 +3428,13 @@ begin
   ReadString(Stream, FSource);
 end;
 
-procedure TMetaView.SaveToDDL(Stream: TStringStream);
+procedure TMetaView.SaveToDDL(Stream: TStringStream; options: TDDLOptions);
 begin
-  inherited SaveToDDL(Stream);
-  SaveNode(Stream, Ord(OIDViewTrigers), NewLine);
+  inherited SaveToDDL(Stream, options);
+  SaveNode(Stream, Ord(OIDViewTrigers), options, NewLine);
 end;
 
-procedure TMetaView.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaView.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 var
   I: Integer;
 begin
@@ -3438,15 +3474,15 @@ begin
   Result := MetaDomain;
 end;
 
-procedure TMetaDomain.SaveToDDL(Stream: TStringStream);
+procedure TMetaDomain.SaveToDDL(Stream: TStringStream; options: TDDLOptions);
 begin
-  SaveToDDLNode(Stream);
+  SaveToDDLNode(Stream, options);
 end;
 
-procedure TMetaDomain.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaDomain.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
   Stream.WriteString(Format('CREATE DOMAIN %s AS ', [Name]));
-  inherited SaveToDDLNode(Stream);
+  inherited SaveToDDLNode(Stream, options);
   Stream.WriteString(';');
 end;
 
@@ -3496,7 +3532,7 @@ begin
 end;
 
 procedure TMetaProcedure.InternalSaveToDDL(Stream: TStringStream;
-  Operation: string);
+  Operation: string; options: TDDLOptions);
 var
   I: Integer;
 begin
@@ -3507,7 +3543,7 @@ begin
     for I := 0 to InPutFieldsCount - 1 do
     begin
       Stream.WriteString(NewLine + '   ');
-      InputFields[I].SaveToDDL(Stream);
+      InputFields[I].SaveToDDL(Stream, options);
       if I <> InputFieldsCount - 1 then
         Stream.WriteString(',');
     end;
@@ -3520,7 +3556,7 @@ begin
     for I := 0 to OutputFieldsCount - 1 do
     begin
       Stream.WriteString(NewLine + '   ');
-      OutputFields[I].SaveToDDL(Stream);
+      OutputFields[I].SaveToDDL(Stream, options);
       if I <> OutputFieldsCount - 1 then
         Stream.WriteString(',');
     end;
@@ -3630,7 +3666,7 @@ begin
   end;
 end;
 
-procedure TMetaProcedure.SaveToAlterDDL(Stream: TStringStream);
+procedure TMetaProcedure.SaveToAlterDDL(Stream: TStringStream; options: TDDLOptions);
 var
   S: String;
 begin
@@ -3638,22 +3674,22 @@ begin
   if SameText(Copy(S,1,4),'decl') then
     Insert('  ',S,1);
 
-  InternalSaveToDDL(Stream, 'ALTER');
+  InternalSaveToDDL(Stream, 'ALTER', options);
   Stream.WriteString(NewLine + 'AS ' + NewLine);
   Stream.WriteString(S);
   Stream.WriteString(';');
 end;
 
-procedure TMetaProcedure.SaveToCreateEmptyDDL(Stream: TStringStream);
+procedure TMetaProcedure.SaveToCreateEmptyDDL(Stream: TStringStream; options: TDDLOptions);
 begin
-  InternalSaveToDDL(Stream, 'CREATE');
+  InternalSaveToDDL(Stream, 'CREATE', options);
   Stream.WriteString(NewLine + 'AS' + NewLine +
     'begin' + NewLine +
     '  exit;' + NewLine +
     'end;');
 end;
 
-procedure TMetaProcedure.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaProcedure.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 var
   S: String;
 begin
@@ -3661,7 +3697,7 @@ begin
   if SameText(Copy(S,1,4),'decl') then
     Insert('  ',S,1);
 
-  InternalSaveToDDL(Stream, 'CREATE');
+  InternalSaveToDDL(Stream, 'CREATE', options);
   Stream.WriteString(NewLine + 'AS ');
   Stream.WriteString(S);
   Stream.WriteString(';');
@@ -3697,7 +3733,7 @@ var stream: TStringStream;
 begin
   stream := TStringStream.Create('');
   try
-    SaveToAlterDDL(stream);
+    SaveToAlterDDL(stream, []);
     result := stream.DataString;
   finally
     stream.Free;
@@ -3709,7 +3745,7 @@ var stream: TStringStream;
 begin
   stream := TStringStream.Create('');
   try
-    SaveToCreateEmptyDDL(stream);
+    SaveToCreateEmptyDDL(stream, []);
     result := stream.DataString;
   finally
     stream.Free;
@@ -3737,7 +3773,7 @@ begin
   Stream.Read(FNumber, SizeOf(FNumber))
 end;
 
-procedure TMetaException.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaException.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
   Stream.WriteString(Format('CREATE EXCEPTION %s %s;', [Name, QuotedStr(FMessage)]));
 end;
@@ -3776,7 +3812,7 @@ begin
   Stream.Read(FReturn, SizeOf(FReturn));
 end;
 
-procedure TMetaUDF.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaUDF.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 var
   I, C: Integer;
 begin
@@ -3791,14 +3827,14 @@ begin
         if C > 0 then
           Stream.WriteString(',');
         Stream.WriteString(NewLine + '  ');
-        Fields[I].SaveToDDL(Stream);
+        Fields[I].SaveToDDL(Stream, options);
         Inc(C);
       end;
     for I := 0 to FieldsCount - 1 do
       if Fields[I].Position = Return then
       begin
         Stream.WriteString(NewLine + '  RETURNS ');
-        Fields[I].SaveToDDL(Stream);
+        Fields[I].SaveToDDL(Stream, options);
         Break;
       end;
   end
@@ -3809,7 +3845,7 @@ begin
       if C > 0 then
         Stream.WriteString(',');
       Stream.WriteString(NewLine + '  ');
-      Fields[I].SaveToDDL(Stream);
+      Fields[I].SaveToDDL(Stream, options);
       Inc(C);
     end;
     Stream.WriteString(Format('%s  RETURNS PARAMETER %d', [NewLine, Freturn]));
@@ -3964,7 +4000,7 @@ begin
   Result := MetaTableField;
 end;
 
-procedure TMetaTableField.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaTableField.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 var i: Integer;
 begin
   if FDomain >= 0 then
@@ -4062,10 +4098,10 @@ begin
   Result := MetaField;
 end;
 
-procedure TMetaField.SaveToDDL(Stream: TStringStream);
+procedure TMetaField.SaveToDDL(Stream: TStringStream; options: TDDLOptions);
 begin
   Stream.WriteString(Name + ' ');
-  inherited SaveToDDL(Stream);
+  inherited SaveToDDL(Stream, options);
 end;
 
 { TMetaUDFField }
@@ -4090,12 +4126,12 @@ begin
   Result := MetaUDFField;
 end;
 
-procedure TMetaUDFField.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaUDFField.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
   if FFieldType = uftBlob then
     Stream.WriteString('BLOB')
   else
-    inherited SaveToDDLNode(Stream);
+    inherited SaveToDDLNode(Stream, options);
   case FMechanism of
     -1: Stream.WriteString(' FREE_IT');
      0: Stream.WriteString(' BY VALUE');
@@ -4230,7 +4266,7 @@ begin
   Result := MetaRole;
 end;
 
-procedure TMetaRole.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaRole.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
   Stream.WriteString(Format('CREATE ROLE %s; /* By user %s */', [Name, Trim(FOwner)]));
 end;
@@ -4261,7 +4297,7 @@ begin
 end;
 
 procedure TMetaGrant.SaveGranteesToDDLNode(Stream: TStringStream;
-  OptionKeyWord: String);
+  OptionKeyWord: String; options: TDDLOptions);
 var
   I, C: Integer;
 begin
@@ -4270,7 +4306,7 @@ begin
     for C := 0 to FNodeItems[I].Childs.Count - 1 do
     begin
       with TMetaGrantee(FNodeItems[I].Childs.Items[C]) do
-        SaveToDDLNode(Stream);
+        SaveToDDLNode(Stream, options);
 
       if C < FNodeItems[I].Childs.Count - 1 then
         Stream.WriteString(', ')
@@ -4282,7 +4318,7 @@ begin
   Stream.WriteString(';');
 end;
 
-procedure TMetaGrant.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaGrant.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
   Stream.WriteString('GRANT ');
 end;
@@ -4326,11 +4362,11 @@ begin
   Result := MetaRoleGrant;
 end;
 
-procedure TMetaRoleGrant.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaRoleGrant.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
-  inherited SaveToDDLNode(Stream);
+  inherited SaveToDDLNode(Stream, options);
   Stream.WriteString('"' + FName + '" TO ');
-  inherited SaveGranteesToDDLNode(Stream, 'ADMIN');
+  inherited SaveGranteesToDDLNode(Stream, 'ADMIN', options);
 end;
 
 { TMetaObjectGrant }
@@ -4405,11 +4441,11 @@ begin
   Result := MetaProcedureGrant;
 end;
 
-procedure TMetaProcedureGrant.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaProcedureGrant.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
-  inherited SaveToDDLNode(Stream);
+  inherited SaveToDDLNode(Stream, options);
   Stream.WriteString('EXECUTE ON PROCEDURE ' + MetaQuote(FName) + ' TO ');
-  inherited SaveGranteesToDDLNode(Stream, 'GRANT');
+  inherited SaveGranteesToDDLNode(Stream, 'GRANT', options);
 end;
 
 { TMetaTableGrant }
@@ -4453,11 +4489,11 @@ begin
   Result := MetaTableGrant;
 end;
 
-procedure TMetaTableGrant.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaTableGrant.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 var
   Grants: String;
 begin
-  inherited SaveToDDLNode(Stream);
+  inherited SaveToDDLNode(Stream, options);
   if FPrivileges = ALLTablePrivileges then
     Grants := 'ALL PRIVILEGES'
   else
@@ -4476,7 +4512,7 @@ begin
     Delete(Grants,Length(Grants),1);
   end;
   Stream.WriteString(Grants + ' ON ' + FName + ' TO ');
-  inherited SaveGranteesToDDLNode(Stream, 'GRANT');
+  inherited SaveGranteesToDDLNode(Stream, 'GRANT', options);
 end;
 
 procedure TMetaTableGrant.SaveToStream(Stream: TStream);
@@ -4575,12 +4611,12 @@ begin
   Result := MetaFieldGrant;
 end;
 
-procedure TMetaFieldGrant.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaFieldGrant.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 var
   I: Integer;
   Grants: String;
 begin
-  inherited SaveToDDLNode(Stream);
+  inherited SaveToDDLNode(Stream, options);
   Grants := '';
   if fpUpdate = FPrivilege then
     Grants := Grants + 'UPDATE('
@@ -4590,7 +4626,7 @@ begin
     Grants := Grants + FFields[i] + ', ';
   Grants[Length(Grants) - 1] := ')';
   Stream.WriteString(Grants + 'ON ' + Name + ' TO ');
-  inherited SaveGranteesToDDLNode(Stream, 'GRANT');
+  inherited SaveGranteesToDDLNode(Stream, 'GRANT', options);
 end;
 
 procedure TMetaFieldGrant.SaveToStream(Stream: TStream);
@@ -4633,9 +4669,9 @@ begin
   Result := MetaGrantee;
 end;
 
-procedure TMetaGrantee.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaGrantee.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
-  inherited SaveToDDLNode(Stream);
+  inherited SaveToDDLNode(Stream, options);
   Stream.WriteString(Name);
 (*
   { Add some comments for debugging purposes }
@@ -4686,10 +4722,10 @@ begin
   Result := MetaProcedureGrantee;
 end;
 
-procedure TMetaProcedureGrantee.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaProcedureGrantee.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
   Stream.WriteString('PROCEDURE ');
-  inherited SaveToDDLNode(Stream);
+  inherited SaveToDDLNode(Stream, options);
 end;
 
 { TMetaTriggerGrantee }
@@ -4704,10 +4740,10 @@ begin
   Result := MetaTriggerGrantee;
 end;
 
-procedure TMetaTriggerGrantee.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaTriggerGrantee.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
   Stream.WriteString('TRIGGER ');
-  inherited SaveToDDLNode(Stream);
+  inherited SaveToDDLNode(Stream, options);
 end;
 
 { TMetaViewGrantee }
@@ -4722,10 +4758,10 @@ begin
   Result := MetaViewGrantee;
 end;
 
-procedure TMetaViewGrantee.SaveToDDLNode(Stream: TStringStream);
+procedure TMetaViewGrantee.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
   Stream.WriteString('VIEW ');
-  inherited SaveToDDLNode(Stream);
+  inherited SaveToDDLNode(Stream, options);
 end;
 
 end.
