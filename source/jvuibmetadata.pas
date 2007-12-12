@@ -2024,8 +2024,8 @@ begin
         blr_int64, blr_quad, blr_double:
           FPrecision := 15;
       // I already seen a case where FScale = 3 and the field was a blob - PrY -
-        blr_blob:
-          FFieldType := uftBlob;
+      //  blr_blob:
+      //    FFieldType := uftBlob;
 
       else
         raise EUIBError.Create(EUIB_UNEXPECTEDERROR);
