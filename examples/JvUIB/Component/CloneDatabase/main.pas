@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, XPMan,
-  jvuibase, jvuiblib, jvuib, jvuibmetadata;
+  jvuibase, jvuiblib, jvuib, jvuibmetadata, ComCtrls;
 
 type
   TMainForm = class(TForm)
@@ -14,30 +14,30 @@ type
     SrcQuery: TJvUIBQuery;
     DstDatabase: TJvUIBDataBase;
     DstTransaction: TJvUIBTransaction;
-    GroupBox1: TGroupBox;
-    cbReplace: TCheckBox;
-    cbMetadataOnly: TCheckBox;
-    cbPageSize: TComboBox;
-    cbOverrideSourcePageSize: TCheckBox;
-    cbIgnoreConstraints: TCheckBox;
     GroupBox2: TGroupBox;
     cbVerbose: TCheckBox;
     cbCloseWhenDone: TCheckBox;
     Log: TMemo;
-    GroupBox3: TGroupBox;
-    cbEmptyTables: TCheckBox;
     GroupBox4: TGroupBox;
-    btStartClone: TButton;
-    btStartPump: TButton;
     btDstDatabase: TButton;
     btSrcDatabase: TButton;
     edSrcDatabase: TEdit;
     edDstDatabase: TEdit;
     Label1: TLabel;
-    cbFailsafePump: TCheckBox;
-    cbFailsafeClone: TCheckBox;
     XPManifest1: TXPManifest;
+    PageControl1: TPageControl;
+    TabSheet1: TTabSheet;
+    TabSheet2: TTabSheet;
+    cbEmptyTables: TCheckBox;
+    cbReplace: TCheckBox;
+    cbMetadataOnly: TCheckBox;
+    cbIgnoreConstraints: TCheckBox;
+    cbPageSize: TComboBox;
+    cbOverrideSourcePageSize: TCheckBox;
     cbInternalNames: TCheckBox;
+    cbFailsafeDataPump: TCheckBox;
+    btStartClone: TButton;
+    btStartPump: TButton;
     procedure FormCreate(Sender: TObject);
     procedure btStartCloneClick(Sender: TObject);
     procedure btSrcDatabaseClick(Sender: TObject);
@@ -148,6 +148,7 @@ begin
     N := edSrcDatabase.Text;
     E := ExtractFileExt(N);
     edDstDatabase.Text := Copy(N,1, Length(N) - Length(E)) + '_Clone' + E;
+    DstDatabase.CharacterSet := SrcDatabase.CharacterSet;
   end;
 
   with TUIBDatabaseEditForm.Create(self) do
@@ -288,7 +289,7 @@ begin
     begin
       dbhandle := DstDatabase.DbHandle;
       DstTransaction.Commit;
-      PumpData(dbhandle, metadb, cbFailsafeClone.Checked, false);
+      PumpData(dbhandle, metadb, cbFailsafeDataPump.Checked, false);
     end;
 
     if not cbIgnoreConstraints.Checked then
@@ -494,7 +495,7 @@ begin
     if cbEmptyTables.Checked then
       EmptyTables(dbhandle, metadb);
 
-    PumpData(dbhandle, metadb, cbFailsafePump.Checked, true);
+    PumpData(dbhandle, metadb, cbFailsafeDataPump.Checked, true);
 
     for i := 0 to metadb.TablesCount - 1 do
     for j := 0 to metadb.Tables[i].TriggersCount - 1 do
