@@ -36,15 +36,14 @@ object MainForm: TMainForm
   end
   object DataBase: TJvUIBDataBase
     Params.Strings = (
-      'sql_dialect=1'
+      'sql_dialect=3'
       'lc_ctype=NONE'
       'password=masterkey'
       'user_name=SYSDBA')
     DatabaseName = 'D:\EMPLOYEE.DB'
-    SQLDialect = 1
     UserName = 'SYSDBA'
     PassWord = 'masterkey'
-    LibraryName = 'fbclient.dll'
+    LibraryName = 'gds32dll'
     Left = 16
     Top = 8
   end
@@ -84,7 +83,7 @@ object MainForm: TMainForm
     Left = 176
     Top = 8
     Bitmap = {
-      494C010112001300040010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010112001400040010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000005000000001002000000000000050
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000

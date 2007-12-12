@@ -1,7 +1,6 @@
 program MetaData;
 
 uses
-  ExceptionLog,
   Forms,
   main in 'main.pas' {MainForm};
 
