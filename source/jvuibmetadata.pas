@@ -2024,8 +2024,8 @@ begin
         blr_int64, blr_quad, blr_double:
           FPrecision := 15;
       // I already seen a case where FScale = 3 and the field was a blob - PrY -
-      //  blr_blob:
-      //    FFieldType := uftBlob;
+        blr_blob:
+          FFieldType := uftBlob;
 
       else
         raise EUIBError.Create(EUIB_UNEXPECTEDERROR);
@@ -2899,7 +2899,7 @@ procedure TMetaUnique.SaveToDDL(Stream: TStringStream; options: TDDLOptions);
 var
   I: Integer;
 begin
-  if (copy(FName, 0, 6) = 'INTEG_') and not (ddlFull in options) then
+  if (copy(FName, 0, 6) = 'INTEG_') then
     Stream.WriteString(Format('ALTER TABLE %s ADD UNIQUE (',
       [TMetaTable(FOwner).Name])) else
     Stream.WriteString(Format('ALTER TABLE %s ADD CONSTRAINT %s UNIQUE (',
@@ -2968,7 +2968,7 @@ procedure TMetaPrimary.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions
 var
   I: Integer;
 begin
-  if (copy(FName, 0, 6) = 'INTEG_') and not (ddlFull in options) then
+  if (copy(FName, 0, 6) = 'INTEG_') then
     Stream.WriteString(Format('ALTER TABLE %s ADD PRIMARY KEY (',
       [TMetaTable(FOwner).Name]))
   else
@@ -3097,7 +3097,7 @@ procedure TMetaForeign.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions
 var
   I: Integer;
 begin
-  if (copy(FName, 0, 6) = 'INTEG_') and not (ddlFull in options) then
+  if (copy(FName, 0, 6) = 'INTEG_') then
     Stream.WriteString(Format('ALTER TABLE %s ADD FOREIGN KEY (',
       [TMetaTable(FOwner).Name]))
   else
@@ -3180,7 +3180,7 @@ end;
 
 procedure TMetaCheck.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
-  if (copy(FName, 0, 6) = 'INTEG_') and not (ddlFull in options) then
+  if (copy(FName, 0, 6) = 'INTEG_') then
     Stream.WriteString(Format('ALTER TABLE %s ADD %s;',
       [TMetaTable(FOwner).Name, FConstraint])) else
     Stream.WriteString(Format('ALTER TABLE %s ADD CONSTRAINT %s %s;',
