@@ -112,7 +112,6 @@ end;
 procedure TPumpForm.btStartClick(Sender: TObject);
 var
   metadb: TMetaDataBase;
-  metatables: TMetaTablesSorter;
 
   i, j, k, l: integer;
   errorscount: integer;
@@ -160,12 +159,10 @@ begin
   log.Clear;
   Screen.Cursor := crHourGlass;
 
-  metatables := TMetaTablesSorter.Create;
   metadb := TMetaDataBase.Create(nil,-1);
   btStart.Enabled := false;
   try
     metadb.LoadFromDatabase(SrcTransaction);
-    metatables.SortFromMetaDataBase(metadb);
 
     Destination.CharacterSet := metadb.DefaultCharset;
     Destination.SQLDialect := Source.InfoDbSqlDialect;
@@ -190,10 +187,10 @@ begin
     begin
       DstTransaction.StartTransaction;
       trhandle := DstTransaction.TrHandle;
-      for i := metatables.TablesCount - 1 downto 0 do
+      for i := metadb.SortedTablesCount - 1 downto 0 do
       try
-        AddLog('Emptying Table: ' + metatables[i].Name);
-        sql := 'delete from ' + metatables[i].Name + ';';
+        AddLog('Emptying Table: ' + metadb.SortedTables[i].Name);
+        sql := 'delete from ' + metadb.SortedTables[i].Name + ';';
 
         with Destination.Lib do
         begin
@@ -218,30 +215,30 @@ begin
 
     DstTransaction.StartTransaction;
     trhandle := DstTransaction.TrHandle;
-    for i := 0 to metatables.TablesCount - 1 do
+    for i := 0 to metadb.SortedTablesCount - 1 do
     try
-      AddLog('Fill Table: ' + metatables[i].Name);
+      AddLog('Fill Table: ' + metadb.SortedTables[i].Name);
       sql := 'select ';
       k := 0;
-      for j := 0 to metatables[i].FieldsCount - 1 do
-        if metatables[i].Fields[j].ComputedSource = '' then
+      for j := 0 to metadb.SortedTables[i].FieldsCount - 1 do
+        if metadb.SortedTables[i].Fields[j].ComputedSource = '' then
         begin
           if (k = 0) then
-            sql := sql + metatables[i].Fields[j].Name else
-            sql := sql + ', ' + metatables[i].Fields[j].Name;
+            sql := sql + metadb.SortedTables[i].Fields[j].Name else
+            sql := sql + ', ' + metadb.SortedTables[i].Fields[j].Name;
           inc(k);
         end;
-      sql := sql + ' from ' + metatables[i].Name;
-      if metatables[i].PrimaryCount > 0 then
+      sql := sql + ' from ' + metadb.SortedTables[i].Name;
+      if metadb.SortedTables[i].PrimaryCount > 0 then
       begin
         k := 0;
-        for j := 0 to metatables[i].Primary[0].FieldsCount - 1 do
+        for j := 0 to metadb.SortedTables[i].Primary[0].FieldsCount - 1 do
         begin
           if (k = 0) then
             sql := sql + ' order by '
           else
             sql := sql + ', ';
-          sql := sql + metatables[i].Primary[0].Fields[j].Name;
+          sql := sql + metadb.SortedTables[i].Primary[0].Fields[j].Name;
           Inc(k);
         end;
       end;
@@ -250,7 +247,7 @@ begin
 
       if not (SrcQuery.Eof) then
       begin
-        sql := format('INSERT INTO %s (%s', [metatables[i].Name, SrcQuery.Fields.SqlName[0]]);
+        sql := format('INSERT INTO %s (%s', [metadb.SortedTables[i].Name, SrcQuery.Fields.SqlName[0]]);
         for j := 1 to SrcQuery.Fields.FieldCount - 1 do
            sql := sql + ', ' + SrcQuery.Fields.SqlName[j];
         sql := sql + ') VALUES (?';
@@ -353,7 +350,6 @@ begin
     DstTransaction.Commit;
   finally
     btStart.Enabled := true;
-    metatables.Free;
     metadb.Free;
     Screen.Cursor := crDefault;
     Destination.Connected := false;
