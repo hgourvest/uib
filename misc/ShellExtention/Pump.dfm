@@ -67,9 +67,9 @@ object PumpForm: TPumpForm
     OnKeyPress = FormKeyPress
   end
   object GroupBox2: TGroupBox
-    Left = 362
+    Left = 279
     Top = 51
-    Width = 161
+    Width = 244
     Height = 62
     Caption = 'Pump Options'
     TabOrder = 4
@@ -91,6 +91,15 @@ object PumpForm: TPumpForm
       Height = 17
       Caption = 'Close after finished'
       TabOrder = 1
+      OnKeyPress = FormKeyPress
+    end
+    object cbLocalHost: TCheckBox
+      Left = 131
+      Top = 13
+      Width = 97
+      Height = 17
+      Caption = 'Localhost'
+      TabOrder = 2
       OnKeyPress = FormKeyPress
     end
   end
@@ -116,7 +125,7 @@ object PumpForm: TPumpForm
   object GroupBox1: TGroupBox
     Left = 8
     Top = 51
-    Width = 348
+    Width = 265
     Height = 62
     Caption = 'Options'
     TabOrder = 7

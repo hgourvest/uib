@@ -30,6 +30,7 @@ type
     cbPageSize: TComboBox;
     cbOverrideSourcePageSize: TCheckBox;
     cbIgnoreConstraints: TCheckBox;
+    cbLocalHost: TCheckBox;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure btBrowseClick(Sender: TObject);
@@ -91,6 +92,8 @@ begin
       pageSize := Integer(cbPageSize.Items.Objects[cbPageSize.ItemIndex]);
       ini.WriteInteger('CLONE', 'PageSize', pageSize);
       ini.WriteBool('CLONE', 'IgnoreConstraints', cbIgnoreConstraints.Checked);
+      ini.WriteBool('CLONE', 'Localhost', cbLocalHost.Checked);
+
     finally
       ini.Free;
     end;
@@ -120,6 +123,7 @@ begin
     cbVerbose.Checked := ini.ReadBool('CLONE', 'Verbose', true);
     cbMetadataOnly.Checked := ini.ReadBool('CLONE', 'MetadataOnly', false);
     cbIgnoreConstraints.Checked := ini.ReadBool('CLONE', 'IgnoreConstraints', false);
+    cbReplace.Checked := ini.ReadBool('CLONE', 'Localhost', false);
 
     cbOverrideSourcePageSize.Checked := ini.ReadBool('CLONE','OverridePageSize',false);
     defaultPageSize := ini.ReadInteger('CLONE','PageSize', 2048);
@@ -205,6 +209,22 @@ begin
         RaiseLastOSError;
     end else
       Exit;
+
+
+  if cbLocalHost.Checked then
+  begin
+    if Pos(':', Source.DatabaseName) <> 1 then
+      Source.DatabaseName := ':' + Source.DatabaseName;
+    if Pos(':', Destination.DatabaseName) <> 1 then
+      Destination.DatabaseName := ':' + Destination.DatabaseName
+  end else
+  begin
+    if Pos(':', Source.DatabaseName) <> 1 then
+      Source.DatabaseName := copy(Source.DatabaseName, 2, Length(Source.DatabaseName) - 1);
+    if Pos(':', Destination.DatabaseName) <> 1 then
+      Destination.DatabaseName := copy(Destination.DatabaseName, 2, Length(Destination.DatabaseName) - 1);
+  end;
+
   log.Clear;
   Screen.Cursor := crHourGlass;
   metadb := TMetaDataBase.Create(nil,-1);

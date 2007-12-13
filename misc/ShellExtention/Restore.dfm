@@ -1,10 +1,10 @@
 object RestoreForm: TRestoreForm
   Left = 419
   Top = 312
-  Width = 513
-  Height = 380
   ActiveControl = btGO
   Caption = 'Restore database'
+  ClientHeight = 353
+  ClientWidth = 505
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -12,7 +12,6 @@ object RestoreForm: TRestoreForm
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
-  Position = poDefaultPosOnly
   OnClose = FormClose
   OnCreate = FormCreate
   OnKeyPress = FormKeyPress
@@ -210,6 +209,15 @@ object RestoreForm: TRestoreForm
     Height = 17
     Caption = 'Close after finished'
     TabOrder = 8
+    OnKeyPress = FormKeyPress
+  end
+  object cbLocalHost: TCheckBox
+    Left = 351
+    Top = 87
+    Width = 97
+    Height = 17
+    Caption = 'Localhost'
+    TabOrder = 9
     OnKeyPress = FormKeyPress
   end
   object SaveDialog: TSaveDialog

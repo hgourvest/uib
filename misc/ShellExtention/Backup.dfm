@@ -1,10 +1,10 @@
 object BackupForm: TBackupForm
   Left = 388
   Top = 316
-  Width = 510
-  Height = 420
   ActiveControl = btGO
   Caption = 'Backup database'
+  ClientHeight = 393
+  ClientWidth = 502
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -12,7 +12,6 @@ object BackupForm: TBackupForm
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
-  Position = poDefaultPosOnly
   OnClose = FormClose
   OnCreate = FormCreate
   OnKeyPress = FormKeyPress
@@ -217,6 +216,15 @@ object BackupForm: TBackupForm
       'WinRar'
       'WinAce')
     TabOrder = 9
+  end
+  object cbLocalHost: TCheckBox
+    Left = 288
+    Top = 88
+    Width = 97
+    Height = 17
+    Caption = 'Localhost'
+    TabOrder = 10
+    OnKeyPress = FormKeyPress
   end
   object UIBBackup: TJvUIBBackup
     LibraryName = 'gds32.dll'

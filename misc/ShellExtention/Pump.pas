@@ -26,6 +26,7 @@ type
     Button1: TButton;
     GroupBox1: TGroupBox;
     cbEmptyTables: TCheckBox;
+    cbLocalHost: TCheckBox;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure btBrowseClick(Sender: TObject);
@@ -64,6 +65,7 @@ begin
       ini.WriteBool('PUMP', 'CloseWhenDone', cbCloseWhenDone.Checked);
       ini.WriteBool('PUMP', 'Verbose', cbVerbose.Checked);
       ini.WriteBool('PUMP', 'EmptyTables', cbEmptyTables.Checked);
+      ini.WriteBool('PUMP', 'Localhost', cbLocalHost.Checked);
     finally
       ini.Free;
     end;
@@ -87,6 +89,7 @@ begin
     cbCloseWhenDone.Checked := ini.ReadBool('PUMP', 'CloseWhenDone', false);
     cbVerbose.Checked := ini.ReadBool('PUMP', 'Verbose', true);
     cbEmptyTables.Checked := ini.ReadBool('PUMP', 'EmptyTables', true);
+    cbLocalHost.Checked := ini.ReadBool('PUMP', 'Localhost', true);
   finally
     ini.Free;
   end;
@@ -158,6 +161,21 @@ begin
   end;
   log.Clear;
   Screen.Cursor := crHourGlass;
+
+
+  if cbLocalHost.Checked then
+  begin
+    if Pos(':', Source.DatabaseName) <> 1 then
+      Source.DatabaseName := ':' + Source.DatabaseName;
+    if Pos(':', Destination.DatabaseName) <> 1 then
+      Destination.DatabaseName := ':' + Destination.DatabaseName
+  end else
+  begin
+    if Pos(':', Source.DatabaseName) <> 1 then
+      Source.DatabaseName := copy(Source.DatabaseName, 2, Length(Source.DatabaseName) - 1);
+    if Pos(':', Destination.DatabaseName) <> 1 then
+      Destination.DatabaseName := copy(Destination.DatabaseName, 2, Length(Destination.DatabaseName) - 1);
+  end;
 
   metadb := TMetaDataBase.Create(nil,-1);
   btStart.Enabled := false;

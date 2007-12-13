@@ -29,6 +29,7 @@ type
     cbCloseWhenDone: TCheckBox;
     Label5: TLabel;
     edPageSize: TEdit;
+    cbLocalHost: TCheckBox;
     procedure btBrowseClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure ConfigChange(Sender: TObject);
@@ -78,6 +79,7 @@ begin
     edPageSize.Text := ini.ReadString('RESTORE', 'PageSize', '4096');
     cbVerbose.Checked := ini.ReadBool('RESTORE', 'Verbose', true);
     cbCloseWhenDone.Checked := ini.ReadBool('RESTORE', 'CloseWhenDone', false);
+    cbLocalHost.Checked := ini.ReadBool('RESTORE', 'Localhost', false);
   finally
     ini.Free;
   end;
@@ -114,6 +116,10 @@ end;
 
 procedure TRestoreForm.btGOClick(Sender: TObject);
 begin
+  if cbLocalHost.Checked then
+    UIBRestore.Protocol := proTCPIP else
+    UIBRestore.Protocol := proLocalHost;
+
   log.Clear;
   btGO.Enabled := false;
   Screen.Cursor := crHourGlass;
@@ -135,6 +141,7 @@ begin
     Action := caNone;
     Exit;
   end;
+
   if cbSave.Checked then
   begin
     ini := TIniFile.Create(ExtractFilePath(GetModuleName(HInstance)) + 'config.ini');
@@ -149,6 +156,7 @@ begin
       ini.WriteInteger('RESTORE', 'PageSize', UIBRestore.PageSize);
       ini.WriteBool('RESTORE', 'Verbose', cbVerbose.Checked);
       ini.WriteBool('RESTORE', 'CloseWhenDone', cbCloseWhenDone.Checked);
+      ini.WriteBool('RESTORE', 'Localhost', cbLocalHost.Checked);
     finally
       ini.Free;
     end;

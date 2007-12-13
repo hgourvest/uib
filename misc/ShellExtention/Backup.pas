@@ -29,6 +29,7 @@ type
     cbSave: TCheckBox;
     cbCloseWhenDone: TCheckBox;
     rgCompression: TRadioGroup;
+    cbLocalHost: TCheckBox;
     procedure btBrowseClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure ConfigChange(Sender: TObject);
@@ -88,6 +89,7 @@ begin
     cbVerbose.Checked := ini.ReadBool('BACKUP', 'Verbose', true);
     cbCloseWhenDone.Checked := ini.ReadBool('BACKUP', 'CloseWhenDone', false);
     rgCompression.ItemIndex := ini.ReadInteger('BACKUP', 'Compression', 0);
+    cbLocalHost.Checked := ini.ReadBool('BACKUP', 'Localhost', false);
   finally
     ini.Free;
   end;
@@ -122,6 +124,10 @@ end;
 
 procedure TBackupForm.btGOClick(Sender: TObject);
 begin
+  if cbLocalHost.Checked then
+    UIBBackup.Protocol := proTCPIP else
+    UIBBackup.Protocol := proLocalHost;
+
   log.Clear;
   btGO.Enabled := false;
   Screen.Cursor := crHourGlass;
@@ -163,6 +169,7 @@ begin
       ini.WriteBool('BACKUP', 'Verbose', cbVerbose.Checked);
       ini.WriteBool('BACKUP', 'CloseWhenDone', cbCloseWhenDone.Checked);
       ini.WriteInteger('BACKUP', 'Compression', rgCompression.ItemIndex);
+      ini.WriteBool('BACKUP', 'Localhost', cbLocalHost.Checked);
     finally
       ini.Free;
     end;

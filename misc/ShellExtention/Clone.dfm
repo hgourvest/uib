@@ -167,6 +167,15 @@ object CloneForm: TCloneForm
       TabOrder = 1
       OnKeyPress = FormKeyPress
     end
+    object cbLocalHost: TCheckBox
+      Left = 11
+      Top = 63
+      Width = 97
+      Height = 17
+      Caption = 'Localhost'
+      TabOrder = 2
+      OnKeyPress = FormKeyPress
+    end
   end
   object Source: TJvUIBDataBase
     Params.Strings = (
