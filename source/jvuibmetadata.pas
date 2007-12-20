@@ -3683,10 +3683,9 @@ end;
 procedure TMetaProcedure.SaveToCreateEmptyDDL(Stream: TStringStream; options: TDDLOptions);
 begin
   InternalSaveToDDL(Stream, 'CREATE', options);
-  Stream.WriteString(NewLine + 'AS' + NewLine +
-    'begin' + NewLine +
-    '  exit;' + NewLine +
-    'end;');
+  if OutputFieldsCount > 0 then
+    Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  suspend;' + NewLine + 'end;') else
+    Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  exit;' + NewLine + 'end;');
 end;
 
 procedure TMetaProcedure.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
