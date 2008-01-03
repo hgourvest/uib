@@ -443,7 +443,7 @@ type
 
   PParamDsc = ^TParamDsc;
   PARAMDSC = record
-    dsc_dtype: Char;
+    dsc_dtype: byte;
     dsc_scale: Shortint;
     dsc_length: ISCUShort;
     dsc_sub_type: Smallint;
