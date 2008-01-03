@@ -1087,6 +1087,7 @@ type
     procedure SetDatabase(value: TJvUIBDataBase);
     procedure SetEvents(Value: TStrings);
     procedure SetRegistered(const Value: boolean);
+    procedure SetAutoRegister(const Value: boolean);
   protected
   {$IFNDEF UIB_NO_COMPONENT}
     procedure Notification(AComponent: TComponent;
@@ -1095,9 +1096,6 @@ type
   public
     constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
     destructor Destroy; override;
-    procedure RegisterEvents; virtual;
-    procedure UnRegisterEvents; virtual;
-    procedure SetAutoRegister(const Value: boolean);
   published
     property AutoRegister: boolean read FAutoRegister write SetAutoRegister;
     property Database: TJvUIBDataBase read FDatabase write SetDatabase;
@@ -1127,6 +1125,7 @@ type
     function HandleException: boolean;
     function FindDataBase: TJvUIBDataBase;
     procedure SyncEventQueue;
+    procedure SyncEventCancel;
     procedure SyncOnEvent;
     procedure SyncHandleException;
     procedure SyncTerminate(sender: TObject);
@@ -1213,7 +1212,7 @@ constructor TJvUIBDataBase.Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){
 begin
   inherited;
   FLibrary := TUIBLibrary.Create;
-  FLiBraryName := GetClientLibrary;
+  FLibraryName := GetClientLibrary;
   FLibrary.OnConnectionLost := DoOnConnectionLost;
   FLibrary.OnGetDBExceptionClass := DoOnGetDBExceptionClass;
   FDbHandle := nil;
@@ -1404,7 +1403,7 @@ begin
           FLibrary.Load(FLiBraryName);
           if not FHandleShared then
             AttachDatabase(FDatabaseName, FDbHandle, FParams.Text, BreakLine);
-          RegisterEvents;  
+          RegisterEvents;
           if Assigned(AfterConnect) then AfterConnect(Self);
         end;
       False :
@@ -1883,7 +1882,7 @@ procedure TJvUIBDataBase.UnRegisterEvents;
 var i: Integer;
 begin
   for i := 0 to FEventNotifiers.Count - 1 do
-    TJvUIBEvents(FEventNotifiers.Items[i]).UnRegisterEvents;
+    TJvUIBEvents(FEventNotifiers.Items[i]).Registered := false;
 end;
 
 procedure TJvUIBDataBase.RegisterEvents;
@@ -1892,7 +1891,7 @@ begin
   for i := 0 to FEventNotifiers.Count - 1 do
     with TJvUIBEvents(FEventNotifiers.Items[i]) do
       if AutoRegister then
-        RegisterEvents;
+        Registered := true;
 end;
 
 procedure TJvUIBDataBase.RemoveEventNotifier(Event: TJvUIBEvents);
@@ -4359,13 +4358,8 @@ end;
 
 destructor TJvUIBEvents.Destroy;
 begin
-  try
-    if Registered then
-      UnRegisterEvents;
-  except
-  end;
-  if Assigned(FDatabase) then
-    FDatabase.RemoveEventNotifier(Self);
+  Registered := false;
+  Database := nil;
   FThreads.Free;
   FEvents.Free;
   inherited Destroy;
@@ -4377,30 +4371,11 @@ begin
   inherited Notification(AComponent, Operation);
   if (Operation = opRemove) and (AComponent = FDatabase) then
   begin
-    if Registered then
-      UnRegisterEvents;
+    Registered := false;
     FDatabase := nil;
   end;
 end;
 {$ENDIF}
-
-procedure TJvUIBEvents.RegisterEvents;
-var
-  i: Integer;
-begin
-{$IFNDEF UIB_NO_COMPONENT}
-  if (csDesigning in ComponentState) then
-    Exit;
-{$ENDIF}
-  if (FThreads.Count = 0) then
-  begin
-    if (FEvents.Count > 0) then
-    begin
-      for i := 0 to ((FEvents.Count - 1) div 15) do
-        FThreads.Add(TJvUIBEventThread.Create(Self, i, FSyncMainThread));
-    end;
-  end;
-end;
 
 procedure TJvUIBEvents.SetEvents(value: TStrings);
 begin
@@ -4420,7 +4395,7 @@ begin
     begin
       WasRegistered := Registered;
       if WasRegistered then
-        UnRegisterEvents;
+        Registered := false;
       try
         if Assigned(FDatabase) then
           FDatabase.RemoveEventNotifier(Self);
@@ -4429,14 +4404,44 @@ begin
           FDatabase.AddEventNotifier(Self);
       finally
         if WasRegistered and Assigned(FDatabase) then
-          RegisterEvents;
+          Registered := true;
       end;
     end;
   end;
 end;
 
 procedure TJvUIBEvents.SetRegistered(const Value : boolean);
+
+  procedure RegisterEvents;
+  var
+    i: Integer;
+  begin
+    if (FThreads.Count = 0) then
+    begin
+      if (FEvents.Count > 0) then
+      begin
+        for i := 0 to ((FEvents.Count - 1) div 15) do
+          FThreads.Add(TJvUIBEventThread.Create(Self, i, FSyncMainThread));
+      end;
+    end;
+  end;
+
+  procedure UnregisterEvents;
+  var
+    i: Integer;
+  begin
+    for i := FThreads.Count - 1 downto 0 do
+      with TJvUIBEventThread(FThreads[i]) do
+      begin
+        FThreads.Delete(i);
+        if not Terminated then
+          free;
+      end;
+  end;
+
 begin
+  if FRegistered = Value then Exit;
+
   FRegistered := Value;
 {$IFNDEF UIB_NO_COMPONENT}
   if (csDesigning in ComponentState) then
@@ -4447,23 +4452,6 @@ begin
     UnRegisterEvents;
 end;
 
-procedure TJvUIBEvents.UnregisterEvents;
-var
-  i: Integer;
-begin
-{$IFNDEF UIB_NO_COMPONENT}
-  if (csDesigning in ComponentState) then
-    Exit;
-{$ENDIF}
-  for i := FThreads.Count - 1 downto 0 do
-    with TJvUIBEventThread(FThreads[i]) do
-    begin
-      FThreads.Delete(i);
-      if not Terminated then
-        free;
-    end;
-end;
-
 procedure TJvUIBEvents.SetAutoRegister(const Value: boolean);
 begin
   if FAutoRegister <> Value then
@@ -4471,7 +4459,7 @@ begin
     FAutoRegister := Value;
     if FAutoRegister and (not Registered) and
        Assigned(FDatabase) and FDatabase.Connected then
-      RegisterEvents;
+      Registered := true;
   end;
 end;
 
@@ -4555,6 +4543,8 @@ begin
     while not Terminated do
     begin
       FSignal.WaitFor(INFINITE);
+      if Terminated then
+        Break;
       if (FQueueEvent or first) then
       begin
         FindDataBase.FLibrary.EventCounts(FStatusVector, FEventBufferLen,
@@ -4580,6 +4570,17 @@ begin
           SyncEventQueue;
       end;
     end;
+
+    if FSyncMainThread then
+      Synchronize(SyncEventCancel) else
+      SyncEventCancel;
+
+    with FindDataBase.FLibrary do
+    begin
+      IscFree(FEventBuffer);
+      IscFree(FResultBuffer);
+    end;
+
     ReturnValue := 0;
   except
     if HandleException then
@@ -4606,12 +4607,18 @@ begin
 end;
 
 destructor TJvUIBEventThread.Destroy;
-var
-  db: TJvUIBDataBase;
 begin
   Terminate;
   FSignal.SetEvent;
   WaitFor;
+  FSignal.Free;
+  inherited Destroy;
+end;
+
+procedure TJvUIBEventThread.SyncEventCancel;
+var
+  db: TJvUIBDataBase;
+begin
   try
     db := FindDataBase;
     with db, Flibrary do
@@ -4626,16 +4633,12 @@ begin
         db.UnLock;
       end;
     {$ENDIF}
-      IscFree(FEventBuffer);
-      IscFree(FResultBuffer);
     end;
   except
-    if HandleException then
-      ReturnValue := 1 else
-      ReturnValue := 0;
+    on E : Exception do
+      if Assigned(FOwner.FOnException) then
+          FOwner.FOnException(E);
   end;
-  FSignal.Free;
-  inherited Destroy;
 end;
 
 procedure TJvUIBEventThread.SyncEventQueue;
@@ -4676,7 +4679,7 @@ begin
     if (ReturnValue = 1) then
     begin
       if Registered then
-        UnRegisterEvents;
+        Registered := false;
       FThreadException := False;
     end
   end;
