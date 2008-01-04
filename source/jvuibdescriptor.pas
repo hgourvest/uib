@@ -18,7 +18,7 @@ unit jvuibdescriptor;
 interface
 
 {$IFDEF FB102ORYF867}
-uses jvuibase, jvuiblib;
+uses classes, jvuibase, jvuiblib;
 
 function DescGetIsNull(Param: PParamDsc): boolean;
 procedure DescSetIsNull(Param: PParamDsc; Value: boolean);
@@ -52,6 +52,15 @@ procedure DescSetAsDate(Param: PParamDsc; const Value: Integer);
 function DescGetAsTime(Param: PParamDsc): Cardinal;
 procedure DescSetAsTime(Param: PParamDsc; const Value: Cardinal);
 
+function DescBlobGetSegment(Param: PBlobCallBack; out length: Word;
+  BufferLength: Cardinal; Buffer: PChar): boolean;
+procedure DescBlobReadString(Param: PBlobCallBack; var Str: String);
+procedure DescBlobSaveToStream(Param: PBlobCallBack; Stream: TStream);
+procedure DescBlobReadSizedBuffer(Param: PBlobCallBack; Buffer: Pointer);
+procedure DescBlobWriteSegment(Param: PBlobCallBack; BufferLength: Cardinal; Buffer: PChar);
+procedure DescBlobWriteString(Param: PBlobCallBack; var Str: String);
+procedure DescBlobWriteStream(Param: PBlobCallBack; Stream: TStream);
+
 {$ENDIF}
 
 implementation
@@ -61,6 +70,9 @@ uses dateutils, jvuibconst;
 type
   TDescFlag = set of 0..15;
   PDescFlag = ^TDescFlag;
+
+const
+  DefaultSegmentSize = 16*1024;
 
 function IntToStr(value: integer): string;
 begin
@@ -591,6 +603,9 @@ begin
   end;
 end;
 
+//******************************************************************************
+// Standard data types
+//******************************************************************************
 
 function DescGetAsInteger(Param: PParamDsc): Integer;
 begin
@@ -1318,6 +1333,113 @@ begin
       exit;
     end;
     DescSetIsNull(Param, false);
+end;
+
+//******************************************************************************
+// BLOBS
+//******************************************************************************
+
+function DescBlobGetSegment(Param: PBlobCallBack; out length: Word;
+  BufferLength: Cardinal; Buffer: PChar): boolean;
+var
+  AStatus: ISCStatus;
+begin
+  if BufferLength > High(Word) then
+    BufferLength := High(Word);
+    AStatus := Param.blob_get_segment(Param.blob_handle, Buffer, Word(BufferLength), length);
+  Result := (AStatus = 0);
+end;
+
+procedure DescBlobReadString(Param: PBlobCallBack; var Str: String);
+var
+  CurrentLength: Word;
+  Buffer: Pointer;
+  Len: Cardinal;
+begin
+  SetLength(Str, Param.blob_total_length);
+  Buffer := PChar(Str);
+  len := 0;
+  while DescBlobGetSegment(Param, CurrentLength, Cardinal(Param.blob_total_length) - len, Buffer) do
+  begin
+    inc(PtrInt(Buffer), CurrentLength);
+    inc(len, CurrentLength);
+    if len = Cardinal(Param.blob_total_length) then
+      Break;
+  end;
+end;
+
+procedure DescBlobSaveToStream(Param: PBlobCallBack; Stream: TStream);
+var
+  Buffer: Pointer;
+  CurrentLength: Word;
+begin
+  Stream.Seek(0, soFromBeginning);
+  Getmem(Buffer, Param.blob_max_segment);
+  try
+    while DescBlobGetSegment(Param, CurrentLength, Param.blob_max_segment, Buffer) do
+      Stream.Write(Buffer^, CurrentLength);
+  finally
+    FreeMem(Buffer);
+  end;
+  Stream.Seek(0, soFromBeginning);
+end;
+
+procedure DescBlobWriteSegment(Param: PBlobCallBack; BufferLength: Cardinal; Buffer: PChar);
+var size: Word;
+begin
+  while BufferLength > 0 do
+  begin
+    if BufferLength > DefaultSegmentSize then
+      size := DefaultSegmentSize else
+      size := Word(BufferLength);
+
+    Param.blob_put_segment(Param.blob_handle, Buffer, Size);
+    dec(BufferLength, size);
+    inc(Buffer, size);
+  end;
+end;
+
+procedure DescBlobWriteString(Param: PBlobCallBack; var Str: String);
+begin
+  DescBlobWriteSegment(Param, Length(Str), PChar(Str));
+end;
+
+procedure DescBlobWriteStream(Param: PBlobCallBack; Stream: TStream);
+var
+  Buffer: PChar;
+begin
+  Stream.Seek(0, soFromBeginning);
+  if Stream is TCustomMemoryStream then
+    DescBlobWriteSegment(Param, Cardinal(TCustomMemoryStream(Stream).Size),
+      TCustomMemoryStream(Stream).Memory) else
+
+  begin
+    GetMem(Buffer, Cardinal(Stream.Size));
+    try
+      Stream.Read(Buffer^, Cardinal(Stream.Size));
+      DescBlobWriteSegment(Param, Cardinal(Stream.Size), Buffer);
+      Stream.Seek(0, soFromBeginning);
+    finally
+      FreeMem(buffer);
+    end;
+  end;
+end;
+
+procedure DescBlobReadSizedBuffer(Param: PBlobCallBack; Buffer: Pointer);
+var
+  CurrentLength: Word;
+  TMP: Pointer;
+  Len: Cardinal;
+begin
+  TMP := Buffer;
+  Len := 0;
+  while DescBlobGetSegment(Param, CurrentLength, Param.blob_total_length - len, TMP) do
+  begin
+    inc(PtrInt(TMP), CurrentLength);
+    inc(Len, CurrentLength);
+    if len = Param.blob_total_length then
+      break;
+  end;
 end;
 
 {$ENDIF}
