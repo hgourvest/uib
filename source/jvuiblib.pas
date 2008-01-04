@@ -800,6 +800,9 @@ const
   procedure EncodeTimeStamp(const DateTime: TDateTime; v: PISCTimeStamp); overload;
   procedure EncodeTimeStamp(const Date: Integer; v: PISCTimeStamp); overload;
   procedure EncodeTimeStamp(const Time: Cardinal; v: PISCTimeStamp); overload;
+  function EncodeSQLDate(Year: Integer; Month, Day: Integer): Integer;
+  function EncodeSQLTime(Hour, Minute, Second: Word;
+    out Fractions: LongWord): Cardinal;
 
 type
   TParamType = (
@@ -3026,6 +3029,28 @@ type
       end;
   end;
 
+  function EncodeSQLDate(Year: Integer; Month, Day: Integer): Integer;
+  var
+    c, ya: integer;
+  begin
+    inc(month);
+    inc(year, 1900);
+
+    if (month > 2) then
+      dec(month, 3) else
+    begin
+      inc(month, 9);
+      dec(year, 1);
+    end;
+
+    c := year div 100;
+    ya := year - 100 * c;
+
+    Result := ((int64(146097) * c) div 4 +
+              (1461 * ya) div 4 +
+              (153 * month + 2) div 5 + day + 1721119 - 2400001);
+  end;
+
   procedure DecodeSQLTime(v: Cardinal; out Hour, Minute, Second: Word;
     out Fractions: LongWord);
   begin
@@ -3053,6 +3078,12 @@ type
         Second    := 0;
         Fractions := 0;
       end;
+  end;
+
+  function EncodeSQLTime(Hour, Minute, Second: Word;
+    out Fractions: LongWord): Cardinal;
+  begin
+    Result := ((Hour * 60 + Minute) * 60 + Second) * ISC_TIME_SECONDS_PRECISION + Fractions;
   end;
 
  { TSQLDA }
@@ -3453,6 +3484,7 @@ type
           SQL_LONG   : Result := PInteger(sqldata)^  / ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : Result := PInt64(sqldata)^    / ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := PDouble(sqldata)^;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3496,6 +3528,7 @@ type
           SQL_LONG   : Result := PInteger(sqldata)^  div ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := Trunc(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3539,6 +3572,7 @@ type
           SQL_LONG   : Result := PInteger(sqldata)^  div ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := Trunc(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3582,6 +3616,7 @@ type
           SQL_LONG   : Result := PInteger(sqldata)^  / ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : Result := PInt64(sqldata)^    / ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := PDouble(sqldata)^;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3625,6 +3660,7 @@ type
           SQL_LONG   : Result := PInteger(sqldata)^  div ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := Trunc(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3670,6 +3706,7 @@ type
           SQL_LONG   : Result := FloatToStr(PInteger(sqldata)^  / ScaleDivisor[sqlscale]);
           SQL_INT64,
           SQL_QUAD   : Result := FloatToStr(PInt64(sqldata)^    / ScaleDivisor[sqlscale]);
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := FloatToStr(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3702,7 +3739,7 @@ type
     with FXSQLDA.sqlvar[Index] do
       if not ((sqlind <> nil) and (sqlind^ = -1)) then
         case (sqltype and not(1)) of
-          SQL_QUAD, SQL_DOUBLE, SQL_INT64, SQL_BLOB, SQL_ARRAY: result := PISCQuad(sqldata)^;
+          SQL_QUAD, SQL_DOUBLE, SQL_D_FLOAT, SQL_INT64, SQL_BLOB, SQL_ARRAY: result := PISCQuad(sqldata)^;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
         end
@@ -3729,6 +3766,7 @@ type
           SQL_LONG   : Result := PInteger(sqldata)^  / ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : Result := PInt64(sqldata)^    / ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := PDouble(sqldata)^;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3780,6 +3818,7 @@ type
           SQL_LONG   : Result := PInteger(sqldata)^  / ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : Result := PInt64(sqldata)^    / ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := PDouble(sqldata)^;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3852,6 +3891,7 @@ type
                             PInt64(@Result)^ := PSmallint(sqldata)^ * CurrencyDivisor[SqlScale] else
                             PInt64(@Result)^ := PSmallint(sqldata)^ div CurrencyDivisor[SqlScale];
                         end;
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := PDouble(sqldata)^;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3895,6 +3935,7 @@ end;
           SQL_LONG   : Result := PInteger(sqldata)^  div ScaleDivisor[sqlscale] <> 0;
           SQL_INT64,
           SQL_QUAD   : Result := (PInt64(sqldata)^ div ScaleDivisor[sqlscale]) <> 0;
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := Trunc(PDouble(sqldata)^) > 0;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3937,6 +3978,7 @@ end;
           SQL_LONG   : Result := FloatToStr(PInteger(sqldata)^  / ScaleDivisor[sqlscale]);
           SQL_INT64,
           SQL_QUAD   : Result := FloatToStr(PInt64(sqldata)^    / ScaleDivisor[sqlscale]);
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := FloatToStr(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -3980,6 +4022,7 @@ end;
           SQL_LONG   : Result := PInteger(sqldata)^  div ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := Trunc(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4023,6 +4066,7 @@ end;
           SQL_LONG   : Result := PInteger(sqldata)^  div ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : Result := PInt64(sqldata)^ div ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := Trunc(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4113,7 +4157,7 @@ end;
     with FXSQLDA.sqlvar[Index] do
       begin
         case (sqltype and not(1)) of
-          SQL_QUAD, SQL_DOUBLE, SQL_INT64, SQL_BLOB, SQL_ARRAY: PISCQuad(sqldata)^ := Value;
+          SQL_QUAD, SQL_DOUBLE, SQL_D_FLOAT, SQL_INT64, SQL_BLOB, SQL_ARRAY: PISCQuad(sqldata)^ := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
         end;
@@ -4139,6 +4183,7 @@ end;
           SQL_LONG   : PInteger(sqldata)^  := Round(Value * ScaleDivisor[sqlscale]);
           SQL_INT64,
           SQL_QUAD   : PInt64(sqldata)^    := Round(Value * ScaleDivisor[sqlscale]);
+          SQL_D_FLOAT,
           SQL_DOUBLE : PDouble(sqldata)^   := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4180,6 +4225,7 @@ end;
           SQL_LONG   : PInteger(sqldata)^  := Value * ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : PInt64(sqldata)^    := Value * ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : PDouble(sqldata)^   := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4221,6 +4267,7 @@ end;
           SQL_LONG   : PInteger(sqldata)^  := Value * ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : PInt64(sqldata)^    := Value * ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : PDouble(sqldata)^   := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4262,6 +4309,7 @@ end;
           SQL_LONG   : PInteger(sqldata)^  := ord(Value) * ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : PInt64(sqldata)^    := ord(Value) * ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : PDouble(sqldata)^   := ord(Value);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4300,6 +4348,7 @@ end;
           SQL_LONG   : PInteger(sqldata)^  := Value * ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : PInt64(sqldata)^    := Value * ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : PDouble(sqldata)^   := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4341,6 +4390,7 @@ end;
           SQL_LONG   : PInteger(sqldata)^  := Round(Value * ScaleDivisor[sqlscale]);
           SQL_INT64,
           SQL_QUAD   : PInt64(sqldata)^    := Round(Value * ScaleDivisor[sqlscale]);
+          SQL_D_FLOAT,
           SQL_DOUBLE : PDouble(sqldata)^   := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4382,6 +4432,7 @@ end;
           SQL_LONG   : PInteger(sqldata)^  := Value * ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : PInt64(sqldata)^    := Value * ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : PDouble(sqldata)^   := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4424,26 +4475,27 @@ end;
           SQL_LONG   : PInteger(sqldata)^  := Trunc(StrToFloat(Value) * ScaleDivisor[sqlscale]);
           SQL_INT64,
           SQL_QUAD   : PInt64(sqldata)^    := Trunc(StrToFloat(Value) * ScaleDivisor[sqlscale]);
+          SQL_D_FLOAT,
           SQL_DOUBLE : PDouble(sqldata)^   := StrToFloat(Value);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
         end;
       end else
         case ASQLCode of
+          SQL_TEXT      : EncodeString(SQL_TEXT, Index, Value);
+          SQL_VARYING   : EncodeString(SQL_VARYING, Index, Value);
           SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := StrToFloat(Value);
           SQL_TIMESTAMP : EncodeTimeStamp(StrToDateTime(Value), PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := Round(int(StrToDate(Value)) + dateoffset);
           SQL_TYPE_TIME : PCardinal(sqldata)^ := Round(Frac(StrToTime(Value)) * TimeCoeff);
-          SQL_LONG      : PInteger(sqldata)^ := Trunc(StrToFloat(Value));
+          SQL_LONG      : PInteger(sqldata)^ := StrToInt(Value);
           SQL_FLOAT     : PSingle(sqldata)^ := StrToFloat(Value);
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
 {$ENDIF}
-          SQL_SHORT     : PSmallint(sqldata)^ := Trunc(StrToFloat(Value));
-          SQL_INT64     : PInt64(sqldata)^ := Trunc(StrToFloat(Value));
-          SQL_TEXT      : EncodeString(SQL_TEXT, Index, Value);
-          SQL_VARYING   : EncodeString(SQL_VARYING, Index, Value);
+          SQL_SHORT     : PSmallint(sqldata)^ := StrToInt(Value);
+          SQL_INT64     : PInt64(sqldata)^ := StrToInt64(Value);
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -4468,26 +4520,27 @@ end;
           SQL_LONG   : PInteger(sqldata)^  := Trunc(StrToFloat(Value) * ScaleDivisor[sqlscale]);
           SQL_INT64,
           SQL_QUAD   : PInt64(sqldata)^    := Trunc(StrToFloat(Value) * ScaleDivisor[sqlscale]);
+          SQL_D_FLOAT,
           SQL_DOUBLE : PDouble(sqldata)^   := StrToFloat(Value);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
         end;
       end else
         case ASQLCode of
+          SQL_TEXT      : EncodeWideString(SQL_TEXT, Index, Value);
+          SQL_VARYING   : EncodeWideString(SQL_VARYING, Index, Value);
           SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := StrToFloat(Value);
           SQL_TIMESTAMP : EncodeTimeStamp(StrToDateTime(Value), PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := Round(int(StrToDate(Value)) + DateOffset);
           SQL_TYPE_TIME : PCardinal(sqldata)^ := Round(Frac(StrToTime(Value)) * TimeCoeff);
-          SQL_LONG      : PInteger(sqldata)^ := Trunc(StrToFloat(Value));
+          SQL_LONG      : PInteger(sqldata)^ := StrToInt(Value);
           SQL_FLOAT     : PSingle(sqldata)^ := StrToFloat(Value);
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
 {$ENDIF}
-          SQL_SHORT     : PSmallint(sqldata)^ := Trunc(StrToFloat(Value));
-          SQL_INT64     : PInt64(sqldata)^ := Trunc(StrToFloat(Value));
-          SQL_TEXT      : EncodeWideString(SQL_TEXT, Index, Value);
-          SQL_VARYING   : EncodeWideString(SQL_VARYING, Index, Value);
+          SQL_SHORT     : PSmallint(sqldata)^ := StrToInt(Value);
+          SQL_INT64     : PInt64(sqldata)^ := StrToInt64(Value);
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -4510,6 +4563,7 @@ end;
           SQL_LONG   : PInteger(sqldata)^  := Value * ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : PInt64(sqldata)^    := Value * ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : PDouble(sqldata)^   := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4551,6 +4605,7 @@ end;
           SQL_LONG   : PInteger(sqldata)^  := Round(Value * ScaleDivisor[sqlscale]);
           SQL_INT64,
           SQL_QUAD   : PInt64(sqldata)^    := Round(Value * ScaleDivisor[sqlscale]);
+          SQL_D_FLOAT,
           SQL_DOUBLE : PDouble(sqldata)^   := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4597,6 +4652,7 @@ end;
                          if sqlscale > -4 then
                            PInt64(sqldata)^ := PInt64(@Value)^ div CurrencyDivisor[sqlscale] else
                            PInt64(sqldata)^ := PInt64(@Value)^ * CurrencyDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : PDouble(sqldata)^   := Value;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -4840,11 +4896,14 @@ end;
 {$ENDIF}
 
   function TSQLDA.GetFieldType(const Index: Word): TUIBFieldType;
+  var
+    typ: integer;
   begin
     CheckRange(Index);
     if (FXSQLDA.sqlvar[Index].SqlScale < 0) then
     begin
-      if FXSQLDA.sqlvar[Index].sqltype and not (1) = SQL_DOUBLE  then
+      typ := FXSQLDA.sqlvar[Index].sqltype and not (1);
+      if (typ = SQL_DOUBLE) or (typ = SQL_D_FLOAT)  then
         Result := uftDoublePrecision else
         Result := uftNumeric;
     end else
@@ -5399,6 +5458,7 @@ end;
           SQL_LONG   : Result := FloatToStr(PInteger(sqldata)^  / ScaleDivisor[sqlscale]);
           SQL_INT64,
           SQL_QUAD   : Result := FloatToStr(PInt64(sqldata)^    / ScaleDivisor[sqlscale]);
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := FloatToStr(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -5446,6 +5506,7 @@ end;
           SQL_LONG   : Result := FloatToStr(PInteger(sqldata)^  / ScaleDivisor[sqlscale]);
           SQL_INT64,
           SQL_QUAD   : Result := FloatToStr(PInt64(sqldata)^    / ScaleDivisor[sqlscale]);
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := FloatToStr(PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
@@ -5493,6 +5554,7 @@ end;
           SQL_LONG   : Result := PInteger(sqldata)^  / ScaleDivisor[sqlscale];
           SQL_INT64,
           SQL_QUAD   : Result := PInt64(sqldata)^    / ScaleDivisor[sqlscale];
+          SQL_D_FLOAT,
           SQL_DOUBLE : Result := PDouble(sqldata)^;
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);

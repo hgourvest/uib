@@ -566,6 +566,7 @@ begin
                     Precision := 19 else
                     Precision := 18;
                 end;
+              SQL_D_FLOAT,
               SQL_DOUBLE:
                 DataType := ftFloat; // possible
             end;
@@ -725,6 +726,7 @@ begin
                 {$ENDIF}
               {$ENDIF}
               end;
+            SQL_D_FLOAT,
             SQL_DOUBLE:
               PDouble(Buffer)^ := PDouble(sqldata)^;
           else
