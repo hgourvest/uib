@@ -3459,11 +3459,11 @@ type
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : Result := PDouble(sqldata)^;
           SQL_TIMESTAMP : DecodeTimeStamp(PISCTimeStamp(sqldata), Result);
           SQL_TYPE_DATE : Result := PInteger(sqldata)^ - DateOffset;
           SQL_TYPE_TIME : Result := PCardinal(sqldata)^ / TimeCoeff;
-          SQL_D_FLOAT,
           SQL_FLOAT     : Result := PSingle(sqldata)^;
           SQL_LONG      : Result := PInteger(sqldata)^;
 {$IFDEF IB7_UP}
@@ -3508,11 +3508,11 @@ type
           SQL_BOOLEAN,
 {$ENDIF}
           SQL_SHORT     : Result := PSmallint(sqldata)^;
+          SQL_D_FLOAT,
           SQL_DOUBLE    : Result := Trunc(PDouble(sqldata)^);
           SQL_TIMESTAMP : Result := PISCTimeStamp(sqldata).timestamp_date - DateOffset; // Only Date
           SQL_TYPE_DATE : Result := PInteger(sqldata)^ - DateOffset;
           SQL_TYPE_TIME : ; // Result := 0; What else ??
-          SQL_D_FLOAT,
           SQL_FLOAT     : Result := Trunc(PSingle(sqldata)^);
           SQL_TEXT      : ConvertString(SQL_TEXT, Index, Result);
           SQL_VARYING   : ConvertString(SQL_VARYING, Index, Result);
@@ -3551,8 +3551,8 @@ type
           SQL_BOOLEAN,
 {$ENDIF}
           SQL_SHORT     : Result := PSmallint(sqldata)^;
-          SQL_DOUBLE    : Result := Trunc(PDouble(sqldata)^);
           SQL_D_FLOAT,
+          SQL_DOUBLE    : Result := Trunc(PDouble(sqldata)^);
           SQL_FLOAT     : Result := Trunc(PSingle(sqldata)^);
           SQL_TIMESTAMP : Result := PISCTimeStamp(sqldata).timestamp_date - DateOffset; // Only Date
           SQL_TYPE_DATE : Result := PInteger(sqldata)^ - DateOffset;
@@ -3588,8 +3588,8 @@ type
         end;
       end else
         case ASQLCode of
-          SQL_D_FLOAT,
           SQL_FLOAT     : Result := PSingle(sqldata)^;
+          SQL_D_FLOAT,
           SQL_DOUBLE    : Result := PDouble(sqldata)^;
           SQL_TIMESTAMP : Result := DecodeTimeStamp(PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : Result := PInteger(sqldata)^ - DateOffset;
@@ -3637,8 +3637,8 @@ type
           SQL_SHORT     : Result := PSmallint(sqldata)^;
           SQL_LONG      : Result := PInteger(sqldata)^;
           SQL_INT64     : Result := PInt64(sqldata)^;
-          SQL_DOUBLE    : Result := Trunc(PDouble(sqldata)^);
           SQL_D_FLOAT,
+          SQL_DOUBLE    : Result := Trunc(PDouble(sqldata)^);
           SQL_FLOAT     : Result := Trunc(PSingle(sqldata)^);
           SQL_TIMESTAMP : Result := PISCTimeStamp(sqldata).timestamp_date - DateOffset; // Only Date
           SQL_TYPE_DATE : Result := PInteger(sqldata)^ - DateOffset;
@@ -3681,9 +3681,9 @@ type
           SQL_TIMESTAMP : Result := DateTimeToStr(DecodeTimeStamp(PISCTimeStamp(sqldata)));
           SQL_TYPE_DATE : Result := DateToStr(PInteger(sqldata)^ - DateOffset);
           SQL_TYPE_TIME : Result := TimeToStr(PCardinal(sqldata)^ / TimeCoeff);
+          SQL_D_FLOAT,
           SQL_DOUBLE    : Result := FloatToStr(PDouble(sqldata)^);
           SQL_LONG      : Result := IntToStr(PInteger(sqldata)^);
-          SQL_D_FLOAT,
           SQL_FLOAT     : Result := FloatToStr(PSingle(sqldata)^);
 {$IFDEF IB7_UP}
           SQL_BOOLEAN   : Result := BoolToStr(PSmallint(sqldata)^ = 1);
@@ -3735,6 +3735,7 @@ type
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : Result := PDouble(sqldata)^;
           SQL_TIMESTAMP : Result := TDateTime(DecodeTimeStamp(PISCTimeStamp(sqldata)));
           SQL_TYPE_DATE :
@@ -3744,7 +3745,6 @@ type
             end;
           SQL_TYPE_TIME : Result := PCardinal(sqldata)^ / TimeCoeff;
           SQL_LONG      : Result := PInteger(sqldata)^;
-          SQL_D_FLOAT,
           SQL_FLOAT     : Result := PSingle(sqldata)^;
 {$IFDEF IB7_UP}
           SQL_BOOLEAN   : Result := PSmallint(sqldata)^ = 1;
@@ -3789,8 +3789,8 @@ type
           SQL_TIMESTAMP : DecodeTimeStamp(PISCTimeStamp(sqldata), Double(Result));
           SQL_TYPE_DATE : Result := PInteger(sqldata)^ - DateOffset;
           SQL_TYPE_TIME : Result := PCardinal(sqldata)^ / TimeCoeff;
-          SQL_DOUBLE    : Result := PDouble(sqldata)^;
           SQL_D_FLOAT,
+          SQL_DOUBLE    : Result := PDouble(sqldata)^;
           SQL_FLOAT     : Result := PSingle(sqldata)^;
           SQL_LONG      : Result := PInteger(sqldata)^;
           SQL_INT64     : Result := PInt64(sqldata)^;
@@ -3858,8 +3858,8 @@ type
         end;
       end else
         case ASQLCode of
-          SQL_DOUBLE    : Result := PDouble(sqldata)^;
           SQL_D_FLOAT,
+          SQL_DOUBLE    : Result := PDouble(sqldata)^;
           SQL_FLOAT     : Result := PSingle(sqldata)^;
           SQL_TIMESTAMP : Result := DecodeTimeStamp(PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : Result := PInteger(sqldata)^ - DateOffset;
@@ -3907,8 +3907,8 @@ end;
           SQL_SHORT     : Result := PSmallint(sqldata)^ <> 0;
           SQL_LONG      : Result := PInteger(sqldata)^ <> 0;
           SQL_INT64     : Result := PInt64(sqldata)^ <> 0;
-          SQL_DOUBLE    : Result := Trunc(PDouble(sqldata)^) <> 0;
           SQL_D_FLOAT,
+          SQL_DOUBLE    : Result := Trunc(PDouble(sqldata)^) <> 0;
           SQL_FLOAT     : Result := Trunc(PSingle(sqldata)^) <> 0;
           SQL_TEXT      : ConvertString(SQL_TEXT, Index, result);
           SQL_VARYING   : ConvertString(SQL_VARYING, Index, result);
@@ -3948,9 +3948,9 @@ end;
           SQL_TIMESTAMP : Result := DateTimeToStr(DecodeTimeStamp(PISCTimeStamp(sqldata)));
           SQL_TYPE_DATE : Result := DateToStr(PInteger(sqldata)^ - DateOffset);
           SQL_TYPE_TIME : Result := TimeToStr(PCardinal(sqldata)^ / TimeCoeff);
+          SQL_D_FLOAT,
           SQL_DOUBLE    : Result := FloatToStr(PDouble(sqldata)^);
           SQL_LONG      : Result := IntToStr(PInteger(sqldata)^);
-          SQL_D_FLOAT,
           SQL_FLOAT     : Result := FloatToStr(PSingle(sqldata)^);
 {$IFDEF IB7_UP}
           SQL_BOOLEAN   : Result := BoolToStr(PSmallint(sqldata)^ = 1);
@@ -3988,8 +3988,8 @@ end;
         case ASQLCode of
           SQL_TYPE_DATE : Result := PInteger(sqldata)^ - DateOffset;
           SQL_TIMESTAMP : Result := PISCTimeStamp(sqldata).timestamp_date - DateOffset;
-          SQL_DOUBLE    : Result := Trunc(PDouble(sqldata)^);
           SQL_D_FLOAT,
+          SQL_DOUBLE    : Result := Trunc(PDouble(sqldata)^);
           SQL_FLOAT     : Result := Trunc(PSingle(sqldata)^);
           SQL_INT64     : Result := PInt64(sqldata)^;
           SQL_LONG      : Result := PInteger(sqldata)^;
@@ -4031,9 +4031,9 @@ end;
         case ASQLCode of
           SQL_TYPE_TIME : Result := PCardinal(sqldata)^;
           SQL_TIMESTAMP : Result := PISCTimeStamp(sqldata).timestamp_time;
+          SQL_D_FLOAT,
           SQL_DOUBLE    : Result := Trunc(PDouble(sqldata)^);
           SQL_LONG      : Result := PInteger(sqldata)^;
-          SQL_D_FLOAT,
           SQL_FLOAT     : Result := Trunc(PSingle(sqldata)^);
         {$IFDEF IB7_UP}
           SQL_BOOLEAN,
@@ -4145,12 +4145,12 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := Value;
           SQL_TIMESTAMP : EncodeTimeStamp(Value, PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := Round(int(Value)) + DateOffset;
           SQL_TYPE_TIME : PCardinal(sqldata)^ := Round(Frac(Value) * TimeCoeff);
           SQL_LONG      : PInteger(sqldata)^ := Trunc(Value);
-          SQL_D_FLOAT,
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
@@ -4186,12 +4186,12 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := Value;
           SQL_TIMESTAMP : EncodeTimeStamp(Value, PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := Value + DateOffset;
           SQL_TYPE_TIME : PCardinal(sqldata)^ := 0;
           SQL_LONG      : PInteger(sqldata)^ := Value;
-          SQL_D_FLOAT,
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
@@ -4227,12 +4227,12 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := Value;
           SQL_TIMESTAMP : EncodeTimeStamp(Value, PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := 0;
           SQL_TYPE_TIME : PCardinal(sqldata)^ := Value;
           SQL_LONG      : PInteger(sqldata)^ := Value;
-          SQL_D_FLOAT,
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
@@ -4268,9 +4268,9 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := ord(Value);
           SQL_LONG      : PInteger(sqldata)^ := ord(Value);
-          SQL_D_FLOAT,
           SQL_FLOAT     : PSingle(sqldata)^ := ord(Value);
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
@@ -4306,12 +4306,12 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := Value;
           SQL_TIMESTAMP : EncodeTimeStamp(Value, PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := Value + DateOffset;
           SQL_TYPE_TIME : PCardinal(sqldata)^ := 0;
           SQL_LONG      : PInteger(sqldata)^ := Value;
-          SQL_D_FLOAT,
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
@@ -4347,12 +4347,12 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := Value;
           SQL_TIMESTAMP : EncodeTimeStamp(Value, PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := Round(int(Value)) + DateOffset;
           SQL_TYPE_TIME : PCardinal(sqldata)^ := Round(Frac(Value) * TimeCoeff);
           SQL_LONG      : PInteger(sqldata)^ := Trunc(Value);
-          SQL_D_FLOAT,
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
@@ -4388,12 +4388,12 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := Value;
           SQL_TIMESTAMP : EncodeTimeStamp(Value, PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := Value + DateOffset;
           SQL_TYPE_TIME : PCardinal(sqldata)^ := 0;
           SQL_LONG      : PInteger(sqldata)^ := Value;
-          SQL_D_FLOAT,
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
@@ -4430,12 +4430,12 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := StrToFloat(Value);
           SQL_TIMESTAMP : EncodeTimeStamp(StrToDateTime(Value), PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := Round(int(StrToDate(Value)) + dateoffset);
           SQL_TYPE_TIME : PCardinal(sqldata)^ := Round(Frac(StrToTime(Value)) * TimeCoeff);
           SQL_LONG      : PInteger(sqldata)^ := Trunc(StrToFloat(Value));
-          SQL_D_FLOAT,
           SQL_FLOAT     : PSingle(sqldata)^ := StrToFloat(Value);
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
@@ -4474,12 +4474,12 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := StrToFloat(Value);
           SQL_TIMESTAMP : EncodeTimeStamp(StrToDateTime(Value), PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := Round(int(StrToDate(Value)) + DateOffset);
           SQL_TYPE_TIME : PCardinal(sqldata)^ := Round(Frac(StrToTime(Value)) * TimeCoeff);
           SQL_LONG      : PInteger(sqldata)^ := Trunc(StrToFloat(Value));
-          SQL_D_FLOAT,
           SQL_FLOAT     : PSingle(sqldata)^ := StrToFloat(Value);
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
@@ -4516,12 +4516,12 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := Value;
           SQL_TIMESTAMP : EncodeTimeStamp(Value, PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := Value + DateOffset;
           SQL_TYPE_TIME : PCardinal(sqldata)^ := 0;
           SQL_LONG      : PInteger(sqldata)^ := Value;
-          SQL_D_FLOAT,
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
@@ -4557,12 +4557,12 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := Value;
           SQL_TIMESTAMP : EncodeTimeStamp(Value, PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := Round(int(Value)) + DateOffset;
           SQL_TYPE_TIME : PCardinal(sqldata)^ := Round(Frac(Value) * TimeCoeff);
           SQL_LONG      : PInteger(sqldata)^ := Trunc(Value);
-          SQL_D_FLOAT,
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
@@ -4603,12 +4603,12 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := Value;
           SQL_TIMESTAMP : EncodeTimeStamp(Value, PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := Round(int(Value) + DateOffset);
           SQL_TYPE_TIME : PCardinal(sqldata)^ := Round(Frac(Value) * TimeCoeff);
           SQL_LONG      : PInteger(sqldata)^ := Trunc(Value);
-          SQL_D_FLOAT,
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
           SQL_BOOLEAN,
@@ -4856,9 +4856,9 @@ end;
     {$ENDIF}
       SQL_SHORT       : Result := uftSmallint;
       SQL_LONG        : Result := uftInteger;
-      SQL_FLOAT,
-      SQL_D_FLOAT     : Result := uftFloat;
-      SQL_DOUBLE      : Result := uftDoublePrecision;
+      SQL_FLOAT       : Result := uftFloat;
+      SQL_DOUBLE,
+      SQL_D_FLOAT     : Result := uftDoublePrecision;
       SQL_TIMESTAMP   : Result := uftTimestamp;
       SQL_BLOB        : Result := uftBlob;
       SQL_QUAD        : Result := uftQuad;
@@ -5405,12 +5405,12 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : Result := FloatToStr(PDouble(sqldata)^);
           SQL_TIMESTAMP : Result := DateTimeToStr(DecodeTimeStamp(PISCTimeStamp(sqldata)));
           SQL_TYPE_DATE : Result := DateToStr(PInteger(sqldata)^ - DateOffset);
           SQL_TYPE_TIME : Result := TimeToStr(PCardinal(sqldata)^ / TimeCoeff);
           SQL_LONG      : Result := IntToStr(PInteger(sqldata)^);
-          SQL_D_FLOAT,
           SQL_FLOAT     : Result := FloatToStr(PSingle(sqldata)^);
 {$IFDEF IB7_UP}
           SQL_BOOLEAN   : Result := BoolToStr(PSmallint(sqldata)^ = 1);
@@ -5452,12 +5452,12 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : Result := FloatToStr(PDouble(sqldata)^);
           SQL_TIMESTAMP : Result := DateTimeToStr(DecodeTimeStamp(PISCTimeStamp(sqldata)));
           SQL_TYPE_DATE : Result := DateToStr(PInteger(sqldata)^ - DateOffset);
           SQL_TYPE_TIME : Result := TimeToStr(PCardinal(sqldata)^ / TimeCoeff);
           SQL_LONG      : Result := IntToStr(PInteger(sqldata)^);
-          SQL_D_FLOAT,
           SQL_FLOAT     : Result := FloatToStr(PSingle(sqldata)^);
 {$IFDEF IB7_UP}
           SQL_BOOLEAN   : Result := BoolToStr(PSmallint(sqldata)^ = 1);
@@ -5499,6 +5499,7 @@ end;
         end;
       end else
         case ASQLCode of
+          SQL_D_FLOAT,
           SQL_DOUBLE    : Result := PDouble(sqldata)^;
           SQL_TIMESTAMP : Result := TDateTime(DecodeTimeStamp(PISCTimeStamp(sqldata)));
           SQL_TYPE_DATE :
@@ -5508,7 +5509,6 @@ end;
             end;
           SQL_TYPE_TIME : Result := PCardinal(sqldata)^ / TimeCoeff;
           SQL_LONG      : Result := PInteger(sqldata)^;
-          SQL_D_FLOAT,
           SQL_FLOAT     : Result := PSingle(sqldata)^;
 {$IFDEF IB7_UP}
           SQL_BOOLEAN   : Result :=  WordBool(PSmallint(sqldata)^);
