@@ -1347,7 +1347,7 @@ begin
   if BufferLength > High(Word) then
     BufferLength := High(Word);
     AStatus := Param.blob_get_segment(Param.blob_handle, Buffer, Word(BufferLength), length);
-  Result := (AStatus = 0);
+  Result := (AStatus <> 0);
 end;
 
 procedure DescBlobReadString(Param: PBlobCallBack; var Str: String);
@@ -1429,7 +1429,7 @@ procedure DescBlobReadSizedBuffer(Param: PBlobCallBack; Buffer: Pointer);
 var
   CurrentLength: Word;
   TMP: Pointer;
-  Len: Cardinal;
+  Len: Integer;
 begin
   TMP := Buffer;
   Len := 0;
