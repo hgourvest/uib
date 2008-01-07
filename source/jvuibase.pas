@@ -408,12 +408,12 @@ const
 type
 
   TBlobGetSegmentFn = function(hnd: Pointer; buffer: PChar; buf_size: ISCUShort;
-    var result_len: ISCUShort): Smallint; stdcall;
+    var result_len: ISCUShort): Smallint; cdecl;
 
   TBlobPutSegmentFn = procedure(hnd: PPointer; buffer: PChar;
-    buf_size: ISCUShort); stdcall;
+    buf_size: ISCUShort); cdecl;
 
-  TBlobLSeekFn = function(hnd: PPointer; mode: ISCUShort; offset: ISCLong): ISCLong; stdcall;
+  TBlobLSeekFn = function(hnd: PPointer; mode: ISCUShort; offset: ISCLong): ISCLong; cdecl;
 
 {$IFDEF FB102ORYF867}
 
