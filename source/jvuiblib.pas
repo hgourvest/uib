@@ -303,6 +303,7 @@ type
     procedure SetAsBoolean(const Index: Word; const Value: Boolean); virtual;
     procedure SetAsDate(const Index: Word; const Value: Integer); virtual;
     procedure SetAsTime(const Index: Word; const Value: Cardinal); virtual;
+    procedure SetAsVariant(const Index: Word; const Value: Variant); virtual;
   {$IFDEF GUID_TYPE}
     procedure SetAsGUID(const Index: Word; const Value: TGUID); virtual;
   {$ENDIF}
@@ -343,6 +344,7 @@ type
     procedure SetByNameAsDateTime(const Name: String; const Value: TDateTime);
     procedure SetByNameAsBoolean(const Name: String; const Value: boolean);
     procedure SetByNameAsDate(const Name: String; const Value: Integer);
+    procedure SetByNameAsVariant(const Name: String; const Value: Variant);
   {$IFDEF GUID_TYPE}
     procedure SetByNameAsGUID(const Name: String; const Value: TGUID);
   {$ENDIF}
@@ -374,7 +376,7 @@ type
     property AsBoolean    [const Index: Word]: Boolean    read GetAsBoolean    write SetAsBoolean;
     property AsDate       [const Index: Word]: Integer    read GetAsDate       write SetAsDate;
     property AsTime       [const Index: Word]: Cardinal   read GetAsTime       write SetAsTime;
-    property AsVariant    [const Index: Word]: Variant    read GetAsVariant;
+    property AsVariant    [const Index: Word]: Variant    read GetAsVariant    write SetAsVariant;
   {$IFDEF GUID_TYPE}
     property AsGUID       [const Index: Word]: TGUID      read GetAsGUID       write SetAsGUID;
   {$ENDIF}
@@ -389,7 +391,7 @@ type
     property ByNameAsString     [const name: String]: String     read GetByNameAsString     write SetByNameAsString;
     property ByNameAsWideString [const name: String]: WideString read GetByNameAsWideString write SetByNameAsWideString;
     property ByNameAsQuad       [const name: String]: TISCQuad   read GetByNameAsQuad       write SetByNameAsQuad;
-    property ByNameAsVariant    [const name: String]: Variant    read GetByNameAsVariant;
+    property ByNameAsVariant    [const name: String]: Variant    read GetByNameAsVariant    write SetByNameAsVariant;
     property ByNameAsDateTime   [const name: String]: TDateTime  read GetByNameAsDateTime   write SetByNameAsDateTime;
     property ByNameAsBoolean    [const name: String]: Boolean    read GetByNameAsBoolean    write SetByNameAsBoolean;
     property ByNameAsDate       [const name: String]: Integer    read GetByNameAsDate       write SetByNameAsDate;
@@ -4680,6 +4682,26 @@ end;
     end;
   end;
 
+  procedure TSQLDA.SetAsVariant(const Index: Word; const Value: Variant);
+  begin
+    case TVarData(Value).VType of
+      varSmallInt, varShortInt, varByte: SetAsSmallint(Index, Value);
+      varWord, varInteger:               SetAsInteger(Index, Value);
+      varLongWord, varInt64:             SetAsInt64(Index, Value);
+      varSingle:                         SetAsSingle(Index, Value);
+      varDouble:                         SetAsDouble(Index, Value);
+      varCurrency:                       SetAsCurrency(Index, Value);
+      varDate:                           SetAsDateTime(Index, Value);
+      varOleStr, varString:              SetAsString(Index, Value);
+{$IFDEF IB7_UP}
+      varBoolean:                        SetAsBoolean(Index, Value);
+{$ENDIF}
+      varNull, VarEmpty:                 SetIsNull(index, true);
+    else
+      raise EUIBConvertError.Create(EUIB_CASTERROR);
+    end;
+  end;
+
 {$IFDEF GUID_TYPE}
   procedure TSQLDA.SetAsGUID(const Index: Word; const Value: TGUID);
   var
@@ -4886,6 +4908,12 @@ end;
   procedure TSQLDA.SetByNameAsWideString(const Name: String; const Value: WideString);
   begin
     SetAsWideString(GetFieldIndex(Name), Value);
+  end;
+
+  procedure TSQLDA.SetByNameAsVariant(const Name: String;
+    const Value: Variant);
+  begin
+    SetAsVariant(GetFieldIndex(Name), Value);
   end;
 
 {$IFDEF GUID_TYPE}
