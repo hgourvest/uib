@@ -42,6 +42,7 @@ contains
   jvuibsqlparser in '..\source\jvuibsqlparser.pas',
   jvuibdataset in '..\source\jvuibdataset.pas',
   jvuibkeywords in '..\source\jvuibkeywords.pas',
-  jvuibavl in '..\source\jvuibavl.pas';
+  jvuibavl in '..\source\jvuibavl.pas',
+  jvuibdescriptor in '..\source\jvuibdescriptor.pas';
 
 end.
