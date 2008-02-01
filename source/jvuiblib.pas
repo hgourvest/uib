@@ -52,11 +52,13 @@ type
 
   EUIBError = class(Exception)
   private
+    FGDSCode: Integer;
     FErrorCode: Integer;
     FSQLCode  : Integer;
   public
     property ErrorCode: Integer read FErrorCode;
     property SQLCode: Integer read FSQLCode;
+    property GDSCode: Integer read FGDSCode;
   end;
 
   EUIBException = class(EUIBError)
@@ -1082,6 +1084,7 @@ const
       Exception.FSQLCode   := ErrSqlcode;
       if Exception.FSQLCode <> 0 then
         Exception.Message := Exception.Message + ErrSQLInterprete(Exception.FSQLCode) + NewLine;
+      Exception.FGDSCode := Status;
       Exception.FErrorCode := GETCode(Status);
       Exception.Message := Exception.Message + 'Error Code: ' + IntToStr(Exception.FErrorCode);
       raise Exception;
