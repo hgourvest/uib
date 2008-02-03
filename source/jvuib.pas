@@ -232,6 +232,7 @@ type
     procedure ClearEvents;
     procedure DoParamsChange(Sender: TObject);
   protected
+    function CanConnect : Boolean; virtual;
     procedure DoOnConnectionLost(Lib: TUIBLibrary); virtual;
     procedure DoOnGetDBExceptionClass(Number: Integer; out Excep: EUIBExceptionClass); virtual;
   public
@@ -1399,6 +1400,8 @@ begin
     case Value of
       True  :
         begin
+          if not CanConnect then
+            Exit;
           if Assigned(BeforeConnect) then BeforeConnect(Self);
           FLibrary.Load(FLiBraryName);
           if not FHandleShared then
@@ -2065,6 +2068,11 @@ begin
     for i := 0 to FTransactions.Count - 1 do
       TJvUIBTransaction(FTransactions[i]).FSQLDialect := Dialect;
   end;
+end;
+
+function TJvUIBDataBase.CanConnect: Boolean;
+begin
+  Result := True;
 end;
 
 { TJvUIBStatement }
