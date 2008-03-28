@@ -4,7 +4,6 @@ program AppServer;
   {$APPTYPE CONSOLE}
 {$ENDIF}
 uses
-  json in '..\..\src\json.pas',
   PDGService in '..\..\src\PDGService.pas',
   PDGSocketStub in '..\..\src\PDGSocketStub.pas',
   WebServer in 'WebServer.pas',

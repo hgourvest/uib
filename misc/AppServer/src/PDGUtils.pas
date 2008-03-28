@@ -248,7 +248,7 @@ begin
 {$IFDEF FPC}
   Result := InterlockedCompareExchange(Value, 0, 0);
 {$ELSE}
-  Result := Integer(InterlockedCompareExchange(Pointer(Value), nil, nil));
+  Result := Integer(InterlockedCompareExchange(Value, 0, 0));
 {$ENDIF}
 {$IFEND}
 end;

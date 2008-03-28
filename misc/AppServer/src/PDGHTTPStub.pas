@@ -19,7 +19,7 @@ unit PDGHTTPStub;
 {$ENDIF}
 {$I PDGAppServer.inc}
 interface
-uses PDGSocketStub, {$IFDEF FPC}sockets,{$ELSE}Winsock,{$ENDIF} PDGUtils, classes, davl;
+uses PDGSocketStub, {$IFDEF FPC}sockets,{$ELSE}Winsock,{$ENDIF} PDGUtils, classes, json;
 
 type
   THttpResponseCode = (rc100, rc101, rc200, rc201, rc202, rc203, rc204, rc205,
@@ -31,51 +31,17 @@ type
 
   TConnectionField = (conClose, conKeepAlive);
 
-  THTTPFieldList = class;
-
-  THTTPField = class(TAvlHandle)
+  THTTPRequest = class(TJsonObject)
   private
-    FName: string;
-    FValue: string;
-  public
-    property Name: string read FName;
-    property Value: string read FValue;
-    constructor Create(const AName, AValue: string); virtual;
-  end;
-
-  THTTPFieldList = class(TAvlTree)
-  private
-    FCaseSensitive: boolean;
-  protected
-    function CompareNodeNode(node1, node2: TAvlHandle): integer; override;
-    function CompareKeyNode(k: TAvlKey; h: TAvlHandle): integer; override;
-  public
-    function GetIntValue(const name: string; const Default: Integer = 0): Integer;
-    function GetStringValue(const name: string; const Default: String = ''): string;
-    constructor Create(CaseSensitive: boolean); reintroduce; virtual;
-  end;
-
-  THTTPRequest = class(THTTPFieldList)
-  private
-    FMethod: THttpMethod;
-    FURI: string;
-    FVersion: record
-      major: integer;
-      minor: integer;
-    end;
-    FParams: THTTPFieldList;
     FContent: TPooledMemoryStream;
     function GetContentString: string;
   public
-    property Method: THttpMethod read FMethod;
-    property URI: string read FURI write FURI;
-    property Params: THTTPFieldList read FParams;
     property Content: TPooledMemoryStream read FContent;
     property ContentString: string read GetContentString;
     function GetAuthorization(out user, pass: string): boolean;
     function GetCookies(const name: string): string;
-    procedure Clear; override;
-    constructor Create(CaseSensitive: boolean); override;
+    procedure Clear;
+    constructor Create(jt: TJsonType = json_type_object); override; 
     destructor Destroy; override;
   end;
 
@@ -168,31 +134,18 @@ const
 implementation
 uses SysUtils, StrUtils;
 
-{ THTTPField }
-
-constructor THTTPField.Create(const AName, AValue: string);
-begin
-  FName := AName;
-  FValue := AValue;
-end;
-
 { THTTPRequest }
 
 procedure THTTPRequest.Clear;
 begin
-  FMethod := mUNKNOW;
-  FVersion.major := 0;
-  FVersion.minor := 0;
-  FURI := '';
-  FContent.Clear;
-  FParams.Clear;
+  if IsType(json_type_object) then
+    AsObject.Clear;
   inherited;
 end;
 
-constructor THTTPRequest.Create(CaseSensitive: boolean);
+constructor THTTPRequest.Create(jt: TJsonType = json_type_object);
 begin
-  inherited Create(CaseSensitive);
-  FParams := THTTPFieldList.Create(true);
+  Inherited create(jt);
   FContent := TPooledMemoryStream.Create;
   Clear;
 end;
@@ -200,7 +153,6 @@ end;
 destructor THTTPRequest.Destroy;
 begin
   inherited;
-  FParams.Free;
   FContent.Free;
 end;
 
@@ -210,7 +162,7 @@ var
   i: integer;
 begin
   Result := False;
-  str := GetStringValue('Authorization');
+  str := s['Authorization'];
   if str <> '' then
   begin
     i := pos('Basic ', str);
@@ -240,65 +192,16 @@ end;
 
 function THTTPRequest.GetCookies(const name: string): string;
 var
-  Field: THTTPField;
   strlist: TStringList;
 begin
-  Field := THTTPField(Search(PChar('Cookie')));
-  if Field <> nil then
-  begin
-    strlist := TStringList.Create;
-    try
-      strlist.Delimiter := ';';
-      strlist.DelimitedText := Field.Value;
-      Result := strlist.Values[name];
-    finally
-      strlist.Free;
-    end;
-  end else
-    Result := '';
-end;
-
-{ THTTPFieldList }
-
-function THTTPFieldList.CompareKeyNode(k: TAvlKey; h: TAvlHandle): integer;
-begin
-  if FCaseSensitive then
-    Result := CompareStr(PChar(k), THTTPField(h).FName) else
-    Result := CompareText(PChar(k), THTTPField(h).FName);
-end;
-
-function THTTPFieldList.CompareNodeNode(node1, node2: TAvlHandle): integer;
-begin
-  if FCaseSensitive then
-    Result := CompareStr(THTTPField(node1).FName, THTTPField(node2).FName) else
-    Result := CompareText(THTTPField(node1).FName, THTTPField(node2).FName);
-end;
-
-constructor THTTPFieldList.Create(CaseSensitive: boolean);
-begin
-  inherited Create;
-  FCaseSensitive := CaseSensitive;
-end;
-
-function THTTPFieldList.GetIntValue(const name: string;
-  const Default: Integer): Integer;
-var
-  f: THTTPField;
-begin
-  f := THTTPField(Search(PChar(name)));
-  if (f = nil) or not TryStrToInt(f.FValue, Result) then
-    Result := Default;
-end;
-
-function THTTPFieldList.GetStringValue(const name,
-  Default: String): string;
-var
-  f: THTTPField;
-begin
-  f := THTTPField(Search(PChar(name)));
-  if (f = nil) then
-    Result := Default else
-    Result := f.FValue;
+  strlist := TStringList.Create;
+  try
+    strlist.Delimiter := ';';
+    strlist.DelimitedText := s['Cookie'];
+    Result := strlist.Values[name];
+  finally
+    strlist.Free;
+  end;
 end;
 
 { THTTPStub }
@@ -311,7 +214,7 @@ begin
   if p = nil then
     Result := false else
     begin
-      FHeader.Insert(THTTPField.Create(Copy(str, 1, p-str), p+2));
+      FHeader.S[Copy(str, 1, p-str)] := p+2;
       Result := true;
     end;
 end;
@@ -324,7 +227,7 @@ var
   size: integer;
 {$ENDIF}
 begin
-  ContentLength := FHeader.GetIntValue('Content-Length', 0);
+  ContentLength := FHeader.I['Content-Length'];
   if ContentLength > 0 then
   begin
     FHeader.FContent.Size := ContentLength;
@@ -380,68 +283,13 @@ function THTTPStub.DecodeCommand(str: PChar): boolean;
 var
   marker: PChar;
   param, value: string;
-  Field: THTTPField;
+  i: integer;
 begin
   result := false;
-  case str^ of
-    'G': if (str[1] = 'E') and (str[2] = 'T') then
-         begin
-           FHeader.FMethod := mGET;
-           str := @str[3];
-         end else
-           exit;
-    'P': case str[1] of
-           'O': if (str[2] = 'S') and (str[3] = 'T') then
-                begin
-                  FHeader.FMethod := mPOST;
-                  str := @str[4];
-                end else
-                  exit;
-           'U': if (str[2] = 'T') then
-                begin
-                  FHeader.FMethod := mPUT;
-                  str := @str[3];
-                end else
-                  exit;
-           else
-             exit;
-           end;
-    'C': if (str[1] = 'O') and (str[2] = 'N') and (str[3] = 'N') and
-           (str[4] = 'E') and (str[5] = 'C') and (str[6] = 'T') then
-         begin
-           FHeader.FMethod := mCONNECT;
-           str := @str[7];
-         end else
-           exit;
-    'D': if (str[1] = 'E') and (str[2] = 'L') and (str[3] = 'E') and
-            (str[4] = 'T') and (str[5] = 'E') then
-         begin
-           FHeader.FMethod := mDELETE;
-           str := @str[6];
-         end else
-           exit;
-    'H': if (str[1] = 'E') and (str[2] = 'A') and (str[3] = 'D') then
-         begin
-           FHeader.FMethod := mHEAD;
-           str := @str[4];
-         end else
-           exit;
-    'O': if (str[1] = 'P') and (str[2] = 'T') and (str[3] = 'I') and
-           (str[4] = 'O') and (str[5] = 'N') and (str[6] = 'S') then
-         begin
-           FHeader.FMethod := mOPTIONS;
-           str := @str[7];
-         end else
-           exit;
-    'T': if (str[1] = 'R') and (str[2] = 'A') and (str[3] = 'C') and (str[4] = 'E') then
-         begin
-           FHeader.FMethod := mTRACE;
-           str := @str[5];
-         end else
-           exit;
-  else
-    exit;
-  end;
+  marker := StrScan(str, SP);
+  if marker = nil then exit;
+  FHeader.s['FMethod'] := PChar(copy(str, 0, marker - str));
+  str := marker;
 
   // SP
   if (str^ <> SP) then
@@ -454,7 +302,8 @@ begin
     inc(str);
   if (str > marker) and (str^ <> NL) then
   begin
-    if not DecodeURI(marker, str - marker, FHeader.FURI) then
+    if DecodeURI(marker, str - marker, value) then
+      FHeader.s['FURI'] := PChar(value) else
       exit;
   end else
     exit;
@@ -472,8 +321,9 @@ begin
                if (param <> '') and (str > marker) then
                begin
                  if not DecodeURI(marker, str - marker, value) then exit;
-                 Field := THTTPField.Create(param, value);
-                 FHeader.FParams.Insert(Field);
+                 FHeader['@FParams'].s[param] := PChar(value);
+                 //Field := THTTPField.Create(param, value);
+                 //FHeader.FParams.Insert(Field);
                end;
                if (str^ in [SP, NL]) then
                  Break;
@@ -511,7 +361,8 @@ begin
   while (str^ in ['0'..'9']) do inc(str);
   if (str > marker) and (str^ <> NL) then
   begin
-    if not TryStrToInt(copy(marker, 0, str - marker), FHeader.FVersion.major) then
+    if TryStrToInt(copy(marker, 0, str - marker), i) then
+      FHeader.I['FVersion.major'] := i else
       exit;
   end else
     exit;
@@ -526,7 +377,8 @@ begin
   while (str^ in ['0'..'9']) do inc(str);
   if (str > marker) then
   begin
-    if not TryStrToInt(copy(marker, 0, str - marker), FHeader.FVersion.minor) then
+    if TryStrToInt(copy(marker, 0, str - marker), i) then
+      FHeader.I['FVersion.minor']  := i else
       exit;
   end else
     exit;
@@ -606,7 +458,7 @@ constructor THTTPStub.CreateStub(AOwner: TSocketServer; ASocket: longint;
   AAddress: TSockAddr);
 begin
   inherited;
-  FHeader := THTTPRequest.Create(false);
+  FHeader := THTTPRequest.Create;
 end;
 
 destructor THTTPStub.Destroy;

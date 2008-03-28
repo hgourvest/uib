@@ -399,6 +399,7 @@ procedure THTTPSession.ProcessRequest(Connexion: THTTPStub);
 var
   Ext: string;
   user, pass, service: string;
+  str: string;
   obj: TJsonObject;
 begin
   with Connexion do
@@ -417,21 +418,21 @@ begin
         FPasswordNeeded := false;
     end;
 
-    case Header.Method of
-    mGET:
+    if Header.S['FMethod'] = 'GET' then
       begin
-        if Header.URI[Length(Header.URI)] in ['/','\'] then
+        str := Header.S['FURI'];
+        if str[Length(str)] in ['/','\'] then
         begin
-          if FileExists(FHttpDir + Header.URI + 'index.html') then
-            Header.URI := Header.URI + 'index.html' else
-          if FileExists(FHttpDir + Header.URI + 'index.htm') then
-            Header.URI := Header.URI + 'index.htm';
+          if FileExists(FHttpDir + str + 'index.html') then
+            Header.S['FURI'] := PChar(Header.S['FURI'] + 'index.html') else
+          if FileExists(FHttpDir + Header.S['FURI'] + 'index.htm') then
+            Header.S['FURI'] := PChar(Header.S['FURI'] + 'index.htm');
         end;
 
-        if FileExists(FHttpDir + Header.URI) then
+        if FileExists(FHttpDir + Header.S['FURI']) then
         begin
           WriteHeader(rc200);
-          ext := UpperCase(ExtractFileExt(Header.URI));
+          ext := UpperCase(ExtractFileExt(Header.S['FURI']));
           if ext = '.HTM' then WriteLine('Content-Type: text/html') else
           if ext = '.HTML' then WriteLine('Content-Type: text/html') else
           if ext = '.CSS' then WriteLine('Content-Type: text/css') else
@@ -442,18 +443,19 @@ begin
           if ext = '.GIF' then WriteLine('Content-Type: image/gif') else
             WriteLine('Content-Type: text/plain');
 
-          SendFile(FHttpDir + Header.URI);
+          SendFile(FHttpDir + Header.S['FURI']);
         end else
         begin
           WriteHeader(rc404);
           SendString(HttpResponseStrings[rc404]);
         end;
-      end;
-    mPOST:
+      end else
+    if Header.S['FMethod'] = 'POST' then
       begin
-        if (Header.GetStringValue('Accept') = 'application/json') then
+        if (Header.s['Accept'] = 'application/json') then
         begin
-          service := copy(Header.URI, 2, Length(Header.URI)-1);
+          str := Header.S['FURI'];
+          service := copy(str, 2, Length(str)-1);
           obj := FJsonRPCServices.Invoke(PChar(service), PChar(Header.ContentString));
           WriteHeader(rc200);
           WriteLine(format('Content-Length: %d', [obj.CalcSize]));
@@ -470,7 +472,6 @@ begin
         WriteHeader(rc404);
         SendString(HttpResponseStrings[rc404]);
       end;
-    end;
   except
     on E: Exception do
     begin
@@ -534,7 +535,7 @@ begin
   try
     tr.DataBase := db;
     qr.Transaction := tr;
-    qr.SQL.Text := 'select * from ' + Params.AsArray.get(0).AsString;
+    qr.SQL.Text := 'select * from ' + Params.AsArray[0].AsString;
     qr.CachedFetch := false;
     Result := QueryToJson(qr);
   finally
