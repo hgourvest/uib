@@ -291,7 +291,7 @@ type
     function GetAsGUID(const Index: Word): TGUID;
   {$ENDIF}
 
-    procedure SetIsNull(const Index: Word; const Value: boolean);
+    procedure SetIsNull(const Index: Word; const Value: boolean); virtual;
     procedure SetAsDouble(const Index: Word; const Value: Double); virtual;
     procedure SetAsCurrency(const Index: Word; const Value: Currency); virtual;
     procedure SetAsInt64(const Index: Word; const Value: Int64); virtual;
@@ -590,6 +590,7 @@ type
     FParamCount: Word;
     function FindParam(const name: string; out Index: Word): boolean;
     function GetFieldName(const Index: Word): string;
+    procedure AllocateDataBuffer;
   protected
     function AddField(const name: string): Word;
     procedure SetFieldType(const Index: Word; Size: Integer; Code: SmallInt;
@@ -704,7 +705,7 @@ type
     function  DSQLFetchWithBlobs(var DbHandle: IscDbHandle; var TraHandle: IscTrHandle;
       var StmtHandle: IscStmtHandle; Dialect: Word; Sqlda: TSQLResult): boolean;
     procedure DSQLDescribe(var DbHandle: IscDbHandle; var TrHandle: IscTrHandle; var StmtHandle: IscStmtHandle; Dialect: Word; Sqlda: TSQLResult);
-    procedure DSQLDescribeBind(var StmtHandle: IscStmtHandle; Dialect: Word; Sqlda: TSQLDA);
+    procedure DSQLDescribeBind(var StmtHandle: IscStmtHandle; Dialect: Word; Sqlda: TSQLParams);
     procedure DSQLSetCursorName(var StmtHandle: IscStmtHandle; const cursor: string);
     procedure DSQLExecImmed2(var DBHhandle: IscDbHandle; var TraHandle: IscTrHandle;
       const Statement: string; dialect: Word; InSqlda, OutSqlda: TSQLDA);
@@ -1877,7 +1878,7 @@ const
     end;
   end;
 
-  procedure TUIBLibrary.DSQLDescribeBind(var StmtHandle: IscStmtHandle; Dialect: Word; Sqlda: TSQLDA);
+  procedure TUIBLibrary.DSQLDescribeBind(var StmtHandle: IscStmtHandle; Dialect: Word; Sqlda: TSQLParams);
   begin
   {$IFDEF UIBTHREADSAFE}
     FLIBCritSec.Enter;
@@ -1885,6 +1886,7 @@ const
   {$ENDIF}
       CheckUIBApiCall(isc_dsql_describe_bind(@FStatusVector, @StmtHandle, Dialect,
         GetSQLDAData(Sqlda)));
+      Sqlda.AllocateDataBuffer;
   {$IFDEF UIBTHREADSAFE}
     finally
       FLIBCritSec.Leave;
@@ -3447,9 +3449,12 @@ type
   end;
 
   function TSQLDA.GetIsBlob(const Index: Word): boolean;
+  var
+    ASQLType: Word;
   begin
     CheckRange(Index);
-    result := ((FXSQLDA.sqlvar[Index].sqltype and not(1)) = SQL_BLOB);
+    ASQLType := (FXSQLDA.sqlvar[Index].sqltype and not(1));
+    result := (ASQLType = SQL_BLOB) or (ASQLType = SQL_QUAD);
   end;
 
   function TSQLDA.GetIsArray(const Index: Word): boolean;
@@ -5970,6 +5975,24 @@ end;
     end;
   end;
 
+  procedure TSQLParams.AllocateDataBuffer;
+  var
+    i, j: integer;
+  begin
+    for i := 0 to FXSQLDA.sqln - 1 do
+      with FXSQLDA.sqlvar[i] do
+      begin
+        Init := true;
+        if SqlLen > 0 then
+          GetMem(sqldata, SqlLen) else
+          sqldata := nil;
+        if ParamNameLength > 0 then
+          for j := 0 to GetAllocatedFields - 1 do
+            if (j <> i) and (ID = FXSQLDA.sqlvar[j].ID) then
+              Move(FXSQLDA.sqlvar[i], FXSQLDA.sqlvar[j], SizeOf(TUIBSQLVar)-MaxParamLength-2);
+      end;
+  end;
+
   procedure TSQLParams.SetFieldType(const Index: Word; Size: Integer; Code,
     Scale: Smallint);
   var i: Word;
@@ -6108,7 +6131,7 @@ end;
               in Identifiers)) and (CompareText(copy(Src, 0, 7), 'declare') = 0) and
                 not (Src[7] in Identifiers) then
                   while (Src^ <> #0) do Next else next;
-          end; 
+          end;
       else
         next;
       end;

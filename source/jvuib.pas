@@ -704,7 +704,7 @@ type
 
     procedure BeginTransaction; virtual;
     procedure BeginStatement; virtual;
-    procedure BeginPrepare; virtual;
+    procedure BeginPrepare(describeParams: boolean = false); virtual;
     procedure BeginExecute; virtual;
     procedure BeginExecImme; virtual;
 
@@ -748,7 +748,7 @@ type
     { Open the query and fetch the first record if FetchFirst = true. }
     procedure Open(FetchFirst: boolean = True);
     { Prepare the query. }
-    procedure Prepare;
+    procedure Prepare(describeParams: boolean = false);
     { Execute the query. }
     procedure Execute;
     { Execute the query or the script (QuickScript = true) immediately. }
@@ -2177,10 +2177,10 @@ begin
     BeginExecImme;
 end;
 
-procedure TJvUIBStatement.Prepare;
+procedure TJvUIBStatement.Prepare(describeParams: boolean = false);
 begin
   if (FCurrentState < qsPrepare) then
-  BeginPrepare
+    BeginPrepare(describeParams);
 end;
 
 procedure TJvUIBStatement.InternalNext;
@@ -2282,7 +2282,7 @@ begin
     FOnClose(Self);    
 end;
 
-procedure TJvUIBStatement.BeginPrepare;
+procedure TJvUIBStatement.BeginPrepare(describeParams: boolean = false);
 begin
   if (FStHandle = nil) then BeginStatement;
   FSQLResult := ResultClass.Create(0, FCachedFetch, FFetchBlobs, FBufferChunks);
@@ -2300,6 +2300,8 @@ begin
         FCursorName := 'C' + inttostr(PtrInt(FStHandle));
         if FUseCursor then
           DSQLSetCursorName(FStHandle, FCursorName);
+        if describeParams and (FParameter.ParamCount > 0) then
+          DSQLDescribeBind(FStHandle, FTransaction.FSQLDialect, FParameter);
     except
       FSQLResult.free;
       FSQLResult := nil;
@@ -4110,22 +4112,26 @@ procedure TJvUIBScript.ExecuteScript;
 var
   Parser: TJVUIBSQLParser;
   st: TSQLStatement;
+  i: Integer;
   j: TCharacterSet;
   Dialect: Integer;
   TrHandle: IscTrHandle;
   str: string;
   Found: boolean;
   Handled: boolean;
+
   procedure CheckDatabase;
   begin
     if (Transaction = nil) then
-       raise Exception.Create(EUIB_TRANSACTIONNOTDEF);
+      raise Exception.Create(EUIB_TRANSACTIONNOTDEF);
   end;
 
   procedure TryExecute;
   begin
     try
-      FQuery.ExecSQL;
+      if FQuery.Params.ParamCount > 0 then
+        FQuery.Prepare(true) else
+        FQuery.ExecSQL;
     except
       on E: Exception do
       begin
@@ -4218,11 +4224,15 @@ begin
           end;
         ssCommit:
           begin
-            Transaction.Commit;
+            if FQuery.CurrentState > qsPrepare then
+              Transaction.CommitRetaining else
+              Transaction.Commit;
           end;
         ssRollback:
           begin
-            Transaction.RollBack;
+            if FQuery.CurrentState > qsPrepare then
+              Transaction.RollBackRetaining else
+              Transaction.Rollback;
           end;
       {$IFDEF IB71_UP}
         ssSetSavepoint:
@@ -4239,15 +4249,40 @@ begin
           begin
             FQuery.SQL.Text := trim(Parser.Statement);
             TryExecute;
-            FQuery.Close(etmStayIn);
+            if FQuery.Params.ParamCount = 0 then
+              FQuery.Close(etmStayIn);
           end;
+        ssBulkParams:
+          begin
+            for i := 0 to Parser.Params.Count - 1 do
+            begin
+              str := Parser.Params[i];
+              case TSQLToken(Parser.Params.Objects[i]) of
+                toValString:
+                  begin
+                    if FQuery.Params.IsBlob[i] then
+                      FQuery.ParamsSetBlob(i, str) else
+                      FQuery.Params.AsString[i] := str;
+                  end;
+                toValNumber: FQuery.Params.AsInt64[i] := StrToInt64(str);
+                toValFloat : FQuery.Params.AsDouble[i] := StrToFloat(str);
+                toNULL     : FQuery.Params.IsNull[i] := true;
+              else
+                raise Exception.Create(EUIB_UNEXPECTEDERROR);
+              end;
+            end;
+            //FQuery.Params.FieldType[i]
+
+            FQuery.Execute;
+          end
       else
         // DDL ...
         FQuery.SQL.Text := trim(Parser.Statement);
         TryExecute;
-        if FAutoDDL then
-          FQuery.Close(etmCommit) else
-          FQuery.Close(etmStayIn);
+        //if not FBulk then
+          if FAutoDDL then
+            FQuery.Close(etmCommit) else
+            FQuery.Close(etmStayIn);
       end;
     end;
   finally

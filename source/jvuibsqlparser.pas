@@ -81,7 +81,7 @@ type
     ssCommentView, ssCommentProcedure, ssCommentTrigger, ssCommentFunction,
     ssCommentFilter, ssCommentException, ssCommentGenerator, ssCommentSequence,
     ssCommentIndex, ssCommentRole, ssCommentCharacterSet, ssCommentCollation,
-    ssCommentColumn, ssCommentParameter, ssEOF);
+    ssCommentColumn, ssCommentParameter, ssBulkParams, ssEOF);
 
 type
   EUIBSQLParseError = class(Exception)
@@ -103,9 +103,9 @@ type
     FParams: TStringlist;
     FStr: string;
     FValue: string;
-    FLine: integer;
+    FLine: Integer;
     FCursor: PChar;
-    FMarkerLine: integer;
+    FMarkerLine: Integer;
     FMarkerPos: Integer;
     FOnComment: TOnComment;
     function NextLine: boolean;
@@ -207,6 +207,7 @@ end;
 function TJVUIBSQLParser.NextStatement: TSQLStatement;
 var
   LastTock: TSQLToken;
+  minus: boolean;
 
   function Next: TSQLToken;
   begin
@@ -225,6 +226,8 @@ var
       end;
     until (tok = t) or (tok = toEOF);
   end;
+
+
 begin
   result := ssUnknow;
 
@@ -475,6 +478,32 @@ begin
         result := ssConnect;
       end else
         error;
+    toLParen:
+      begin
+        while true do
+          case Next of
+            toValString, toValNumber, toValFloat, toNULL:
+              begin
+                if minus then
+                begin
+                  FParams.AddObject('-' + FValue, Pointer(LastTock));
+                  minus := false;
+                end else
+                  FParams.AddObject(FValue, Pointer(LastTock));
+                case Next of
+                  toRParen: Break;
+                  toComma: Continue;
+                else
+                  Error;
+                end;
+              end;
+            toMinus: minus := true;
+            toPlus : minus := false;
+          else
+            Error;
+          end;
+        Result := ssBulkParams;
+      end;
     toEOF: result := ssEOF;
   else
     Error('Unknow statement type.');
@@ -1405,7 +1434,8 @@ next:
                           'C': if (get = 'O') and (get = 'D') and (get = 'E') and (get = ' ') then
                                  result := toSQLCODE;
                         end;
-                 'T': if (get = 'A') then
+                 'T': case get of
+                      'A':
                         case get of
                           'B': if (get = 'I') and (get = 'L') and (get = 'I') and (get = 'T') and
                                   (get = 'Y') and (get = ' ') then
@@ -1425,6 +1455,7 @@ next:
                                         result := toSTATISTICS;
                                end;
                         end;
+                      end;
                  'U': case get of
                         'B': case get of
                                '_': if (get = 'T') and (get = 'Y') and (get = 'P') and
