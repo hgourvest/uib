@@ -4257,7 +4257,7 @@ begin
             for i := 0 to Parser.Params.Count - 1 do
             begin
               str := Parser.Params[i];
-              case TSQLToken(Parser.Params.Objects[i]) of
+              case TSQLToken(PtrInt(Parser.Params.Objects[i])) of
                 toValString:
                   begin
                     if FQuery.Params.IsBlob[i] then

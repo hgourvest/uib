@@ -486,10 +486,10 @@ begin
               begin
                 if minus then
                 begin
-                  FParams.AddObject('-' + FValue, Pointer(LastTock));
+                  FParams.AddObject('-' + FValue, Pointer(ord(LastTock)));
                   minus := false;
                 end else
-                  FParams.AddObject(FValue, Pointer(LastTock));
+                  FParams.AddObject(FValue, Pointer(ord(LastTock)));
                 case Next of
                   toRParen: Break;
                   toComma: Continue;
