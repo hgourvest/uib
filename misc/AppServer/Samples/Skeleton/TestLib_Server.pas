@@ -54,7 +54,7 @@ var
   stream: TPooledMemoryStream;
   procedure SendException(e: Exception);
   begin
-    stream.WriteString('[' + e.ClassName + '] ' + E.Message);
+    stream.WriteString('[' + e.ClassName + '] ' + E.Message, true);
   end;
 begin
   Result := 0;
@@ -134,7 +134,7 @@ var
   stream: TPooledMemoryStream;
   procedure SendException(e: Exception);
   begin
-    stream.WriteString('[' + e.ClassName + '] ' + E.Message);
+    stream.WriteString('[' + e.ClassName + '] ' + E.Message, true);
   end;
 begin
   Result := 0;

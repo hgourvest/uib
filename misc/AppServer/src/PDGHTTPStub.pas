@@ -22,10 +22,6 @@ interface
 uses PDGSocketStub, {$IFDEF FPC}sockets,{$ELSE}Winsock,{$ENDIF} PDGUtils, classes, json;
 
 type
-  THttpResponseCode = (rc100, rc101, rc200, rc201, rc202, rc203, rc204, rc205,
-    rc206, rc300, rc301, rc302, rc303, rc304, rc305, rc306, rc307, rc400, rc401,
-    rc402, rc403, rc404, rc405, rc406, rc407, rc408, rc409, rc410, rc411, rc412,
-    rc413, rc414, rc415, rc416, rc417, rc500, rc501, rc502, rc503, rc504, rc505);
 
   THttpMethod = (mUNKNOW, mOPTIONS, mGET, mHEAD, mPOST, mPUT, mDELETE, mTRACE, mCONNECT);
 
@@ -83,52 +79,52 @@ const
   PT = '.';
   CRLF = CR+LF;
 
-  HttpResponseStrings : array[THttpResponseCode] of string = (
-    '100 Continue',
-    '101 Switching Protocols',
-
-    '200 OK',
-    '201 Created',
-    '202 Accepted',
-    '203 Non-Authoritative Information',
-    '204 No Content',
-    '205 Reset Content',
-    '206 Partial Content',
-
-    '300 Multiple Choices',
-    '301 Moved Permanently',
-    '302 Found',
-    '303 See Other',
-    '304 Not Modified',
-    '305 Use Proxy',
-    '306 unused',
-    '307 Temporary Redirect',
-    '400 Bad Request',
-    '401 Authorization Required',
-    '402 Payment Required',
-    '403 Forbidden',
-    '404 Not Found',
-    '405 Method Not Allowed',
-    '406 Not Acceptable',
-    '407 Proxy Authentication Required',
-    '408 Request Time-out',
-    '409 Conflict',
-    '410 Gone',
-    '411 Length Required',
-    '412 Precondition Failed',
-    '413 Request Entity Too Large',
-    '414 Request-URI Too Large',
-    '415 Unsupported Media Type',
-    '416 Requested Range Not Satisfiable',
-    '417 Expectation Failed',
-
-    '500 Internal Server Error',
-    '501 Method Not Implemented',
-    '502 Bad Gateway',
-    '503 Service Temporarily Unavailable',
-    '504 Gateway Time-out',
-    '505 HTTP Version Not Supported'
-  );
+//  HttpResponseStrings : array[THttpResponseCode] of string = (
+//    '100 Continue',
+//    '101 Switching Protocols',
+//
+//    '200 OK',
+//    '201 Created',
+//    '202 Accepted',
+//    '203 Non-Authoritative Information',
+//    '204 No Content',
+//    '205 Reset Content',
+//    '206 Partial Content',
+//
+//    '300 Multiple Choices',
+//    '301 Moved Permanently',
+//    '302 Found',
+//    '303 See Other',
+//    '304 Not Modified',
+//    '305 Use Proxy',
+//    '306 unused',
+//    '307 Temporary Redirect',
+//    '400 Bad Request',
+//    '401 Authorization Required',
+//    '402 Payment Required',
+//    '403 Forbidden',
+//    '404 Not Found',
+//    '405 Method Not Allowed',
+//    '406 Not Acceptable',
+//    '407 Proxy Authentication Required',
+//    '408 Request Time-out',
+//    '409 Conflict',
+//    '410 Gone',
+//    '411 Length Required',
+//    '412 Precondition Failed',
+//    '413 Request Entity Too Large',
+//    '414 Request-URI Too Large',
+//    '415 Unsupported Media Type',
+//    '416 Requested Range Not Satisfiable',
+//    '417 Expectation Failed',
+//
+//    '500 Internal Server Error',
+//    '501 Method Not Implemented',
+//    '502 Bad Gateway',
+//    '503 Service Temporarily Unavailable',
+//    '504 Gateway Time-out',
+//    '505 HTTP Version Not Supported'
+//  );
 
 const
 (* default limit on bytes in Request-Line (Method+URI+HTTP-version) *)
@@ -139,6 +135,7 @@ const
   DEFAULT_LIMIT_REQUEST_FIELDS = 100;
 
 function HTTPInterprete(src: PChar; named: boolean = false; sep: char = ';'): TJsonObject;
+function HTTPDecode(const AStr: String): String;
 
 implementation
 uses SysUtils, StrUtils;
@@ -153,21 +150,62 @@ begin
     strlist.Delimiter := sep;
     strlist.DelimitedText := src;
     if named then
-    begin
+    begin    
       Result := TJsonObject.Create(json_type_object);
-      with Result.AsObject do
+      //with Result.AsObject do
         for j := 0 to strlist.Count - 1 do
-          Put(PChar(strlist.Names[j]), TJsonObject.Create(trim(strlist.ValueFromIndex[j])));
+          Result.S[HTTPDecode(strlist.Names[j])] := PChar(trim(HTTPDecode(strlist.ValueFromIndex[j])));
     end else
     begin
       Result := TJsonObject.Create(json_type_array);
       with Result.AsArray do
         for j := 0 to strlist.Count - 1 do
-          Add(TJsonObject.Create(trim(strlist.Strings[j])));
+          Add(TJsonObject.Create(trim(HTTPDecode(strlist.Strings[j]))));
     end;
   finally
     strlist.Free;
   end;
+end;
+
+function HTTPDecode(const AStr: String): String;
+var
+  Sp, Rp, Cp: PChar;
+  S: String;
+begin
+  SetLength(Result, Length(AStr));
+  Sp := PChar(AStr);
+  Rp := PChar(Result);
+  while Sp^ <> #0 do
+  begin
+    case Sp^ of
+      '+': Rp^ := ' ';
+      '%': begin
+             Inc(Sp);
+             if Sp^ = '%' then
+               Rp^ := '%'
+             else
+             begin
+               Cp := Sp;
+               Inc(Sp);
+               if (Cp^ <> #0) and (Sp^ <> #0) then
+               begin
+                 S := '$' + Cp^ + Sp^;
+                 Rp^ := Chr(StrToInt(S));
+               end
+               else
+               begin
+                 Result := '';
+                 Exit;
+               end;
+             end;
+           end;
+    else
+      Rp^ := Sp^;
+    end;
+    Inc(Rp);
+    Inc(Sp);
+  end;
+  SetLength(Result, Rp - PChar(Result));
 end;
 
 function HTTPGetAuthorization(str: string): TJsonObject;
@@ -323,7 +361,7 @@ begin
                if (param <> '') and (str > marker) then
                begin
                  if not DecodeURI(marker, str - marker, value) then exit;
-                 FRequest['@params'].s[param] := PChar(value);
+                 FRequest['@params'].s[HTTPDecode(param)] := PChar(HTTPDecode(value));
                end;
                if (str^ in [SP, NL]) then
                  Break;
@@ -422,17 +460,28 @@ begin
           begin
             if not DecodeContent then
               exit;
-            ctx := TJsonObject.Create;
+
             try
-              doBeforeProcessRequest(ctx);
+              ctx := TJsonObject.Create;
               try
-                ProcessRequest(ctx); // <<<<<<<<<<<<<<<
+                doBeforeProcessRequest(ctx);
+                try
+                  ProcessRequest(ctx); // <<<<<<<<<<<<<<<
+                finally
+                  doAfterProcessRequest(ctx);
+                end;
               finally
-                doAfterProcessRequest(ctx);
+                ctx.Free;
               end;
-            finally
-              ctx.Free;
+            except
+              on E: Exception do
+              begin
+              {$ifdef madExcept}
+                HandleException(etNormal, E);
+              {$endif}
+              end;
             end;
+
             line := 0;
             cursor := 0;
           end else
@@ -506,7 +555,7 @@ begin
   FRequest['accept'] := HTTPInterprete(Request.S['env.accept'], false, ',');
 
 
-  FResponse.S['response'] :=  PChar(HttpResponseStrings[rc200]);
+  FResponse.I['response'] :=  200;
 
   FRequest.AddRef;
   ctx['request'] := FRequest;

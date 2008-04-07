@@ -16,7 +16,10 @@ type
   private
     procedure application_getdata_controler(Params: TJsonObject; var Result: TJsonObject);
     procedure application_getdata_json(Params: TJsonObject; var Result: TJsonObject);
+    procedure application_getdata_html(Params: TJsonObject; var Result: TJsonObject);
   public
+    procedure Redirect(const location: string);
+    function isPost: boolean;
     constructor Create(jt: TJsonType = json_type_object); override;
   end;
 
@@ -117,8 +120,7 @@ begin
   FFormats.S['jpg'] := 'image/jpeg';
   FFormats.S['gif'] := 'image/gif';
   FFormats.S['css'] := 'text/css';
-  FFormats.S['js'] := 'text/js';
-
+  FFormats.S['js'] := 'text/javascript';
 
   // connexion timout
 {$IFDEF FPC}
@@ -141,6 +143,8 @@ begin
 end;
 
 procedure THTTPConnexion.doBeforeProcessRequest(ctx: TJsonObject);
+var
+  obj: TJsonObject;
   function interprete(v: PChar; name: string): boolean;
   var
     p: PChar;
@@ -170,12 +174,29 @@ begin
   // get parametters
   ctx['params'] := TJsonObject.Create;
   ctx['params'].Merge(Request['params'], true);
-  if (Request.S['method'] = 'POST') and
-    (Request.S['content-type[0]'] = 'application/json') then
+  if (Request.S['method'] = 'POST') then
+    if(Request.S['content-type[0]'] = 'application/json') then
     begin
       ctx['params'].Merge(Request.ContentString);
       ctx.S['params.format'] := 'json';
-    end;
+    end else
+    if(Request.S['content-type[0]'] = 'application/x-www-form-urlencoded') then
+    begin
+      obj := HTTPInterprete(PChar(Request.ContentString), true, '&');
+      try
+        ctx['params'].Merge(obj, true);
+        ctx.S['params.format'] := 'html';
+      finally
+        obj.Free;
+      end;
+    end
+//    else
+//    if(Request.S['content-type[0]'] = 'multipart/form-data') then
+//    begin
+//
+//      ctx.S['params.format'] := 'html';
+//    end
+    ;
 
    with HTTPInterprete(Request.S['uri'], false, '/') do
    begin
@@ -194,6 +215,8 @@ begin
     ctx.S['params.format'] := 'html';
 
   //writeln(ctx.asjson(true));
+//  writeln(Request.ContentString);
+//  Request.Content.SaveToFile('c:\test.txt');
 end;
 
 procedure THTTPConnexion.ProcessRequest(ctx: TJsonObject);
@@ -205,71 +228,67 @@ var
   proc: TJsonMethod;
 begin
   inherited;
-  try
-    // Authenticate
-    if ctx.B['session.authenticate'] then
+
+  // Authenticate
+  if ctx.B['session.authenticate'] then
+  begin
+    user := Request.S['authorization.user'];
+    pass := Request.S['authorization.pass'];
+    if not((user = 'user') and (pass = 'pass')) then
     begin
-      user := Request.S['authorization.user'];
-      pass := Request.S['authorization.pass'];
-      if not((user = 'user') and (pass = 'pass')) then
-      begin
-        Response.S['response'] :=  PChar(HttpResponseStrings[rc401]);
-        Response.S['env.WWW-Authenticate'] := 'Basic';
-        exit;
-      end else
-        ctx.B['session.authenticate'] := false;
-    end;
-
-    if ctx['params.controler'] <> nil then
-      with ctx['params'] do
-      begin
-        // controler
-        TMethod(proc).Code := MVC[S['controler']][S['action']].M['controler'];
-        if TMethod(proc).Code <> nil then
-        begin
-          TMethod(proc).Data := ctx;
-          obj := nil;
-          proc(ctx['params'], obj);
-        end;
-        // view
-        TMethod(proc).Code := MVC[S['controler']][S['action']].M[S['format']];
-        if TMethod(proc).Code <> nil then
-        begin
-          TMethod(proc).Data := ctx;
-          obj := nil;
-          proc(ctx['params'], obj);
-          Response.S['env.Content-Type'] := PChar('application/' + S['format']);
-          exit;
-        end;
-      end;
-
-    str := Request.S['uri'];
-    path := ExtractFilePath(ParamStr(0)) + 'HTTP';
-
-    if str[Length(str)] in ['/','\'] then
-    begin
-      if FileExists(path + str + 'index.html') then
-        Request.S['uri'] := PChar(Request.S['uri'] + 'index.html') else
-      if FileExists(path + Request.S['uri'] + 'index.htm') then
-        Request.S['uri'] := PChar(Request.S['uri'] + 'index.htm');
-    end;
-
-    if FileExists(path + Request.S['uri']) then
-    begin
-      Response.S['env.Content-Type'] := FFormats.S[ctx.S['params.format']];
-      Response.S['sendfile'] := PChar(path + Request.S['uri']);
+      Response.I['response'] := 401;
+      Response.S['env.WWW-Authenticate'] := 'Basic';
       exit;
     end else
-      Response.S['response'] :=  PChar(HttpResponseStrings[rc404])
-
-  except
-    on E: Exception do
-    begin
-    {$ifdef madExcept}
-      HandleException(etNormal, E);
-    {$endif}
-    end;
+      ctx.B['session.authenticate'] := false;
   end;
+
+  if ctx['params.controler'] <> nil then
+    with ctx['params'] do
+    begin
+      // controler
+      TMethod(proc).Code := MVC[S['controler']][S['action']].M['controler'];
+      if TMethod(proc).Code <> nil then
+      begin
+        TMethod(proc).Data := ctx;
+        obj := nil;
+        proc(ctx['params'], obj);
+      end;
+
+      // redirect ? ...
+      if Response.I['response'] = 300 then Exit;
+
+      // view
+      TMethod(proc).Code := MVC[S['controler']][S['action']].M[S['format']];
+      if TMethod(proc).Code <> nil then
+      begin
+        TMethod(proc).Data := ctx;
+        obj := nil;
+        proc(ctx['params'], obj);
+        Response.S['env.Content-Type'] := FFormats.S[S['format']];
+        exit;
+      end;
+    end;
+
+  str := Request.S['uri'];
+  path := ExtractFilePath(ParamStr(0)) + 'HTTP';
+
+  if str[Length(str)] in ['/','\'] then
+  begin
+    if FileExists(path + str + 'index.html') then
+      Request.S['uri'] := PChar(Request.S['uri'] + 'index.html') else
+    if FileExists(path + Request.S['uri'] + 'index.htm') then
+      Request.S['uri'] := PChar(Request.S['uri'] + 'index.htm');
+  end;
+
+  if FileExists(path + Request.S['uri']) then
+  begin
+    Response.S['env.Content-Type'] := FFormats.S[ctx.S['params.format']];
+    Response.S['sendfile'] := PChar(path + Request.S['uri']);
+    exit;
+  end else
+    Response.I['response'] :=  404;
+
 end;
 
 { THTTPServer }
@@ -282,11 +301,11 @@ end;
 
 { THTTPMethods }
 
-
 function QueryToJson(qr: TJvUIBQuery): TJsonObject;
 var
   meta, data, rec: TJsonObject;
   i: integer;
+  str: string;
 begin
   qr.Open;
   Result := TJsonObject.Create(json_type_object);
@@ -302,15 +321,20 @@ var
   begin
     rec := TJsonObject.create(json_type_array);
     data.AsArray.Add(rec);
-
-    for i := 0 to qr.Fields.FieldCount - 1 do
+        for i := 0 to qr.Fields.FieldCount - 1 do
       if qr.Fields.IsNull[i] then
         rec.AsArray.Add(nil) else
       case qr.Fields.FieldType[i] of
         uftChar, uftVarchar, uftCstring: rec.AsArray.Add(TJsonObject.Create(PChar(qr.Fields.AsString[i])));
         uftSmallint, uftInteger, uftInt64: rec.AsArray.Add(TJsonObject.Create(qr.Fields.AsInteger[i]));
         uftNumeric, uftFloat, uftDoublePrecision: rec.AsArray.Add(TJsonObject.Create(qr.Fields.AsDouble[i]));
-        //uftBlob, uftBlobId: ;  b64?
+        uftBlob, uftBlobId:
+          begin
+            qr.ReadBlob(i, str);
+            if qr.Fields.Data.sqlvar[i].SqlSubType = 1 then
+              rec.AsArray.Add(TJsonObject.Create(PChar(str))) else
+              rec.AsArray.Add(TJsonObject.Create(PChar(StrTobase64(str))));
+          end;
         uftTimestamp, uftDate, uftTime: rec.AsArray.Add(TJsonObject.Create(PChar(qr.Fields.AsString[i])));
         {$IFDEF IB7_UP}
         uftBoolean: rec.AsArray.Add(TJsonObject.Create(PChar(qr.Fields.AsBoolean[i])));
@@ -322,6 +346,13 @@ var
   end;
 end;
 
+procedure THTTPMethods.application_getdata_html(Params: TJsonObject;
+  var Result: TJsonObject);
+begin
+  THTTPMessage(O['response']).Content.WriteString('<html><body><pre>', false);
+  O['dataset'].SaveTo(THTTPMessage(O['response']).Content, true);
+  THTTPMessage(O['response']).Content.WriteString('</pre></body></html>', false);
+end;
 
 procedure THTTPMethods.application_getdata_json(Params: TJsonObject;
   var Result: TJsonObject);
@@ -334,6 +365,18 @@ begin
   inherited;
   M['application.getdata.controler'] := @THTTPMethods.application_getdata_controler;
   M['application.getdata.json'] := @THTTPMethods.application_getdata_json;
+  M['application.getdata.html'] := @THTTPMethods.application_getdata_html;
+end;
+
+function THTTPMethods.isPost: boolean;
+begin
+  Result := S['request.method'] = 'POST'
+end;
+
+procedure THTTPMethods.Redirect(const location: string);
+begin
+  I['response.response'] := 300;
+  S['response.env.Location'] := PChar(Location);
 end;
 
 procedure THTTPMethods.application_getdata_controler(Params: TJsonObject;

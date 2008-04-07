@@ -63,7 +63,7 @@ type
     function Seek(Offset: Longint; Origin: Word): Longint; override;
     function Read(var Buffer; Count: Longint): Longint; override;
     function Write(const Buffer; Count: Longint): Longint; override;
-    procedure WriteString(const str: string);
+    procedure WriteString(const str: string; writesize: boolean);
     procedure WriteInteger(const V: Integer);
     function ReadString: string;
     procedure SaveToStream(Stream: TStream);
@@ -776,12 +776,13 @@ begin
   Write(v, sizeof(v));
 end;
 
-procedure TPooledMemoryStream.WriteString(const str: string);
+procedure TPooledMemoryStream.WriteString(const str: string; writesize: boolean);
 var
   s: Integer;
 begin
   s := Length(str);
-  Write(s, sizeof(s));
+  if writesize then
+    Write(s, sizeof(s));
   if s > 0 then
     Write(str[1], s)
 end;
