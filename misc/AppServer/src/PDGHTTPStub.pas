@@ -461,26 +461,28 @@ begin
             if not DecodeContent then
               exit;
 
-            try
               ctx := TJsonObject.Create;
               try
                 doBeforeProcessRequest(ctx);
                 try
-                  ProcessRequest(ctx); // <<<<<<<<<<<<<<<
+                  try
+                    ProcessRequest(ctx); // <<<<<<<<<<<<<<<
+                  except
+                    on E: Exception do
+                    begin
+                      FResponse.I['response'] := 500;
+                      FResponse.Content.WriteString(E.Message, false);
+                    {$ifdef madExcept}
+                      HandleException(etNormal, E);
+                    {$endif}
+                    end;
+                  end;
                 finally
                   doAfterProcessRequest(ctx);
                 end;
               finally
                 ctx.Free;
               end;
-            except
-              on E: Exception do
-              begin
-              {$ifdef madExcept}
-                HandleException(etNormal, E);
-              {$endif}
-              end;
-            end;
 
             line := 0;
             cursor := 0;
