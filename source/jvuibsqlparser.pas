@@ -480,6 +480,7 @@ begin
         error;
     toLParen:
       begin
+        minus := false;
         while true do
           case Next of
             toValString, toValNumber, toValFloat, toNULL:
