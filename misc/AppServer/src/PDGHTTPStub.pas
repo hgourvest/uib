@@ -31,30 +31,37 @@ type
 
   TConnectionField = (conClose, conKeepAlive);
 
-  THTTPRequest = class(TJsonObject)
+  THTTPMessage = class(TJsonObject)
   private
     FContent: TPooledMemoryStream;
     function GetContentString: string;
   public
     property Content: TPooledMemoryStream read FContent;
     property ContentString: string read GetContentString;
-    function GetAuthorization(out user, pass: string): boolean;
-    function GetCookies(const name: string): string;
-    procedure Clear;
-    constructor Create(jt: TJsonType = json_type_object); override; 
+
+    constructor Create(jt: TJsonType = json_type_object); override;
     destructor Destroy; override;
+
+    procedure Clear; override;
   end;
 
   THTTPStub = class(TSocketStub)
   private
-    FHeader: THTTPRequest;
+    FRequest: THTTPMessage;
+    FResponse: THTTPMessage;
+    FMVC: TJsonObject;
     function DecodeFields(str: PChar): boolean;
     function DecodeCommand(str: PChar): boolean;
   protected
+    function CreateMVC: TJsonObject; virtual;
     function DecodeContent: boolean; virtual;
-    procedure ProcessRequest; virtual;
+    procedure doBeforeProcessRequest(ctx: TJsonObject); virtual;
+    procedure doAfterProcessRequest(ctx: TJsonObject); virtual;
+    procedure ProcessRequest(ctx: TJsonObject); virtual;
   public
-    property Header: THTTPRequest read FHeader;
+    property Request: THTTPMessage read FRequest;
+    property Response: THTTPMessage read FResponse;
+    property MVC: TJsonObject read FMVC;
     function Run: Cardinal; override;
     procedure WriteLine(str: string);
     procedure WriteString(const str: string);
@@ -131,38 +138,43 @@ const
 (* default limit on number of request header fields *)
   DEFAULT_LIMIT_REQUEST_FIELDS = 100;
 
+function HTTPInterprete(src: PChar; named: boolean = false; sep: char = ';'): TJsonObject;
+
 implementation
 uses SysUtils, StrUtils;
 
-{ THTTPRequest }
-
-procedure THTTPRequest.Clear;
-begin
-  if IsType(json_type_object) then
-    AsObject.Clear;
-  inherited;
-end;
-
-constructor THTTPRequest.Create(jt: TJsonType = json_type_object);
-begin
-  Inherited create(jt);
-  FContent := TPooledMemoryStream.Create;
-  Clear;
-end;
-
-destructor THTTPRequest.Destroy;
-begin
-  inherited;
-  FContent.Free;
-end;
-
-function THTTPRequest.GetAuthorization(out user, pass: string): boolean;
+function HTTPInterprete(src: PChar; named: boolean; sep: char): TJsonObject;
 var
-  str: string;
+  strlist: TStringList;
+  j: integer;
+begin
+  strlist := TStringList.Create;
+  try
+    strlist.Delimiter := sep;
+    strlist.DelimitedText := src;
+    if named then
+    begin
+      Result := TJsonObject.Create(json_type_object);
+      with Result.AsObject do
+        for j := 0 to strlist.Count - 1 do
+          Put(PChar(strlist.Names[j]), TJsonObject.Create(trim(strlist.ValueFromIndex[j])));
+    end else
+    begin
+      Result := TJsonObject.Create(json_type_array);
+      with Result.AsArray do
+        for j := 0 to strlist.Count - 1 do
+          Add(TJsonObject.Create(trim(strlist.Strings[j])));
+    end;
+  finally
+    strlist.Free;
+  end;
+end;
+
+function HTTPGetAuthorization(str: string): TJsonObject;
+var
   i: integer;
 begin
-  Result := False;
-  str := s['Authorization'];
+  Result := nil;
   if str <> '' then
   begin
     i := pos('Basic ', str);
@@ -172,36 +184,37 @@ begin
       i := pos(':', str);
       if i > 0 then
       begin
-        user := copy(str, 1, i-1);
-        pass := copy(str, i+1, Length(str)-i);
-        Result := True;
+        Result := TJsonObject.Create;
+        Result.AsObject.Put('user', TJsonObject.Create(copy(str, 1, i-1)));
+        Result.AsObject.Put('pass', TJsonObject.Create(copy(str, i+1, Length(str)-i)));
       end;
     end;
   end;
 end;
 
-function THTTPRequest.GetContentString: string;
+{ THTTPMessage }
+
+procedure THTTPMessage.Clear;
 begin
-  SetLength(Result, FContent.Size);
-  if FContent.Size > 0 then
-  begin
-    FContent.Seek(0, soFromBeginning);
-    FContent.Read(Result[1], FContent.Size);
-  end;
+  inherited;
+  FContent.Clear;
 end;
 
-function THTTPRequest.GetCookies(const name: string): string;
-var
-  strlist: TStringList;
+constructor THTTPMessage.Create(jt: TJsonType = json_type_object);
 begin
-  strlist := TStringList.Create;
-  try
-    strlist.Delimiter := ';';
-    strlist.DelimitedText := s['Cookie'];
-    Result := strlist.Values[name];
-  finally
-    strlist.Free;
-  end;
+  Inherited create(jt);
+  FContent := TPooledMemoryStream.Create;
+end;
+
+destructor THTTPMessage.Destroy;
+begin
+  inherited;
+  FContent.Free;
+end;
+
+function THTTPMessage.GetContentString: string;
+begin
+  Result := StreamToString(FContent);
 end;
 
 { THTTPStub }
@@ -209,12 +222,15 @@ end;
 function THTTPStub.DecodeFields(str: PChar): boolean;
 var
   p: PChar;
+  prop: string;
 begin
   p := StrScan(str, ':');
   if p = nil then
     Result := false else
+    with FRequest['@env'] do
     begin
-      FHeader.S[Copy(str, 1, p-str)] := p+2;
+      prop := LowerCase(Copy(str, 1, p-str));
+      AsObject.Put(PChar(prop), TJsonObject.Create(p+2));
       Result := true;
     end;
 end;
@@ -222,26 +238,12 @@ end;
 function THTTPStub.DecodeContent: boolean;
 var
   ContentLength: integer;
-{$IFDEF CONSOLEAPP}
-  buffer: array[0..1023] of char;
-  size: integer;
-{$ENDIF}
 begin
-  ContentLength := FHeader.I['Content-Length'];
+  ContentLength := FRequest.I['env.content-length'];
   if ContentLength > 0 then
   begin
-    FHeader.FContent.Size := ContentLength;
-    FHeader.FContent.LoadFromSocket(SocketHandle, false);
-{$IFDEF CONSOLEAPP}
-    repeat
-      size := FHeader.FContent.Read(buffer, sizeof(buffer));
-      if size > 0 then
-      begin
-        if size < sizeof(buffer) then buffer[size] := #0;
-        writeln(buffer);
-      end;
-    until size < sizeof(buffer);
-{$ENDIF}
+    FRequest.FContent.Size := ContentLength;
+    FRequest.FContent.LoadFromSocket(SocketHandle, false);
   end;
   result := true;
 end;
@@ -288,7 +290,7 @@ begin
   result := false;
   marker := StrScan(str, SP);
   if marker = nil then exit;
-  FHeader.s['FMethod'] := PChar(copy(str, 0, marker - str));
+  FRequest.s['method'] := PChar(copy(str, 0, marker - str));
   str := marker;
 
   // SP
@@ -303,7 +305,7 @@ begin
   if (str > marker) and (str^ <> NL) then
   begin
     if DecodeURI(marker, str - marker, value) then
-      FHeader.s['FURI'] := PChar(value) else
+      FRequest.s['uri'] := PChar(value) else
       exit;
   end else
     exit;
@@ -321,9 +323,7 @@ begin
                if (param <> '') and (str > marker) then
                begin
                  if not DecodeURI(marker, str - marker, value) then exit;
-                 FHeader['@FParams'].s[param] := PChar(value);
-                 //Field := THTTPField.Create(param, value);
-                 //FHeader.FParams.Insert(Field);
+                 FRequest['@params'].s[param] := PChar(value);
                end;
                if (str^ in [SP, NL]) then
                  Break;
@@ -362,7 +362,7 @@ begin
   if (str > marker) and (str^ <> NL) then
   begin
     if TryStrToInt(copy(marker, 0, str - marker), i) then
-      FHeader.I['FVersion.major'] := i else
+      FRequest.I['http-version.major'] := i else
       exit;
   end else
     exit;
@@ -378,7 +378,7 @@ begin
   if (str > marker) then
   begin
     if TryStrToInt(copy(marker, 0, str - marker), i) then
-      FHeader.I['FVersion.minor']  := i else
+      FRequest.I['http-version.minor']  := i else
       exit;
   end else
     exit;
@@ -393,12 +393,12 @@ var
   buffer: string;
   cursor, line, len: integer;
   c: char;
+  ctx: TJsonObject;
 begin
   result := 0;
   cursor := 0;
   len := 0;
   line := 0;
-  FHeader.Clear;
   while not Stopped do
   begin
     inc(cursor);
@@ -422,19 +422,22 @@ begin
           begin
             if not DecodeContent then
               exit;
-            {$IFDEF CONSOLEAPP}
-            writeln('---------------------------------------');
-            {$ENDIF}
-            ProcessRequest; // <<<<<<<<<<<<<<<
+            ctx := TJsonObject.Create;
+            try
+              doBeforeProcessRequest(ctx);
+              try
+                ProcessRequest(ctx); // <<<<<<<<<<<<<<<
+              finally
+                doAfterProcessRequest(ctx);
+              end;
+            finally
+              ctx.Free;
+            end;
             line := 0;
             cursor := 0;
-            FHeader.Clear;
           end else
           begin
             buffer[cursor] := NL;
-            {$IFDEF CONSOLEAPP}
-            writeln(PChar(Buffer));
-            {$ENDIF}
             if line = 0 then
             begin
               if not DecodeCommand(Pointer(Buffer)) then
@@ -454,20 +457,64 @@ begin
   end;
 end;
 
+function THTTPStub.CreateMVC: TJsonObject;
+begin
+  Result := TJsonObject.Create;
+end;
+
 constructor THTTPStub.CreateStub(AOwner: TSocketServer; ASocket: longint;
   AAddress: TSockAddr);
 begin
   inherited;
-  FHeader := THTTPRequest.Create;
+  FRequest := THTTPMessage.Create;
+  FResponse := THTTPMessage.Create;
+  FMVC := CreateMVC;
 end;
 
 destructor THTTPStub.Destroy;
 begin
-  FHeader.Free;
+  FRequest.Free;
+  FResponse.Free;
+  FMVC.Free;
   inherited;
 end;
 
-procedure THTTPStub.ProcessRequest;
+procedure THTTPStub.doAfterProcessRequest(ctx: TJsonObject);
+var
+  ite: TJsonObjectIter;
+begin
+   WriteLine('HTTP/1.1 ' + Response.S['response']);
+   if JsonFindFirst(Response['env'], ite) then
+   repeat
+     WriteLine(ite.key + ': ' + ite.val.AsString);
+   until not JsonFindNext(ite);
+   JsonFindClose(ite);
+
+   if Response['sendfile'] <> nil then
+     SendFile(Response.S['sendfile']) else
+     SendStream(Response.Content);
+
+   Response.Clear;
+   Request.Clear;
+end;
+
+procedure THTTPStub.doBeforeProcessRequest(ctx: TJsonObject);
+begin
+  FRequest['cookies'] := HTTPInterprete(Request.S['env.cookie'], true);
+  FRequest['content-type'] := HTTPInterprete(Request.S['env.content-type']);
+  FRequest['authorization'] := HTTPGetAuthorization(Request.S['env.authorization']);
+  FRequest['accept'] := HTTPInterprete(Request.S['env.accept'], false, ',');
+
+
+  FResponse.S['response'] :=  PChar(HttpResponseStrings[rc200]);
+
+  FRequest.AddRef;
+  ctx['request'] := FRequest;
+  FResponse.AddRef;
+  ctx['response'] := FResponse;
+end;
+
+procedure THTTPStub.ProcessRequest(ctx: TJsonObject);
 begin
 
 end;

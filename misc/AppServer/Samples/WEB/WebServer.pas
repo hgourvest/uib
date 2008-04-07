@@ -4,7 +4,7 @@ unit WebServer;
 {$ENDIF}
 interface
 uses PDGHTTPStub, PDGSocketStub, PDGUtils, {$IFDEF FPC}sockets,{$ELSE}Winsock, {$ENDIF}Windows,
-  jvuib, jvuiblib, davl, json, SyncObjs, classes;
+  jvuib, jvuiblib, json, SyncObjs, classes;
 
 type
   THTTPServer = class(TSocketServer)
@@ -12,63 +12,25 @@ type
     function doOnCreateStub(Socket: longint; AAddress: TSockAddr): TSocketStub; override;
   end;
 
+  THTTPMethods = class(TJsonObject)
+  private
+    procedure application_getdata_controler(Params: TJsonObject; var Result: TJsonObject);
+    procedure application_getdata_json(Params: TJsonObject; var Result: TJsonObject);
+  public
+    constructor Create(jt: TJsonType = json_type_object); override;
+  end;
+
   THTTPConnexion = class(THTTPStub)
   protected
-    procedure ProcessRequest; override;
+    FFormats: TJsonObject;
+    procedure doBeforeProcessRequest(ctx: TJsonObject); override;
+    procedure doAfterProcessRequest(ctx: TJsonObject); override;
+    procedure ProcessRequest(ctx: TJsonObject); override;
+    function CreateMVC: TJsonObject; override;
   public
     constructor CreateStub(AOwner: TSocketServer; Socket: longint;
       AAddress: TSockAddr); override;
-  end;
-
-  THTTPSession = class
-  private
-    FRefCount: Integer;
-    FCriticalSection: TRtlCriticalSection;
-    FCessionId: string;
-    FHttpDir: string;
-    FPasswordNeeded: boolean;
-    FJsonRPCServices: TJsonRpcServiceList;
-    procedure rpc_getdata(Params: TJsonObject; out Result: TJsonObject);
-  protected
-    function AddRef: integer;
-    procedure Release;
-    procedure Lock;
-    procedure UnLock;
-  public
-    constructor Create(const ACookie: string); virtual;
     destructor Destroy; override;
-    procedure ProcessRequest(Connexion: THTTPStub); virtual;
-  end;
-
-  THTTPSessionNode = class(TAvlHandle)
-  private
-    FCookie: string;
-    FLastActive: Cardinal;
-    FSession: THTTPSession;
-  public
-    constructor Create(const ACookie: string; ASession: THTTPSession); virtual;
-    destructor Destroy; override;
-  end;
-
-  THTTPSessionList = class(TAvlTree)
-  private
-    FCriticalSection: TRtlCriticalSection;
-  protected
-    function CompareNodeNode(node1, node2: TAvlHandle): integer; override;
-    function CompareKeyNode(k: TAvlKey; h: TAvlHandle): integer; override;
-  public
-    constructor Create; override;
-    destructor Destroy; override;
-    function GetSession(const ACookie: string): THTTPSession;
-    function CreateSession: THTTPSession;
-    procedure ClearSessions(Timeout: Cardinal);
-    procedure Lock;
-    procedure Unlock;
-  end;
-
-  THTTPSessionCleaner = class(TPDGThread)
-  protected
-    function Run: Cardinal; override;
   end;
 
   TMyPool = class(TConnexionPool)
@@ -84,13 +46,13 @@ type
   end;
 
 implementation
-uses SysUtils, PDGService, inifiles{$ifdef madExcept}, madExcept {$endif};
+uses SysUtils, PDGService{$ifdef madExcept}, madExcept {$endif};
 
 const
   ReadTimeOut: Integer = 60000; // 1 minute
+  COOKIE_NAME = 'PDGCookie';
 
 var
-  SessionList: THTTPSessionList;
   pool: TMyPool;
 
 {$IFDEF FPC}
@@ -117,57 +79,197 @@ begin
 end;
 
 constructor TMyPool.Create(MaxSize: Integer = 0);
-var inifile: TIniFile;
 begin
   inherited Create(MaxSize);
-  inifile := TIniFile.Create(ExtractFilePath(ParamStr(0)) + 'AppServer.ini');
+  with TJsonObject.Parse(
+    PChar(
+      FileToString(
+        ExtractFilePath(ParamStr(0)) + 'appserver.json'))) do
   try
-    FDatabaseName := inifile.ReadString('DATABASE', 'DatabaseName', '');
-    FUserName := inifile.ReadString('DATABASE', 'UserName', 'SYSDBA');
-    FPassWord := inifile.ReadString('DATABASE', 'PassWord', 'masterkey');
-    FSQLDialect := inifile.ReadInteger('DATABASE', 'SQLDialect', 3);
+    FDatabaseName := s['database.databasename'];
+    FUserName := s['database.username'];
+    FPassWord := s['database.password'];
+    FSQLDialect := i['database.sqldialect'];
   finally
-    inifile.Free;
+    Free;
   end;
 end;
 
 { THTTPServer }
 
-procedure THTTPConnexion.ProcessRequest;
-var
-  Cookie: string;
-  Session: THTTPSession;
+function THTTPConnexion.CreateMVC: TJsonObject;
 begin
-  Cookie := Header.GetCookies('PDGCookie');
-
-  if Cookie <> '' then
-    Session := SessionList.GetSession(Cookie) else
-    Session := nil;
-  if Session = nil then
-    Session := SessionList.CreateSession;
-
-  try
-    Session.Lock;
-    try
-      Session.ProcessRequest(Self);
-    finally
-      Session.UnLock;
-    end;
-  finally
-    Session.Release;
-  end;
+  Result := THTTPMethods.Create;
 end;
 
 constructor THTTPConnexion.CreateStub(AOwner: TSocketServer; Socket: longint;
   AAddress: TSockAddr);
 begin
   inherited;
+  FFormats := TJsonObject.Create;
+
+  FFormats.S['htm'] := 'text/html';
+  FFormats.S['html'] := 'text/html';
+  FFormats.S['xml'] := 'text/xml';
+  FFormats.S['json'] := 'text/json';
+  FFormats.S['png'] := 'image/png';
+  FFormats.S['jpeg'] := 'image/jpeg';
+  FFormats.S['jpg'] := 'image/jpeg';
+  FFormats.S['gif'] := 'image/gif';
+  FFormats.S['css'] := 'text/css';
+  FFormats.S['js'] := 'text/js';
+
+
   // connexion timout
 {$IFDEF FPC}
   fpsetsockopt(Socket, SOL_SOCKET, SO_RCVTIMEO, @ReadTimeOut, SizeOf(ReadTimeOut));
 {$ELSE}
   setsockopt(Socket, SOL_SOCKET, SO_RCVTIMEO, @ReadTimeOut, SizeOf(ReadTimeOut));
 {$ENDIF}
+end;
+
+destructor THTTPConnexion.Destroy;
+begin
+  FFormats.Free;
+  inherited;
+end;
+
+procedure THTTPConnexion.doAfterProcessRequest(ctx: TJsonObject);
+begin
+  Response.S['env.Set-Cookie'] := PChar(COOKIE_NAME + '=' + StrTobase64(ctx['session'].AsJSon));
+  inherited;
+end;
+
+procedure THTTPConnexion.doBeforeProcessRequest(ctx: TJsonObject);
+  function interprete(v: PChar; name: string): boolean;
+  var
+    p: PChar;
+    str: string;
+  begin
+    str := trim(v);
+    if str <> '' then
+    begin
+      p := StrScan(PChar(str), '.');
+      if p <> nil then
+      begin
+        ctx.S['params.format'] := p + 1;
+        setlength(str, p - PChar(str));
+      end;
+      ctx['params'].S[name] := PChar(str);
+      Result := true;
+    end else
+      Result := false
+  end;
+begin
+  inherited;
+  // default values
+  ctx.B['session.authenticate'] := true;
+  // decode session from cookie
+  ctx['session'].Merge(Base64ToStr(Request['cookies'].S[COOKIE_NAME]));
+
+  // get parametters
+  ctx['params'] := TJsonObject.Create;
+  ctx['params'].Merge(Request['params'], true);
+  if (Request.S['method'] = 'POST') and
+    (Request.S['content-type[0]'] = 'application/json') then
+    begin
+      ctx['params'].Merge(Request.ContentString);
+      ctx.S['params.format'] := 'json';
+    end;
+
+   with HTTPInterprete(Request.S['uri'], false, '/') do
+   begin
+     if interprete(AsArray.S[1], 'controler') then
+     if interprete(AsArray.S[2], 'action') then
+        interprete(AsArray.S[3], 'id');
+     Free;
+   end;
+
+  // default action is index
+  if (ctx['params.controler'] <> nil) and (ctx['params.action'] = nil) then
+    (ctx.S['params.action'] := 'index');
+
+  // detect format
+  if (ctx['params.format'] = nil) then
+    ctx.S['params.format'] := 'html';
+
+  //writeln(ctx.asjson(true));
+end;
+
+procedure THTTPConnexion.ProcessRequest(ctx: TJsonObject);
+var
+  user, pass: string;
+  str: string;
+  path: string;
+  obj: TJsonObject;
+  proc: TJsonMethod;
+begin
+  inherited;
+  try
+    // Authenticate
+    if ctx.B['session.authenticate'] then
+    begin
+      user := Request.S['authorization.user'];
+      pass := Request.S['authorization.pass'];
+      if not((user = 'user') and (pass = 'pass')) then
+      begin
+        Response.S['response'] :=  PChar(HttpResponseStrings[rc401]);
+        Response.S['env.WWW-Authenticate'] := 'Basic';
+        exit;
+      end else
+        ctx.B['session.authenticate'] := false;
+    end;
+
+    if ctx['params.controler'] <> nil then
+      with ctx['params'] do
+      begin
+        // controler
+        TMethod(proc).Code := MVC[S['controler']][S['action']].M['controler'];
+        if TMethod(proc).Code <> nil then
+        begin
+          TMethod(proc).Data := ctx;
+          obj := nil;
+          proc(ctx['params'], obj);
+        end;
+        // view
+        TMethod(proc).Code := MVC[S['controler']][S['action']].M[S['format']];
+        if TMethod(proc).Code <> nil then
+        begin
+          TMethod(proc).Data := ctx;
+          obj := nil;
+          proc(ctx['params'], obj);
+          Response.S['env.Content-Type'] := PChar('application/' + S['format']);
+          exit;
+        end;
+      end;
+
+    str := Request.S['uri'];
+    path := ExtractFilePath(ParamStr(0)) + 'HTTP';
+
+    if str[Length(str)] in ['/','\'] then
+    begin
+      if FileExists(path + str + 'index.html') then
+        Request.S['uri'] := PChar(Request.S['uri'] + 'index.html') else
+      if FileExists(path + Request.S['uri'] + 'index.htm') then
+        Request.S['uri'] := PChar(Request.S['uri'] + 'index.htm');
+    end;
+
+    if FileExists(path + Request.S['uri']) then
+    begin
+      Response.S['env.Content-Type'] := FFormats.S[ctx.S['params.format']];
+      Response.S['sendfile'] := PChar(path + Request.S['uri']);
+      exit;
+    end else
+      Response.S['response'] :=  PChar(HttpResponseStrings[rc404])
+
+  except
+    on E: Exception do
+    begin
+    {$ifdef madExcept}
+      HandleException(etNormal, E);
+    {$endif}
+    end;
+  end;
 end;
 
 { THTTPServer }
@@ -178,310 +280,8 @@ begin
   Result := THTTPConnexion.CreateStub(Self, Socket, AAddress);
 end;
 
-{ THTTPSessionList }
+{ THTTPMethods }
 
-procedure THTTPSessionList.ClearSessions(Timeout: Cardinal);
-var
-  ite: TAvlIterator;
-  node: THTTPSessionNode;
-  list: TList;
-  i: integer;
-begin
-  Lock;
-  try
-    ite := TAvlIterator.Create(Self);
-    list := TList.Create;
-    try
-      ite.First;
-      node := THTTPSessionNode(ite.GetIter);
-      while node <> nil do
-      begin
-        if (node.FSession.AddRef = 2) and ((GetTickCount - node.FLastActive) > Timeout) then
-          list.Add(node);
-        node.FSession.Release;
-        ite.Next;
-        node := THTTPSessionNode(ite.GetIter);
-      end;
-      for i := 0 to list.Count - 1 do
-      begin
-        node := THTTPSessionNode(Remove(PChar(THTTPSessionNode(list[i]).FCookie)));
-        if node <> nil then
-          node.Free;
-      end;
-    finally
-      ite.Free;
-      list.Free;
-    end;
-  finally
-    Unlock;
-  end;
-end;
-
-function THTTPSessionList.CompareKeyNode(k: TAvlKey;
-  h: TAvlHandle): integer;
-begin
-  Result := CompareStr(PChar(k), THTTPSessionNode(h).FCookie);
-end;
-
-function THTTPSessionList.CompareNodeNode(node1,
-  node2: TAvlHandle): integer;
-begin
-  Result := CompareStr(THTTPSessionNode(node1).FCookie, THTTPSessionNode(node2).FCookie);
-end;
-
-constructor THTTPSessionList.Create;
-begin
-  inherited;
-{$IFDEF FPC}
-  InitCriticalSection(FCriticalSection);
-{$ELSE}
-  InitializeCriticalSection(FCriticalSection);
-{$ENDIF}
-end;
-
-function THTTPSessionList.CreateSession: THTTPSession;
-var
-  c: string;
-  s: THTTPSession;
-  n: THTTPSessionNode;
-begin
-  c := 'C' + IntToStr(GetTickCount);
-  s := THTTPSession.Create(c);
-  s.AddRef;
-  n := THTTPSessionNode.Create(c, s);
-  n.FLastActive := GetTickCount;
-  Lock;
-  try
-    Insert(n);
-  finally
-    Unlock;
-  end;
-  Result := s;
-end;
-
-destructor THTTPSessionList.Destroy;
-begin
-{$IFDEF FPC}
-  DoneCriticalSection(FCriticalSection);
-{$ELSE}
-  DeleteCriticalSection(FCriticalSection);
-{$ENDIF}
-  inherited;
-end;
-
-function THTTPSessionList.GetSession(
-  const ACookie: string): THTTPSession;
-var
-  node: THTTPSessionNode;
-begin
-  Lock;
-  try
-    node := THTTPSessionNode(Search(PChar(ACookie)));
-    if node = nil then
-      Result := nil else
-      begin
-        node.FLastActive := GetTickCount;
-        Result := node.FSession;
-        Result.AddRef;
-      end;
-  finally
-    Unlock;
-  end;
-end;
-
-procedure THTTPSessionList.Lock;
-begin
-  EnterCriticalSection(FCriticalSection);
-end;
-
-procedure THTTPSessionList.Unlock;
-begin
-  LeaveCriticalSection(FCriticalSection);
-end;
-
-{ THTTPSessionNode }
-
-constructor THTTPSessionNode.Create(const ACookie: string;
-  ASession: THTTPSession);
-begin
-  FCookie := ACookie;
-  FLastActive := GetTickCount;
-  FSession := ASession;
-end;
-
-destructor THTTPSessionNode.Destroy;
-begin
-  FSession.Release;
-  inherited;
-end;
-
-{ THTTPSessionCleaner }
-
-function THTTPSessionCleaner.Run: Cardinal;
-var
-  i: integer;
-begin
-  // remove expired sessions
-  while not Stopped do
-  begin
-    SessionList.ClearSessions(60000*30);//30min
-    for i := 1 to 60*30 do
-      if not stopped then
-        sleep(1000) else
-        Break;
-  end;
-  Result := 0;
-end;
-
-{ THTTPSession }
-
-function THTTPSession.AddRef: Integer;
-begin
-  Result := InterlockedIncrement(FRefCount);
-end;
-
-constructor THTTPSession.Create(const ACookie: string);
-var
-  srv: TJsonRpcService;
-begin
-  FCessionId := ACookie;
-  FPasswordNeeded := true;
-  FRefCount := 1;
-  FJsonRPCServices := TJsonRpcServiceList.Create;
-{$IFDEF FPC}
-  InitCriticalSection(FCriticalSection);
-{$ELSE}
-  InitializeCriticalSection(FCriticalSection);
-{$ENDIF}
-  FHttpDir := ExtractFilePath(ParamStr(0)) + 'HTTP';
-
-  srv := TJsonRpcService.Create;
-  srv.RegisterMethod('getdata', self, @THTTPSession.rpc_getdata);
-  FJsonRPCServices.RegisterService('application', srv);
-
-end;
-
-destructor THTTPSession.Destroy;
-begin
-{$IFDEF FPC}
-  DoneCriticalSection(FCriticalSection);
-{$ELSE}
-  DeleteCriticalSection(FCriticalSection);
-{$ENDIF}
-  FJsonRPCServices.Free;
-  inherited;
-end;
-
-procedure THTTPSession.Lock;
-begin
-  AddRef;
-  EnterCriticalSection(FCriticalSection);
-end;
-
-procedure THTTPSession.Release;
-begin
-  if InterlockedDecrement(FRefCount) = 0 then Destroy;
-end;
-
-procedure THTTPSession.UnLock;
-begin
-  LeaveCriticalSection(FCriticalSection);
-  Release;
-end;
-
-procedure THTTPSession.ProcessRequest(Connexion: THTTPStub);
-  procedure WriteHeader(code: THttpResponseCode);
-  begin
-    Connexion.WriteLine('HTTP/1.1 ' + HttpResponseStrings[code]);
-    Connexion.WriteLine('Server: progdigy server/1.0');
-    Connexion.WriteLine('Set-Cookie: PDGCookie=' + FCessionId);
-  end;
-var
-  Ext: string;
-  user, pass, service: string;
-  str: string;
-  obj: TJsonObject;
-begin
-  with Connexion do
-  try
-    // Authenticate
-    if FPasswordNeeded then
-    begin
-      Header.GetAuthorization(user, pass);
-      if not((user = 'user') and (pass = 'pass')) then
-      begin
-        WriteHeader(rc401); // Authorization Required
-        WriteLine('WWW-Authenticate: Basic');
-        SendString('');
-        exit;
-      end else
-        FPasswordNeeded := false;
-    end;
-
-    if Header.S['FMethod'] = 'GET' then
-      begin
-        str := Header.S['FURI'];
-        if str[Length(str)] in ['/','\'] then
-        begin
-          if FileExists(FHttpDir + str + 'index.html') then
-            Header.S['FURI'] := PChar(Header.S['FURI'] + 'index.html') else
-          if FileExists(FHttpDir + Header.S['FURI'] + 'index.htm') then
-            Header.S['FURI'] := PChar(Header.S['FURI'] + 'index.htm');
-        end;
-
-        if FileExists(FHttpDir + Header.S['FURI']) then
-        begin
-          WriteHeader(rc200);
-          ext := UpperCase(ExtractFileExt(Header.S['FURI']));
-          if ext = '.HTM' then WriteLine('Content-Type: text/html') else
-          if ext = '.HTML' then WriteLine('Content-Type: text/html') else
-          if ext = '.CSS' then WriteLine('Content-Type: text/css') else
-          if ext = '.XML' then WriteLine('Content-Type: text/xml') else
-          if ext = '.PNG' then WriteLine('Content-Type: image/png') else
-          if ext = '.JPG' then WriteLine('Content-Type: image/jpeg') else
-          if ext = '.JPEG' then WriteLine('Content-Type: image/jpeg') else
-          if ext = '.GIF' then WriteLine('Content-Type: image/gif') else
-            WriteLine('Content-Type: text/plain');
-
-          SendFile(FHttpDir + Header.S['FURI']);
-        end else
-        begin
-          WriteHeader(rc404);
-          SendString(HttpResponseStrings[rc404]);
-        end;
-      end else
-    if Header.S['FMethod'] = 'POST' then
-      begin
-        if (Header.s['Accept'] = 'application/json') then
-        begin
-          str := Header.S['FURI'];
-          service := copy(str, 2, Length(str)-1);
-          obj := FJsonRPCServices.Invoke(PChar(service), PChar(Header.ContentString));
-          WriteHeader(rc200);
-          WriteLine(format('Content-Length: %d', [obj.CalcSize]));
-          WriteLine('');
-          obj.SaveTo(Connexion.SocketHandle);
-          obj.Release;
-        end else
-        begin
-          WriteHeader(rc404);
-          SendString(HttpResponseStrings[rc404]);
-        end;
-      end else
-      begin
-        WriteHeader(rc404);
-        SendString(HttpResponseStrings[rc404]);
-      end;
-  except
-    on E: Exception do
-    begin
-    {$ifdef madExcept}
-      HandleException(etNormal, E);
-    {$endif}
-      //SendString('[' + E.ClassName + '] ' + E.Message);
-    end;
-  end;
-end;
 
 function QueryToJson(qr: TJvUIBQuery): TJsonObject;
 var
@@ -522,8 +322,22 @@ var
   end;
 end;
 
-procedure THTTPSession.rpc_getdata(Params: TJsonObject;
-  out Result: TJsonObject);
+
+procedure THTTPMethods.application_getdata_json(Params: TJsonObject;
+  var Result: TJsonObject);
+begin
+  O['dataset'].SaveTo(THTTPMessage(O['response']).Content);
+end;
+
+constructor THTTPMethods.create(jt: TJsonType = json_type_object);
+begin
+  inherited;
+  M['application.getdata.controler'] := @THTTPMethods.application_getdata_controler;
+  M['application.getdata.json'] := @THTTPMethods.application_getdata_json;
+end;
+
+procedure THTTPMethods.application_getdata_controler(Params: TJsonObject;
+  var Result: TJsonObject);
 var
   db: TJvUIBDataBase;
   tr: TJvUIBTransaction;
@@ -535,9 +349,9 @@ begin
   try
     tr.DataBase := db;
     qr.Transaction := tr;
-    qr.SQL.Text := 'select * from ' + Params.AsArray[0].AsString;
+    qr.SQL.Text := 'select * from ' + Params.S['id'];
     qr.CachedFetch := false;
-    Result := QueryToJson(qr);
+    O['dataset'] := QueryToJson(qr);
   finally
     qr.Free;
     tr.Free;
@@ -547,13 +361,10 @@ end;
 
 initialization
   pool := TMyPool.Create(0);
-  SessionList := THTTPSessionList.Create;
-  Application.CreateThread(THTTPSessionCleaner);
   Application.CreateServer(THTTPServer, 81);
 
 finalization
   while TPDGThread.ThreadCount > 0 do sleep(100);
   pool.Free;
-  SessionList.Free;
 
 end.

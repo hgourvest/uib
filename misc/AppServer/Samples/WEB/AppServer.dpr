@@ -4,6 +4,7 @@ program AppServer;
   {$APPTYPE CONSOLE}
 {$ENDIF}
 uses
+  //fastmm4,
   PDGService in '..\..\src\PDGService.pas',
   PDGSocketStub in '..\..\src\PDGSocketStub.pas',
   WebServer in 'WebServer.pas',

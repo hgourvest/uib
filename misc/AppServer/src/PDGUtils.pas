@@ -14,6 +14,9 @@
 *)
 
 unit PDGUtils;
+
+{$I jedi.inc}
+
 {$IFDEF FPC}
 {$mode objfpc}{$H+}
 {$ENDIF}
@@ -65,7 +68,7 @@ type
     function ReadString: string;
     procedure SaveToStream(Stream: TStream);
     procedure SaveToFile(const FileName: string);
-    function SaveToSocket(socket: longint): boolean;
+    function SaveToSocket(socket: longint; writesize: boolean = true): boolean;
     procedure LoadFromStream(Stream: TStream);
     procedure LoadFromFile(const FileName: string);
     function LoadFromSocket(socket: longint; readsize: boolean = true): boolean;
@@ -107,6 +110,9 @@ function receive(s: longint; var Buf; len, flags: Integer): Integer;
 // Base64 functions from <dirk.claessens.dc@belgium.agfa.com> (modified)
 function StrTobase64(Buf: string): string;
 function Base64ToStr(const B64: string): string;
+
+function FileToString(const FileName: string): string;
+function StreamToString(stream: TStream): string;
 
 implementation
 
@@ -248,7 +254,11 @@ begin
 {$IFDEF FPC}
   Result := InterlockedCompareExchange(Value, 0, 0);
 {$ELSE}
-  Result := Integer(InterlockedCompareExchange(Value, 0, 0));
+  {$IFDEF COMPILER8_UP}
+    Result := Integer(InterlockedCompareExchange(Value, 0, 0));
+  {$ELSE}
+    Result := Integer(InterlockedCompareExchange(Pointer(Value), nil, nil));
+  {$ENDIF}
 {$ENDIF}
 {$IFEND}
 end;
@@ -489,6 +499,25 @@ begin
   inflateEnd(zstream);
 end;
 
+function StreamToString(stream: TStream): string;
+begin
+  stream.Seek(0, soFromBeginning);
+  SetLength(Result, stream.Size);
+  stream.Read(PChar(Result)^, stream.Size);
+end;
+
+function FileToString(const FileName: string): string;
+var
+  strm: TFileStream;
+begin
+  strm := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
+  try
+    Result := StreamToString(strm);
+  finally
+    strm.Free;
+  end;
+end;
+
 { TPooledMemoryStream }
 
 procedure TPooledMemoryStream.Clear;
@@ -631,13 +660,15 @@ begin
   end;
 end;
 
-function TPooledMemoryStream.SaveToSocket(socket: longint): boolean;
+function TPooledMemoryStream.SaveToSocket(socket: longint; writesize: boolean): boolean;
 var
   s, count, i: integer;
 begin
   Result := False;
   count := FSize;
-  if send(socket, count, sizeof(count), 0) <> sizeof(count) then Exit;
+  if writesize then
+    if send(socket, count, sizeof(count), 0) <> sizeof(count) then
+      Exit;
   i := 0;
   while count > 0 do
   begin

@@ -2,22 +2,6 @@
  * @author Henri Gourvest <hgourvest@progdigy.com>
  */
 
-var id = 0;
-
-function JsonRpc(service, methode, params, doSuccess){
-	new Ajax.Request(service, {
-		method:'post',
-		requestHeaders: {'Accept': 'application/json', 'Content-Type': 'application/json'},
-		postBody: $H({'method': methode, 'params': params, 'id': ++id}).toJSON(),
-  		onSuccess: function(transport){
-			var json = transport.responseText.evalJSON(true);
-			if (json.error == null) 
-				doSuccess(json.result); else
-				alert(json.error);
-  		}
-	});	
-}
-
 function jsonT(self, rules) {
    var T = {
       output: false,
@@ -77,8 +61,20 @@ function jsonT(self, rules) {
    return T.init().apply("self");
 }
 
+function JsonRpc(url, params, doSuccess){
+	new Ajax.Request(url, {
+		method:'post',
+		requestHeaders: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+		postBody: Object.toJSON(params),
+  		onSuccess: function(transport){
+			doSuccess(transport.responseText.evalJSON(true));
+  		}
+	});	
+}
+
 function getdata(div, t){
-	JsonRpc('application', 'getdata', [t], function(r){
+	
+	JsonRpc("/",{'controler':'application','action':'getdata', 'id': t}, function(r){
 	    
 		div.innerHTML = jsonT(r, 
 		    { "self": "<table><tbody>{$}</tbody></table>",
@@ -88,4 +84,5 @@ function getdata(div, t){
               "data[*][*]": "<td>{$}</td>"});
 	});	
 }
+	
 	

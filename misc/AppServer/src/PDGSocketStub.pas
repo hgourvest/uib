@@ -72,7 +72,7 @@ type
     function GetChildCount: Integer;
     function GetStopped: boolean;
   protected
-    function Run: Cardinal; virtual; abstract;
+    function Run: Cardinal; virtual;
     procedure Stop; virtual;
   public
     class function ThreadCount: integer;
@@ -215,6 +215,11 @@ begin
       UnLock;
     end;
   end;
+end;
+
+function TPDGThread.Run: Cardinal;
+begin
+  raise Exception.Create('not implemented');
 end;
 
 // Childs ...
