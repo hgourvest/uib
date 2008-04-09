@@ -1,53 +1,49 @@
 {$IFNDEF JEDI_INC}
 {$DEFINE JEDI_INC}
 
-{******************************************************************************}
-{                                                                              }
-{  The contents of this file are subject to the Mozilla Public License         }
-{  Version 1.1 (the "License"); you may not use this file except in            }
-{  compliance with the License. You may obtain a copy of the License at        }
-{  http://www.mozilla.org/MPL/                                                 }
-{                                                                              }
-{  Software distributed under the License is distributed on an "AS IS" basis,  }
-{  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License    }
-{  for the specific language governing rights and limitations under the        }
-{  License.                                                                    }
-{                                                                              }
-{  The Original Code is: jedi.inc.                                             }
-{  The Initial Developer of the Original Code is Project JEDI                  }
-{  http://www.delphi-jedi.org                                                  }
-{                                                                              }
-{  Alternatively, the contents of this file may be used under the terms of     }
-{  the GNU Lesser General Public License (the  "LGPL License"), in which case  }
-{  the provisions of the LGPL License are applicable instead of those above.   }
-{  If you wish to allow use of your version of this file only under the terms  }
-{  of the LGPL License and not to allow others to use your version of this     }
-{  file under the MPL, indicate your decision by deleting the provisions       }
-{  above and replace them with the notice and other provisions required by     }
-{  the LGPL License. If you do not delete the provisions above, a recipient    }
-{  may use your version of this file under either the MPL or the LGPL License. }
-{                                                                              }
-{  For more information about the LGPL:                                        }
-{  http://www.gnu.org/copyleft/lesser.html                                     }
-{                                                                              }
-{******************************************************************************}
-{                                                                              }
-{  This file defines various generic compiler directives used in different     }
-{  libraries, e.g. in the JEDI Code Library (JCL) and JEDI Visual Component    }
-{  Library Library (J-VCL). The directives in this file are of generic nature  }
-{  and consist mostly of mappings from the VERXXX directives defined by        }
-{  Delphi, C++ Builder and FPC to friendly names such as DELPHI5 and           }
-{  SUPPORTS_WIDESTRING. These friendly names are subsequently used in the      }
-{  libraries to test for compiler versions and/or whether the compiler         }
-{  supports certain features (such as widestrings or 64 bit integers. The      }
-{  libraries provide an additional, library specific, include file. For the    }
-{  JCL e.g. this is jcl.inc. These files should be included in source files    }
-{  instead of this file (which is pulled in automatically).                    }
-{                                                                              }
-{******************************************************************************}
-
-// Last modified: $Date: 2007-07-06 18:50:24 +0200 (ven., 06 juil. 2007) $
-// For history see end of file
+{**************************************************************************************************}
+{                                                                                                  }
+{  The contents of this file are subject to the Mozilla Public License Version 1.1 (the "License");}
+{  you may not use this file except in compliance with the License. You may obtain a copy of the   }
+{  License at http://www.mozilla.org/MPL/                                                          }
+{                                                                                                  }
+{  Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF  }
+{  ANY KIND, either express or implied. See the License for the specific language governing rights }
+{  and limitations under the License.                                                              }
+{                                                                                                  }
+{  The Original Code is: jedi.inc.                                                                 }
+{  The Initial Developer of the Original Code is Project JEDI http://www.delphi-jedi.org           }
+{                                                                                                  }
+{  Alternatively, the contents of this file may be used under the terms of the GNU Lesser General  }
+{  Public License (the  "LGPL License"), in which case the provisions of the LGPL License are      }
+{  applicable instead of those above. If you wish to allow use of your version of this file only   }
+{  under the terms of the LGPL License and not to allow others to use your version of this file    }
+{  under the MPL, indicate your decision by deleting the provisions above and replace them with    }
+{  the notice and other provisions required by the LGPL License. If you do not delete the          }
+{  provisions above, a recipient may use your version of this file under either the MPL or the     }
+{  LGPL License.                                                                                   }
+{                                                                                                  }
+{  For more information about the LGPL: http://www.gnu.org/copyleft/lesser.html                    }
+{                                                                                                  }
+{**************************************************************************************************}
+{                                                                                                  }
+{  This file defines various generic compiler directives used in different libraries, e.g. in the  }
+{  JEDI Code Library (JCL) and JEDI Visual Component Library Library (J-VCL). The directives in    }
+{  this file are of generic nature and consist mostly of mappings from the VERXXX directives       }
+{  defined by Delphi, C++ Builder and FPC to friendly names such as DELPHI5 and                    }
+{  SUPPORTS_WIDESTRING. These friendly names are subsequently used in the libraries to test for    }
+{  compiler versions and/or whether the compiler supports certain features (such as widestrings or }
+{  64 bit integers. The libraries provide an additional, library specific, include file. For the   }
+{  JCL e.g. this is jcl.inc. These files should be included in source files instead of this file   }
+{  (which is pulled in automatically).                                                             }
+{                                                                                                  }
+{**************************************************************************************************}
+{                                                                                                  }
+{ Last modified: $Date:: 2008-03-09 23:54:44 +0100 (dim., 09 mars 2008)                          $ }
+{ Revision:      $Rev:: 2360                                                                     $ }
+{ Author:        $Author:: ahuser                                                                $ }
+{                                                                                                  }
+{**************************************************************************************************}
 
 (*
 
@@ -77,10 +73,20 @@
   Directive           Description
   ------------------------------------------------------------------------------
   WIN32               Defined when target platform is 32 bit Windows
+  WIN64               Defined when target platform is 64 bit Windows
   MSWINDOWS           Defined when target platform is 32 bit Windows
   LINUX               Defined when target platform is Linux
-  UNIX                Defined when target platform is Linux or Unix
+  UNIX                Defined when target platform is Unix-like (including Linux)
+  CLR                 Defined when target platform is .NET
 
+- Architecture directives. These are auto-defined by FPC
+  CPU32 and CPU64 are mostly for generic pointer size dependant differences rather
+  than for a specific architecture.
+
+  CPU386              Defined when target platform is native x86 (win32)
+  CPUx86_64           Defined when target platform is native x86_64 (win64)
+  CPU32               Defined when target is 32-bit
+  CPU64	              Defined when target is 64-bit
 
 - Visual library Directives
 
@@ -202,13 +208,15 @@
   BCB4         Defined when compiling with C++ Builder 4
   BCB5         Defined when compiling with C++ Builder 5
   BCB6         Defined when compiling with C++ Builder 6
-  BCB10        Defined when compiling with C++ Builder Personality of BDS 4.0
+  BCB10        Defined when compiling with C++ Builder Personality of BDS 4.0 (also known as C++Builder 2006)
+  BCB11        Defined when compiling with C++ Builder Personality of RAD Studio 2007 (also known as C++Builder 2007)
   BCB1_UP      Defined when compiling with C++ Builder 1 or higher
   BCB3_UP      Defined when compiling with C++ Builder 3 or higher
   BCB4_UP      Defined when compiling with C++ Builder 4 or higher
   BCB5_UP      Defined when compiling with C++ Builder 5 or higher
   BCB6_UP      Defined when compiling with C++ Builder 6 or higher
   BCB10_UP     Defined when compiling with C++ Builder Personality of BDS 4.0 or higher
+  BCB11_UP     Defined when compiling with C++ Builder Personality of RAD Studio 2007 or higher
 
 
 - Borland Developer Studio Versions
@@ -296,6 +304,19 @@
   RTL185_UP     Defined when compiling with Delphi for Win32 2007 or later
 
 
+- CLR Versions
+
+  Directive     Description
+  ------------------------------------------------------------------------------
+  CLR            Defined when compiling for .NET
+  CLR10          Defined when compiling for .NET 1.0 (may be overriden by FORCE_CLR10)
+  CLR10_UP       Defined when compiling for .NET 1.0 or later
+  CLR11          Defined when compiling for .NET 1.1 (may be overriden by FORCE_CLR11)
+  CLR11_UP       Defined when compiling for .NET 1.1 or later
+  CLR20          Defined when compiling for .NET 2.0 (may be overriden by FORCE_CLR20)
+  CLR20_UP       Defined when compiling for .NET 2.0 or later
+
+
 - Feature Directives
 
   The features directives are used to test if the compiler supports specific
@@ -328,9 +349,9 @@
   SUPPORTS_IMPLEMENTS           Compiler supports implements (D4+/BCB4+)
   SUPPORTS_DEPRECATED           Compiler supports the deprecated directive (D6+/BCB6+)
   SUPPORTS_PLATFORM             Compiler supports the platform directive (D6+/BCB6+)
-  SUPPORTS_LIBRARY              Compiler supports the library directive (D6+/BCB6+)
+  SUPPORTS_LIBRARY              Compiler supports the library directive (D6+/BCB6+/FPC)
   SUPPORTS_LOCAL                Compiler supports the local directive (D6+/BCB6+)
-  SUPPORTS_INLINE               Compiler supports the inline directive (D9+)
+  SUPPORTS_INLINE               Compiler supports the inline directive (D9+/FPC)
   SUPPORTS_FOR_IN               Compiler supports for in loops (D9+)
   SUPPORTS_NESTED_CONSTANTS     Compiler supports nested constants (D9+)
   SUPPORTS_NESTED_TYPES         Compiler supports nested types (D9+)
@@ -341,8 +362,9 @@
   SUPPORTS_STRICT               Compiler supports strict keyword (D9.NET, D10+)
   SUPPORTS_STATIC               Compiler supports static keyword (D9.NET, D10+)
   SUPPORTS_FINAL                Compiler supports final keyword (D9.NET, D10+)
+  SUPPORTS_GENERICS             Compiler supports generic implementations (D11.net)
   ACCEPT_DEPRECATED             Compiler supports or ignores the deprecated directive (D6+/BCB6+/FPC)
-  ACCEPT_PLATFORM               Compiler supports or ignores the platform directive (D6+/BCB6+)
+  ACCEPT_PLATFORM               Compiler supports or ignores the platform directive (D6+/BCB6+/FPC)
   ACCEPT_LIBRARY                Compiler supports or ignores the library directive (D6+/BCB6+)
   SUPPORTS_CUSTOMVARIANTS       Compiler supports custom variants (D6+/BCB6+)
   SUPPORTS_VARARGS              Compiler supports varargs (D6+/BCB6+)
@@ -353,12 +375,16 @@
   SUPPORTS_UNSAFE_WARNINGS      Compiler supports unsafe warnings (D7)
   SUPPORTS_WEAKPACKAGEUNIT      Compiler supports the WEAKPACKAGEUNIT directive
   SUPPORTS_COMPILETIME_MESSAGES Compiler supports the MESSAGE directive
-  HAS_UNIT_LIBC                 Unit Libc exists (Kylix, FPC on Linux)
-  HAS_UNIT_RTLCONSTS            Unit RTLConsts exists (D6+/BCB6+)
-  HAS_UNIT_TYPES                Unit Types exists (D6+/BCB6+)
-  HAS_UNIT_VARIANTS             Unit Variants exists (D6+/BCB6+)
-  HAS_UNIT_STRUTILS             Unit StrUtils exists (D6+/BCB6+)
+  SUPPORTS_PACKAGES             Compiler supports Packages 
+  HAS_UNIT_LIBC                 Unit Libc exists (Kylix, FPC on Linux/x86)
+  HAS_UNIT_RTLCONSTS            Unit RTLConsts exists (D6+/BCB6+/FPC)
+  HAS_UNIT_TYPES                Unit Types exists (D6+/BCB6+/FPC)
+  HAS_UNIT_VARIANTS             Unit Variants exists (D6+/BCB6+/FPC)
+  HAS_UNIT_STRUTILS             Unit StrUtils exists (D6+/BCB6+/FPC)
+  HAS_UNIT_DATEUTILS            Unit DateUtils exists (D6+/BCB6+/FPC)
+  HAS_UNIT_CONTNRS              Unit contnrs exists (D6+/BCB6+/FPC)
   XPLATFORM_RTL                 The RTL supports crossplatform function names (e.g. RaiseLastOSError) (D6+/BCB6+/FPC)
+  SUPPORTS_UNICODE              Compiler supports unicode strings
 
 
 - Compiler Settings
@@ -397,12 +423,17 @@
   {$MODE DELPHI}
   {$ASMMODE Intel}
   {$UNDEF BORLAND}
+   // FPC defines CPU* and Unix automatically
 {$ENDIF}
 
 {$IFDEF BORLAND}
   {$IFDEF LINUX}
     {$DEFINE KYLIX}
   {$ENDIF LINUX}
+  {$IFNDEF CLR}
+    {$DEFINE CPU386}  // For Borland compilers select the x86 compat assembler by default
+    {$DEFINE CPU32}   // Assume Borland compilers are 32-bit (rather than 64-bit)
+  {$ENDIF ~CLR}
 {$ENDIF BORLAND}
 
 {------------------------------------------------------------------------------}
@@ -506,6 +537,9 @@
     {$IFDEF VER160}
       {$DEFINE BDS2}
       {$DEFINE BDS}
+      {$IFDEF CLR}
+        {$DEFINE CLR10}
+      {$ENDIF CLR}
       {$DEFINE COMPILER8}
       {$DEFINE DELPHI8}
       {$DEFINE DELPHICOMPILER8}
@@ -516,6 +550,9 @@
     {$IFDEF VER170}
       {$DEFINE BDS3}
       {$DEFINE BDS}
+      {$IFDEF CLR}
+        {$DEFINE CLR11}
+      {$ENDIF CLR}
       {$DEFINE COMPILER9}
       {$DEFINE DELPHI9}
       {$DEFINE DELPHI2005} // synonym to DELPHI9
@@ -526,6 +563,9 @@
 
     {$IFDEF VER180}
       {$DEFINE BDS}
+      {$IFDEF CLR}
+        {$DEFINE CLR11}
+      {$ENDIF CLR}
       {$IFDEF VER185}
         {$DEFINE BDS5}
         {$DEFINE COMPILER11}
@@ -552,9 +592,23 @@
       {$UNDEF UNKNOWN_COMPILER_VERSION}
     {$ENDIF}
 
-    {$IFDEF UNKNOWN_COMPILER_VERSION} // adjust for newer version
-      {$DEFINE BDS5}
+    {$IFDEF VER190} // Delphi.NET 2007
       {$DEFINE BDS}
+      {$DEFINE BDS5}
+      {$IFDEF CLR}
+        {$DEFINE CLR20}
+      {$ENDIF CLR}
+      {$DEFINE COMPILER11}
+      {$DEFINE DELPHI11}
+      {$DEFINE DELPHI2007} // synonym to DELPHI10
+      {$DEFINE DELPHICOMPILER11}
+      {$DEFINE RTL190_UP}
+      {$UNDEF UNKNOWN_COMPILER_VERSION}
+    {$ENDIF VER190}
+
+    {$IFDEF UNKNOWN_COMPILER_VERSION} // adjust for newer version (always use latest version)
+      {$DEFINE BDS}
+      {$DEFINE BDS5}
       {$DEFINE COMPILER11}
       {$DEFINE DELPHI11}
       {$DEFINE DELPHI2007} // synonym to DELPHI11
@@ -727,6 +781,7 @@
 { RTLX_UP from RTLX_UP mappings                                                }
 {------------------------------------------------------------------------------}
 
+{$IFDEF RTL190_UP} {$DEFINE RTL185_UP} {$ENDIF}
 {$IFDEF RTL185_UP} {$DEFINE RTL180_UP} {$ENDIF}
 {$IFDEF RTL180_UP} {$DEFINE RTL170_UP} {$ENDIF}
 {$IFDEF RTL170_UP} {$DEFINE RTL160_UP} {$ENDIF}
@@ -742,6 +797,45 @@
 {$IFDEF RTL100_UP} {$DEFINE RTL93_UP}  {$ENDIF}
 {$IFDEF RTL93_UP}  {$DEFINE RTL90_UP}  {$ENDIF}
 {$IFDEF RTL90_UP}  {$DEFINE RTL80_UP}  {$ENDIF}
+
+{------------------------------------------------------------------------------}
+{ Check for CLR overrides of default detection                                 }
+{------------------------------------------------------------------------------}
+
+{$IFDEF CLR}
+  {$IFDEF FORCE_CLR10}
+    {$DEFINE CLR10}
+    {$UNDEF CLR11}
+    {$UNDEF CLR20}
+  {$ENDIF FORCE_CLR10}
+
+  {$IFDEF FORCE_CLR11}
+    {$UNDEF CLR10}
+    {$DEFINE CLR11}
+    {$UNDEF CLR20}
+  {$ENDIF FORCE_CLR11}
+
+  {$IFDEF FORCE_CLR20}
+    {$UNDEF CLR10}
+    {$UNDEF CLR11}
+    {$DEFINE CLR20}
+  {$ENDIF FORCE_CLR20}
+{$ENDIF CLR}
+
+{------------------------------------------------------------------------------}
+{ CLRX from CLRX_UP mappings                                                   }
+{------------------------------------------------------------------------------}
+
+{$IFDEF CLR10} {$DEFINE CLR10_UP} {$ENDIF}
+{$IFDEF CLR11} {$DEFINE CLR11_UP} {$ENDIF}
+{$IFDEF CLR20} {$DEFINE CLR20_UP} {$ENDIF}
+
+{------------------------------------------------------------------------------}
+{ CLRX_UP from CLRX_UP mappings                                                }
+{------------------------------------------------------------------------------}
+
+{$IFDEF CLR20_UP} {$DEFINE CLR11_UP} {$ENDIF}
+{$IFDEF CLR11_UP} {$DEFINE CLR10_UP} {$ENDIF}
 
 {------------------------------------------------------------------------------}
 
@@ -804,8 +898,8 @@
     {$DEFINE SUPPORTS_DYNAMICARRAYS}
     {$DEFINE SUPPORTS_DEFAULTPARAMS}
     {$DEFINE SUPPORTS_OVERLOAD}
-    {$DEFINE ACCEPT_DEPRECATED}
-    {$DEFINE ACCEPT_PLATFORM}
+    {$DEFINE ACCEPT_DEPRECATED}  // 2.2 also gives warnings
+    {$DEFINE ACCEPT_PLATFORM}    // 2.2 also gives warnings
     {$DEFINE ACCEPT_LIBRARY}
     {$DEFINE SUPPORTS_EXTSYM}
     {$DEFINE SUPPORTS_NODEFINE}
@@ -816,24 +910,43 @@
     {$IFDEF LINUX}
       {$DEFINE HAS_UNIT_LIBC}
     {$ENDIF LINUX}
+    {$DEFINE HAS_UNIT_CONTNRS}
     {$DEFINE HAS_UNIT_TYPES}
     {$DEFINE HAS_UNIT_VARIANTS}
     {$DEFINE HAS_UNIT_STRUTILS}
+    {$DEFINE HAS_UNIT_DATEUTILS}
     {$DEFINE HAS_UNIT_RTLCONSTS}
 
     {$DEFINE XPLATFORM_RTL}
 
-    {$UNDEF SUPPORTS_DISPINTERFACE}
-    {$UNDEF SUPPORTS_IMPLEMENTS}
+    {$IFDEF VER2_2}
+      {$DEFINE SUPPORTS_DISPINTERFACE}
+      {$DEFINE SUPPORTS_IMPLEMENTS}
+      {$DEFINE SUPPORTS_DISPID}
+    {$ELSE}
+      {$UNDEF SUPPORTS_DISPINTERFACE}
+      {$UNDEF SUPPORTS_IMPLEMENTS}
+    {$endif}
     {$UNDEF SUPPORTS_UNSAFE_WARNINGS}
   {$ENDIF}
 {$ENDIF FPC}
+
+{$IFDEF CONDITIONALEXPRESSIONS}
+  {$IFDEF CLR}
+    {$DEFINE SUPPORTS_UNICODE}
+  {$ELSE}
+    {$IFDEF COMPILER12_UP}
+      {$DEFINE SUPPORTS_UNICODE}
+    {$ENDIF COMPILER12_UP}
+  {$ENDIF CLR}
+{$ENDIF CONDITIONALEXPRESSIONS}
 
 {$IFDEF COMPILER1_UP}
   {$DEFINE SUPPORTS_CONSTPARAMS}
   {$DEFINE SUPPORTS_SINGLE}
   {$DEFINE SUPPORTS_DOUBLE}
   {$DEFINE SUPPORTS_EXTENDED}
+  {$DEFINE SUPPORTS_PACKAGES} 
 {$ENDIF COMPILER1_UP}
 
 {$IFDEF COMPILER2_UP}
@@ -913,6 +1026,12 @@
   {$DEFINE SUPPORTS_FINAL}
 {$ENDIF COMPILER10_UP}
 
+{$IFDEF COMPILER11_UP}
+  {$IFDEF CLR}
+    {$DEFINE SUPPORTS_GENERICS}
+  {$ENDIF CLR}
+{$ENDIF COMPILER11_UP}
+
 {$IFDEF RTL140_UP}
   {$IFDEF LINUX}
     {$DEFINE HAS_UNIT_LIBC}
@@ -921,8 +1040,13 @@
   {$DEFINE HAS_UNIT_TYPES}
   {$DEFINE HAS_UNIT_VARIANTS}
   {$DEFINE HAS_UNIT_STRUTILS}
+  {$DEFINE HAS_UNIT_DATEUTILS}
   {$DEFINE XPLATFORM_RTL}
 {$ENDIF RTL140_UP}
+
+{$IFDEF RTL130_UP}
+  {$DEFINE HAS_UNIT_CONTNRS}
+{$ENDIF RTL130_UP}
 
 {------------------------------------------------------------------------------}
 { Cross-platform related defines                                               }
