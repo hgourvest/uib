@@ -136,7 +136,7 @@ const
   EUIB_QUERYNOTOPEN        = 'La requête n''est pas encore ouverte.';
   EUIB_CASTERROR           = 'Transtypage incorrect.';
   EUIB_UNEXPECTEDERROR     = 'Erreur inattendue.';
-  EUIB_FIELDNUMNOTFOUND    = 'Le champ numéro: %d ''esxiste pas.';
+  EUIB_FIELDNUMNOTFOUND    = 'Le champ numéro: %d n''existe pas.';
   EUIB_FIELDSTRNOTFOUND    = 'Le champ "%s" n''existe pas.';
   EUIB_PARAMSTRNOTFOUND    = 'Le Parametre "%s" n''existe pas.';
   EUIB_BLOBFIELDNOTFOUND   = 'Le champ Blob numéro: %d n''existe pas.';
