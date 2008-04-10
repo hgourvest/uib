@@ -1,6 +1,9 @@
 program CloneDB;
 
 uses
+{$IFDEF USE_FASTMM4}
+  FastMM4,
+{$ENDIF}
   Forms,
   exceptionform in 'exceptionform.pas' {ExceptionDialog},
   main in 'main.pas' {MainForm};

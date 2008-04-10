@@ -38,6 +38,7 @@ type
     cbFailsafeDataPump: TCheckBox;
     btStartClone: TButton;
     btStartPump: TButton;
+    cbSkipGrants: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure btStartCloneClick(Sender: TObject);
     procedure btSrcDatabaseClick(Sender: TObject);
@@ -372,62 +373,65 @@ begin
       ExecuteImmediate(metadb.Procedures[i].AsAlterDDL);
     end;
 
-    // GRANTS
-    for i := 0 to metadb.RolesCount - 1 do
+    if not cbSkipGrants.Checked then
     begin
-      for j := 0 to metadb.Roles[i].GrantsCount - 1 do
+      // GRANTS
+      for i := 0 to metadb.RolesCount - 1 do
       begin
-         AddLog('Grant To Role: %s', [metadb.Roles[i].Grants[j].Name]);
-         if cbInternalNames.Checked then
-           ExecuteImmediate(metadb.Roles[i].Grants[j].AsFullDDL) else
-           ExecuteImmediate(metadb.Roles[i].Grants[j].AsDDL);
+        for j := 0 to metadb.Roles[i].GrantsCount - 1 do
+        begin
+           AddLog('Grant To Role: %s', [metadb.Roles[i].Grants[j].Name]);
+           if cbInternalNames.Checked then
+             ExecuteImmediate(metadb.Roles[i].Grants[j].AsFullDDL) else
+             ExecuteImmediate(metadb.Roles[i].Grants[j].AsDDL);
+        end;
       end;
-    end;
 
-    for i := 0 to metadb.TablesCount - 1 do
-    begin
-      for j := 0 to metadb.Tables[i].GrantsCount - 1 do
+      for i := 0 to metadb.TablesCount - 1 do
       begin
-        AddLog('Grant To Table: %s', [metadb.Tables[i].Grants[j].Name]);
-        if cbInternalNames.Checked then
-          ExecuteImmediate(metadb.Tables[i].Grants[j].AsFullDDL) else
-          ExecuteImmediate(metadb.Tables[i].Grants[j].AsDDL);
+        for j := 0 to metadb.Tables[i].GrantsCount - 1 do
+        begin
+          AddLog('Grant To Table: %s', [metadb.Tables[i].Grants[j].Name]);
+          if cbInternalNames.Checked then
+            ExecuteImmediate(metadb.Tables[i].Grants[j].AsFullDDL) else
+            ExecuteImmediate(metadb.Tables[i].Grants[j].AsDDL);
+        end;
+        for j := 0 to metadb.Tables[i].FieldsGrantsCount - 1 do
+        begin
+          AddLog('Grant To TableField: %s', [metadb.Tables[i].FieldsGrants[j].Name]);
+          if cbInternalNames.Checked then
+            ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsFullDDL) else
+            ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsDDL);
+        end;
       end;
-      for j := 0 to metadb.Tables[i].FieldsGrantsCount - 1 do
-      begin
-        AddLog('Grant To TableField: %s', [metadb.Tables[i].FieldsGrants[j].Name]);
-        if cbInternalNames.Checked then
-          ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsFullDDL) else
-          ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsDDL);
-      end;
-    end;
 
-    for i := 0 to metadb.ViewsCount - 1 do
-    begin
-      for j := 0 to metadb.Views[i].GrantsCount - 1 do
+      for i := 0 to metadb.ViewsCount - 1 do
       begin
-        AddLog('Grant To View: %s', [metadb.Views[i].Grants[j].Name]);
-        if cbInternalNames.Checked then
-          ExecuteImmediate(metadb.Views[i].Grants[j].AsFullDDL) else
-          ExecuteImmediate(metadb.Views[i].Grants[j].AsDDL);
+        for j := 0 to metadb.Views[i].GrantsCount - 1 do
+        begin
+          AddLog('Grant To View: %s', [metadb.Views[i].Grants[j].Name]);
+          if cbInternalNames.Checked then
+            ExecuteImmediate(metadb.Views[i].Grants[j].AsFullDDL) else
+            ExecuteImmediate(metadb.Views[i].Grants[j].AsDDL);
+        end;
+        for j := 0 to metadb.Views[i].FieldsGrantsCount - 1 do
+        begin
+          AddLog('Grant To ViewField: %s', [metadb.Views[i].FieldsGrants[j].Name]);
+          if cbInternalNames.Checked then
+            ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsFullDDL) else
+            ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsDDL);
+        end;
       end;
-      for j := 0 to metadb.Views[i].FieldsGrantsCount - 1 do
-      begin
-        AddLog('Grant To ViewField: %s', [metadb.Views[i].FieldsGrants[j].Name]);
-        if cbInternalNames.Checked then
-          ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsFullDDL) else
-          ExecuteImmediate(metadb.Tables[i].FieldsGrants[j].AsDDL);
-      end;
-    end;
 
-    for i := 0 to metadb.ProceduresCount - 1 do
-    begin
-      for j := 0 to metadb.Procedures[i].GrantsCount - 1 do
+      for i := 0 to metadb.ProceduresCount - 1 do
       begin
-        AddLog('Grant To Procedure: %s', [metadb.Procedures[i].Grants[j].Name]);
-        if cbInternalNames.Checked then
-          ExecuteImmediate(metadb.Procedures[i].Grants[j].AsFullDDL) else
-          ExecuteImmediate(metadb.Procedures[i].Grants[j].AsDDL);
+        for j := 0 to metadb.Procedures[i].GrantsCount - 1 do
+        begin
+          AddLog('Grant To Procedure: %s', [metadb.Procedures[i].Grants[j].Name]);
+          if cbInternalNames.Checked then
+            ExecuteImmediate(metadb.Procedures[i].Grants[j].AsFullDDL) else
+            ExecuteImmediate(metadb.Procedures[i].Grants[j].AsDDL);
+        end;
       end;
     end;
   finally

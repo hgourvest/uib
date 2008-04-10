@@ -141,8 +141,6 @@ object MainForm: TMainForm
     TabOrder = 3
     object TabSheet1: TTabSheet
       Caption = 'Clone'
-      ExplicitWidth = 518
-      ExplicitHeight = 49
       DesignSize = (
         378
         94)
@@ -165,9 +163,9 @@ object MainForm: TMainForm
       object cbIgnoreConstraints: TCheckBox
         Left = 3
         Top = 49
-        Width = 249
+        Width = 205
         Height = 17
-        Caption = 'Do not restore indices and relational constraints'
+        Caption = 'Skip indices and relational constraints'
         TabOrder = 2
       end
       object cbPageSize: TComboBox
@@ -183,7 +181,7 @@ object MainForm: TMainForm
       object cbOverrideSourcePageSize: TCheckBox
         Left = 196
         Top = 3
-        Width = 182
+        Width = 179
         Height = 17
         Caption = 'Override src. database page size'
         TabOrder = 4
@@ -192,7 +190,7 @@ object MainForm: TMainForm
       object cbInternalNames: TCheckBox
         Left = 3
         Top = 72
-        Width = 249
+        Width = 205
         Height = 17
         Caption = 'Force internal names'
         TabOrder = 5
@@ -207,12 +205,18 @@ object MainForm: TMainForm
         TabOrder = 6
         OnClick = btStartCloneClick
       end
+      object cbSkipGrants: TCheckBox
+        Left = 214
+        Top = 49
+        Width = 161
+        Height = 17
+        Caption = 'Skip grants'
+        TabOrder = 7
+      end
     end
     object TabSheet2: TTabSheet
       Caption = 'Pump'
       ImageIndex = 1
-      ExplicitWidth = 518
-      ExplicitHeight = 49
       DesignSize = (
         378
         94)
