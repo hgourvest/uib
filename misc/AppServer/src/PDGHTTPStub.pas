@@ -19,7 +19,7 @@ unit PDGHTTPStub;
 {$ENDIF}
 {$I PDGAppServer.inc}
 interface
-uses PDGSocketStub, {$IFDEF FPC}sockets,{$ELSE}Winsock,{$ENDIF} PDGUtils, classes, json;
+uses PDGSocketStub, {$IFDEF FPC}sockets,{$ELSE}Winsock,{$ENDIF} PDGUtils, classes, superobject;
 
 type
 
@@ -27,7 +27,7 @@ type
 
   TConnectionField = (conClose, conKeepAlive);
 
-  THTTPMessage = class(TJsonObject)
+  THTTPMessage = class(TSuperObject)
   private
     FContent: TPooledMemoryStream;
     function GetContentString: string;
@@ -35,29 +35,29 @@ type
     property Content: TPooledMemoryStream read FContent;
     property ContentString: string read GetContentString;
 
-    constructor Create(jt: TJsonType = json_type_object); override;
+    constructor Create(jt: TSuperType = stObject); override;
     destructor Destroy; override;
 
-    procedure Clear; override;
+    procedure Clear(all: boolean = false); virtual;
   end;
 
   THTTPStub = class(TSocketStub)
   private
     FRequest: THTTPMessage;
     FResponse: THTTPMessage;
-    FMVC: TJsonObject;
+    FMVC: ISuperObject;
     function DecodeFields(str: PChar): boolean;
     function DecodeCommand(str: PChar): boolean;
   protected
-    function CreateMVC: TJsonObject; virtual;
+    function CreateMVC: ISuperObject; virtual;
     function DecodeContent: boolean; virtual;
-    procedure doBeforeProcessRequest(ctx: TJsonObject); virtual;
-    procedure doAfterProcessRequest(ctx: TJsonObject); virtual;
-    procedure ProcessRequest(ctx: TJsonObject); virtual;
+    procedure doBeforeProcessRequest(ctx: ISuperObject); virtual;
+    procedure doAfterProcessRequest(ctx: ISuperObject); virtual;
+    procedure ProcessRequest(ctx: ISuperObject); virtual;
   public
     property Request: THTTPMessage read FRequest;
     property Response: THTTPMessage read FResponse;
-    property MVC: TJsonObject read FMVC;
+    property MVC: ISuperObject read FMVC;
     function Run: Cardinal; override;
     procedure WriteLine(str: string);
     procedure WriteString(const str: string);
@@ -79,53 +79,6 @@ const
   PT = '.';
   CRLF = CR+LF;
 
-//  HttpResponseStrings : array[THttpResponseCode] of string = (
-//    '100 Continue',
-//    '101 Switching Protocols',
-//
-//    '200 OK',
-//    '201 Created',
-//    '202 Accepted',
-//    '203 Non-Authoritative Information',
-//    '204 No Content',
-//    '205 Reset Content',
-//    '206 Partial Content',
-//
-//    '300 Multiple Choices',
-//    '301 Moved Permanently',
-//    '302 Found',
-//    '303 See Other',
-//    '304 Not Modified',
-//    '305 Use Proxy',
-//    '306 unused',
-//    '307 Temporary Redirect',
-//    '400 Bad Request',
-//    '401 Authorization Required',
-//    '402 Payment Required',
-//    '403 Forbidden',
-//    '404 Not Found',
-//    '405 Method Not Allowed',
-//    '406 Not Acceptable',
-//    '407 Proxy Authentication Required',
-//    '408 Request Time-out',
-//    '409 Conflict',
-//    '410 Gone',
-//    '411 Length Required',
-//    '412 Precondition Failed',
-//    '413 Request Entity Too Large',
-//    '414 Request-URI Too Large',
-//    '415 Unsupported Media Type',
-//    '416 Requested Range Not Satisfiable',
-//    '417 Expectation Failed',
-//
-//    '500 Internal Server Error',
-//    '501 Method Not Implemented',
-//    '502 Bad Gateway',
-//    '503 Service Temporarily Unavailable',
-//    '504 Gateway Time-out',
-//    '505 HTTP Version Not Supported'
-//  );
-
 const
 (* default limit on bytes in Request-Line (Method+URI+HTTP-version) *)
   DEFAULT_LIMIT_REQUEST_LINE = 8190;
@@ -134,13 +87,68 @@ const
 (* default limit on number of request header fields *)
   DEFAULT_LIMIT_REQUEST_FIELDS = 100;
 
-function HTTPInterprete(src: PChar; named: boolean = false; sep: char = ';'): TJsonObject;
+function HTTPInterprete(src: PChar; named: boolean = false; sep: char = ';'): ISuperObject;
 function HTTPDecode(const AStr: String): String;
+function HttpResponseStrings(code: integer): string;
 
 implementation
 uses SysUtils, StrUtils;
 
-function HTTPInterprete(src: PChar; named: boolean; sep: char): TJsonObject;
+
+function HttpResponseStrings(code: integer): string;
+begin
+  case code of
+    100: Result := '100 Continue';
+    101: Result := '101 Switching Protocols';
+
+    200: Result := 'HTTP/1.1 200 OK';
+    201: Result := 'HTTP/1.1 201 Created';
+    202: Result := 'HTTP/1.1 202 Accepted';
+    203: Result := 'HTTP/1.1 203 Non-Authoritative Information';
+    204: Result := 'HTTP/1.1 204 No Content';
+    205: Result := 'HTTP/1.1 205 Reset Content';
+    206: Result := 'HTTP/1.1 206 Partial Content';
+
+    300: Result := 'HTTP/1.1 300 Multiple Choices';
+    301: Result := 'HTTP/1.1 301 Moved Permanently';
+    302: Result := 'HTTP/1.1 302 Found';
+    303: Result := 'HTTP/1.1 303 See Other';
+    304: Result := 'HTTP/1.1 304 Not Modified';
+    305: Result := 'HTTP/1.1 305 Use Proxy';
+    306: Result := 'HTTP/1.1 306 unused';
+    307: Result := 'HTTP/1.1 307 Temporary Redirect';
+    400: Result := 'HTTP/1.1 400 Bad Request';
+    401: Result := 'HTTP/1.1 401 Authorization Required';
+    402: Result := 'HTTP/1.1 402 Payment Required';
+    403: Result := 'HTTP/1.1 403 Forbidden';
+    404: Result := 'HTTP/1.1 404 Not Found';
+    405: Result := 'HTTP/1.1 405 Method Not Allowed';
+    406: Result := 'HTTP/1.1 406 Not Acceptable';
+    407: Result := 'HTTP/1.1 407 Proxy Authentication Required';
+    408: Result := 'HTTP/1.1 408 Request Time-out';
+    409: Result := 'HTTP/1.1 409 Conflict';
+    410: Result := 'HTTP/1.1 410 Gone';
+    411: Result := 'HTTP/1.1 411 Length Required';
+    412: Result := 'HTTP/1.1 412 Precondition Failed';
+    413: Result := 'HTTP/1.1 413 Request Entity Too Large';
+    414: Result := 'HTTP/1.1 414 Request-URI Too Large';
+    415: Result := 'HTTP/1.1 415 Unsupported Media Type';
+    416: Result := 'HTTP/1.1 416 Requested Range Not Satisfiable';
+    417: Result := 'HTTP/1.1 417 Expectation Failed';
+
+    500: Result := 'HTTP/1.1 500 Internal Server Error';
+    501: Result := 'HTTP/1.1 501 Method Not Implemented';
+    502: Result := 'HTTP/1.1 502 Bad Gateway';
+    503: Result := 'HTTP/1.1 503 Service Temporarily Unavailable';
+    504: Result := 'HTTP/1.1 504 Gateway Time-out';
+    505: Result := 'HTTP/1.1 505 HTTP Version Not Supported';
+  else
+    Result := 'HTTP/1.1 ' + inttostr(code);
+  end;
+end;
+
+
+function HTTPInterprete(src: PChar; named: boolean; sep: char): ISuperObject;
 var
   strlist: TStringList;
   j: integer;
@@ -150,17 +158,17 @@ begin
     strlist.Delimiter := sep;
     strlist.DelimitedText := src;
     if named then
-    begin    
-      Result := TJsonObject.Create(json_type_object);
+    begin
+      Result := TSuperObject.Create(stObject);
       //with Result.AsObject do
         for j := 0 to strlist.Count - 1 do
           Result.S[HTTPDecode(strlist.Names[j])] := PChar(trim(HTTPDecode(strlist.ValueFromIndex[j])));
     end else
     begin
-      Result := TJsonObject.Create(json_type_array);
+      Result := TSuperObject.Create(stArray);
       with Result.AsArray do
         for j := 0 to strlist.Count - 1 do
-          Add(TJsonObject.Create(trim(HTTPDecode(strlist.Strings[j]))));
+          Add(TSuperObject.Create(trim(HTTPDecode(strlist.Strings[j]))));
     end;
   finally
     strlist.Free;
@@ -208,7 +216,7 @@ begin
   SetLength(Result, Rp - PChar(Result));
 end;
 
-function HTTPGetAuthorization(str: string): TJsonObject;
+function HTTPGetAuthorization(str: string): ISuperObject;
 var
   i: integer;
 begin
@@ -222,9 +230,9 @@ begin
       i := pos(':', str);
       if i > 0 then
       begin
-        Result := TJsonObject.Create;
-        Result.AsObject.Put('user', TJsonObject.Create(copy(str, 1, i-1)));
-        Result.AsObject.Put('pass', TJsonObject.Create(copy(str, i+1, Length(str)-i)));
+        Result := TSuperObject.Create;
+        Result.AsObject.Put('user', TSuperObject.Create(copy(str, 1, i-1)));
+        Result.AsObject.Put('pass', TSuperObject.Create(copy(str, i+1, Length(str)-i)));
       end;
     end;
   end;
@@ -232,16 +240,17 @@ end;
 
 { THTTPMessage }
 
-procedure THTTPMessage.Clear;
+procedure THTTPMessage.Clear(all: boolean);
 begin
   inherited;
   FContent.Clear;
 end;
 
-constructor THTTPMessage.Create(jt: TJsonType = json_type_object);
+constructor THTTPMessage.Create(jt: TSuperType);
 begin
   Inherited create(jt);
   FContent := TPooledMemoryStream.Create;
+  DataPtr := Self;
 end;
 
 destructor THTTPMessage.Destroy;
@@ -268,7 +277,7 @@ begin
     with FRequest['@env'] do
     begin
       prop := LowerCase(Copy(str, 1, p-str));
-      AsObject.Put(PChar(prop), TJsonObject.Create(p+2));
+      AsObject.Put(PChar(prop), TSuperObject.Create(p+2));
       Result := true;
     end;
 end;
@@ -431,7 +440,7 @@ var
   buffer: string;
   cursor, line, len: integer;
   c: char;
-  ctx: TJsonObject;
+  ctx: ISuperObject;
 begin
   result := 0;
   cursor := 0;
@@ -461,7 +470,7 @@ begin
             if not DecodeContent then
               exit;
 
-              ctx := TJsonObject.Create;
+              ctx := TSuperObject.Create;
               try
                 doBeforeProcessRequest(ctx);
                 try
@@ -481,7 +490,7 @@ begin
                   doAfterProcessRequest(ctx);
                 end;
               finally
-                ctx.Free;
+                ctx := nil;
               end;
 
             line := 0;
@@ -508,9 +517,9 @@ begin
   end;
 end;
 
-function THTTPStub.CreateMVC: TJsonObject;
+function THTTPStub.CreateMVC: ISuperObject;
 begin
-  Result := TJsonObject.Create;
+  Result := TSuperObject.Create;
 end;
 
 constructor THTTPStub.CreateStub(AOwner: TSocketServer; ASocket: longint;
@@ -518,28 +527,31 @@ constructor THTTPStub.CreateStub(AOwner: TSocketServer; ASocket: longint;
 begin
   inherited;
   FRequest := THTTPMessage.Create;
+  FRequest._AddRef;
   FResponse := THTTPMessage.Create;
+  FResponse._AddRef;
   FMVC := CreateMVC;
 end;
 
 destructor THTTPStub.Destroy;
 begin
-  FRequest.Free;
-  FResponse.Free;
-  FMVC.Free;
+  FRequest._Release;
+  FResponse._Release;
+  FMVC := nil;
   inherited;
 end;
 
-procedure THTTPStub.doAfterProcessRequest(ctx: TJsonObject);
+procedure THTTPStub.doAfterProcessRequest(ctx: ISuperObject);
 var
-  ite: TJsonObjectIter;
+  ite: TSuperObjectIter;
 begin
-   WriteLine('HTTP/1.1 ' + Response.S['response']);
-   if JsonFindFirst(Response['env'], ite) then
+   WriteLine(HttpResponseStrings(Response.I['response']));
+
+   if ObjectFindFirst(Response['env'], ite) then
    repeat
      WriteLine(ite.key + ': ' + ite.val.AsString);
-   until not JsonFindNext(ite);
-   JsonFindClose(ite);
+   until not ObjectFindNext(ite);
+   ObjectFindClose(ite);
 
    if Response['sendfile'] <> nil then
      SendFile(Response.S['sendfile']) else
@@ -549,23 +561,21 @@ begin
    Request.Clear;
 end;
 
-procedure THTTPStub.doBeforeProcessRequest(ctx: TJsonObject);
+procedure THTTPStub.doBeforeProcessRequest(ctx: ISuperObject);
 begin
-  FRequest['cookies'] := HTTPInterprete(Request.S['env.cookie'], true);
-  FRequest['content-type'] := HTTPInterprete(Request.S['env.content-type']);
+  FRequest['cookies'] := HTTPInterprete(PChar(Request.S['env.cookie']), true);
+  FRequest['content-type'] := HTTPInterprete(PChar(Request.S['env.content-type']));
   FRequest['authorization'] := HTTPGetAuthorization(Request.S['env.authorization']);
-  FRequest['accept'] := HTTPInterprete(Request.S['env.accept'], false, ',');
+  FRequest['accept'] := HTTPInterprete(PChar(Request.S['env.accept']), false, ',');
 
 
   FResponse.I['response'] :=  200;
 
-  FRequest.AddRef;
   ctx['request'] := FRequest;
-  FResponse.AddRef;
   ctx['response'] := FResponse;
 end;
 
-procedure THTTPStub.ProcessRequest(ctx: TJsonObject);
+procedure THTTPStub.ProcessRequest(ctx: ISuperObject);
 begin
 
 end;
@@ -611,19 +621,36 @@ begin
 end;
 
 procedure THTTPStub.SendStream(Stream: TStream);
-var
-  size: Integer;
-  buffer: array[0..1023] of byte;
-begin
-  WriteLine(format('Content-Length: %d', [stream.size]));
-  WriteLine('');
-  Stream.Seek(0, soFromBeginning);
-  size := stream.Read(buffer, sizeof(buffer));
-  while size > 0 do
+  procedure SendIt(s: TSTream);
+  var
+    size: Integer;
+    buffer: array[0..1023] of byte;
   begin
-    send(SocketHandle, buffer, size, 0);
-    size := stream.Read(buffer, sizeof(buffer));
+    WriteLine(format('Content-Length: %d', [s.size]));
+    WriteLine('');
+    s.Seek(0, soFromBeginning);
+    size := s.Read(buffer, sizeof(buffer));
+    while size > 0 do
+    begin
+      send(SocketHandle, buffer, size, 0);
+      size := s.Read(buffer, sizeof(buffer));
+    end;
   end;
+var
+  streamout: TPooledMemoryStream;
+begin
+  if Response.B['compress'] then
+  begin
+    streamout := TPooledMemoryStream.Create;
+    try
+      stream.Seek(0, soFromBeginning);
+      CompressStream(stream, streamout, 5);
+      SendIt(streamout);
+    finally
+      streamout.Free;
+    end;
+  end else
+    SendIt(Stream);
 end;
 
 end.

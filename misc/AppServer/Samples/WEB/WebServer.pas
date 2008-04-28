@@ -4,7 +4,7 @@ unit WebServer;
 {$ENDIF}
 interface
 uses PDGHTTPStub, PDGSocketStub, PDGUtils, {$IFDEF FPC}sockets,{$ELSE}Winsock, {$ENDIF}Windows,
-  jvuib, jvuiblib, json, SyncObjs, classes;
+  jvuib, jvuiblib, superobject, SyncObjs, classes;
 
 type
   THTTPServer = class(TSocketServer)
@@ -12,24 +12,13 @@ type
     function doOnCreateStub(Socket: longint; AAddress: TSockAddr): TSocketStub; override;
   end;
 
-  THTTPMethods = class(TJsonObject)
-  private
-    procedure application_getdata_controler(Params: TJsonObject; var Result: TJsonObject);
-    procedure application_getdata_json(Params: TJsonObject; var Result: TJsonObject);
-    procedure application_getdata_html(Params: TJsonObject; var Result: TJsonObject);
-  public
-    procedure Redirect(const location: string);
-    function isPost: boolean;
-    constructor Create(jt: TJsonType = json_type_object); override;
-  end;
-
   THTTPConnexion = class(THTTPStub)
   protected
-    FFormats: TJsonObject;
-    procedure doBeforeProcessRequest(ctx: TJsonObject); override;
-    procedure doAfterProcessRequest(ctx: TJsonObject); override;
-    procedure ProcessRequest(ctx: TJsonObject); override;
-    function CreateMVC: TJsonObject; override;
+    FFormats: ISuperObject;
+    procedure doBeforeProcessRequest(ctx: ISuperObject); override;
+    procedure doAfterProcessRequest(ctx: ISuperObject); override;
+    procedure ProcessRequest(ctx: ISuperObject); override;
+    function CreateMVC: ISuperObject; override;
   public
     constructor CreateStub(AOwner: TSocketServer; Socket: longint;
       AAddress: TSockAddr); override;
@@ -84,32 +73,25 @@ end;
 constructor TMyPool.Create(MaxSize: Integer = 0);
 begin
   inherited Create(MaxSize);
-  with TJsonObject.Parse(
+  with TSuperObject.Parse(
     PChar(
       FileToString(
         ExtractFilePath(ParamStr(0)) + 'appserver.json'))) do
-  try
+  begin
     FDatabaseName := s['database.databasename'];
     FUserName := s['database.username'];
     FPassWord := s['database.password'];
     FSQLDialect := i['database.sqldialect'];
-  finally
-    Free;
   end;
 end;
 
 { THTTPServer }
 
-function THTTPConnexion.CreateMVC: TJsonObject;
-begin
-  Result := THTTPMethods.Create;
-end;
-
 constructor THTTPConnexion.CreateStub(AOwner: TSocketServer; Socket: longint;
   AAddress: TSockAddr);
 begin
   inherited;
-  FFormats := TJsonObject.Create;
+  FFormats := TSuperObject.Create;
 
   FFormats.S['htm'] := 'text/html';
   FFormats.S['html'] := 'text/html';
@@ -132,19 +114,19 @@ end;
 
 destructor THTTPConnexion.Destroy;
 begin
-  FFormats.Free;
+  FFormats := nil;
   inherited;
 end;
 
-procedure THTTPConnexion.doAfterProcessRequest(ctx: TJsonObject);
+procedure THTTPConnexion.doAfterProcessRequest(ctx: ISuperObject);
 begin
   Response.S['env.Set-Cookie'] := PChar(COOKIE_NAME + '=' + StrTobase64(ctx['session'].AsJSon));
   inherited;
 end;
 
-procedure THTTPConnexion.doBeforeProcessRequest(ctx: TJsonObject);
+procedure THTTPConnexion.doBeforeProcessRequest(ctx: ISuperObject);
 var
-  obj: TJsonObject;
+  obj: ISuperObject;
   function interprete(v: PChar; name: string): boolean;
   var
     p: PChar;
@@ -172,10 +154,10 @@ begin
   ctx['session'].Merge(Base64ToStr(Request['cookies'].S[COOKIE_NAME]));
 
   // get parametters
-  ctx['params'] := TJsonObject.Create;
+  ctx['params'] := TSuperObject.Create;
   ctx['params'].Merge(Request['params'], true);
   if (Request.S['method'] = 'POST') then
-    if(Request.S['content-type[0]'] = 'application/json') then
+    if(Request.S['accept[0]'] = 'application/json') then
     begin
       ctx['params'].Merge(Request.ContentString);
       ctx.S['params.format'] := 'json';
@@ -187,23 +169,15 @@ begin
         ctx['params'].Merge(obj, true);
         ctx.S['params.format'] := 'html';
       finally
-        obj.Free;
+        obj := nil;
       end;
-    end
-//    else
-//    if(Request.S['content-type[0]'] = 'multipart/form-data') then
-//    begin
-//
-//      ctx.S['params.format'] := 'html';
-//    end
-    ;
+    end;
 
-   with HTTPInterprete(Request.S['uri'], false, '/') do
+   obj := HTTPInterprete(PChar(Request.S['uri']), false, '/');
    begin
-     if interprete(AsArray.S[1], 'controler') then
-     if interprete(AsArray.S[2], 'action') then
-        interprete(AsArray.S[3], 'id');
-     Free;
+     if interprete(PChar(obj.AsArray.S[1]), 'controler') then
+     if interprete(PChar(obj.AsArray.S[2]), 'action') then
+        interprete(PChar(obj.AsArray.S[3]), 'id');
    end;
 
   // default action is index
@@ -213,19 +187,15 @@ begin
   // detect format
   if (ctx['params.format'] = nil) then
     ctx.S['params.format'] := 'html';
-
-  //writeln(ctx.asjson(true));
-//  writeln(Request.ContentString);
-//  Request.Content.SaveToFile('c:\test.txt');
 end;
 
-procedure THTTPConnexion.ProcessRequest(ctx: TJsonObject);
+procedure THTTPConnexion.ProcessRequest(ctx: ISuperObject);
 var
   user, pass: string;
   str: string;
   path: string;
-  obj: TJsonObject;
-  proc: TJsonMethod;
+  obj: ISuperObject;
+  proc: TSuperMethod;
 begin
   inherited;
 
@@ -237,7 +207,7 @@ begin
     if not((user = 'user') and (pass = 'pass')) then
     begin
       Response.I['response'] := 401;
-      Response.S['env.WWW-Authenticate'] := 'Basic';
+      Response['@env'].AsObject.Put('WWW-Authenticate', TSuperObject.Create('Basic'));
       exit;
     end else
       ctx.B['session.authenticate'] := false;
@@ -247,24 +217,22 @@ begin
     with ctx['params'] do
     begin
       // controler
-      TMethod(proc).Code := MVC[S['controler']][S['action']].M['controler'];
-      if TMethod(proc).Code <> nil then
+      proc := MVC.M[S['controler'] + '.' + S['action'] + '.controler'];
+      if assigned(proc) then
       begin
-        TMethod(proc).Data := ctx;
         obj := nil;
-        proc(ctx['params'], obj);
+        proc(ctx, ctx['params'], obj);
       end;
 
       // redirect ? ...
       if Response.I['response'] = 300 then Exit;
 
       // view
-      TMethod(proc).Code := MVC[S['controler']][S['action']].M[S['format']];
-      if TMethod(proc).Code <> nil then
+      proc := MVC.M[S['controler'] + '.' + S['action'] + '.' + S['format']];
+      if assigned(proc) then
       begin
-        TMethod(proc).Data := ctx;
         obj := nil;
-        proc(ctx['params'], obj);
+        proc(ctx, ctx['params'], obj);
         Response.S['env.Content-Type'] := FFormats.S[S['format']];
         exit;
       end;
@@ -299,45 +267,45 @@ begin
   Result := THTTPConnexion.CreateStub(Self, Socket, AAddress);
 end;
 
-{ THTTPMethods }
+{ HTTP Methods }
 
-function QueryToJson(qr: TJvUIBQuery): TJsonObject;
+function QueryToJson(qr: TJvUIBQuery): ISuperObject;
 var
-  meta, data, rec: TJsonObject;
+  meta, data, rec: ISuperObject;
   i: integer;
   str: string;
 begin
   qr.Open;
-  Result := TJsonObject.Create(json_type_object);
+  Result := TSuperObject.Create(stObject);
 
-  meta := TJsonObject.Create(json_type_array);
+  meta := TSuperObject.Create(stArray);
   Result.AsObject.Put('meta', meta);
   for i := 0 to qr.Fields.FieldCount - 1 do
-    meta.AsArray.add(TJsonObject.create(PChar(qr.Fields.AliasName[i])));
+    meta.AsArray.add(TSuperObject.create(PChar(qr.Fields.AliasName[i])));
 
-  data := TJsonObject.Create(json_type_array);
+  data := TSuperObject.Create(stArray);
   Result.AsObject.Put('data', data);
   while not qr.Eof do
   begin
-    rec := TJsonObject.create(json_type_array);
+    rec := TSuperObject.create(stArray);
     data.AsArray.Add(rec);
         for i := 0 to qr.Fields.FieldCount - 1 do
       if qr.Fields.IsNull[i] then
         rec.AsArray.Add(nil) else
       case qr.Fields.FieldType[i] of
-        uftChar, uftVarchar, uftCstring: rec.AsArray.Add(TJsonObject.Create(PChar(qr.Fields.AsString[i])));
-        uftSmallint, uftInteger, uftInt64: rec.AsArray.Add(TJsonObject.Create(qr.Fields.AsInteger[i]));
-        uftNumeric, uftFloat, uftDoublePrecision: rec.AsArray.Add(TJsonObject.Create(qr.Fields.AsDouble[i]));
+        uftChar, uftVarchar, uftCstring: rec.AsArray.Add(TSuperObject.Create(PChar(qr.Fields.AsString[i])));
+        uftSmallint, uftInteger, uftInt64: rec.AsArray.Add(TSuperObject.Create(qr.Fields.AsInteger[i]));
+        uftNumeric, uftFloat, uftDoublePrecision: rec.AsArray.Add(TSuperObject.Create(qr.Fields.AsDouble[i]));
         uftBlob, uftBlobId:
           begin
             qr.ReadBlob(i, str);
             if qr.Fields.Data.sqlvar[i].SqlSubType = 1 then
-              rec.AsArray.Add(TJsonObject.Create(PChar(str))) else
-              rec.AsArray.Add(TJsonObject.Create(PChar(StrTobase64(str))));
+              rec.AsArray.Add(TSuperObject.Create(PChar(str))) else
+              rec.AsArray.Add(TSuperObject.Create(PChar(StrTobase64(str))));
           end;
-        uftTimestamp, uftDate, uftTime: rec.AsArray.Add(TJsonObject.Create(PChar(qr.Fields.AsString[i])));
+        uftTimestamp, uftDate, uftTime: rec.AsArray.Add(TSuperObject.Create(PChar(qr.Fields.AsString[i])));
         {$IFDEF IB7_UP}
-        uftBoolean: rec.AsArray.Add(TJsonObject.Create(PChar(qr.Fields.AsBoolean[i])));
+        uftBoolean: rec.AsArray.Add(ISuperObject.Create(PChar(qr.Fields.AsBoolean[i])));
         {$ENDIF}
       else
         rec.AsArray.Add(nil);
@@ -346,41 +314,48 @@ var
   end;
 end;
 
-procedure THTTPMethods.application_getdata_html(Params: TJsonObject;
-  var Result: TJsonObject);
+procedure HTTPOutput(this, obj: ISuperObject; format: boolean); overload;
 begin
-  THTTPMessage(O['response']).Content.WriteString('<html><body><pre>', false);
-  O['dataset'].SaveTo(THTTPMessage(O['response']).Content, true);
-  THTTPMessage(O['response']).Content.WriteString('</pre></body></html>', false);
+  obj.SaveTo(THTTPMessage(this['response'].DataPtr).Content, format);
 end;
 
-procedure THTTPMethods.application_getdata_json(Params: TJsonObject;
-  var Result: TJsonObject);
+procedure HTTPOutput(this: ISuperObject; const str: string); overload;
 begin
-  O['dataset'].SaveTo(THTTPMessage(O['response']).Content);
+  THTTPMessage(this['response'].DataPtr).Content.WriteString(str, false);
 end;
 
-constructor THTTPMethods.create(jt: TJsonType = json_type_object);
+procedure HTTPCompress(this: ISuperObject);
 begin
-  inherited;
-  M['application.getdata.controler'] := @THTTPMethods.application_getdata_controler;
-  M['application.getdata.json'] := @THTTPMethods.application_getdata_json;
-  M['application.getdata.html'] := @THTTPMethods.application_getdata_html;
+  this.B['response.compress'] := true;
+  this.S['response.env.Content-Encoding'] := 'deflate';
 end;
 
-function THTTPMethods.isPost: boolean;
+function HTTPIsPost(this: ISuperObject): boolean;
 begin
-  Result := S['request.method'] = 'POST'
+  Result := This.S['request.method'] = 'POST'
 end;
 
-procedure THTTPMethods.Redirect(const location: string);
+procedure HTTPRedirect(This: ISuperObject; const location: string);
 begin
-  I['response.response'] := 300;
-  S['response.env.Location'] := PChar(Location);
+  This.I['response.response'] := 300;
+  This.S['response.env.Location'] := PChar(Location);
 end;
 
-procedure THTTPMethods.application_getdata_controler(Params: TJsonObject;
-  var Result: TJsonObject);
+
+procedure application_getdata_html(This, Params: ISuperObject; var Result: ISuperObject);
+begin
+  HTTPOutput(this, '<html><body><pre>');
+  HTTPOutput(this, this['dataset'], true);
+  HTTPOutput(this, '</pre></body></html>');
+end;
+
+procedure application_getdata_json(This, Params: ISuperObject; var Result: ISuperObject);
+begin
+  HTTPOutput(this, this['dataset'], false);
+end;
+
+procedure application_getdata_controler(This, Params: ISuperObject;
+  var Result: ISuperObject);
 var
   db: TJvUIBDataBase;
   tr: TJvUIBTransaction;
@@ -394,12 +369,20 @@ begin
     qr.Transaction := tr;
     qr.SQL.Text := 'select * from ' + Params.S['id'];
     qr.CachedFetch := false;
-    O['dataset'] := QueryToJson(qr);
+    this['dataset'] := QueryToJson(qr);
   finally
     qr.Free;
     tr.Free;
     pool.FreeConnexion;
   end;
+end;
+
+function THTTPConnexion.CreateMVC: ISuperObject;
+begin
+  Result := TSuperObject.Create;
+  Result.M['application.getdata.controler'] := @application_getdata_controler;
+  Result.M['application.getdata.json'] := @application_getdata_json;
+  Result.M['application.getdata.html'] := @application_getdata_html;
 end;
 
 initialization
@@ -409,5 +392,4 @@ initialization
 finalization
   while TPDGThread.ThreadCount > 0 do sleep(100);
   pool.Free;
-
 end.
