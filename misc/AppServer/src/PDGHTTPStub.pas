@@ -626,9 +626,9 @@ procedure THTTPStub.SendStream(Stream: TStream);
     size: Integer;
     buffer: array[0..1023] of byte;
   begin
-    WriteLine(format('Content-Length: %d', [s.size]));
+    //WriteLine(format('Content-Length: %d', [s.size]));
     WriteLine('');
-    s.Seek(0, soFromBeginning);
+    //s.Seek(0, soFromBeginning);
     size := s.Read(buffer, sizeof(buffer));
     while size > 0 do
     begin
@@ -644,13 +644,20 @@ begin
     streamout := TPooledMemoryStream.Create;
     try
       stream.Seek(0, soFromBeginning);
-      CompressStream(stream, streamout, 5);
+      CompressStream(stream, streamout, Response.I['compresslevel']);
+      // don't send first 2 bytes !
+      WriteLine(format('Content-Length: %d', [streamout.size - 2]));
+      streamout.Seek(2, soFromBeginning);
       SendIt(streamout);
     finally
       streamout.Free;
     end;
   end else
+  begin
+    WriteLine(format('Content-Length: %d', [Stream.size]));
+    Stream.Seek(0, soFromBeginning);
     SendIt(Stream);
+  end;
 end;
 
 end.

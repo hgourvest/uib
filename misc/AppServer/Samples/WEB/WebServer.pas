@@ -57,6 +57,36 @@ function GetTickCount : Cardinal;
   end;
 {$ENDIF}
 
+
+procedure HTTPOutput(this, obj: ISuperObject; format: boolean); overload;
+begin
+  obj.SaveTo(THTTPMessage(this['response'].DataPtr).Content, format);
+end;
+
+procedure HTTPOutput(this: ISuperObject; const str: string); overload;
+begin
+  THTTPMessage(this['response'].DataPtr).Content.WriteString(str, false);
+end;
+
+procedure HTTPCompress(this: ISuperObject; level: integer = 5);
+begin
+  this.B['response.compress'] := true;
+  this.I['response.compresslevel'] := level;
+  this.S['response.env.Content-Encoding'] := 'deflate';
+end;
+
+function HTTPIsPost(this: ISuperObject): boolean;
+begin
+  Result := This.S['request.method'] = 'POST'
+end;
+
+procedure HTTPRedirect(This: ISuperObject; const location: string);
+begin
+  This.I['response.response'] := 300;
+  This.S['response.env.Location'] := PChar(Location);
+end;
+
+
 { TMyPool }
 
 procedure TMyPool.ConfigureConnexion(Database: TJvUIBDataBase);
@@ -314,34 +344,6 @@ var
   end;
 end;
 
-procedure HTTPOutput(this, obj: ISuperObject; format: boolean); overload;
-begin
-  obj.SaveTo(THTTPMessage(this['response'].DataPtr).Content, format);
-end;
-
-procedure HTTPOutput(this: ISuperObject; const str: string); overload;
-begin
-  THTTPMessage(this['response'].DataPtr).Content.WriteString(str, false);
-end;
-
-procedure HTTPCompress(this: ISuperObject);
-begin
-  this.B['response.compress'] := true;
-  this.S['response.env.Content-Encoding'] := 'deflate';
-end;
-
-function HTTPIsPost(this: ISuperObject): boolean;
-begin
-  Result := This.S['request.method'] = 'POST'
-end;
-
-procedure HTTPRedirect(This: ISuperObject; const location: string);
-begin
-  This.I['response.response'] := 300;
-  This.S['response.env.Location'] := PChar(Location);
-end;
-
-
 procedure application_getdata_html(This, Params: ISuperObject; var Result: ISuperObject);
 begin
   HTTPOutput(this, '<html><body><pre>');
@@ -352,6 +354,12 @@ end;
 procedure application_getdata_json(This, Params: ISuperObject; var Result: ISuperObject);
 begin
   HTTPOutput(this, this['dataset'], false);
+end;
+
+
+procedure application_getdata_txt(This, Params: ISuperObject; var Result: ISuperObject);
+begin
+  HTTPOutput(this, this['dataset'], true);
 end;
 
 procedure application_getdata_controler(This, Params: ISuperObject;
@@ -375,6 +383,7 @@ begin
     tr.Free;
     pool.FreeConnexion;
   end;
+  HTTPCompress(this);
 end;
 
 function THTTPConnexion.CreateMVC: ISuperObject;
@@ -382,6 +391,7 @@ begin
   Result := TSuperObject.Create;
   Result.M['application.getdata.controler'] := @application_getdata_controler;
   Result.M['application.getdata.json'] := @application_getdata_json;
+  Result.M['application.getdata.txt'] := @application_getdata_txt;
   Result.M['application.getdata.html'] := @application_getdata_html;
 end;
 
