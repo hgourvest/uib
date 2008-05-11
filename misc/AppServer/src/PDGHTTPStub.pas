@@ -38,7 +38,7 @@ type
     constructor Create(jt: TSuperType = stObject); override;
     destructor Destroy; override;
 
-    procedure Clear(all: boolean = false); virtual;
+    procedure Clear(all: boolean = false); override;
   end;
 
   THTTPStub = class(TSocketStub)
