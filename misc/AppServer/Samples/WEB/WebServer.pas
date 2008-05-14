@@ -182,7 +182,6 @@ begin
   ctx.B['session.authenticate'] := true;
   // decode session from cookie
   ctx['session'].Merge(Base64ToStr(Request['cookies'].S[COOKIE_NAME]));
-
   // get parametters
   ctx['params'] := TSuperObject.Create;
   ctx['params'].Merge(Request['params'], true);
@@ -355,7 +354,6 @@ procedure application_getdata_json(This, Params: ISuperObject; var Result: ISupe
 begin
   HTTPOutput(this, this['dataset'], false);
 end;
-
 
 procedure application_getdata_txt(This, Params: ISuperObject; var Result: ISuperObject);
 begin
