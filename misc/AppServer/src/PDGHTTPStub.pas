@@ -162,7 +162,7 @@ begin
       Result := TSuperObject.Create(stObject);
       //with Result.AsObject do
         for j := 0 to strlist.Count - 1 do
-          Result.S[HTTPDecode(strlist.Names[j])] := PChar(trim(HTTPDecode(strlist.ValueFromIndex[j])));
+          Result.S[HTTPDecode(strlist.Names[j])] := PChar(trim(HTTPDecode(strlist[j])));
     end else
     begin
       Result := TSuperObject.Create(stArray);
