@@ -92,7 +92,7 @@ function HTTPDecode(const AStr: String): String;
 function HttpResponseStrings(code: integer): string;
 
 implementation
-uses SysUtils, StrUtils;
+uses SysUtils, StrUtils {$ifdef madExcept}, madexcept {$endif} ;
 
 
 function HttpResponseStrings(code: integer): string;
@@ -149,6 +149,13 @@ end;
 
 
 function HTTPInterprete(src: PChar; named: boolean; sep: char): ISuperObject;
+  function GetValueFromIndex(strings: TStrings; Index: Integer): string;
+  begin
+    with strings do
+      if Index >= 0 then
+        Result := Copy(strings[Index], Length(Names[Index]) + 2, MaxInt) else
+        Result := '';
+  end;
 var
   strlist: TStringList;
   j: integer;
@@ -162,7 +169,7 @@ begin
       Result := TSuperObject.Create(stObject);
       //with Result.AsObject do
         for j := 0 to strlist.Count - 1 do
-          Result.S[HTTPDecode(strlist.Names[j])] := PChar(trim(HTTPDecode(strlist[j])));
+          Result.S[HTTPDecode(strlist.Names[j])] := trim(HTTPDecode(GetValueFromIndex(strlist, j)));
     end else
     begin
       Result := TSuperObject.Create(stArray);
@@ -557,8 +564,9 @@ begin
      SendFile(Response.S['sendfile']) else
      SendStream(Response.Content);
 
-   Response.Clear;
-   Request.Clear;
+//   Response.Clear;
+//   Request.Clear;
+   ctx.Clear(true);
 end;
 
 procedure THTTPStub.doBeforeProcessRequest(ctx: ISuperObject);

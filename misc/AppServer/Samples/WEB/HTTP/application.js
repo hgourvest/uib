@@ -79,7 +79,7 @@ function getdata(div, t){
 		div.innerHTML = jsonT(r, 
 		    { "self": "<table><tbody>{$}</tbody></table>",
               "meta": "<tr>{$}</tr>",
-              "meta[*]": "<th>{$}</th>",
+              "meta[*]": "<th>{$.name}({$.type})</th>",
               "data[*]": "<tr>{$}</tr>",
               "data[*][*]": "<td>{$}</td>"});
 	});	

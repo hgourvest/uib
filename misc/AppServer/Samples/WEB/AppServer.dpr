@@ -4,11 +4,21 @@ program AppServer;
   {$APPTYPE CONSOLE}
 {$ENDIF}
 uses
-  //fastmm4,
+  //FastMM4,
+{$IFDEF madExcept}
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
+{$ENDIF}  
   PDGService in '..\..\src\PDGService.pas',
   PDGSocketStub in '..\..\src\PDGSocketStub.pas',
   WebServer in 'WebServer.pas',
-  PDGHTTPStub in '..\..\src\PDGHTTPStub.pas';
+  PDGHTTPStub in '..\..\src\PDGHTTPStub.pas',
+  myapp_controler in 'myapp_controler.pas',
+  mypool in 'mypool.pas',
+  myapp_view in 'myapp_view.pas';
 
 begin
   Application.Name := 'PDGIWEBSRV';

@@ -4,7 +4,7 @@ unit WebServer;
 {$ENDIF}
 interface
 uses PDGHTTPStub, PDGSocketStub, PDGUtils, {$IFDEF FPC}sockets,{$ELSE}Winsock, {$ENDIF}Windows,
-  jvuib, jvuiblib, superobject, SyncObjs, classes;
+  superobject, SyncObjs, classes, mypool, myapp_controler, myapp_view;
 
 type
   THTTPServer = class(TSocketServer)
@@ -25,17 +25,11 @@ type
     destructor Destroy; override;
   end;
 
-  TMyPool = class(TConnexionPool)
-  private
-    FDatabaseName: string;
-    FUserName: string;
-    FPassWord: string;
-    FSQLDialect: Integer;
-  protected
-    procedure ConfigureConnexion(Database: TJvUIBDataBase); override;
-  public
-    constructor Create(MaxSize: Integer = 0); override;
-  end;
+procedure HTTPOutput(this, obj: ISuperObject; format: boolean); overload;
+procedure HTTPOutput(this: ISuperObject; const str: string); overload;
+procedure HTTPCompress(this: ISuperObject; level: integer = 5);
+function HTTPIsPost(this: ISuperObject): boolean;
+procedure HTTPRedirect(This: ISuperObject; const location: string);
 
 implementation
 uses SysUtils, PDGService{$ifdef madExcept}, madExcept {$endif};
@@ -43,9 +37,6 @@ uses SysUtils, PDGService{$ifdef madExcept}, madExcept {$endif};
 const
   ReadTimeOut: Integer = 60000; // 1 minute
   COOKIE_NAME = 'PDGCookie';
-
-var
-  pool: TMyPool;
 
 {$IFDEF FPC}
 function GetTickCount : Cardinal;
@@ -87,36 +78,8 @@ begin
 end;
 
 
-{ TMyPool }
+{ THTTPServer }
 
-procedure TMyPool.ConfigureConnexion(Database: TJvUIBDataBase);
-begin
-  Database.DatabaseName := FDatabaseName;
-  Database.UserName := FUserName;
-  Database.PassWord := FPassWord;
-  Database.SQLDialect := FSQLDialect;
-  // one thread should try to connect to database at the same time
-  // this eliminate dead lock when there is too many thread trying to connect
-  Database.Connected := true;
-end;
-
-constructor TMyPool.Create(MaxSize: Integer = 0);
-begin
-  inherited Create(MaxSize);
-  with TSuperObject.Parse(
-    PChar(
-      FileToString(
-        ExtractFilePath(ParamStr(0)) + 'appserver.json'))) do
-  begin
-    FDatabaseName := s['database.databasename'];
-    FUserName := s['database.username'];
-    FPassWord := s['database.password'];
-    FSQLDialect := i['database.sqldialect'];
-  end;
-end;
-
-{ THTTPServer }
-
 constructor THTTPConnexion.CreateStub(AOwner: TSocketServer; Socket: longint;
   AAddress: TSockAddr);
 begin
@@ -151,6 +114,7 @@ end;
 procedure THTTPConnexion.doAfterProcessRequest(ctx: ISuperObject);
 begin
   Response.S['env.Set-Cookie'] := PChar(COOKIE_NAME + '=' + StrTobase64(ctx['session'].AsJSon));
+  Response.S['Cache-Control'] := 'no-cache';
   inherited;
 end;
 
@@ -225,6 +189,7 @@ var
   path: string;
   obj: ISuperObject;
   proc: TSuperMethod;
+  valide: ISuperObject;
 begin
   inherited;
 
@@ -246,6 +211,18 @@ begin
     with ctx['params'] do
     begin
       // controler
+
+      valide := MVC[S['controler'] + '.' + S['action'] + '.validate'];
+      if (valide <> nil) and (ctx['params'] <> nil) then
+      begin
+         //writeln(ctx['params'].asjson);
+         //writeln(valide.asjson);
+         //writeln(MVC['schema'].asjson);
+         if not ctx['params'].Validate(valide, MVC['schema']) then
+           Exit;
+      end;
+
+      //writeln(ctx.S['params']);
       proc := MVC.M[S['controler'] + '.' + S['action'] + '.controler'];
       if assigned(proc) then
       begin
@@ -296,108 +273,19 @@ begin
   Result := THTTPConnexion.CreateStub(Self, Socket, AAddress);
 end;
 
-{ HTTP Methods }
-
-function QueryToJson(qr: TJvUIBQuery): ISuperObject;
-var
-  meta, data, rec: ISuperObject;
-  i: integer;
-  str: string;
-begin
-  qr.Open;
-  Result := TSuperObject.Create(stObject);
-
-  meta := TSuperObject.Create(stArray);
-  Result.AsObject.Put('meta', meta);
-  for i := 0 to qr.Fields.FieldCount - 1 do
-    meta.AsArray.add(TSuperObject.create(PChar(qr.Fields.AliasName[i])));
-
-  data := TSuperObject.Create(stArray);
-  Result.AsObject.Put('data', data);
-  while not qr.Eof do
-  begin
-    rec := TSuperObject.create(stArray);
-    data.AsArray.Add(rec);
-        for i := 0 to qr.Fields.FieldCount - 1 do
-      if qr.Fields.IsNull[i] then
-        rec.AsArray.Add(nil) else
-      case qr.Fields.FieldType[i] of
-        uftChar, uftVarchar, uftCstring: rec.AsArray.Add(TSuperObject.Create(PChar(qr.Fields.AsString[i])));
-        uftSmallint, uftInteger, uftInt64: rec.AsArray.Add(TSuperObject.Create(qr.Fields.AsInteger[i]));
-        uftNumeric, uftFloat, uftDoublePrecision: rec.AsArray.Add(TSuperObject.Create(qr.Fields.AsDouble[i]));
-        uftBlob, uftBlobId:
-          begin
-            qr.ReadBlob(i, str);
-            if qr.Fields.Data.sqlvar[i].SqlSubType = 1 then
-              rec.AsArray.Add(TSuperObject.Create(PChar(str))) else
-              rec.AsArray.Add(TSuperObject.Create(PChar(StrTobase64(str))));
-          end;
-        uftTimestamp, uftDate, uftTime: rec.AsArray.Add(TSuperObject.Create(PChar(qr.Fields.AsString[i])));
-        {$IFDEF IB7_UP}
-        uftBoolean: rec.AsArray.Add(ISuperObject.Create(PChar(qr.Fields.AsBoolean[i])));
-        {$ENDIF}
-      else
-        rec.AsArray.Add(nil);
-      end;
-    qr.next;
-  end;
-end;
-
-procedure application_getdata_html(This, Params: ISuperObject; var Result: ISuperObject);
-begin
-  HTTPOutput(this, '<html><body><pre>');
-  HTTPOutput(this, this['dataset'], true);
-  HTTPOutput(this, '</pre></body></html>');
-end;
-
-procedure application_getdata_json(This, Params: ISuperObject; var Result: ISuperObject);
-begin
-  HTTPOutput(this, this['dataset'], false);
-end;
-
-procedure application_getdata_txt(This, Params: ISuperObject; var Result: ISuperObject);
-begin
-  HTTPOutput(this, this['dataset'], true);
-end;
-
-procedure application_getdata_controler(This, Params: ISuperObject;
-  var Result: ISuperObject);
-var
-  db: TJvUIBDataBase;
-  tr: TJvUIBTransaction;
-  qr: TJvUIBQuery;
-begin
-  db := pool.GetConnexion;
-  tr := TJvUIBTransaction.Create(nil);
-  qr := TJvUIBQuery.Create(nil);
-  try
-    tr.DataBase := db;
-    qr.Transaction := tr;
-    qr.SQL.Text := 'select * from ' + Params.S['id'];
-    qr.CachedFetch := false;
-    this['dataset'] := QueryToJson(qr);
-  finally
-    qr.Free;
-    tr.Free;
-    pool.FreeConnexion;
-  end;
-  HTTPCompress(this);
-end;
-
 function THTTPConnexion.CreateMVC: ISuperObject;
 begin
   Result := TSuperObject.Create;
-  Result.M['application.getdata.controler'] := @application_getdata_controler;
-  Result.M['application.getdata.json'] := @application_getdata_json;
-  Result.M['application.getdata.txt'] := @application_getdata_txt;
-  Result.M['application.getdata.html'] := @application_getdata_html;
-end;
 
+  Result.O['schema'] :=
+    so('[{type: map, name: mvc, mapping: {controler: {type: str}, action: {type: str}, format: {type: str}}}]');
+
+  app_controler_initialize(Result);
+  app_view_initialize(Result);
+
+end;
+    
 initialization
-  pool := TMyPool.Create(0);
   Application.CreateServer(THTTPServer, 81);
 
-finalization
-  while TPDGThread.ThreadCount > 0 do sleep(100);
-  pool.Free;
 end.

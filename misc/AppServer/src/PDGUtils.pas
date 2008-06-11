@@ -14,17 +14,12 @@
 *)
 
 unit PDGUtils;
-
-{$I jedi.inc}
-
 {$IFDEF FPC}
 {$mode objfpc}{$H+}
+{$ELSE}
+{$I jedi.inc}
 {$ENDIF}
-
-{$IFNDEF CPU64}
-{$ALIGN ON}
-{$MINENUMSIZE 4}
-{$ENDIF}
+{$I PDGAppServer.inc}
 
 interface
 uses Classes, SysUtils, jvuib

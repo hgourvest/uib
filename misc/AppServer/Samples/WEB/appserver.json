@@ -1,5 +1,5 @@
 {"database":
-	{"databasename":"127.0.0.1:C:\\Program Files\\Firebird\\examples\\EMPLOYEE.FDB",
+	{"databasename":"C:\\Program Files\\Firebird\\Firebird_2_1\\examples\\empbuild\\EMPLOYEE.FDB",
 	 "username":"SYSDBA",
 	 "password":"masterkey",
      "sqldialect":3}

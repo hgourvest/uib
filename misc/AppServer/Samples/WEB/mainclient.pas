@@ -55,7 +55,7 @@ begin
 
   for i := 0 to meta.AsArray.Length - 1 do
   begin
-    Grid.Cells[i+1, 0] := meta.AsArray.S[i];
+    Grid.Cells[i+1, 0] := meta.AsArray[i].S['name'];
     for j := 0 to data.AsArray.Length - 1 do
       Grid.Cells[i+1, j+1] := data.AsArray[j].AsArray.S[i];
   end;
