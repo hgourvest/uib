@@ -83,7 +83,6 @@ begin
   mvc.M['country.index.html'] := @country_index_html;
   mvc.M['country.index.json'] := @country_index_json;
   mvc.M['country.edit.html'] := @country_edit_html;
-
 end;
 
 end.

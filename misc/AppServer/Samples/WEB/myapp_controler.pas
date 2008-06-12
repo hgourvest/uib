@@ -188,13 +188,13 @@ begin
 
 
   mvc.O['application.getdata.validate'] :=
-    SO('{type: map, inherit: mvc, mapping: {id: {type: str}}}');
+    SO('{type: map, inherit: mvc, mapping: {id: {type: text}}}');
 
   mvc.M['application.getdata.controler'] := @application_getdata_controler;
 
   mvc.M['country.index.controler'] := @country_index;
   mvc.O['country.add.validate'] :=
-    SO('{type: map, inherit: mvc, mapping: {country: {type: str},currency: {type: str}}}');
+    SO('{type: map, inherit: mvc, mapping: {country: {type: text},currency: {type: text}}}');
   mvc.M['country.add.controler'] := @country_add;
   mvc.M['country.del.controler'] := @country_del;
   mvc.M['country.edit.controler'] := @country_edit;
