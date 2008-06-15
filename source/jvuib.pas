@@ -397,6 +397,9 @@ type
     property InfoActiveTransactionsCount: Integer index isc_info_active_tran_count read GetInfoIntValue;
     property InfoCreationDate: TDateTime index isc_info_creation_date read GetInfoDateTimeValue;
   {$ENDIF}
+  {$IFDEF FB21_UP}
+    property InfoDBFileSize: Integer index isc_info_db_file_size read GetInfoIntValue;
+  {$ENDIF}
   {$IFDEF IB7_UP}
     property InfoDbReads: Integer index isc_info_db_reads read GetInfoIntValue;
     property InfoDbWrites: Integer index isc_info_db_writes read GetInfoIntValue;

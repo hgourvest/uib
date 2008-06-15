@@ -771,6 +771,15 @@ const
   blr_blob2 = 17;
 {$ENDIF}
 
+{$IFDEF FB21_UP}
+  blr_domain_name = 18;
+  blr_domain_name2 = 19;
+  blr_not_nullable = 20;
+
+  blr_domain_type_of = 0;
+  blr_domain_full = 1;
+{$ENDIF}
+
 {$IFDEF IB7_UP}
   blr_boolean_dtype = 17;
 {$ENDIF}
@@ -1012,10 +1021,35 @@ const
   blr_extract_second = 5;
   blr_extract_weekday = 6;
   blr_extract_yearday = 7;
+{$IFDEF FB21_UP}
+  blr_extract_millisecond = 8;
+  blr_extract_week = 9;
+{$ENDIF}
+
 
   blr_current_date = 160;
   blr_current_timestamp = 161;
   blr_current_time = 162;
+
+{$IFDEF FB15_UP}
+  (* This codes reuse BLR code space *)
+  blr_post_arg = 163;
+  blr_exec_into	= 164;
+  blr_user_savepoint = 165;
+{$ENDIF FB15_UP}
+
+{$IFDEF FB20_UP}
+  blr_dcl_cursor = 166;
+  blr_cursor_stmt	=	167;
+  blr_current_timestamp2 = 168;
+  blr_current_time2 = 169;
+{$ENDIF FB20_UP}
+
+{$IFDEF FB21_UP}
+  blr_agg_list = 170;
+  blr_agg_list_distinct = 171;
+  blr_modify2 = 172;
+{$ENDIF}
 
 {$IFDEF FB102ORYF867}
   (* FB1 specific BLR *)
@@ -1063,19 +1097,6 @@ const
   blr_trim_characters = 1;
 {$ENDIF}
 
-{$IFDEF FB15_UP}
-  (* This codes reuse BLR code space *)
-  blr_post_arg = 163;
-  blr_exec_into	= 164;
-  blr_user_savepoint = 165;
-{$ENDIF FB15_UP}
-{$IFDEF FB20_UP}
-  blr_dcl_cursor = 166;
-  blr_cursor_stmt	=	167;
-  blr_current_timestamp2 = 168;
-  blr_current_time2 = 169;
-{$ENDIF FB20_UP}
-
   (* These codes are actions for user-defined savepoints *)
 {$IFDEF FB15_UP}
   blr_savepoint_set = 0;
@@ -1089,6 +1110,12 @@ const
   blr_cursor_close = 1;
   blr_cursor_fetch = 2;
 {$ENDIF FB20_UP}
+
+{$IFDEF FB21_UP}
+  blr_init_variable = 184;
+  blr_recurse = 185;
+  blr_sys_function = 186;
+{$ENDIF}
 
 (**********************************
  * Database parameter block stuff *
@@ -1172,6 +1199,13 @@ const
   isc_dpb_address_path = 70;
 {$ENDIF}
 
+{$IFDEF FB21_UP}
+  isc_dpb_process_id = 71;
+  isc_dpb_no_db_triggers = 72;
+  isc_dpb_trusted_auth = 73;
+  isc_dpb_process_name = 74;
+{$ENDIF}
+
 {$IFDEF IB65ORYF867}
   isc_dpb_gbak_ods_version = 68;
   isc_dpb_gbak_ods_minor_version = 69;
@@ -1212,6 +1246,9 @@ const
 {$IFDEF IB75}
   isc_dpb_Max_Value = 71;
 {$ELSE}
+{$IFDEF FB21}
+  isc_dpb_Max_Value = 74;
+{$ELSE}
 {$IFDEF FB20}
   isc_dpb_Max_Value = 70;
 {$ELSE}
@@ -1229,6 +1266,7 @@ const
 {$ENDIF FB103}
 {$ENDIF FB15}
 {$ENDIF FB20}
+{$ENDIF FB21}
 {$ENDIF IB75}
 {$ENDIF IB71}
 {$ENDIF IB7}
@@ -1375,9 +1413,17 @@ const
   isc_bpb_source_interp = #4;
   isc_bpb_target_interp = #5;
   isc_bpb_filter_parameter = #6;
+{$IFDEF FB21_UP}
+  isc_bpb_storage = #7;
+{$ENDIF}
 
   isc_bpb_type_segmented = #0;
   isc_bpb_type_stream = #1;
+
+{$IFDEF FB21_UP}
+  isc_bpb_storage_main = #0;
+  isc_bpb_storage_temp = #2;
+{$ENDIF}
 
   (*********************************
    * Service parameter block stuff *
@@ -1402,6 +1448,12 @@ const
   isc_spb_address_path = #109;
 {$ENDIF}
 
+{$IFDEF FB21_UP}
+  isc_spb_process_id = #110;
+  isc_spb_trusted_auth = #111;
+  isc_spb_process_name = #112;
+{$ENDIF}
+
   isc_spb_connect_timeout = Char(isc_dpb_connect_timeout);
   isc_spb_dummy_packet_interval = Char(isc_dpb_dummy_packet_interval);
   isc_spb_sql_role_name = Char(isc_dpb_sql_role_name);
@@ -1418,6 +1470,9 @@ const
   isc_info_truncated = 2;
   isc_info_error = 3;
   isc_info_data_not_ready = 4;
+{$IFDEF FB21_UP}
+  isc_info_length = 126;
+{$ENDIF}
   isc_info_flag_end = 127;
 
   (******************************
@@ -1527,6 +1582,9 @@ const
   isc_info_active_tran_count = 110;
   isc_info_creation_date = 111;
 {$ENDIF}
+{$IFDEF FB21_UP}
+  isc_info_db_file_size = 112;
+{$ENDIF}
 
   isc_info_version = isc_info_isc_version;
 
@@ -1589,7 +1647,7 @@ const
 
   isc_info_db_impl_freebsd = 61;
   isc_info_db_impl_netbsd = 62;
-  isc_info_db_impl_darwin = 63;
+  isc_info_db_impl_darwin_ppc = 63;
 {$ENDIF FB102ORYF867}
 {$IFDEF FB102_UP}
   isc_info_db_impl_sinixz = 64;
@@ -1603,6 +1661,12 @@ const
   isc_info_db_impl_freebsd_amd64 = 67;
   isc_info_db_impl_winnt_amd64 = 68;
   isc_info_db_impl_linux_ppc = 69;
+  isc_info_db_impl_darwin_x86 = 70;
+{$ENDIF}
+{$IFDEF FB21_UP}
+  isc_info_db_impl_linux_mipsel = 71;
+  isc_info_db_impl_linux_mips = 72;
+  isc_info_db_impl_darwin_x64 = 73;
 {$ENDIF}
 
   isc_info_db_impl_isc_a = isc_info_db_impl_isc_apl_68K;
@@ -1698,6 +1762,10 @@ const
   isc_info_rsb_procedure = 21;
 {$IFDEF FB20_UP}
   isc_info_rsb_skip = 22;
+{$ENDIF}
+{$IFDEF FB21_UP}
+  isc_info_rsb_virt_sequential = 23;
+  isc_info_rsb_recursive = 24;
 {$ENDIF}
 
   (**********************
@@ -2210,6 +2278,9 @@ const
   isc_dyn_coll_specific_attributes = 236;
   isc_dyn_del_collation = 237;
 {$ENDIF}
+{$IFDEF FB21_UP}
+  isc_dyn_coll_from_external = 239;
+{$ENDIF}
 
   isc_dyn_delete_shadow = 35;
 {$IFDEF IB75_UP}
@@ -2244,6 +2315,10 @@ const
   isc_dyn_drop_difference = 221;
   isc_dyn_begin_backup = 222;
   isc_dyn_end_backup = 223;
+{$ENDIF}
+
+{$IFDEF FB21_UP}
+  isc_dyn_debug_info = 240;
 {$ENDIF}
 
   (***********************
@@ -2299,6 +2374,11 @@ const
   (************************************
    * Global field specific attributes *
    ************************************)
+{$IFDEF FB21_UP}
+  isc_dyn_rel_temporary = 238;
+  isc_dyn_rel_temp_global_preserve = 1;
+  isc_dyn_rel_temp_global_delete = 2;
+{$ENDIF}
 
   isc_dyn_fld_type = 70;
   isc_dyn_fld_length = 71;
@@ -2459,6 +2539,12 @@ const
   (*********************************
    * Parameter specific attributes *
    *********************************)
+{$IFDEF FB21_UP}
+  isc_dyn_prc_type = 239;
+
+  isc_dyn_prc_t_selectable = 1;
+  isc_dyn_prc_t_executable = 2;
+{$ENDIF}
 
   isc_dyn_prm_number = 138;
   isc_dyn_prm_type = 139;
@@ -2466,6 +2552,9 @@ const
   (********************************
    * Relation specific attributes *
    ********************************)
+{$IFDEF FB21_UP}
+  isc_dyn_prm_mechanism = 241;
+{$ENDIF}
 
   isc_dyn_xcp_msg = 185;
 
@@ -2540,8 +2629,12 @@ const
    * Last $dyn value assigned *
    ****************************)
 
+{$IFDEF FB21}
+  isc_dyn_last_dyn_value = 242;
+{$ENDIF FB20}
+   
 {$IFDEF FB20}
-  isc_dyn_last_dyn_value = 223;
+  isc_dyn_last_dyn_value = 227;
 {$ENDIF FB20}
 
 {$IFDEF FB15}
@@ -2662,8 +2755,9 @@ const
   isc_blob_format                   = 6;
   isc_blob_tra                      = 7;
   isc_blob_extfile                  = 8;
-{$IFDEF FB20_UP}
-  isc_blob_max_predefined_subtype   = 9;
+{$IFDEF FB21_UP}
+  isc_blob_debug_info               = 9;
+  isc_blob_max_predefined_subtype   = 10;
 {$ENDIF}
 
   (* the range 20-30 is reserved for dBASE and Paradox types *)
@@ -2673,6 +2767,17 @@ const
   isc_blob_graphic = 22;
   isc_blob_dbase_ole = 23;
   isc_blob_typed_binary = 24;
+
+{$IFDEF FB21_UP}
+  fb_dbg_version = 1;
+  fb_dbg_end = 255;
+  fb_dbg_map_src2blr = 2;
+  fb_dbg_map_varname = 3;
+  fb_dbg_map_argument = 4;
+
+  fb_dbg_arg_input = 0;
+  fb_dbg_arg_output = 1;
+{$ENDIF}
 
 (*******************************************************************************
  *    LINK LIBRARY                                                             *
@@ -2982,8 +3087,12 @@ type
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_encode_timestamp: procedure(times_arg: PPointer; date: PISCTimeStamp);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_event_block: function(event_buffer, result_buffer: PPChar; count: Smallint;
+    isc_event_block: function(event_buffer, result_buffer: PPChar; count: Word;
       v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15: PChar): ISCLong; cdecl;
+{$IFDEF FB21_UP}
+    isc_event_block_a: function(event_buffer, result_buffer: PPChar; count: Word; name_buffer: PPChar): Word;
+      {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
+{$ENDIF}
     isc_event_counts: procedure(ser_status: PISCStatus; buffer_length: Smallint;
       event_buffer, result_buffer: PChar);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
@@ -3411,6 +3520,9 @@ begin
       isc_encode_sql_time := nil;
       isc_encode_timestamp := nil;
       isc_event_block := nil;
+{$IFDEF FB21_UP}
+      isc_event_block_a := nil;
+{$ENDIF}
       isc_event_counts := nil;
       isc_execute := nil;
       isc_execute_immediate := nil;
@@ -3626,6 +3738,9 @@ begin
         isc_encode_sql_time := GetProcAddress(FGDS32Lib, 'isc_encode_sql_time');
         isc_encode_timestamp := GetProcAddress(FGDS32Lib, 'isc_encode_timestamp');
         isc_event_block := GetProcAddress(FGDS32Lib, 'isc_event_block');
+{$IFDEF FB21_UP}
+        isc_event_block_a := GetProcAddress(FGDS32Lib, 'isc_event_block_a');
+{$ENDIF}
         isc_event_counts := GetProcAddress(FGDS32Lib, 'isc_event_counts');
         isc_execute := GetProcAddress(FGDS32Lib, 'isc_execute');
         isc_execute_immediate := GetProcAddress(FGDS32Lib, 'isc_execute_immediate');
@@ -3751,7 +3866,11 @@ begin
           Assigned(isc_embed_dsql_prepare) and Assigned(isc_embed_dsql_release) and
           Assigned(isc_encode_date) and Assigned(isc_encode_sql_date) and
           Assigned(isc_encode_sql_time) and Assigned(isc_encode_timestamp) and
-          Assigned(isc_event_block) and Assigned(isc_event_counts) and Assigned(isc_execute) and
+          Assigned(isc_event_block)
+{$IFDEF FB21_UP}
+          and Assigned(isc_event_block_a)
+{$ENDIF}
+          and Assigned(isc_event_counts) and Assigned(isc_execute) and
           Assigned(isc_execute_immediate) and Assigned(isc_expand_dpb) and
           Assigned(isc_free) and Assigned(isc_ftof) and Assigned(isc_get_segment) and
           Assigned(isc_fetch) and Assigned(isc_get_slice) and Assigned(isc_interprete) and

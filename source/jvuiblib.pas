@@ -919,8 +919,14 @@ const
    ,(Name: 'set_db_charset';         ParamType: prStrg) // ok
 {$ENDIF}
 {$IFDEF FB20_UP}
-  ,(Name: 'gsec_attach';            ParamType: prNone)
+  ,(Name: 'gsec_attach';            ParamType: prByte)
   ,(Name: 'address_path';           ParamType: prStrg)
+{$ENDIF}
+{$IFDEF FB21_UP}
+  ,(Name: 'process_id';             ParamType: prCard)
+  ,(Name: 'no_db_triggers';         ParamType: prByte)
+  ,(Name: 'trusted_auth';           ParamType: prStrg)
+  ,(Name: 'process_name';           ParamType: prStrg)
 {$ENDIF}
    );
 
@@ -1222,7 +1228,6 @@ const
       Result[FinalSize-l] := chr(l);
       Move(PChar(AString)^, Result[FinalSize-l+1], l);
     end;
-
   begin
     FinalSize := 1;
     BufferSize := 32;
