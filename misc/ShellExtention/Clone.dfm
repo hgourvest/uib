@@ -177,7 +177,7 @@ object CloneForm: TCloneForm
       OnKeyPress = FormKeyPress
     end
   end
-  object Source: TJvUIBDataBase
+  object Source: TUIBDataBase
     Params.Strings = (
       'sql_dialect=3'
       'lc_ctype=NONE')
@@ -185,7 +185,7 @@ object CloneForm: TCloneForm
     Left = 16
     Top = 152
   end
-  object Destination: TJvUIBDataBase
+  object Destination: TUIBDataBase
     Params.Strings = (
       'sql_dialect=3'
       'lc_ctype=NONE')
@@ -198,19 +198,19 @@ object CloneForm: TCloneForm
     Left = 16
     Top = 216
   end
-  object SrcTransaction: TJvUIBTransaction
+  object SrcTransaction: TUIBTransaction
     DataBase = Source
     Options = [tpConcurrency, tpWait, tpRead]
     Left = 48
     Top = 152
   end
-  object DstTransaction: TJvUIBTransaction
+  object DstTransaction: TUIBTransaction
     DataBase = Destination
     Options = [tpConcurrency, tpWait, tpWrite, tpNoAutoUndo]
     Left = 48
     Top = 184
   end
-  object SrcQuery: TJvUIBQuery
+  object SrcQuery: TUIBQuery
     Transaction = SrcTransaction
     CachedFetch = False
     FetchBlobs = True

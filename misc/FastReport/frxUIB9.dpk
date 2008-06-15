@@ -32,7 +32,7 @@ package frxUIB9;
 requires
   VCL,
   VCLDB,
-  JvUIBD9R,
+  uibD9R,
   frx9,
   frxDB9,
 {$IFDEF QBUILDER}

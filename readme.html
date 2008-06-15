@@ -23,36 +23,36 @@ YAFFIL.&nbsp;&nbsp; </p>
       <p align="left">UIB include&nbsp;11 components:</p>
       <ul>
         <li>
-          <div align="left">TJvUIBDatabase. </div>
+          <div align="left">TUIBDatabase. </div>
         </li>
         <li>
-          <div align="left">TJvUIBTransaction.</div>
+          <div align="left">TUIBTransaction.</div>
         </li>
         <li>
-          <div align="left">TJvUIBQuery.</div>
+          <div align="left">TUIBQuery.</div>
         </li>
         <li>
-          <div align="left">TJvUIBBackup.</div>
+          <div align="left">TUIBBackup.</div>
         </li>
         <li>
-          <div align="left">TJvUIBRestore.</div>
+          <div align="left">TUIBRestore.</div>
         </li>
         <li>
-          <div align="left">TJvUIBScript.</div>
+          <div align="left">TUIBScript.</div>
         </li>
         <li>
-          <div align="left">TJvUIBDataSet (<strong>read only</strong>).</div>
+          <div align="left">TUIBDataSet (<strong>read only</strong>).</div>
         </li>
         <li>
-          <div align="left">TJvUIBSecurity</div>
+          <div align="left">TUIBSecurity</div>
         </li>
         <li>
-          <div align="left">TJvUIBEvents</div>
+          <div align="left">TUIBEvents</div>
         </li>
         <li>
-          <div align="left">TJvUIBRepair</div>
+          <div align="left">TUIBRepair</div>
         </li>
-        <li>&nbsp; TJvUIBConfig</li>
+        <li>&nbsp; TUIBConfig</li>
       </ul>
       <p align="left">&nbsp;These components are "<strong>Thread-Safe</strong>"
 with any version of Interbase, FireBird and Yaffil and are working with
@@ -74,28 +74,28 @@ Lazarus &amp;&nbsp;FPC (Win32, Linux, FreeBsd)</strong>.</p>
             <td height="31" width="680">
             <p><strong>UIB 2<br>
             </strong></p>
-            <li> New component TJvUIBConfig. </li>
-            <li> New component TJvUIBRepair.</li>
-            <li>&nbsp;New component TJvUIBSecurity (thanks to Volkan
+            <li> New component TUIBConfig. </li>
+            <li> New component TUIBRepair.</li>
+            <li>&nbsp;New component TUIBSecurity (thanks to Volkan
 Ceylan). </li>
-            <li> New component TJvUIBEvents. </li>
-            <li> Rewritten TJvUIBScript to handle large script. </li>
+            <li> New component TUIBEvents. </li>
+            <li> Rewritten TUIBScript to handle large script. </li>
             <li> Corrected dataset and FPC 1.9.6 compatibility. </li>
-            <li> Improved TJvUIBDatabase to retrieve database
+            <li> Improved TUIBDatabase to retrieve database
 informations. </li>
-            <li> Corrected "jvuibmetadata" to retrieve array
+            <li> Corrected "uibmetadata" to retrieve array
 informations. </li>
             <li> Read/write faster NUMERIC data types. (thanks to
 Volkan Ceylan).&nbsp; </li>
             <li> Delphi 2005 for win32 compatibility. </li>
             <li> new compiler option: "HAVE_SYNEDIT", if you don't want
-to use synedit, desactivate this option in jvuib.inc. </li>
+to use synedit, desactivate this option in uib.inc. </li>
             <li> Firebird 2 compatibility. </li>
             <li> Again faster :)&nbsp;
               <p><u>Compatibility with previous version</u> </p>
             </li>
-            <li> In previous version of TJvUIBBackUp &amp;
-TJvUIBRestore you need to implement the OnVerbose event to wait for the
+            <li> In previous version of TUIBBackUp &amp;
+TUIBRestore you need to implement the OnVerbose event to wait for the
 end of the operation. Now you also have to set the new "verbose"
 property to true. </li>
             <li> If you use the dataset with persistent BCD fields you
@@ -106,14 +106,14 @@ have to regenerate them !!! </li>
             <td height="31"><font color="#006600">2004-05-06</font></td>
             <td height="31" width="680"> <li> <u>UIB v1.2h
 maintenance update.</u> </li>
-            <li> Bug corrected on TJvUIBDataset when 2 fields&nbsp;have
+            <li> Bug corrected on TUIBDataset when 2 fields&nbsp;have
 the same alias name. </li>
-            <li> Improved speed on TjVUIBQuery.Open (thanks to Volkan
+            <li> Improved speed on TUIBQuery.Open (thanks to Volkan
 Ceylan). </li>
             <li> Added SQL Editor on Kylix (Get the latest SynEdit
 Version). </li>
             <li> DBExpress drivers recompiled for Windows and Linux. </li>
-            <li> Corrected packages and TJvUIBDataset for FreePascal
+            <li> Corrected packages and TUIBDataset for FreePascal
 and Lazarus Ide (Win32+ Linux). </li>
             <li> I've checked all supported version of Delphi, Kylix,
 BCB, FPC and Lazarus.</li>
@@ -123,7 +123,7 @@ BCB, FPC and Lazarus.</li>
             <td height="31" width="74"><font color="#006600">2004-04-08</font></td>
             <td height="31"> <li> <u>UIB v1.2g maintenance update.</u>
             </li>
-            <li> Bug corrected on "TJvUIBStatement.ParamsSetBlob(fIeld,
+            <li> Bug corrected on "TUIBStatement.ParamsSetBlob(fIeld,
 buffer, size)" function. </li>
             <li> FreeBsd Compatibilitty with FPC (Thank to Sergey
 Shilov). </li>
@@ -136,10 +136,10 @@ computed fields. </li>
             <td height="31" width="74"><font color="#006600">2004-03-07</font></td>
             <td height="31"> <li> <u>UIB v1.2f maintenance update.</u>
             </li>
-            <li> TJvUIBQuery &gt; Corrected Eof property when prior is
+            <li> TUIBQuery &gt; Corrected Eof property when prior is
 called. (Thank to Francois Piette) </li>
-            <li> TJvUIBQuery &gt; Added Bof property. </li>
-            <li> TJvUIBDataSet &gt; Corrected Refresh method.</li>
+            <li> TUIBQuery &gt; Added Bof property. </li>
+            <li> TUIBDataSet &gt; Corrected Refresh method.</li>
             </td>
           </tr>
           <tr>
@@ -202,9 +202,9 @@ version of Interbase and Firebird. </li>
             <td height="31"> <li> <u>UIB v1.2 RC1</u> </li>
             <li> Improved SQL Editor (code completion, code parameter,
 syntax HighLighter ...). </li>
-            <li> Bug corrected in JvUIBMetadata (when reading a double
+            <li> Bug corrected in UIBMetadata (when reading a double
 foreign key). </li>
-            <li> TJvUIBQuery can now excecute a stored proc that return
+            <li> TUIBQuery can now excecute a stored proc that return
 values&nbsp;without adding&nbsp;"suspend" at the end.</li>
             </td>
           </tr>
@@ -214,7 +214,7 @@ values&nbsp;without adding&nbsp;"suspend" at the end.</li>
 Update. </li>
             <li> BUG corrected on blob Read/Write operations, the bug
 was occuring on blobs&nbsp;&gt; 64 Kb. </li>
-            <li> TJvUIBStatement.SetTransaction corrected.</li>
+            <li> TUIBStatement.SetTransaction corrected.</li>
             </td>
           </tr>
           <tr>
@@ -228,7 +228,7 @@ SYNEDIT</a> components. </li>
 need to close transaction explicitly. </li>
             <li> There is now 2 packages to install, the Runtime and
 the design pakages, read help file. </li>
-            <li> JvUIBScript doesn't commit automatically anymore. </li>
+            <li> UIBScript doesn't commit automatically anymore. </li>
             <li> BUG corrected on blob Read/Write operations, the bug
 was occuring on blobs&nbsp;&gt; 64 Kb. </li>
             <li> Spanish language support.&nbsp;</li>
@@ -261,9 +261,9 @@ your own exceptions&nbsp;using "<strong>RegisterException"</strong>
 method on the database component,&nbsp;so UIB will be able to
 raise&nbsp;different&nbsp;exeption for each Interbase exception. </li>
             <li> If FB15 compiler option is defined, you can use the
-"GetClientLibrary" method (JvUIBLib.pas)&nbsp;to retrieve absolute path
+"GetClientLibrary" method (UIBLib.pas)&nbsp;to retrieve absolute path
 of the client library according to to the new Firebird specifications. </li>
-            <li> JvUIBMetadata unit: Now support <strong>Roles</strong>
+            <li> UIBMetadata unit: Now support <strong>Roles</strong>
 and <strong>Domains</strong> (thank to Ritsaert Hornstra). </li>
             <li> UIB join&nbsp; <a
  href="http://v.webring.com/hub?ring=interbase">Interbase&reg; WebRing</a>.</li>
@@ -278,16 +278,16 @@ and <strong>Domains</strong> (thank to Ritsaert Hornstra). </li>
           <tr>
             <td height="56" width="74"><font color="darkgreen">2003-10-11</font></td>
             <td height="56"> <li> <u>UIB v1.1b</u> </li>
-            <li> TJvUIBDataBase.OnConnectionLost. </li>
+            <li> TUIBDataBase.OnConnectionLost. </li>
             <li> "Two Phase Commits" support. </li>
-            <li> Bug on TJvUIBDataSet.Fields[n].IsNull corrected. </li>
+            <li> Bug on TUIBDataSet.Fields[n].IsNull corrected. </li>
             </td>
           </tr>
           <tr>
             <td height="41" width="74"><font color="darkgreen">2003-10-04</font></td>
             <td height="41"> <li> <u>UIB v1.1a</u> </li>
             <li> Improved speed on Blob operations. </li>
-            <li> Bug corrected in TJvUIBScript with "Drop" statements. </li>
+            <li> Bug corrected in TUIBScript with "Drop" statements. </li>
             <li> Deutch&nbsp;language support. </li>
             </td>
           </tr>
@@ -300,7 +300,7 @@ and <strong>Domains</strong> (thank to Ritsaert Hornstra). </li>
           <tr>
             <td height="41" width="74"><font color="darkgreen">2003-09-21</font></td>
             <td height="41"> <li> <u>UIB v 1.1 RC3 </u> </li>
-            <li> New TJvUIBDataSet component, at this time the
+            <li> New TUIBDataSet component, at this time the
 component is "read only". </li>
             <li> New package for Delphi 6&nbsp;Personnal Editions. </li>
             <li> New CZECH language support (Thank to Petr Stasiak). </li>
@@ -320,24 +320,24 @@ working correctly. </li>
           <tr>
             <td height="41" width="74"><font color="darkgreen">2003-09-07</font></td>
             <td height="41"> <li> <u>UIB v 1.1 RC2</u> </li>
-            <li> New component TJvUIBScript (You don't need to use "SET
+            <li> New component TUIBScript (You don't need to use "SET
 TERM"). </li>
-            <li> New method: TJvUIBDataBase.CreateDatabase. </li>
+            <li> New method: TUIBDataBase.CreateDatabase. </li>
             </td>
           </tr>
           <tr>
             <td height="41" width="74"><font color="darkgreen">2003-08-15</font></td>
             <td height="41"> <li> <u>UIB v 1.1 RC1. </u> </li>
-            <li> New unit JvUIBMetaData, to extract Metadatas (see
-UIB\examples\JvUIB\Component\Metadata sample). </li>
+            <li> New unit UIBMetaData, to extract Metadatas (see
+UIB\examples\UIB\Component\Metadata sample). </li>
             <li> New Widestring data type (Params &amp; Fields). </li>
-            <li> New optimization on TJvUIBQuery.Open, now you can
+            <li> New optimization on TUIBQuery.Open, now you can
 reopen the same query just changing parametters to save the "prepare
 time" (the query is still closed if you change Sql text). </li>
-            <li> new method (TJvUIBQuery.BuildStoredProc):
+            <li> new method (TUIBQuery.BuildStoredProc):
 automatically create sql query and find parametter types from procedure
 name. </li>
-            <li> new event: TJvUIBTransaction.OnStartTransaction &amp;
+            <li> new event: TUIBTransaction.OnStartTransaction &amp;
 OnEndTransaction; </li>
             <li> UIB source code on sourceforge. </li>
             </td>
@@ -373,8 +373,8 @@ here. </li>
           </tr>
           <tr>
             <td height="41" width="74"><font color="darkgreen">2003-06-25</font></td>
-            <td height="41"> <li> New property on TJvUIBDataBase,
-TJvUIBackUp &amp; TJvUIBRestore: <strong>LibraryName</strong>, to
+            <td height="41"> <li> New property on TUIBDataBase,
+TUIBackUp &amp; TUIBRestore: <strong>LibraryName</strong>, to
 specify thr GDS library to use (helpfull for embeded versions). </li>
             <li> Added <strong>Interbase 7.1</strong> compatibility. </li>
             </td>
@@ -389,7 +389,7 @@ specify thr GDS library to use (helpfull for embeded versions). </li>
             <td height="28"> <li> Corrected: AsVariant with boolean
 data types. </li>
             <li> Missed methods added (AddCurrency, AddBoolean). </li>
-            <li> Added: Execute method on TJvUIBQuery (see data pump
+            <li> Added: Execute method on TUIBQuery (see data pump
 example). </li>
             <li> Transaction can lock more than one table (ex: LockRead
 := 'Table1;Table2 ...'). </li>
@@ -406,9 +406,9 @@ example). </li>
             <td height="28" width="74"><font color="darkgreen">2003-06-08</font></td>
             <td height="28"> <li> Added Currency Data Type. </li>
             <li> Added Boolean Data Type. </li>
-            <li> Added UseCursor: boolean&nbsp;property on TJvUIBQuery
+            <li> Added UseCursor: boolean&nbsp;property on TUIBQuery
 (see cursor example). </li>
-            <li> Added OnError: TEndTransMode property on TJvUIBQuery
+            <li> Added OnError: TEndTransMode property on TUIBQuery
 to define what to do on transaction when error occur&nbsp;(see cursor
 example). </li>
             <li> AddBlob <strong>renamed</strong> with ParamAddBlob. </li>
@@ -443,7 +443,7 @@ when needed. </li>
           </tr>
           <tr>
             <td width="74"><font color="darkgreen">2003-05-03</font></td>
-            <td> <li> Minor bug corrected on TJvUIBQuery.ExecSQL. </li>
+            <td> <li> Minor bug corrected on TUIBQuery.ExecSQL. </li>
             </td>
           </tr>
           <tr>
@@ -460,7 +460,7 @@ handle of another IB Database Component to migrate to UIB easier. </li>
             <td> <li> New compiler option: "UIBTHREADSAFE",
 desactivate multithreading to retrieve records faster.&nbsp;(single
 thread applications only) </li>
-            <li> New TJvUIBQuery property: "BufferChunks" to allocate
+            <li> New TUIBQuery property: "BufferChunks" to allocate
 memory faster when "CachedFetch" property is set to True. </li>
             </td>
           </tr>
@@ -491,7 +491,7 @@ field by his name. </li>
           <tr>
             <td width="74"><font color="darkgreen">2003-04-10</font></td>
             <td> <li> Now work with BCB6 </li>
-            <li> New components: TJvUIBBackup &amp; TJvUIBRestore. </li>
+            <li> New components: TUIBBackup &amp; TUIBRestore. </li>
             </td>
           </tr>
           <tr>
@@ -526,7 +526,7 @@ connections. </li>
             <td height="18" width="74"><font color="darkgreen">2003-03-11</font></td>
             <td height="18"> <li> UIB Will be included to JVCL 3.0,
 Components are now compliant to JVCL Specifications. </li>
-            <li> QuickScript property on TJvUIBQuery. </li>
+            <li> QuickScript property on TUIBQuery. </li>
             </td>
           </tr>
           <tr>
@@ -593,7 +593,7 @@ supported ?</h3>
         </li>
       </ul>
       <h3 align="left">Compiler options:</h3>
-      <p align="left">Edit "JvUIB.inc" and activate what you need.</p>
+      <p align="left">Edit "UIB.inc" and activate what you need.</p>
       <p align="left">(UIB work in compatibility mode
 (IB6)&nbsp;if&nbsp;any option&nbsp;is defined.)</p>
       <ul>

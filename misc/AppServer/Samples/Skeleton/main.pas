@@ -30,7 +30,7 @@ var
   Form1: TForm1;
 
 implementation
-uses jvuiblib, PDGUtils;
+uses uiblib, PDGUtils;
 
 {$R *.dfm}
 

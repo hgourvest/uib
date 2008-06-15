@@ -124,7 +124,7 @@
       <Directories Name="PackageDLLOutputDir"></Directories>
       <Directories Name="PackageDCPOutputDir"></Directories>
       <Directories Name="SearchPath"></Directories>
-      <Directories Name="Packages">vcl;rtl;vclx;indy;inet;xmlrtl;vclie;inetdbbde;inetdbxpress;dbrtl;dsnap;dsnapcon;vcldb;soaprtl;VclSmp;dbexpress;dbxcds;bdertl;vcldbx;adortl;CLXIB;ibxpress;VCLIB;teeui;teedb;tee;dss;visualclx;visualdbclx;vclactnband;vclshlctrls;IntrawebDB_50_70;Intraweb_50_70;Rave50CLX;Rave50VCL;dclOfficeXP;SynEdit_R7;JvUIBD7R;cxLibraryVCLD7;dxThemeD7;cxEditorsVCLD7;cxDataD7;cxExtEditorsVCLD7;cxPageControlVCLD7;cxGridVCLD7;dxBarD7;dxComnD7;dxBarDBNavD7;dxBarExtDBItemsD7;dxBarExtItemsD7;dxDockingD7;tb2k_d7;dxsbD7;inetdb;kbmMemD7Run;VirtualTreesD7;madBasic_;madDisAsm_;madExcept_</Directories>
+      <Directories Name="Packages">vcl;rtl;vclx;indy;inet;xmlrtl;vclie;inetdbbde;inetdbxpress;dbrtl;dsnap;dsnapcon;vcldb;soaprtl;VclSmp;dbexpress;dbxcds;bdertl;vcldbx;adortl;CLXIB;ibxpress;VCLIB;teeui;teedb;tee;dss;visualclx;visualdbclx;vclactnband;vclshlctrls;IntrawebDB_50_70;Intraweb_50_70;Rave50CLX;Rave50VCL;dclOfficeXP;SynEdit_R7;UIBD7R;cxLibraryVCLD7;dxThemeD7;cxEditorsVCLD7;cxDataD7;cxExtEditorsVCLD7;cxPageControlVCLD7;cxGridVCLD7;dxBarD7;dxComnD7;dxBarDBNavD7;dxBarExtDBItemsD7;dxBarExtItemsD7;dxDockingD7;tb2k_d7;dxsbD7;inetdb;kbmMemD7Run;VirtualTreesD7;madBasic_;madDisAsm_;madExcept_</Directories>
       <Directories Name="Conditionals"></Directories>
       <Directories Name="DebugSourceDirs"></Directories>
       <Directories Name="UsePackages">False</Directories>

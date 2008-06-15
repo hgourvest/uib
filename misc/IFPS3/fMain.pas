@@ -46,11 +46,11 @@ uses
   uPSR_graphics,
   uPSR_controls,
   uPSR_classes,
-  uPSI_jvuiblib,
-  uPSI_jvuibconst,
-  uPSI_jvuibmetadata,
-  uPSI_jvuibsqlparser,
-  uPSI_jvuib;
+  uPSI_uiblib,
+  uPSI_uibconst,
+  uPSI_uibmetadata,
+  uPSI_uibsqlparser,
+  uPSI_uib;
 
 {$R *.DFM}
 
@@ -63,11 +63,11 @@ begin
   SIRegister_Controls(x);
   SIRegister_stdctrls(x);
   SIRegister_Forms(x);
-  SIRegister_jvuiblib(x);
-  SIRegister_jvuibconst(x);
-  SIRegister_jvuibmetadata(x);
-  SIRegister_jvuibsqlparser(x);
-  SIRegister_jvuib(x);
+  SIRegister_uiblib(x);
+  SIRegister_uibconst(x);
+  SIRegister_uibmetadata(x);
+  SIRegister_uibsqlparser(x);
+  SIRegister_uib(x);
 end;
 
 procedure TForm1.IFPS3ClassesPlugin1ExecImport(Sender: TObject; Exec: TIFPSExec;
@@ -79,10 +79,10 @@ begin
   RIRegister_Controls(x);
   RIRegister_stdctrls(x);
   RIRegister_Forms(x);
-  RIRegister_jvuiblib(x);
-  RIRegister_jvuibmetadata(x);
-  RIRegister_jvuibsqlparser(x);
-  RIRegister_jvuib(x);
+  RIRegister_uiblib(x);
+  RIRegister_uibmetadata(x);
+  RIRegister_uibsqlparser(x);
+  RIRegister_uib(x);
 end;
 
 function ImportTest(S1: string; s2: Longint; s3: Byte; s4: word; var s5: string): string;

@@ -4,15 +4,15 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, jvuib, Grids, ValEdit, StdCtrls;
+  Dialogs, uib, Grids, ValEdit, StdCtrls;
 
 type
   TInfosForm = class(TForm)
-    Database: TJvUIBDataBase;
+    Database: TUIBDataBase;
     ValueList: TValueListEditor;
     UserList: TListBox;
     Label1: TLabel;
-    Config: TJvUIBConfig;
+    Config: TUIBConfig;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);

@@ -1,17 +1,17 @@
 unit UIBCodeGen;
-{$I jvuib.inc}
+{$I uib.inc}
 interface
-uses JvUIB, jvuiblib, Classes, Contnrs;
+uses uib, uiblib, Classes, Contnrs;
 
 type
 
   TUIBCodeGenerator = class
   private
     FUnitName: string;
-    FTransaction: TJvUIBTransaction;
+    FTransaction: TUIBTransaction;
     FSQLObjects: TObjectList;
   public
-    constructor Create(const AUnitName: string; Transaction: TJvUIBTransaction); virtual;
+    constructor Create(const AUnitName: string; Transaction: TUIBTransaction); virtual;
     destructor Destroy; override;
     procedure AddStatement(const Name, SQL: string; paramtypes: array of TUIBFieldType;
       QInsert: string = ''; QUpdate: string = ''; QDelete: string = '');
@@ -21,7 +21,7 @@ type
   end;
 
 implementation
-uses sysutils, jvuibmetadata;
+uses sysutils, uibmetadata;
 
 
 const
@@ -40,7 +40,7 @@ const
 
 
 type
-  TQueryCodeGen = class(TJvUIBQuery)
+  TQueryCodeGen = class(TUIBQuery)
   public
     QInsert, QUpdate, QDelete: string;
   end;
@@ -94,7 +94,7 @@ begin
   FSQLObjects.Add(Q);
 end;
 
-constructor TUIBCodeGenerator.Create(const AUnitName: string; Transaction: TJvUIBTransaction);
+constructor TUIBCodeGenerator.Create(const AUnitName: string; Transaction: TUIBTransaction);
 begin
   FUnitName := AUnitName;
   FSQLObjects := TObjectList.Create;
@@ -164,7 +164,7 @@ var
     Q: TQueryCodeGen;
   begin
     writeln('interface');
-    writeln('uses Classes, Contnrs, JvUIB;', [FUnitName]);
+    writeln('uses Classes, Contnrs, uib;', [FUnitName]);
     writeln;
     writeln('type');
     for i := 0 to FSQLObjects.Count - 1 do
@@ -230,7 +230,7 @@ var
       writeln('  public');
       writeln('    constructor Create; overload;');
       writeln('    destructor Destroy; override;');
-      write('    procedure LoadFromDatabase(Transaction: TJvUIBTransaction');
+      write('    procedure LoadFromDatabase(Transaction: TUIBTransaction');
       with Q.Params do
         for j := 0 to ParamCount - 1 do
           write('; %s: %s', [FieldName[j], SQLDelphiType[FieldType[j]]]);
@@ -239,7 +239,7 @@ var
       writeln('    procedure SaveToFile(const FileName: string; changes: boolean = false);');
       writeln('    procedure LoadFromStream(stream: TStream);');
       writeln('    procedure LoadFromFile(const FileName: string);');
-      writeln('    function Apply(Transaction: TJvUIBTransaction): boolean;');
+      writeln('    function Apply(Transaction: TUIBTransaction): boolean;');
       writeln('    property Items[Index: Integer]: T%0:s read Get%0:s write Set%0:s; default;', [Q.Name]);
       writeln('  end;');
     end;
@@ -249,11 +249,11 @@ var
   var
     i, j: integer;
     Q: TQueryCodeGen;
-    QInsert, QUpdate, QDelete: TJvUIBQuery;
+    QInsert, QUpdate, QDelete: TUIBQuery;
   begin
-    QInsert := TJvUIBQuery.Create(nil);
-    QUpdate := TJvUIBQuery.Create(nil);
-    QDelete := TJvUIBQuery.Create(nil);
+    QInsert := TUIBQuery.Create(nil);
+    QUpdate := TUIBQuery.Create(nil);
+    QDelete := TUIBQuery.Create(nil);
     try
       QInsert.Transaction := FTransaction;
       QUpdate.Transaction := FTransaction;
@@ -546,13 +546,13 @@ var
 
           // LOADFROMDATABASE
           writeln;
-          write('procedure T%sList.LoadFromDatabase(Transaction: TJvUIBTransaction', [Q.Name]);
+          write('procedure T%sList.LoadFromDatabase(Transaction: TUIBTransaction', [Q.Name]);
           with Q.Params do
             for j := 0 to ParamCount - 1 do
               write('; %s: %s', [FieldName[j], SQLDelphiType[FieldType[j]]]);
           writeln(');');
           writeln('var');
-          writeln('  Q: TJvUIBQuery;');
+          writeln('  Q: TUIBQuery;');
           writeln('  O: T%s;', [Q.Name]);
           with Q.Fields do
             for j := 0 to FieldCount - 1 do
@@ -561,7 +561,7 @@ var
 
           writeln('begin');
           writeln('  FUpdating := true;');
-          writeln('  Q := TJvUIBQuery.Create(nil);');
+          writeln('  Q := TUIBQuery.Create(nil);');
           writeln('  try');
           writeln('    Clear;');
           writeln('    FDeleted.Clear;');
@@ -762,9 +762,9 @@ var
           if QUpdate.SQL.Text <> '' then QUpdate.Prepare;
           if QDelete.SQL.Text <> '' then QDelete.Prepare;
 
-          writeln('function T%sList.Apply(Transaction: TJvUIBTransaction): boolean;', [Q.Name]);
+          writeln('function T%sList.Apply(Transaction: TUIBTransaction): boolean;', [Q.Name]);
           writeln('var');
-          writeln('  QInsert, QUpdate, QDelete: TJvUIBQuery;');
+          writeln('  QInsert, QUpdate, QDelete: TUIBQuery;');
           writeln('  i: integer;');
           writeln('  expected, done: integer;');
           writeln('  procedure doObject(O: T%s);', [Q.Name]);
@@ -883,9 +883,9 @@ var
           writeln('  done := 0;');
           writeln('  if Transaction <> nil then');
           writeln('  begin');
-          writeln('    QInsert := TJvUIBQuery.Create(nil);');
-          writeln('    QUpdate := TJvUIBQuery.Create(nil);');
-          writeln('    QDelete := TJvUIBQuery.Create(nil);');
+          writeln('    QInsert := TUIBQuery.Create(nil);');
+          writeln('    QUpdate := TUIBQuery.Create(nil);');
+          writeln('    QDelete := TUIBQuery.Create(nil);');
           writeln('    try');
           writeln('      QInsert.Transaction := Transaction;');
           writeln('      QUpdate.Transaction := Transaction;');

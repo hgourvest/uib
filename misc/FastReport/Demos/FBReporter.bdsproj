@@ -158,7 +158,7 @@
 		</VersionInfoKeys>  
     
     <Excluded_Packages>
-      <Excluded_Packages Name="F:\Projets Borland Studio\Bpl\JvUIBkbmMemTableD9.bpl">(sans titre)</Excluded_Packages>
+      <Excluded_Packages Name="F:\Projets Borland Studio\Bpl\uibkbmMemTableD9.bpl">(sans titre)</Excluded_Packages>
       <Excluded_Packages Name="C:\Program Files\Delphi Configuration Manager\DCM90.bpl">Delphi Config Manager - IDE AddIn</Excluded_Packages>
     </Excluded_Packages>
   </Delphi.Personality>

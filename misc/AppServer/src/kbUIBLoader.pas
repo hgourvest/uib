@@ -20,7 +20,7 @@ interface
 uses
   SysUtils, Windows, Classes,
   DB, FmtBcd,
-  kbmMemTable, jvuiblib;
+  kbmMemTable, uiblib;
 
 type
   TkbUIBLoader = class(TkbmMemTable)
@@ -32,11 +32,11 @@ procedure Register;
 
 implementation
 
-uses jvuibase, jvuibconst;
+uses uibase, uibconst;
 
 procedure Register;
 begin
-  RegisterComponents('Jv UIB', [TkbUIBLoader]);
+  RegisterComponents('UIB', [TkbUIBLoader]);
 end;
 
 { TkbUIBLoader }

@@ -20,34 +20,34 @@ uses
   Windows, SysUtils, Graphics, Classes, 
   frxClass, frxrcUIB,
   DB, frxCustomDB,
-  JvUIB, JvUIBLib, JvUIBDataset
+  uib, uibLib, uibDataset
 {$IFDEF Delphi6}
 , Variants
 {$ENDIF}
 {$IFDEF QBUILDER}
 , fqbClass
-, JvUIBMetadata
+, uibMetadata
 {$ENDIF};
 
 
 type
   TfrxUIBComponents = class(TfrxDBComponents)
   private
-    FDefaultDatabase: TJvUIBDatabase;
-    FDefaultTransaction: TJvUIBTransaction;
+    FDefaultDatabase: TUIBDatabase;
+    FDefaultTransaction: TUIBTransaction;
     FOldComponents: TfrxUIBComponents;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     function GetDescription: String; override;
   published
-    property DefaultDatabase: TJvUIBDatabase read FDefaultDatabase write FDefaultDatabase;
-    property DefaultTransaction: TJvUIBTransaction read FDefaultTransaction write FDefaultTransaction;
+    property DefaultDatabase: TUIBDatabase read FDefaultDatabase write FDefaultDatabase;
+    property DefaultTransaction: TUIBTransaction read FDefaultTransaction write FDefaultTransaction;
   end;
 
   TfrxUIBDatabase = class(TfrxCustomDatabase)
   private
-    FDatabase: TJvUIBDatabase;
+    FDatabase: TUIBDatabase;
     function GetSQLDialect: Integer;
     procedure SetSQLDialect(const Value: Integer);
   protected
@@ -63,7 +63,7 @@ type
     constructor Create(AOwner: TComponent); override;
     class function GetDescription: String; override;
     procedure SetLogin(const Login, Password: String); override;
-    property Database: TJvUIBDatabase read FDatabase;
+    property Database: TUIBDatabase read FDatabase;
   published
     property DatabaseName;
     property LoginPrompt;
@@ -75,7 +75,7 @@ type
   TfrxUIBTransaction = class(TfrxDialogComponent)
   private
     FDatabase: TfrxUIBDatabase;
-    FTransaction: TJvUIBTransaction;
+    FTransaction: TUIBTransaction;
   protected
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     procedure SetDatabase(const Value: TfrxUIBDatabase);
@@ -85,7 +85,7 @@ type
     constructor Create(AOwner: TComponent); override;
     constructor DesignCreate(AOwner: TComponent; Flags: Word); override;
     class function GetDescription: String; override;
-    property Transaction: TJvUIBTransaction read FTransaction;
+    property Transaction: TUIBTransaction read FTransaction;
   published
     property Database: TfrxUIBDatabase read FDatabase write SetDatabase;
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
@@ -95,7 +95,7 @@ type
   private
     FDatabase: TfrxUIBDatabase;
     FTransaction: TfrxUIBTransaction;
-    FQuery: TJvUIBDataset;
+    FQuery: TUIBDataset;
     procedure SetDatabase(const Value: TfrxUIBDatabase);
     procedure SetTransaction(const Value: TfrxUIBTransaction);
   protected
@@ -111,7 +111,7 @@ type
 {$IFDEF QBUILDER}
     function QBEngine: TfqbEngine; override;
 {$ENDIF}
-    property Query: TJvUIBDataset read FQuery;
+    property Query: TUIBDataset read FQuery;
   published
     property Database: TfrxUIBDatabase read FDatabase write SetDatabase;
     property Transaction: TfrxUIBTransaction read FTransaction write SetTransaction;
@@ -120,14 +120,14 @@ type
 {$IFDEF QBUILDER}
   TfrxEngineUIB = class(TfqbEngine)
   private
-    FDatabase: TJvUIBDatabase;
-    FTransaction: TJvUIBTransaction;
-    FDataset: TJvUIBDataSet;
+    FDatabase: TUIBDatabase;
+    FTransaction: TUIBTransaction;
+    FDataset: TUIBDataSet;
     FOldSystemObjects: Boolean;
-    procedure SetDatabase(const Value: TJvUIBDatabase);
+    procedure SetDatabase(const Value: TUIBDatabase);
     function ReadMetadatas: TMetaDataBase;
   protected
-    property Database: TJvUIBDatabase read FDatabase write SetDatabase;
+    property Database: TUIBDatabase read FDatabase write SetDatabase;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -147,7 +147,7 @@ uses
   frxUIBRTTI,
 {$IFNDEF NO_EDITORS}
   frxUIBEditor,
-  JvUIBConst,
+  uibConst,
 {$ENDIF}
   frxDsgnIntf, frxRes;
 
@@ -213,7 +213,7 @@ end;
 constructor TfrxUIBDatabase.Create(AOwner: TComponent);
 begin
   inherited;
-  FDatabase := TJvUIBDatabase.Create(nil);
+  FDatabase := TUIBDatabase.Create(nil);
   Component := FDatabase;
 end;
 
@@ -283,7 +283,7 @@ end;
 constructor TfrxUIBTransaction.Create(AOwner: TComponent);
 begin
   inherited;
-  FTransaction := TJvUIBTransaction.Create(nil);
+  FTransaction := TUIBTransaction.Create(nil);
   Component := FTransaction;
   SetDatabase(nil);
 end;
@@ -353,7 +353,7 @@ end;
 
 constructor TfrxUIBQuery.Create(AOwner: TComponent);
 begin
-  FQuery := TJvUIBDataset.Create(nil);
+  FQuery := TUIBDataset.Create(nil);
   Dataset := FQuery;
   SetTransaction(nil);
 //  SetDatabase(nil);
@@ -476,10 +476,10 @@ end;
 constructor TfrxEngineUIB.Create(AOwner: TComponent);
 begin
   inherited;
-  FTransaction := TJvUIBTransaction.Create(nil);
+  FTransaction := TUIBTransaction.Create(nil);
   FTransaction.Options := [tpConcurrency, tpNoWait, tpRead];
 
-  FDataset := TJvUIBDataset.Create(nil);
+  FDataset := TUIBDataset.Create(nil);
   FDataset.Transaction := FTransaction;
 end;
 
@@ -490,7 +490,7 @@ begin
   inherited;
 end;
 
-procedure TfrxEngineUIB.SetDatabase(const Value: TJvUIBDatabase);
+procedure TfrxEngineUIB.SetDatabase(const Value: TUIBDatabase);
 begin
   FOldSystemObjects := ShowSystemTables;
   FDatabase := Value;

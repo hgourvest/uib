@@ -141,7 +141,7 @@ object PumpForm: TPumpForm
       OnKeyPress = FormKeyPress
     end
   end
-  object Source: TJvUIBDataBase
+  object Source: TUIBDataBase
     Params.Strings = (
       'sql_dialect=3'
       'lc_ctype=NONE')
@@ -149,7 +149,7 @@ object PumpForm: TPumpForm
     Left = 16
     Top = 160
   end
-  object Destination: TJvUIBDataBase
+  object Destination: TUIBDataBase
     Params.Strings = (
       'sql_dialect=3'
       'lc_ctype=NONE')
@@ -162,19 +162,19 @@ object PumpForm: TPumpForm
     Left = 16
     Top = 224
   end
-  object SrcTransaction: TJvUIBTransaction
+  object SrcTransaction: TUIBTransaction
     DataBase = Source
     Options = [tpConcurrency, tpWait, tpRead]
     Left = 48
     Top = 160
   end
-  object DstTransaction: TJvUIBTransaction
+  object DstTransaction: TUIBTransaction
     DataBase = Destination
     Options = [tpConcurrency, tpWait, tpWrite, tpNoAutoUndo]
     Left = 48
     Top = 192
   end
-  object SrcQuery: TJvUIBQuery
+  object SrcQuery: TUIBQuery
     Transaction = SrcTransaction
     CachedFetch = False
     FetchBlobs = True

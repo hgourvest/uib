@@ -5,7 +5,7 @@ unit TestLib;
 interface
 uses
   TestLib_Server, TestLib_Intf, PDGUtils, PDGSocketStub,
-  {$IFDEF FPC}sockets{$ELSE}Winsock{$ENDIF}, classes, jvuib;
+  {$IFDEF FPC}sockets{$ELSE}Winsock{$ENDIF}, classes, uib;
 
 type
 
@@ -31,20 +31,20 @@ type
     FPassWord: string;
     FSQLDialect: Integer;
   protected
-    procedure ConfigureConnexion(Database: TJvUIBDataBase); override; 
+    procedure ConfigureConnexion(Database: TUIBDataBase); override; 
   public
     constructor Create(MaxSize: Integer = 0); override; 
   end;
 
 implementation
-uses PDGService, sysutils, inifiles, jvuibsqlparser;
+uses PDGService, sysutils, inifiles, uibsqlparser;
 
 var
   pool: TMyPool;
 
 { TMyPool }
 
-procedure TMyPool.ConfigureConnexion(Database: TJvUIBDataBase);
+procedure TMyPool.ConfigureConnexion(Database: TUIBDataBase);
 begin
   Database.DatabaseName := FDatabaseName;
   Database.UserName := FUserName;
@@ -92,18 +92,18 @@ procedure TMyObjectServer.ExecuteScript(const script: string;
   out data: TMemoryStream); stdcall;
 var
   Strings: TStringList;
-  Parser: TJVUIBSQLParser;
-  QR: TJvUIBQuery;
-  TR: TJvUIBTransaction;
-  DB: TJvUIBDataBase;
+  Parser: TUIBSQLParser;
+  QR: TUIBQuery;
+  TR: TUIBTransaction;
+  DB: TUIBDataBase;
   st: TSQLStatement;
 begin
   Strings := TStringList.Create;
   Strings.Text := Script;
-  Parser := TJVUIBSQLParser.Create(Strings);
+  Parser := TUIBSQLParser.Create(Strings);
   DB := pool.GetConnexion;
-  TR := TJvUIBTransaction.Create(nil);
-  QR := TJvUIBQuery.Create(nil);
+  TR := TUIBTransaction.Create(nil);
+  QR := TUIBQuery.Create(nil);
   try
     TR.Options := [tpReadCommitted, tpRecVersion, tpNowait];
     TR.DataBase := DB;

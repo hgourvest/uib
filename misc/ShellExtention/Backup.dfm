@@ -226,7 +226,7 @@ object BackupForm: TBackupForm
     TabOrder = 10
     OnKeyPress = FormKeyPress
   end
-  object UIBBackup: TJvUIBBackup
+  object UIBBackup: TUIBBackup
     LibraryName = 'gds32.dll'
     OnVerbose = UIBBackupVerbose
     Verbose = True

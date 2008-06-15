@@ -8,7 +8,7 @@ unit UIBLaz;
 interface
 
 uses
-  registeruib, jvuib, jvuibdataset, LazarusPackageIntf; 
+  registeruib, uib, uibdataset, LazarusPackageIntf; 
 
 implementation
 

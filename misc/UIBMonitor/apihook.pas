@@ -7,7 +7,7 @@
 *)
 
 unit apihook;
-{$I jvuib.inc}
+{$I uib.inc}
 {$ALIGN ON}
 {$MINENUMSIZE 4}
 {.$define INTERCEPTALL}
@@ -16,7 +16,7 @@ interface
 uses madCodeHook;
 
 implementation
-uses Windows, jvuibase, SysUtils, SharedHook, JvUIBLib;
+uses Windows, uibase, SysUtils, SharedHook, uibLib;
 
 type
   TUIBHookKedLibrary = class(TUIBLibrary)

@@ -166,7 +166,7 @@ var
   NumberGenerator: Integer = 0;
 
 implementation
-uses JvUIBase, JvUIBLib, Clipbrd, inifiles, SynEditKeyCmds;
+uses uibase, uibLib, Clipbrd, inifiles, SynEditKeyCmds;
 
 const
   CONFIGSECTION = 'CONFIG';

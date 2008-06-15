@@ -7,12 +7,12 @@
 *)
 
 unit SharedHook;
-{$I jvuib.inc}
+{$I uib.inc}
 {$ALIGN ON}
 {$MINENUMSIZE 4}
 
 interface
-uses Classes, JvUIBase, SysUtils;
+uses Classes, uibase, SysUtils;
 
 type
   THookedMethod = (

@@ -57,7 +57,7 @@ object InfosForm: TInfosForm
     TabOrder = 1
     OnKeyPress = FormKeyPress
   end
-  object Database: TJvUIBDataBase
+  object Database: TUIBDataBase
     Params.Strings = (
       'sql_dialect=3'
       'lc_ctype=NONE')
@@ -66,7 +66,7 @@ object InfosForm: TInfosForm
     Left = 8
     Top = 8
   end
-  object Config: TJvUIBConfig
+  object Config: TUIBConfig
     LibraryName = 'gds32.dll'
     Left = 40
     Top = 8

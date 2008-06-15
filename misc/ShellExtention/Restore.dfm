@@ -225,7 +225,7 @@ object RestoreForm: TRestoreForm
     Left = 56
     Top = 264
   end
-  object UIBRestore: TJvUIBRestore
+  object UIBRestore: TUIBRestore
     LibraryName = 'gds32.dll'
     OnVerbose = UIBRestoreVerbose
     Verbose = True

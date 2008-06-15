@@ -4,12 +4,12 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, jvuib, StdCtrls;
+  Dialogs, uib, StdCtrls;
 
 type
   TCloneForm = class(TForm)
-    Source: TJvUIBDataBase;
-    Destination: TJvUIBDataBase;
+    Source: TUIBDataBase;
+    Destination: TUIBDataBase;
     Log: TMemo;
     btStart: TButton;
     btClose: TButton;
@@ -18,9 +18,9 @@ type
     Label1: TLabel;
     btBrowse: TButton;
     SaveDialog: TSaveDialog;
-    SrcTransaction: TJvUIBTransaction;
-    DstTransaction: TJvUIBTransaction;
-    SrcQuery: TJvUIBQuery;
+    SrcTransaction: TUIBTransaction;
+    DstTransaction: TUIBTransaction;
+    SrcQuery: TUIBQuery;
     GroupBox1: TGroupBox;
     cbReplace: TCheckBox;
     cbMetadataOnly: TCheckBox;
@@ -66,7 +66,7 @@ var
 
 implementation
 
-uses inifiles, jvuiblib, jvuibmetadata, jvuibase;
+uses inifiles, uiblib, uibmetadata, uibase;
 
 {$R *.dfm}
 

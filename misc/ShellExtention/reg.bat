@@ -1,1 +1,1 @@
-regsvr32 "D:\dev\composants\uib\misc\ShellExtention\UIBFileHandler.dll"
+regsvr32 "C:\dev\uib\trunk\misc\ShellExtention\UIBFileHandler.dll"

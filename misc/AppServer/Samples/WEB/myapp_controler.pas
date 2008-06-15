@@ -9,7 +9,7 @@ uses superobject;
 procedure app_controler_initialize(mvc: ISuperObject);
 
 implementation
-uses SysUtils, webserver, mypool, jvuib;
+uses SysUtils, webserver, mypool, uib;
 
 { HTTP Methods }
 
@@ -20,13 +20,13 @@ uses SysUtils, webserver, mypool, jvuib;
 procedure application_getdata_controler(This, Params: ISuperObject;
   var Result: ISuperObject);
 var
-  db: TJvUIBDataBase;
-  tr: TJvUIBTransaction;
-  qr: TJvUIBQuery;
+  db: TUIBDataBase;
+  tr: TUIBTransaction;
+  qr: TUIBQuery;
 begin
   db := pool.GetConnexion;
-  tr := TJvUIBTransaction.Create(nil);
-  qr := TJvUIBQuery.Create(nil);
+  tr := TUIBTransaction.Create(nil);
+  qr := TUIBQuery.Create(nil);
   try
     tr.DataBase := db;
     qr.Transaction := tr;
@@ -46,13 +46,13 @@ end;
 //**************************************************************
 procedure country_index(This, Params: ISuperObject; var Result: ISuperObject);
 var
-  db: TJvUIBDataBase;
-  tr: TJvUIBTransaction;
-  qr: TJvUIBQuery;
+  db: TUIBDataBase;
+  tr: TUIBTransaction;
+  qr: TUIBQuery;
 begin
   db := pool.GetConnexion;
-  tr := TJvUIBTransaction.Create(nil);
-  qr := TJvUIBQuery.Create(nil);
+  tr := TUIBTransaction.Create(nil);
+  qr := TUIBQuery.Create(nil);
   try
     tr.DataBase := db;
     qr.Transaction := tr;
@@ -69,15 +69,15 @@ end;
 
 procedure country_add(This, Params: ISuperObject; var Result: ISuperObject);
 var
-  db: TJvUIBDataBase;
-  tr: TJvUIBTransaction;
-  qr: TJvUIBQuery;
+  db: TUIBDataBase;
+  tr: TUIBTransaction;
+  qr: TUIBQuery;
 begin
   if HTTPIsPost(this) then
   begin
     db := pool.GetConnexion;
-    tr := TJvUIBTransaction.Create(nil);
-    qr := TJvUIBQuery.Create(nil);
+    tr := TUIBTransaction.Create(nil);
+    qr := TUIBQuery.Create(nil);
     try
       tr.DataBase := db;
       qr.Transaction := tr;
@@ -98,14 +98,14 @@ end;
 
 procedure country_del(This, Params: ISuperObject; var Result: ISuperObject);
 var
-  db: TJvUIBDataBase;
-  tr: TJvUIBTransaction;
-  qr: TJvUIBQuery;
+  db: TUIBDataBase;
+  tr: TUIBTransaction;
+  qr: TUIBQuery;
 begin
   try
     db := pool.GetConnexion;
-    tr := TJvUIBTransaction.Create(nil);
-    qr := TJvUIBQuery.Create(nil);
+    tr := TUIBTransaction.Create(nil);
+    qr := TUIBQuery.Create(nil);
     try
       tr.DataBase := db;
       qr.Transaction := tr;
@@ -132,14 +132,14 @@ end;
 
 procedure country_edit(This, Params: ISuperObject; var Result: ISuperObject);
 var
-  db: TJvUIBDataBase;
-  tr: TJvUIBTransaction;
-  qr: TJvUIBQuery;
+  db: TUIBDataBase;
+  tr: TUIBTransaction;
+  qr: TUIBQuery;
 begin
   try
     db := pool.GetConnexion;
-    tr := TJvUIBTransaction.Create(nil);
-    qr := TJvUIBQuery.Create(nil);
+    tr := TUIBTransaction.Create(nil);
+    qr := TUIBQuery.Create(nil);
     try
       tr.DataBase := db;
       qr.Transaction := tr;

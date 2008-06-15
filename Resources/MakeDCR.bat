@@ -1,1 +1,2 @@
-brc32 JvUIBReg.rc -r -foJvUIBReg.dcr
+brc32 UIBReg.rc -r -foUIBReg.dcr
+pause

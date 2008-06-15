@@ -32,7 +32,7 @@ package frxUIB10;
 requires
   VCL,
   VCLDB,
-  JvUIBD10Win32R,
+  uibD10Win32R,
   frx10,
   frxDB10,
 {$IFDEF QBUILDER}

@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, jvuib;
+  Dialogs, StdCtrls, uib;
 
 type
   TShutDownForm = class(TForm)
@@ -15,7 +15,7 @@ type
     rbDenyAttachment: TRadioButton;
     Label1: TLabel;
     btShutdown: TButton;
-    Config: TJvUIBConfig;
+    Config: TUIBConfig;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure btShutdownClick(Sender: TObject);

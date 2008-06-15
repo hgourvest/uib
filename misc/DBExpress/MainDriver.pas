@@ -18,13 +18,13 @@
 
 unit MainDriver;
 
-{$I jvuib.inc}
+{$I uib.inc}
 {$IFDEF LINUX}
 {$DEFINE COMPILER7_UP}
 {$ENDIF}
 
 interface
-uses SysUtils, jvuiblib, jvuib, jvuibmetadata, DBXpress, SqlConst, Classes,
+uses SysUtils, uiblib, uib, uibmetadata, DBXpress, SqlConst, Classes,
   SqlTimSt {$IFDEF COMPILER6_UP},fmtbcd{$ENDIF};
 
 type
@@ -39,7 +39,7 @@ type
   TMetaColumns = array[1..High(Word)] of TMetaColumn;
   PMetaColumns = ^TMetaColumns;
 
-  TUIBDbxTransaction = class(TJvUIBTransaction)
+  TUIBDbxTransaction = class(TUIBTransaction)
   private
     FTransactionDesc: TTransactionDesc;
     procedure SetTransactionDesc(const Value: TTransactionDesc);
@@ -78,7 +78,7 @@ type
   TUIBDbxConnection = class(TUIBDbxErrorSupport, ISQLConnection)
   private
     FOwner: TUIBDbxDriver;
-    FDatabase: TJvUIBDataBase;
+    FDatabase: TUIBDataBase;
     FTransaction: TUIBDbxTransaction;
     FCallBackEvent: TSQLCallbackEvent;
     FTraceClientData: Integer;
@@ -117,7 +117,7 @@ type
   TUIBDbxCommand = class(TUIBDbxErrorSupport, ISQLCommand)
   private
     FOwner: TUIBDbxConnection;
-    FStatement: TJvUIBStatement;
+    FStatement: TUIBStatement;
     FStoredProc: boolean;
     function BuildStoredProc(const ProcName: string): string;
   protected
@@ -339,7 +339,7 @@ uses
 {$IFDEF DEBUG}
   DbugIntf,
 {$ENDIF}
-  JvUIBase, JvUIBConst;
+  uibase, uibConst;
 
 const
 {$IFDEF COMPILER9_UP}
@@ -663,7 +663,7 @@ end;
 constructor TUIBDbxConnection.Create(AOwner: TUIBDbxDriver; LibraryName: string);
 begin {$IFDEF DEBUG}SendDebug('TUIBDbxConnection.Create');{$ENDIF}
   FOwner := AOwner;
-  FDatabase := TJvUIBDataBase.Create(nil);
+  FDatabase := TUIBDataBase.Create(nil);
   FDatabase.LibraryName := LibraryName;
   with FDatabase.MetaDataOptions do
   begin
@@ -900,7 +900,7 @@ end;
 constructor TUIBDbxCommand.Create(AOwner: TUIBDbxConnection; Transaction: TUIBDbxTransaction);
 begin 
   FOwner := AOwner;
-  FStatement:= TJvUIBStatement.Create(nil);
+  FStatement:= TUIBStatement.Create(nil);
   FStatement.Transaction := Transaction;
   FStatement.CachedFetch := False;
   FStatement.UseCursor := False;

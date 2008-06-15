@@ -6,6 +6,6 @@
 /* Based on images provided by Henri Gourvest              */
 /***********************************************************/
 frxUIBMenu BITMAP "frxUIBMenu.bmp"
-TfrxUIBDataBase BITMAP "TJvUIBDataBase.bmp"
-TfrxUIBTransaction BITMAP "TJvUIBTransaction.bmp"
-TfrxUIBQuery BITMAP "TJvUIBDataset.bmp"
+TfrxUIBDataBase BITMAP "TUIBDataBase.bmp"
+TfrxUIBTransaction BITMAP "TUIBTransaction.bmp"
+TfrxUIBQuery BITMAP "TUIBDataset.bmp"

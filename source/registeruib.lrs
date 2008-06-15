@@ -1,5 +1,5 @@
-LazarusResources.Add('TJvUIBBackup','XPM',[
-  '/* XPM */'#10'static char * TJvUIBBackup_xpm[] = {'#10'"22 22 265 2",'#10'" '
+LazarusResources.Add('TUIBBackup','XPM',[
+  '/* XPM */'#10'static char * TUIBBackup_xpm[] = {'#10'"22 22 265 2",'#10'" '
   +' '#9'c #E0C000",'#10'". '#9'c #E0CA00",'#10'"+ '#9'c #E0E000",'#10'"@ '#9'c'
   +' #DFDF00",'#10'"# '#9'c #DEDE00",'#10'"$ '#9'c #DDDD00",'#10'"% '#9'c #DEE0'
   +'00",'#10'"& '#9'c #C7E000",'#10'"* '#9'c #C0E000",'#10'"= '#9'c #DCDC00",'
@@ -97,8 +97,8 @@ LazarusResources.Add('TJvUIBBackup','XPM',[
   +'c+d+e+f+g+h+i+j+k+=+l+m+-+]+^+-+",'#10'"* n+o+p+q+r+s+s+t+t+u+v+w+x+y+=+z+A'
   +'+B+7+C+-+",'#10'"D+* E+F+G+H+I+I+I+I+J+K+L+M+N+=+-+O+z+P+-+-+"};'#10
 ]);
-LazarusResources.Add('TJvUIBConfig','XPM',[
-  '/* XPM */'#10'static char * TJvUIBConfig_xpm[] = {'#10'"22 22 317 2",'#10'" '
+LazarusResources.Add('TUIBConfig','XPM',[
+  '/* XPM */'#10'static char * TUIBConfig_xpm[] = {'#10'"22 22 317 2",'#10'" '
   +' '#9'c #E0C000",'#10'". '#9'c #E0CA00",'#10'"+ '#9'c #E0E000",'#10'"@ '#9'c'
   +' #DFDF00",'#10'"# '#9'c #DEDE00",'#10'"$ '#9'c #DDDD00",'#10'"% '#9'c #DEE0'
   +'00",'#10'"& '#9'c #C7E000",'#10'"* '#9'c #C0E000",'#10'"= '#9'c #DCDC00",'
@@ -212,8 +212,8 @@ LazarusResources.Add('TJvUIBConfig','XPM',[
   +'@@#@$@g+%@&@h+y+z+h+",'#10'"*@=@-@;@>@,@''@)@!@~@{@]@^@/@(@g+_@:@<@R+[@h+",'
   +#10'"}@|@1@2@3@4@5@6@7@8@9@C.D.V.0@g+h+a@_@b@h+h+"};'#10
 ]);
-LazarusResources.Add('TJvUIBDataBase','XPM',[
-  '/* XPM */'#10'static char * TJvUIBDataBase_xpm[] = {'#10'"22 22 263 2",'#10
+LazarusResources.Add('TUIBDataBase','XPM',[
+  '/* XPM */'#10'static char * TUIBDataBase_xpm[] = {'#10'"22 22 263 2",'#10
   +'"  '#9'c #E0C000",'#10'". '#9'c #E0CA00",'#10'"+ '#9'c #E0E000",'#10'"@ '#9
   +'c #DFDF00",'#10'"# '#9'c #DEDE00",'#10'"$ '#9'c #DDDD00",'#10'"% '#9'c #DEE'
   +'000",'#10'"& '#9'c #C7E000",'#10'"* '#9'c #C0E000",'#10'"= '#9'c #DCDC00",'
@@ -311,8 +311,8 @@ LazarusResources.Add('TJvUIBDataBase','XPM',[
   +'"* * * * * * A+B+p+f C+C+D+E+F+''+G+H+I+n+J+)+",'#10'"K+* * * * * * * * * *'
   +' l.m.C.L+''+)+M+G+N+)+)+"};'#10
 ]);
-LazarusResources.Add('TJvUIBDataSet','XPM',[
-  '/* XPM */'#10'static char * TJvUIBDataSet_xpm[] = {'#10'"22 22 317 2",'#10'"'
+LazarusResources.Add('TUIBDataSet','XPM',[
+  '/* XPM */'#10'static char * TUIBDataSet_xpm[] = {'#10'"22 22 317 2",'#10'"'
   +'  '#9'c #E0C000",'#10'". '#9'c #E0CA00",'#10'"+ '#9'c #E0E000",'#10'"@ '#9
   +'c #DEE000",'#10'"# '#9'c #C7E000",'#10'"$ '#9'c #C0E000",'#10'"% '#9'c #E0C'
   +'900",'#10'"& '#9'c #DFDF00",'#10'"* '#9'c #DEDE00",'#10'"= '#9'c #DDDD00",'
@@ -426,8 +426,8 @@ LazarusResources.Add('TJvUIBDataSet','XPM',[
   +'@#@$@9+%@&@0+n+o+0+",'#10'"$ *@=@-@;@>@,@''@)@!@~@{@]@^@/@9+(@_@:@R+<@0+",'
   +#10'"[@$ *@}@|@1@2@3@4@5@6@7@8@9@0@9+0+a@(@b@0+0+"};'#10
 ]);
-LazarusResources.Add('TJvUIBEvents','XPM',[
-  '/* XPM */'#10'static char * TJvUIBEvents_xpm[] = {'#10'"22 22 309 2",'#10'" '
+LazarusResources.Add('TUIBEvents','XPM',[
+  '/* XPM */'#10'static char * TUIBEvents_xpm[] = {'#10'"22 22 309 2",'#10'" '
   +' '#9'c #E0C000",'#10'". '#9'c #E0CA00",'#10'"+ '#9'c #E0E000",'#10'"@ '#9'c'
   +' #DFDF00",'#10'"# '#9'c #DEDE00",'#10'"$ '#9'c #DDDD00",'#10'"% '#9'c #DEE0'
   +'00",'#10'"& '#9'c #C7E000",'#10'"* '#9'c #C0E000",'#10'"= '#9'c #DCDC00",'
@@ -539,8 +539,8 @@ LazarusResources.Add('TJvUIBEvents','XPM',[
   +' * * * * ;@>@,@''@)@!@~@{@]@h+^@/@(@Y+_@i+",'#10'":@* * * * * * * <@[@}@|@1'
   +'@X.2@h+i+3@^@4@i+i+"};'#10
 ]);
-LazarusResources.Add('TJvUIBQuery','XPM',[
-  '/* XPM */'#10'static char * TJvUIBQuery_xpm[] = {'#10'"22 22 318 2",'#10'"  '
+LazarusResources.Add('TUIBQuery','XPM',[
+  '/* XPM */'#10'static char * TUIBQuery_xpm[] = {'#10'"22 22 318 2",'#10'"  '
   +#9'c #E0C000",'#10'". '#9'c #E0CA00",'#10'"+ '#9'c #E0E000",'#10'"@ '#9'c #D'
   +'FDF00",'#10'"# '#9'c #DEDE00",'#10'"$ '#9'c #DEE000",'#10'"% '#9'c #C7E000"'
   +','#10'"& '#9'c #C0E000",'#10'"* '#9'c #DCDC01",'#10'"= '#9'c #D7D709",'#10
@@ -655,8 +655,8 @@ LazarusResources.Add('TJvUIBQuery','XPM',[
   +'@|@1@t+2@3@4@*@5@u+",'#10'"6@& & & & & & & & /@7@8@9@0@a@t+u+b@2@c@u+u+"};'
   +#10
 ]);
-LazarusResources.Add('TJvUIBRepair','XPM',[
-  '/* XPM */'#10'static char * TJvUIBRepair_xpm[] = {'#10'"22 22 318 2",'#10'" '
+LazarusResources.Add('TUIBRepair','XPM',[
+  '/* XPM */'#10'static char * TUIBRepair_xpm[] = {'#10'"22 22 318 2",'#10'" '
   +' '#9'c #E0C000",'#10'". '#9'c #E0CA00",'#10'"+ '#9'c #E0E000",'#10'"@ '#9'c'
   +' #DFDF00",'#10'"# '#9'c #DEDE00",'#10'"$ '#9'c #DDDD00",'#10'"% '#9'c #DEE0'
   +'00",'#10'"& '#9'c #C7E000",'#10'"* '#9'c #C0E000",'#10'"= '#9'c #DCDC00",'
@@ -771,8 +771,8 @@ LazarusResources.Add('TJvUIBRepair','XPM',[
   +'@<@[@}@|@r+1@2@3@*@4@s+",'#10'"5@* * * * * * * -@6@7@8@9@0@a@r+s+b@1@c@s+s+'
   +'"};'#10
 ]);
-LazarusResources.Add('TJvUIBRestore','XPM',[
-  '/* XPM */'#10'static char * TJvUIBRestore_xpm[] = {'#10'"22 22 265 2",'#10'"'
+LazarusResources.Add('TUIBRestore','XPM',[
+  '/* XPM */'#10'static char * TUIBRestore_xpm[] = {'#10'"22 22 265 2",'#10'"'
   +'  '#9'c #E0C000",'#10'". '#9'c #E0CA00",'#10'"+ '#9'c #E0E000",'#10'"@ '#9
   +'c #DFDF00",'#10'"# '#9'c #DEDE00",'#10'"$ '#9'c #DDDD00",'#10'"% '#9'c #DEE'
   +'000",'#10'"& '#9'c #C7E000",'#10'"* '#9'c #C0E000",'#10'"= '#9'c #DCDC00",'
@@ -870,8 +870,8 @@ LazarusResources.Add('TJvUIBRestore','XPM',[
   +'c+d+e+f+g+h+i+j+k+=+l+m+-+]+^+-+",'#10'"* n+o+p+q+r+s+s+t+t+u+v+w+x+y+=+z+A'
   +'+B+7+C+-+",'#10'"D+* E+F+G+H+I+I+I+I+J+K+L+M+N+=+-+O+z+P+-+-+"};'#10
 ]);
-LazarusResources.Add('TJvUIBScript','XPM',[
-  '/* XPM */'#10'static char * TJvUIBScript_xpm[] = {'#10'"22 22 357 2",'#10'" '
+LazarusResources.Add('TUIBScript','XPM',[
+  '/* XPM */'#10'static char * TUIBScript_xpm[] = {'#10'"22 22 357 2",'#10'" '
   +' '#9'c #E0C000",'#10'". '#9'c #DFC900",'#10'"+ '#9'c #D9DA07",'#10'"@ '#9'c'
   +' #CDD013",'#10'"# '#9'c #C4C712",'#10'"$ '#9'c #BFC212",'#10'"% '#9'c #BEC1'
   +'12",'#10'"& '#9'c #BEC011",'#10'"* '#9'c #BEBF10",'#10'"= '#9'c #C4C60B",'
@@ -998,8 +998,8 @@ LazarusResources.Add('TJvUIBScript','XPM',[
   +'y@y@z@A@B@Y+C@D@E@g@F@Z+",'#10'"G@'' l.H@V I@J@K@K@K@K@L@M@M@N@Y+Z+O@C@P@Z+'
   +'Z+"};'#10
 ]);
-LazarusResources.Add('TJvUIBSecurity','XPM',[
-  '/* XPM */'#13#10'static char * TJvUIBSecurity_xpm[] = {'#13#10'"22 22 322 2"'
+LazarusResources.Add('TUIBSecurity','XPM',[
+  '/* XPM */'#13#10'static char * TUIBSecurity_xpm[] = {'#13#10'"22 22 322 2"'
   +','#13#10'"  '#9'c #E0C000",'#13#10'". '#9'c #E0CA00",'#13#10'"+ '#9'c #E0E0'
   +'00",'#13#10'"@ '#9'c #DFDF00",'#13#10'"# '#9'c #DEDE00",'#13#10'"$ '#9'c #D'
   +'DDD00",'#13#10'"% '#9'c #DEE000",'#13#10'"& '#9'c #C7E000",'#13#10'"* '#9'c'
@@ -1129,7 +1129,7 @@ LazarusResources.Add('TJvUIBSecurity','XPM',[
   +' :@<@[@}@|@f 1@2@3@4@5@t+6@7@8@=@9@u+",'#13#10'"0@* * * * a@b@c@d@* * N.O.&'
   ,'+e@t+u+f@6@g@u+u+"};'#13#10
 ]);
-LazarusResources.Add('TJvUIBServerInfo','XPM',[
+LazarusResources.Add('TUIBServerInfo','XPM',[
   '/* XPM */'#10'static char *tmp22[] = {'#10'/* width height ncolors chars_per'
   +'_pixel */'#10'"22 22 307 2",'#10'/* colors */'#10'"   c #DCDC2F",'#10'" . c'
   +' #C05767",'#10'" X c #C0DF06",'#10'" o c #ECE9CD",'#10'" O c #AD836B",'#10
@@ -1231,8 +1231,8 @@ LazarusResources.Add('TJvUIBServerInfo','XPM',[
   +'..X:.bX/.$.M.S.<XD",'#10'"Xt.v.v.v.v.v.v.v.v.v.v uo=X4X:.bXD.(X/.UXDXD"'#10
   +'};'#10
 ]);
-LazarusResources.Add('TJvUIBTransaction','XPM',[
-  '/* XPM */'#10'static char * TJvUIBTransaction_xpm[] = {'#10'"22 22 255 2",'
+LazarusResources.Add('TUIBTransaction','XPM',[
+  '/* XPM */'#10'static char * TUIBTransaction_xpm[] = {'#10'"22 22 255 2",'
   +#10'"  '#9'c #E0C000",'#10'". '#9'c #E0CA00",'#10'"+ '#9'c #E0E000",'#10'"@ '
   +#9'c #DEE000",'#10'"# '#9'c #C7E000",'#10'"$ '#9'c #C0E000",'#10'"% '#9'c #D'
   +'DDD00",'#10'"& '#9'c #DAC900",'#10'"* '#9'c #D6D600",'#10'"= '#9'c #D9D900"'

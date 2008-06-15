@@ -43,18 +43,18 @@ begin
   begin
     with AddClass(TfrxUIBDatabase, 'TfrxCustomDatabase') do
     begin
-      AddProperty('Database', 'TJvUIBDatabase', GetProp, nil);
+      AddProperty('Database', 'TUIBDatabase', GetProp, nil);
     end;
 
     with AddClass(TfrxUIBTransaction, 'TfrxDialogComponent') do
     begin
-      AddProperty('Transaction', 'TJvUIBTransaction', GetProp, nil);
+      AddProperty('Transaction', 'TUIBTransaction', GetProp, nil);
     end;
 
     with AddClass(TfrxUIBQuery, 'TfrxCustomQuery') do
     begin
       AddMethod('procedure ExecSQL', CallMethod);
-      AddProperty('Query', 'TJvUIBQuery', GetProp, nil);
+      AddProperty('Query', 'TUIBQuery', GetProp, nil);
     end;
   end;
 end;

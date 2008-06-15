@@ -9,10 +9,10 @@ New features:
 - New Lazarus sample to explore metadatas.
 
 bug fixes:
-- TJvUIBEvent bug when destroying component is fixed.
+- TUIBEvent bug when destroying component is fixed.
 - ExecSQL now call Execute when query is prepared;
 - When a query don't return fields, a call to next don't raise exception anymore.
-- TJvUIBDataSet: a bug was fixed when the query return only one record.
+- TUIBDataSet: a bug was fixed when the query return only one record.
 - RowsAffected now support stored procedures.
 - Parsing error corrected with stored procedure.
 - Removed Fastcode unit because of bug in asm code.
@@ -25,9 +25,9 @@ New features:
 
 - TimeOut on transactions (FB2)
 - new asGUID property (PierreY)
-- TJvUIBServerInfo (PierreY)
+- TUIBServerInfo (PierreY)
 - UIB_NO_COMPONENT compiler option, this remove TComponent heritage.
-- removed jvuibobj.pas and jvuibsrv.pas, for server application example take a look in the misc/appserver directory.
+- removed uibobj.pas and uibsrv.pas, for server application example take a look in the misc/appserver directory.
 - various examples of use and third party applications in the misc directory.
 
 bug fixes:

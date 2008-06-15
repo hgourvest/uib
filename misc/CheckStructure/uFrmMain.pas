@@ -4,12 +4,12 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, jvuib, StdCtrls, jvuibmetadata;
+  Dialogs, uib, StdCtrls, uibmetadata;
 
 type
   TForm1 = class(TForm)
     Button1: TButton;
-    DataBase: TJvUIBDataBase;
+    DataBase: TUIBDataBase;
     Memo1: TMemo;
     procedure Button1Click(Sender: TObject);
   private
@@ -27,19 +27,19 @@ var
 
 implementation
    
-uses jvuiblib;
+uses uiblib;
 
 {$R *.dfm}
 
 procedure TForm1.Button1Click(Sender: TObject);
 var
   meta: TMetaDataBase;
-  tr: TJvUIBTransaction;
+  tr: TUIBTransaction;
   i: integer;
 begin
   meta := TMetaDataBase.Create(nil, -1);
   try
-    tr := TJvUIBTransaction.Create(nil);
+    tr := TUIBTransaction.Create(nil);
     try
       tr.DataBase := DataBase;
       meta.LoadFromDatabase(tr);

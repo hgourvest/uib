@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, jvuib, StdCtrls;
+  Dialogs, uib, StdCtrls;
 
 type
   TRestoreForm = class(TForm)
@@ -18,7 +18,7 @@ type
     btClose: TButton;
     GroupBox1: TGroupBox;
     cbSave: TCheckBox;
-    UIBRestore: TJvUIBRestore;
+    UIBRestore: TUIBRestore;
     cbDeactivateIndexes: TCheckBox;
     cbNoShadow: TCheckBox;
     cbNoValidityCheck: TCheckBox;

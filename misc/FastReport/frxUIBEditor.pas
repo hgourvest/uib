@@ -18,7 +18,7 @@ implementation
 
 uses
   Windows, Classes, SysUtils, Forms, Dialogs, frxUIBComponents, frxCustomDB,
-  frxDsgnIntf, frxRes, JvUIB, JvUIBDataset
+  frxDsgnIntf, frxRes, uib, uibDataset
 {$IFDEF Delphi6}
 , Variants
 {$ENDIF};

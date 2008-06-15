@@ -15,24 +15,24 @@
 					<li>
 						Add the&nbsp;UIB library path&nbsp;in the Delphi Environment Options, ex: "<font color="#000099">C:\UIB\source".</font>
 					</li><li>
-						Open and <u>compile</u> the runtime package: JvUIBD<font color="#ff0033">X</font>R.dpk.
+						Open and <u>compile</u> the runtime package: UIBD<font color="#ff0033">X</font>R.dpk.
 					</li><li>
-						Open and <u>install </u>the design pakage: JvUIBD<font color="#ff0033">X</font>D.dpk</li></ul>
+						Open and <u>install </u>the design pakage: UIBD<font color="#ff0033">X</font>D.dpk</li></ul>
 			</li><li>
 				Installing UIB with BC++ Builder.
 				<ul>
 					<li>
-						Open and <u>compile</u> the runtime package: JvUIBC<font color="#ff0033">X</font>R.bpk.
+						Open and <u>compile</u> the runtime package: UIBC<font color="#ff0033">X</font>R.bpk.
 					</li><li>
 						Design packages are preconfigured to use SYNEDIT in this path: <font color="#000099">
 							"$(BCB)\Source\synedit\Source</font>". Change this path&nbsp;if needed.
 					</li><li>
-						Open and <u>install </u>the design pakage: JvUIBC<font color="#ff0033">X</font>D.bpk</li></ul>
+						Open and <u>install </u>the design pakage: UIBC<font color="#ff0033">X</font>D.bpk</li></ul>
 			</li><li>
 				Installing UIB with Kylix.
 				<ul>
 					<li>
-						Install jvUIBPack_K3.dpk.</li></ul>
+						Install UIBPack_K3.dpk.</li></ul>
 			</li><li>
 				Installing UIB on Lazarus.
 				<ul>
@@ -43,7 +43,7 @@
 						Build Lazarus).</li></ul>
 			</li>
 		</ul>
-		<h2>Using TJvUIBQuery&nbsp;</h2>
+		<h2>Using TUIBQuery&nbsp;</h2>
 		<p style="margin-right: 0px;" dir="ltr">There is 3 methods to use this component.</p>
 		<ul>
 			<li dir="ltr">
@@ -121,11 +121,11 @@
 					detached from transaction.</li></ol>
 			<h3>Example</h3>
 			<pre><strong>procedure</strong> TForm1.BtOpenClick(Sender: TObject);<br><strong>var</strong>
-  Transaction: TJvUIBTransaction;
-  Query1: TJvUIBQuery;
-  Query2: TJvUIBQuery;
+  Transaction: TUIBTransaction;
+  Query1: TUIBQuery;
+  Query2: TUIBQuery;
 <strong>begin</strong>
-  Transaction := TJvUIBTransaction.Create(<strong>nil</strong>);<br>  Query1 := TJvUIBQuery.Create(<strong>nil</strong>);<br>  Query2 := TJvUIBQuery.Create(<strong>nil</strong>);<br>  <strong>try</strong>
+  Transaction := TUIBTransaction.Create(<strong>nil</strong>);<br>  Query1 := TUIBQuery.Create(<strong>nil</strong>);<br>  Query2 := TUIBQuery.Create(<strong>nil</strong>);<br>  <strong>try</strong>
     Transaction.DataBase := DataBase;
     Query1.Transaction := Transaction;
     Query2.Transaction := Transaction;
@@ -162,7 +162,7 @@
 		<h2 align="left">Compiler Options</h2>
 		<p align="left">First of all you have to set some compiler options depending which 
 			type of application you are writing and which database you are using.<br>
-			Edit the "JvUIB.inc" file in the source directory with a text editor and 
+			Edit the "UIB.inc" file in the source directory with a text editor and 
 			uncomment compiler options you need.</p>
 		<blockquote style="margin-right: 0px;" dir="ltr">
 			<h3 align="left">Database.</h3>

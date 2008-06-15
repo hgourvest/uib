@@ -74,7 +74,7 @@ object ShutDownForm: TShutDownForm
     TabOrder = 2
     OnClick = btShutdownClick
   end
-  object Config: TJvUIBConfig
+  object Config: TUIBConfig
     LibraryName = 'gds32.dll'
     Left = 8
     Top = 8

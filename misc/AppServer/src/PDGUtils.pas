@@ -22,7 +22,7 @@ unit PDGUtils;
 {$I PDGAppServer.inc}
 
 interface
-uses Classes, SysUtils, jvuib
+uses Classes, SysUtils, uib
 {$IFDEF MSWINDOWS}
 , windows
 {$ENDIF}
@@ -80,11 +80,11 @@ type
     function GetActiveCount: integer;
     function GetCount: integer;
   protected
-    procedure ConfigureConnexion(Database: TJvUIBDataBase); virtual; abstract;
+    procedure ConfigureConnexion(Database: TUIBDataBase); virtual; abstract;
   public
     constructor Create(MaxSize: Integer = 0); virtual;
     destructor Destroy; override;
-    function GetConnexion: TJvUIBDatabase;
+    function GetConnexion: TUIBDatabase;
     procedure FreeConnexion;
     function TryDisconnect: boolean;
     function AdjustSize(count: integer): Integer;
@@ -261,7 +261,7 @@ end;
 type
   PConnexion = ^TConnexion;
   TConnexion = record
-    Database: TJvUIBDataBase;
+    Database: TUIBDataBase;
     ThreadId: Cardinal;
   end;
 
@@ -855,7 +855,7 @@ begin
   end;
 end;
 
-function TConnexionPool.GetConnexion: TJvUIBDatabase;
+function TConnexionPool.GetConnexion: TUIBDatabase;
 var
   i: integer;
   tid: cardinal;
@@ -886,7 +886,7 @@ begin
     GetMem(p, SizeOf(TConnexion));
     p^.ThreadId := tid;
     inc(FActiveCount);
-    p^.Database := TJvUIBDataBase.Create(nil);
+    p^.Database := TUIBDataBase.Create(nil);
     ConfigureConnexion(p^.Database);
     FList.Add(p);
     Result := p^.Database;

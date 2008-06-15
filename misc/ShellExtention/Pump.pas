@@ -4,20 +4,20 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, jvuib, StdCtrls;
+  Dialogs, uib, StdCtrls;
 
 type
   TPumpForm = class(TForm)
-    Source: TJvUIBDataBase;
-    Destination: TJvUIBDataBase;
+    Source: TUIBDataBase;
+    Destination: TUIBDataBase;
     Log: TMemo;
     btStart: TButton;
     btClose: TButton;
     cbSave: TCheckBox;
     SaveDialog: TSaveDialog;
-    SrcTransaction: TJvUIBTransaction;
-    DstTransaction: TJvUIBTransaction;
-    SrcQuery: TJvUIBQuery;
+    SrcTransaction: TUIBTransaction;
+    DstTransaction: TUIBTransaction;
+    SrcQuery: TUIBQuery;
     GroupBox2: TGroupBox;
     cbVerbose: TCheckBox;
     cbCloseWhenDone: TCheckBox;
@@ -45,7 +45,7 @@ var
 
 implementation
 
-uses inifiles, jvuiblib, jvuibmetadata, jvuibase;
+uses inifiles, uiblib, uibmetadata, uibase;
 
 {$R *.dfm}
 

@@ -4,11 +4,11 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, jvuib, StdCtrls, ExtCtrls;
+  Dialogs, uib, StdCtrls, ExtCtrls;
 
 type
   TBackupForm = class(TForm)
-    UIBBackup: TJvUIBBackup;
+    UIBBackup: TUIBBackup;
     edBackupFile: TEdit;
     btBrowse: TButton;
     SaveDialog: TSaveDialog;
