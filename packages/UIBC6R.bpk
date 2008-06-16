@@ -3,12 +3,12 @@
 <PROJECT>
   <MACROS>
     <VERSION value="BCB.06.00"/>
-    <PROJECT value="JvUIBC6R.bpl"/>
-    <OBJFILES value="JvUIBC6R.obj ..\source\jvuib.obj ..\source\jvuibase.obj 
-      ..\source\jvuibconst.obj ..\source\jvuibdataset.obj 
-      ..\source\jvuiberror.obj ..\source\jvuiblib.obj 
-      ..\source\jvuibmetadata.obj ..\source\jvuibsqlparser.obj"/>
-    <RESFILES value="JvUIBC6R.res"/>
+    <PROJECT value="UIBC6R.bpl"/>
+    <OBJFILES value="UIBC6R.obj ..\source\uib.obj ..\source\uibase.obj 
+      ..\source\uibconst.obj ..\source\uibdataset.obj 
+      ..\source\uiberror.obj ..\source\uiblib.obj 
+      ..\source\uibmetadata.obj ..\source\uibsqlparser.obj"/>
+    <RESFILES value="UIBC6R.res"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
     <DEFFILE value=""/>
@@ -26,7 +26,7 @@
     <LINKER value="ilink32"/>
     <USERDEFINES value=""/>
     <SYSDEFINES value="_RTLDLL;NO_STRICT;USEPACKAGES"/>
-    <MAINSOURCE value="JvUIBC6R.cpp"/>
+    <MAINSOURCE value="UIBC6R.cpp"/>
     <INCLUDEPATH value="$(BCB)\include;$(BCB)\include\vcl;..\Resources;..\source"/>
     <LIBPATH value="$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;..\Resources;..\source"/>
     <WARNINGS value="-w-par"/>
@@ -50,17 +50,17 @@
     <OTHERFILES value=""/>
   </LINKER>
   <FILELIST>
-      <FILE FILENAME="JvUIBC6R.res" FORMNAME="" UNITNAME="JvUIBC6R.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="JvUIBC6R.cpp" FORMNAME="" UNITNAME="JvUIBC6R" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="UIBC6R.res" FORMNAME="" UNITNAME="UIBC6R.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="UIBC6R.cpp" FORMNAME="" UNITNAME="UIBC6R" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="rtl.bpi" FORMNAME="" UNITNAME="rtl" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\source\jvuib.pas" FORMNAME="" UNITNAME="jvuib" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\source\jvuibase.pas" FORMNAME="" UNITNAME="jvuibase" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\source\jvuibconst.pas" FORMNAME="" UNITNAME="jvuibconst" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\source\jvuibdataset.pas" FORMNAME="" UNITNAME="jvuibdataset" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\source\jvuiberror.pas" FORMNAME="" UNITNAME="jvuiberror" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\source\jvuiblib.pas" FORMNAME="" UNITNAME="jvuiblib" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\source\jvuibmetadata.pas" FORMNAME="" UNITNAME="jvuibmetadata" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\source\jvuibsqlparser.pas" FORMNAME="" UNITNAME="jvuibsqlparser" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\source\uib.pas" FORMNAME="" UNITNAME="uib" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\source\uibase.pas" FORMNAME="" UNITNAME="uibase" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\source\uibconst.pas" FORMNAME="" UNITNAME="uibconst" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\source\uibdataset.pas" FORMNAME="" UNITNAME="uibdataset" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\source\uiberror.pas" FORMNAME="" UNITNAME="uiberror" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\source\uiblib.pas" FORMNAME="" UNITNAME="uiblib" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\source\uibmetadata.pas" FORMNAME="" UNITNAME="uibmetadata" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\source\uibsqlparser.pas" FORMNAME="" UNITNAME="uibsqlparser" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="vcl.bpi" FORMNAME="" UNITNAME="vcl" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="vclx.bpi" FORMNAME="" UNITNAME="vclx" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="dbrtl.bpi" FORMNAME="" UNITNAME="dbrtl" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>

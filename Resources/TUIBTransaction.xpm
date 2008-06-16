@@ -1,5 +1,5 @@
 /* XPM */
-static char * TJvUIBTransaction_xpm[] = {
+static char * TUIBTransaction_xpm[] = {
 "22 22 255 2",
 "  	c #E0C000",
 ". 	c #E0CA00",

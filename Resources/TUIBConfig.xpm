@@ -1,5 +1,5 @@
 /* XPM */
-static char * TJvUIBConfig_xpm[] = {
+static char * TUIBConfig_xpm[] = {
 "22 22 317 2",
 "  	c #E0C000",
 ". 	c #E0CA00",

@@ -3,16 +3,16 @@
 <PROJECT>
   <MACROS>
     <VERSION value="BCB.05.03"/>
-    <PROJECT value="JvUIBC5R.bpl"/>
-    <OBJFILES value="..\source\jvuib.obj ..\source\jvuibase.obj ..\source\jvuibconst.obj
-      ..\source\jvuibdataset.obj ..\source\jvuiberror.obj ..\source\jvuiblib.obj
-      ..\source\jvuibmetadata.obj ..\source\jvuibsqlparser.obj JvUIBC5R.obj"/>
-    <RESFILES value="JvUIBC5R.res"/>
+    <PROJECT value="UIBC5R.bpl"/>
+    <OBJFILES value="..\source\uib.obj ..\source\uibase.obj ..\source\uibconst.obj
+      ..\source\uibdataset.obj ..\source\uiberror.obj ..\source\uiblib.obj
+      ..\source\uibmetadata.obj ..\source\uibsqlparser.obj UIBC5R.obj"/>
+    <RESFILES value="UIBC5R.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
     <LIBFILES value=""/>
-    <LIBRARIES value="jvUIBPack_C5.lib"/>
-    <SPARELIBS value="Vcl50.lib jvUIBPack_C5.lib Vcldb50.lib"/>
+    <LIBRARIES value="UIBPack_C5.lib"/>
+    <SPARELIBS value="Vcl50.lib UIBPack_C5.lib Vcldb50.lib"/>
     <PACKAGES value="vcl50.bpi Vcldb50.bpi"/>
     <PATHCPP value=".;"/>
     <PATHPAS value=".;..\source"/>
@@ -23,7 +23,7 @@
     <LINKER value="tlink32"/>
     <USERDEFINES value="_DEBUG"/>
     <SYSDEFINES value="_RTLDLL;NO_STRICT;USEPACKAGES"/>
-    <MAINSOURCE value="JvUIBC5R.cpp"/>
+    <MAINSOURCE value="UIBC5R.cpp"/>
     <INCLUDEPATH value="..\source;$(BCB)\include;$(BCB)\include\vcl"/>
     <LIBPATH value="$(BCB)\Projects\Lib;..\source;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>

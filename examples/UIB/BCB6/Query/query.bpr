@@ -11,8 +11,8 @@
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) main.dfm"/>
     <LIBFILES value=""/>
-    <LIBRARIES value="jvUIBPack_C6.lib"/>
-    <SPARELIBS value="vcl.lib rtl.lib jvUIBPack_C6.lib dbrtl.lib"/>
+    <LIBRARIES value="UIBPack_C6.lib"/>
+    <SPARELIBS value="vcl.lib rtl.lib UIBPack_C6.lib dbrtl.lib"/>
     <PACKAGES value="vcl.bpi rtl.bpi dbrtl.bpi adortl.bpi vcldb.bpi vclx.bpi bdertl.bpi 
       vcldbx.bpi ibxpress.bpi dsnap.bpi cds.bpi bdecds.bpi qrpt.bpi teeui.bpi 
       teedb.bpi tee.bpi dss.bpi teeqr.bpi visualclx.bpi visualdbclx.bpi 
@@ -30,14 +30,14 @@
     <USERDEFINES value="_DEBUG"/>
     <SYSDEFINES value="_RTLDLL;NO_STRICT;USEPACKAGES"/>
     <MAINSOURCE value="query.cpp"/>
-    <INCLUDEPATH value="..\..\..\..\source;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;&quot;D:\Unified Interbase\examples\JvUIB\BCB6\Query&quot;;$(BCB)\include;$(BCB)\include\vcl"/>
-    <LIBPATH value="$(BCB)\Projects\Lib;..\..\..\..\source;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;&quot;D:\Unified Interbase\examples\JvUIB\BCB6\Query&quot;;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="..\..\..\..\source;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;&quot;D:\Unified Interbase\examples\UIB\BCB6\Query&quot;;$(BCB)\include;$(BCB)\include\vcl"/>
+    <LIBPATH value="$(BCB)\Projects\Lib;..\..\..\..\source;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;&quot;D:\Unified Interbase\examples\UIB\BCB6\Query&quot;;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <OTHERFILES value=""/>
   </MACROS>
   <OPTIONS>
     <IDLCFLAGS value="-I..\..\..\..\source -I&quot;C:\Program Files\Borland\CBuilder6\Projects&quot; 
-      -I&quot;D:\Unified Interbase\examples\JvUIB\BCB6\Query&quot; -I$(BCB)\include 
+      -I&quot;D:\Unified Interbase\examples\UIB\BCB6\Query&quot; -I$(BCB)\include 
       -I$(BCB)\include\vcl -src_suffix cpp -D_DEBUG -boa"/>
     <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -X- -r- -a8 -b- -k -y -v -vi- -c 
       -tW -tWM"/>

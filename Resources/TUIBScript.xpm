@@ -1,5 +1,5 @@
 /* XPM */
-static char * TJvUIBScript_xpm[] = {
+static char * TUIBScript_xpm[] = {
 "22 22 357 2",
 "  	c #E0C000",
 ". 	c #DFC900",

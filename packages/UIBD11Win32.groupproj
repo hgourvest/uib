@@ -4,8 +4,8 @@
   </PropertyGroup>
   <ItemGroup />
   <ItemGroup>
-    <Projects Include="JvUIBD11Win32D.dproj" />
-    <Projects Include="JvUIBD11Win32R.dproj" />
+    <Projects Include="UIBD11Win32D.dproj" />
+    <Projects Include="UIBD11Win32R.dproj" />
   </ItemGroup>
   <ProjectExtensions>
     <Borland.Personality>Default.Personality</Borland.Personality>
@@ -13,32 +13,32 @@
     <BorlandProject>
 <BorlandProject xmlns=""><Default.Personality></Default.Personality></BorlandProject></BorlandProject>
   </ProjectExtensions>
-  <Target Name="JvUIBD11Win32R">
-    <MSBuild Projects="JvUIBD11Win32R.dproj" Targets="" />
+  <Target Name="UIBD11Win32R">
+    <MSBuild Projects="UIBD11Win32R.dproj" Targets="" />
   </Target>
-  <Target Name="JvUIBD11Win32R:Clean">
-    <MSBuild Projects="JvUIBD11Win32R.dproj" Targets="Clean" />
+  <Target Name="UIBD11Win32R:Clean">
+    <MSBuild Projects="UIBD11Win32R.dproj" Targets="Clean" />
   </Target>
-  <Target Name="JvUIBD11Win32R:Make">
-    <MSBuild Projects="JvUIBD11Win32R.dproj" Targets="Make" />
+  <Target Name="UIBD11Win32R:Make">
+    <MSBuild Projects="UIBD11Win32R.dproj" Targets="Make" />
   </Target>
-  <Target Name="JvUIBD11Win32D">
-    <MSBuild Projects="JvUIBD11Win32D.dproj" Targets="" />
+  <Target Name="UIBD11Win32D">
+    <MSBuild Projects="UIBD11Win32D.dproj" Targets="" />
   </Target>
-  <Target Name="JvUIBD11Win32D:Clean">
-    <MSBuild Projects="JvUIBD11Win32D.dproj" Targets="Clean" />
+  <Target Name="UIBD11Win32D:Clean">
+    <MSBuild Projects="UIBD11Win32D.dproj" Targets="Clean" />
   </Target>
-  <Target Name="JvUIBD11Win32D:Make">
-    <MSBuild Projects="JvUIBD11Win32D.dproj" Targets="Make" />
+  <Target Name="UIBD11Win32D:Make">
+    <MSBuild Projects="UIBD11Win32D.dproj" Targets="Make" />
   </Target>
   <Target Name="Build">
-    <CallTarget Targets="JvUIBD11Win32R;JvUIBD11Win32D" />
+    <CallTarget Targets="UIBD11Win32R;UIBD11Win32D" />
   </Target>
   <Target Name="Clean">
-    <CallTarget Targets="JvUIBD11Win32R:Clean;JvUIBD11Win32D:Clean" />
+    <CallTarget Targets="UIBD11Win32R:Clean;UIBD11Win32D:Clean" />
   </Target>
   <Target Name="Make">
-    <CallTarget Targets="JvUIBD11Win32R:Make;JvUIBD11Win32D:Make" />
+    <CallTarget Targets="UIBD11Win32R:Make;UIBD11Win32D:Make" />
   </Target>
   <Import Condition="Exists('$(MSBuildBinPath)\Borland.Group.Targets')" Project="$(MSBuildBinPath)\Borland.Group.Targets" />
 </Project>

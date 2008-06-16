@@ -60,10 +60,10 @@
       <Unit2>
         <CursorPos X="21" Y="3619"/>
         <EditorIndex Value="3"/>
-        <Filename Value="D:\developpement\UIB2\source\jvuibase.pas"/>
+        <Filename Value="D:\developpement\UIB2\source\uibase.pas"/>
         <Loaded Value="True"/>
         <TopLine Value="3615"/>
-        <UnitName Value="jvuibase"/>
+        <UnitName Value="uibase"/>
         <UsageCount Value="10"/>
       </Unit2>
       <Unit3>
@@ -77,10 +77,10 @@
       <Unit4>
         <CursorPos X="93" Y="956"/>
         <EditorIndex Value="2"/>
-        <Filename Value="D:\developpement\UIB2\source\jvuiblib.pas"/>
+        <Filename Value="D:\developpement\UIB2\source\uiblib.pas"/>
         <Loaded Value="True"/>
         <TopLine Value="917"/>
-        <UnitName Value="jvuiblib"/>
+        <UnitName Value="uiblib"/>
         <UsageCount Value="10"/>
       </Unit4>
     </Units>

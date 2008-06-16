@@ -3,15 +3,15 @@
 <PROJECT>
   <MACROS>
     <VERSION value="BCB.06.00"/>
-    <PROJECT value="JvUIBC6D.bpl"/>
-    <OBJFILES value="JvUIBC6D.obj ..\source\jvuibreg.obj ..\source\jvuibtransactionedit.obj 
-      ..\source\jvuibdatabaseedit.obj ..\source\jvuibsqledit.obj"/>
-    <RESFILES value="JvUIBC6D.res"/>
+    <PROJECT value="UIBC6D.bpl"/>
+    <OBJFILES value="UIBC6D.obj ..\source\uibreg.obj ..\source\uibtransactionedit.obj 
+      ..\source\uibdatabaseedit.obj ..\source\uibsqledit.obj"/>
+    <RESFILES value="UIBC6D.res"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
     <DEFFILE value=""/>
-    <RESDEPEN value="$(RESFILES) ..\source\jvuibtransactionedit.dfm 
-      ..\source\jvuibdatabaseedit.dfm ..\source\jvuibsqledit.dfm"/>
+    <RESDEPEN value="$(RESFILES) ..\source\uibtransactionedit.dfm 
+      ..\source\uibdatabaseedit.dfm ..\source\uibsqledit.dfm"/>
     <LIBFILES value=""/>
     <LIBRARIES value="bcb2kaxserver.lib indy.lib dbxcds.lib dclocx.lib soaprtl.lib bcbie.lib 
       nmfast.lib dbexpress.lib inetdbxpress.lib inetdbbde.lib bcbsmp.lib 
@@ -34,7 +34,7 @@
     <LINKER value="ilink32"/>
     <USERDEFINES value=""/>
     <SYSDEFINES value="_RTLDLL;NO_STRICT;USEPACKAGES"/>
-    <MAINSOURCE value="JvUIBC6D.cpp"/>
+    <MAINSOURCE value="UIBC6D.cpp"/>
     <INCLUDEPATH value="$(BCB)\include;$(BCB)\include\vcl;..\Resources;..\source"/>
     <LIBPATH value="$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;$(BCB)\Source\synedit\Source;..\Resources;..\source"/>
     <WARNINGS value="-w-par"/>
@@ -67,12 +67,12 @@
       <FILE FILENAME="dclstd.bpi" FORMNAME="" UNITNAME="dclstd" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="dbrtl.bpi" FORMNAME="" UNITNAME="dbrtl" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="vcldb.bpi" FORMNAME="" UNITNAME="vcldb" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="JvUIBC6D.res" FORMNAME="" UNITNAME="JvUIBC6D.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="JvUIBC6D.cpp" FORMNAME="" UNITNAME="JvUIBC6D" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\source\jvuibreg.pas" FORMNAME="" UNITNAME="jvuibreg" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\source\jvuibtransactionedit.pas" FORMNAME="UIBTransactionEditForm" UNITNAME="jvuibtransactionedit" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\source\jvuibdatabaseedit.pas" FORMNAME="UIBDatabaseEditForm" UNITNAME="jvuibdatabaseedit" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\source\jvuibsqledit.pas" FORMNAME="UIBSQLEditForm" UNITNAME="jvuibsqledit" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="UIBC6D.res" FORMNAME="" UNITNAME="UIBC6D.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="UIBC6D.cpp" FORMNAME="" UNITNAME="UIBC6D" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\source\uibreg.pas" FORMNAME="" UNITNAME="uibreg" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\source\uibtransactionedit.pas" FORMNAME="UIBTransactionEditForm" UNITNAME="uibtransactionedit" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\source\uibdatabaseedit.pas" FORMNAME="UIBDatabaseEditForm" UNITNAME="uibdatabaseedit" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\source\uibsqledit.pas" FORMNAME="UIBSQLEditForm" UNITNAME="uibsqledit" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>

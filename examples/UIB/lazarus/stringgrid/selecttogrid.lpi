@@ -62,8 +62,8 @@
         <UsageCount Value="10"/>
       </Unit2>
       <Unit3>
-        <Filename Value="..\..\..\..\..\..\UIB2\source\jvuibdataset.pas"/>
-        <UnitName Value="jvuibdataset"/>
+        <Filename Value="..\..\..\..\..\..\UIB2\source\uibdataset.pas"/>
+        <UnitName Value="uibdataset"/>
         <CursorPos X="1" Y="1"/>
         <TopLine Value="1"/>
         <EditorIndex Value="2"/>
@@ -87,19 +87,19 @@
     </Units>
     <JumpHistory Count="4" HistoryIndex="3">
       <Position1>
-        <Filename Value="..\..\..\..\..\..\UIB2\source\jvuibdataset.pas"/>
+        <Filename Value="..\..\..\..\..\..\UIB2\source\uibdataset.pas"/>
         <Caret Line="1" Column="1" TopLine="1"/>
       </Position1>
       <Position2>
-        <Filename Value="..\..\..\..\..\..\UIB2\source\jvuibdataset.pas"/>
+        <Filename Value="..\..\..\..\..\..\UIB2\source\uibdataset.pas"/>
         <Caret Line="766" Column="24" TopLine="676"/>
       </Position2>
       <Position3>
-        <Filename Value="..\..\..\..\..\..\UIB2\source\jvuibdataset.pas"/>
+        <Filename Value="..\..\..\..\..\..\UIB2\source\uibdataset.pas"/>
         <Caret Line="766" Column="62" TopLine="744"/>
       </Position3>
       <Position4>
-        <Filename Value="..\..\..\..\..\..\UIB2\source\jvuibdataset.pas"/>
+        <Filename Value="..\..\..\..\..\..\UIB2\source\uibdataset.pas"/>
         <Caret Line="764" Column="71" TopLine="699"/>
       </Position4>
     </JumpHistory>

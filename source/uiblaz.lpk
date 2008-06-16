@@ -34,18 +34,18 @@
         <UnitName Value="RegisterUIB"/>
       </Item1>
       <Item2>
-        <Filename Value="jvuib.pas"/>
+        <Filename Value="uib.pas"/>
         <Type Value="Virtual Unit"/>
-        <UnitName Value="jvuib"/>
+        <UnitName Value="uib"/>
       </Item2>
       <Item3>
         <Filename Value="registeruib.lrs"/>
         <Type Value="LRS"/>
       </Item3>
       <Item4>
-        <Filename Value="jvuibdataset.pas"/>
+        <Filename Value="uibdataset.pas"/>
         <Type Value="Virtual Unit"/>
-        <UnitName Value="jvuibdataset"/>
+        <UnitName Value="uibdataset"/>
       </Item4>
     </Files>
     <Type Value="RunAndDesignTime"/>

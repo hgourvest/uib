@@ -3,15 +3,15 @@
 <PROJECT>
   <MACROS>
     <VERSION value="BCB.05.03"/>
-    <PROJECT value="JvUIBC5D.bpl"/>
-    <OBJFILES value="..\source\jvuibreg.obj JvUIBC5D.obj"/>
-    <RESFILES value="JvUIBC5D.res"/>
+    <PROJECT value="UIBC5D.bpl"/>
+    <OBJFILES value="..\source\uibreg.obj UIBC5D.obj"/>
+    <RESFILES value="UIBC5D.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
     <LIBFILES value=""/>
     <LIBRARIES value=""/>
     <SPARELIBS value="Vcl50.lib"/>
-    <PACKAGES value="vcl50.bpi vclx50.bpi vcldb50.bpi SynEdit_BCB5.bpi JvUIBC5R.bpi"/>
+    <PACKAGES value="vcl50.bpi vclx50.bpi vcldb50.bpi SynEdit_BCB5.bpi UIBC5R.bpi"/>
     <PATHCPP value=".;"/>
     <PATHPAS value=".;..\source"/>
     <PATHRC value=".;"/>
@@ -21,7 +21,7 @@
     <LINKER value="tlink32"/>
     <USERDEFINES value=""/>
     <SYSDEFINES value="_RTLDLL;NO_STRICT;USEPACKAGES"/>
-    <MAINSOURCE value="JvUIBC5D.cpp"/>
+    <MAINSOURCE value="UIBC5D.cpp"/>
     <INCLUDEPATH value="..\source;$(BCB)\include;$(BCB)\include\vcl;$(BCB)\Source\synedit\Source"/>
     <LIBPATH value="$(BCB)\Projects\Lib;..\source;$(BCB)\lib\obj;$(BCB)\lib;$(BCB)\Source\ToolsAPI;$(BCB)\Source\synedit\Source"/>
     <WARNINGS value="-w-par"/>
