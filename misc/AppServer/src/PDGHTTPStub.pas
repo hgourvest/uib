@@ -159,6 +159,8 @@ function HTTPInterprete(src: PChar; named: boolean; sep: char): ISuperObject;
 var
   strlist: TStringList;
   j: integer;
+  str: string;
+  value: ISuperObject;
 begin
   strlist := TStringList.Create;
   try
@@ -167,9 +169,14 @@ begin
     if named then
     begin
       Result := TSuperObject.Create(stObject);
-      //with Result.AsObject do
         for j := 0 to strlist.Count - 1 do
-          Result.S[HTTPDecode(strlist.Names[j])] := trim(HTTPDecode(GetValueFromIndex(strlist, j)));
+        begin
+          str := trim(HTTPDecode(GetValueFromIndex(strlist, j)));
+          value := TSuperObject.Parse(PChar(str), false);
+          if value = nil then
+            Result.S[HTTPDecode(strlist.Names[j])] := str else
+            Result[HTTPDecode(strlist.Names[j])] := value;
+        end;
     end else
     begin
       Result := TSuperObject.Create(stArray);
