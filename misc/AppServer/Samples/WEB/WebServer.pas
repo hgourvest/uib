@@ -3,7 +3,10 @@ unit WebServer;
   {$MODE OBJFPC}{$H+}
 {$ENDIF}
 interface
-uses PDGHTTPStub, PDGSocketStub, PDGUtils, {$IFDEF FPC}sockets,{$ELSE}Winsock, {$ENDIF}Windows,
+uses 
+  PDGHTTPStub, PDGSocketStub, PDGUtils, 
+{$IFDEF FPC}sockets,{$ELSE}Winsock, {$ENDIF}
+{$IFDEF MSWINDOWS}Windows,{$ENDIF}
   superobject, SyncObjs, classes, mypool, myapp_controler, myapp_view;
 
 type

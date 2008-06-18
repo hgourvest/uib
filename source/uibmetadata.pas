@@ -21,7 +21,10 @@ unit uibmetadata;
 interface
 
 uses
-  Windows, Classes, SysUtils,
+{$IFDEF MSWINDOWS}
+  Windows, 
+{$ENDIF}
+  Classes, SysUtils,
   uibase, uiblib, uib, uibconst, uibkeywords, uibavl;
 
 type
