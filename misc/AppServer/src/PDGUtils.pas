@@ -270,21 +270,29 @@ const
 
 function receive(s: longint; var Buf; len, flags: Integer): Integer;
 var
- p: PChar;
- r, l: integer;
+  p: PChar;
+  r, l: integer;
 begin
- Result := 0;
- p := @Buf;
- l := len;
- r := recv(s, p^, l, flags);
- while (r > 0) and (r < l) do
- begin
-   inc(Result, r);
-   dec(l, r);
-   inc(p, r);
-   r := recv(s, p^, l, flags);
- end;
- inc(Result, r);
+  Result := 0;
+  p := @Buf;
+  l := len;
+{$IFDEF FPC}
+  r := fprecv(s, p, l, flags);
+{$ELSE}
+  r := recv(s, p^, l, flags);
+{$ENDIF}
+  while (r > 0) and (r < l) do
+  begin
+    inc(Result, r);
+    dec(l, r);
+    inc(p, r);
+{$IFDEF FPC}
+    r := fprecv(s, p, l, flags);
+{$ELSE}
+    r := recv(s, p^, l, flags);
+{$ENDIF}
+  end;
+  inc(Result, r);
 end;
 
 function CompressStream(inStream, outStream: TStream; level: Integer): boolean;
@@ -406,10 +414,17 @@ begin
       outSize := bufferSize - zstream.avail_out;
       if outSize > 0 then
       begin
+{$IFDEF FPC}
+        if fpsend(outSocket, @outSize, sizeof(outSize), 0) <> sizeof(outSize) then
+          goto error;
+        if fpsend(outSocket, @outBuffer, outSize, 0) <> outSize then
+          goto error;
+{$ELSE}
         if send(outSocket, outSize, sizeof(outSize), 0) <> sizeof(outSize) then
           goto error;
         if send(outSocket, outBuffer, outSize, 0) <> outSize then
           goto error;
+{$ENDIF}
       end;
     until (zstream.avail_in = 0) and (zstream.avail_out > 0);
     inSize := inStream.Read(inBuffer, bufferSize);
@@ -423,15 +438,27 @@ begin
     outSize := bufferSize - zstream.avail_out;
     if outSize > 0 then
     begin
+{$IFDEF FPC}
+      if fpsend(outSocket, @outSize, sizeof(outSize), 0) <> sizeof(outSize) then
+        goto error;
+      if fpsend(outSocket, @outBuffer, outSize, 0) <> outSize then
+        goto error;
+{$ELSE}
       if send(outSocket, outSize, sizeof(outSize), 0) <> sizeof(outSize) then
         goto error;
       if send(outSocket, outBuffer, outSize, 0) <> outSize then
         goto error;
+{$ENDIF}
     end;
   until (zresult = Z_STREAM_END) and (zstream.avail_out > 0);
   outsize := 0;
+{$IFDEF FPC}
+  if fpsend(outSocket, @outSize, sizeof(outSize), 0) <> sizeof(outSize) then
+    goto error;
+{$ELSE}
   if send(outSocket, outSize, sizeof(outSize), 0) <> sizeof(outSize) then
     goto error;
+{$ENDIF}
   Result := deflateEnd(zstream) >= Z_OK;
   Exit;
   error:
@@ -662,15 +689,24 @@ begin
   Result := False;
   count := FSize;
   if writesize then
+{$IFDEF FPC}
+    if fpsend(socket, @count, sizeof(count), 0) <> sizeof(count) then
+      Exit;
+{$ELSE}
     if send(socket, count, sizeof(count), 0) <> sizeof(count) then
       Exit;
+{$ENDIF}
   i := 0;
   while count > 0 do
   begin
     if count >= FPageSize then
       s := FPageSize else
       s := count;
+{$IFDEF FPC}
+    if fpsend(socket, FList[i], s, 0) <> s then Exit;
+{$ELSE}
     if send(socket, FList[i]^, s, 0) <> s then Exit;
+{$ENDIF}
     dec(count, s);
     inc(i);
   end;

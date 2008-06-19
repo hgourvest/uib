@@ -219,6 +219,7 @@ end;
 
 function TPDGThread.Run: Cardinal;
 begin
+  Result := 0;
   raise Exception.Create('not implemented');
 end;
 
@@ -395,8 +396,11 @@ begin
 
   Result := 0;
   //SetThreadPriority(GetCurrentThread, THREAD_PRIORITY_ABOVE_NORMAL);
-
+{$IFDEF FPC}
+  FSocketHandle := fpsocket(AF_INET, SOCK_STREAM, 0);
+{$ELSE}
   FSocketHandle := socket(AF_INET, SOCK_STREAM, 0);
+{$ENDIF}
   FAddress.sin_addr.s_addr := INADDR_ANY;
   FAddress.sin_family := AF_INET;
   FAddress.sin_port := htons(FPort);
@@ -410,7 +414,7 @@ begin
 {$ENDIF}
 
 {$IFDEF FPC}
-  if not bind(FSocketHandle, FAddress, SizeOf(FAddress)) then
+  if fpbind(FSocketHandle, @FAddress, SizeOf(FAddress)) <> 0 then
 {$ELSE}
   if bind(FSocketHandle, FAddress, SizeOf(FAddress)) <> 0 then
 {$ENDIF}
@@ -419,7 +423,7 @@ begin
     raise Exception.Create('can''t bind.');
   end;
 {$IFDEF FPC}
-  if not listen(FSocketHandle, 15) then
+  if (fplisten(FSocketHandle, 15) <> 0) then
 {$ELSE}
   if (listen(FSocketHandle, 15) <> 0) then
 {$ENDIF}
@@ -432,7 +436,7 @@ begin
   while not Stopped do
   try
 {$IFDEF FPC}
-    InputSocket := accept(FSocketHandle, InputAddress, InputLen);
+    InputSocket := fpaccept(FSocketHandle, @InputAddress, @InputLen);
 {$ELSE}
     InputSocket := accept(FSocketHandle, @InputAddress, @InputLen);
 {$ENDIF}

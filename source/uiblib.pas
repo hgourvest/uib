@@ -807,7 +807,7 @@ const
   procedure EncodeTimeStamp(const Time: Cardinal; v: PISCTimeStamp); overload;
   function EncodeSQLDate(Year: Integer; Month, Day: Integer): Integer;
   function EncodeSQLTime(Hour, Minute, Second: Word;
-    out Fractions: LongWord): Cardinal;
+    var Fractions: LongWord): Cardinal;
 
 type
   TParamType = (
@@ -3093,9 +3093,9 @@ type
   end;
 
   function EncodeSQLTime(Hour, Minute, Second: Word;
-    out Fractions: LongWord): Cardinal;
+    var Fractions: LongWord): Cardinal;
   begin
-    Result := ((Hour * 60 + Minute) * 60 + Second) * ISC_TIME_SECONDS_PRECISION + Fractions;
+    Result := Cardinal((Hour * 60 + Minute) * 60 + Second) * ISC_TIME_SECONDS_PRECISION + Fractions;
   end;
 
  { TSQLDA }
@@ -4587,7 +4587,7 @@ end;
         case ASQLCode of
           SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := Value;
-          SQL_TIMESTAMP : EncodeTimeStamp(Value, PISCTimeStamp(sqldata));
+          SQL_TIMESTAMP : EncodeTimeStamp(Integer(Value), PISCTimeStamp(sqldata));
           SQL_TYPE_DATE : PInteger(sqldata)^ := Value + DateOffset;
           SQL_TYPE_TIME : PCardinal(sqldata)^ := 0;
           SQL_LONG      : PInteger(sqldata)^ := Value;
@@ -5364,7 +5364,7 @@ end;
   begin
     for I := 0 to Length(FBlobsIndex) - 1 do
     begin
-      BlobData := Pointer(PtrInt(Buffer) + (PtrInt(GetDataQuadOffset(FBlobsIndex[I])) - PtrInt(FDataBuffer)));
+      BlobData := PBlobData(PtrInt(Buffer) + (PtrInt(GetDataQuadOffset(FBlobsIndex[I])) - PtrInt(FDataBuffer)));
       if BlobData.Size > 0 then
         FreeMem(BlobData.Buffer);
     end;

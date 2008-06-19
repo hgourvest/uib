@@ -46,7 +46,7 @@ uses
 type
 
 {$ifndef FPC}
-  PtrInt = Longint;
+  PtrInt = type Longint;
 {$endif}
 
 {$IFNDEF COMPILER6_UP}

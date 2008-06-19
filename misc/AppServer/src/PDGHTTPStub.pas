@@ -627,12 +627,20 @@ end;
 procedure THTTPStub.WriteLine(str: string);
 begin
   str := str + CRLF;
+{$IFDEF FPC}
+  fpsend(SocketHandle, PChar(str), length(str), 0);
+{$ELSE}
   send(SocketHandle, PChar(str)^, length(str), 0);
+{$ENDIF}
 end;
 
 procedure THTTPStub.WriteString(const str: string);
 begin
+{$IFDEF FPC}
+  fpsend(SocketHandle, PChar(str), length(str), 0);
+{$ELSE}
   send(SocketHandle, PChar(str)^, length(str), 0);
+{$ENDIF}
 end;
 
 procedure THTTPStub.SendStream(Stream: TStream);
@@ -647,7 +655,11 @@ procedure THTTPStub.SendStream(Stream: TStream);
     size := s.Read(buffer, sizeof(buffer));
     while size > 0 do
     begin
+{$IFDEF FPC}
+      fpsend(SocketHandle, @buffer, size, 0);
+{$ELSE}
       send(SocketHandle, buffer, size, 0);
+{$ENDIF}
       size := s.Read(buffer, sizeof(buffer));
     end;
   end;
