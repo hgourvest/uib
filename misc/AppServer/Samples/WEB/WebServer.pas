@@ -122,8 +122,6 @@ begin
 end;
 
 procedure THTTPConnexion.doBeforeProcessRequest(ctx: ISuperObject);
-var
-  obj: ISuperObject;
   function interprete(v: PChar; name: string): boolean;
   var
     p: PChar;
@@ -143,12 +141,23 @@ var
     end else
       Result := false
   end;
+var
+  obj: ISuperObject;
+  i: integer;
 begin
   inherited;
   // default values
   ctx.B['session.authenticate'] := true;
   // decode session from cookie
-  ctx['session'].Merge(Base64ToStr(Request['cookies'].S[COOKIE_NAME]));
+  obj := Request['cookies.' + COOKIE_NAME];
+  if obj <> nil then
+  case obj.DataType of
+    stString: ctx['session'].Merge(Base64ToStr(obj.AsString));
+    stArray:
+      for i := 0 to obj.AsArray.Length - 1 do
+        ctx['session'].Merge(Base64ToStr(obj.AsArray.S[i]));
+  end;
+
   // get parametters
   ctx['params'] := TSuperObject.Create;
   ctx['params'].Merge(Request['params'], true);
@@ -171,11 +180,11 @@ begin
 
    obj := HTTPInterprete(PChar(Request.S['uri']), false, '/');
    begin
-     if interprete(PChar(obj.AsArray.S[1]), 'controler') then
-     if interprete(PChar(obj.AsArray.S[2]), 'action') then
-        interprete(PChar(obj.AsArray.S[3]), 'id');
+     if interprete(PChar(obj.AsArray.S[0]), 'controler') then
+     if interprete(PChar(obj.AsArray.S[1]), 'action') then
+        interprete(PChar(obj.AsArray.S[2]), 'id');
    end;
-
+   //writeln(ctx['params'].asjson);
   // default action is index
   if (ctx['params.controler'] <> nil) and (ctx['params.action'] = nil) then
     (ctx.S['params.action'] := 'index');
