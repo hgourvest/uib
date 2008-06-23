@@ -711,7 +711,7 @@ begin
                 if (sqlscale = -4) then
                   PInt64(Buffer)^ := PInt64(sqldata)^ else
                   if sqlscale > -4 then
-                    PInt64(Buffer)^ := FastInt64Mul(PInt64(sqldata), @CurrencyDivisor[sqlscale]) else
+                    PInt64(Buffer)^ := PInt64(sqldata) * @CurrencyDivisor[sqlscale] else
                     CurrToBcd(PInt64(sqldata)^/scaledivisor[sqlscale], TBCD(Buffer^));
                 {$ELSE}
                   {$IFDEF FPC}

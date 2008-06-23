@@ -12,6 +12,9 @@ uses
   madListProcesses,
   madListModules,
 {$ENDIF}
+{$IFDEF UNIX}
+  cthreads,
+{$ENDIF}
   PDGService in '..\..\src\PDGService.pas',
   PDGSocketStub in '..\..\src\PDGSocketStub.pas',
   WebServer in 'WebServer.pas',
