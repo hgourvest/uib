@@ -87,7 +87,7 @@ const
 (* default limit on number of request header fields *)
   DEFAULT_LIMIT_REQUEST_FIELDS = 100;
 
-function HTTPInterprete(src: PChar; named: boolean = false; sep: char = ';'): ISuperObject;
+function HTTPInterprete(src: PChar; named: boolean = false; sep: char = ';'; StrictSep: boolean = false): ISuperObject;
 function HTTPDecode(const AStr: String): String;
 function HttpResponseStrings(code: integer): string;
 
@@ -148,46 +148,116 @@ begin
 end;
 
 
-function HTTPInterprete(src: PChar; named: boolean; sep: char): ISuperObject;
-  function GetValueFromIndex(strings: TStrings; Index: Integer): string;
-  begin
-    with strings do
-      if Index >= 0 then
-        Result := Copy(strings[Index], Length(Names[Index]) + 2, MaxInt) else
-        Result := '';
-  end;
+function HTTPInterprete(src: PChar; named: boolean; sep: char; StrictSep: boolean): ISuperObject;
 var
-  strlist: TStringList;
-  j: integer;
-  str: string;
-  value: ISuperObject;
+  P1: PChar;
+  S: string;
+  i: integer;
+  obj, obj2, value: ISuperObject;
 begin
-  strlist := TStringList.Create;
-  try
-    strlist.Delimiter := sep;
-    strlist.DelimitedText := src;
     if named then
+      Result := TSuperObject.create(stObject) else
+      Result := TSuperObject.create(stArray);
+    if not StrictSep then
+      while src^ in [#1..' '] do
+        Inc(src);
+    while src^ <> #0 do
     begin
-      Result := TSuperObject.Create(stObject);
-        for j := 0 to strlist.Count - 1 do
+      if src^ = sep then
+        S := AnsiExtractQuotedStr(src, sep)
+      else
+      begin
+        P1 := src;
+        while ((not StrictSep and (src^ > ' ')) or
+              (StrictSep and (src^ <> #0))) and (src^ <> sep) do
+          Inc(src);
+        SetString(S, P1, src - P1);
+      end;
+      if named then
+      begin
+        S := HTTPDecode(S);
+        i := pos('=', S);
+        // named
+        if i > 1 then
         begin
-          str := trim(HTTPDecode(GetValueFromIndex(strlist, j)));
-          value := TSuperObject.Parse(PChar(str), false);
+          S[i] := #0;
+          obj := Result[PChar(S)];
+          value := TSuperObject.Parse(PChar(@S[i+1]), false);
           if value = nil then
-            Result.S[HTTPDecode(strlist.Names[j])] := str else
-            Result[HTTPDecode(strlist.Names[j])] := value;
+            value := TSuperObject.Create(PChar(@S[i+1]));
+          if obj = nil then
+            Result[PChar(S)] := value else
+            begin
+              if obj.IsType(stArray) then
+                obj.AsArray.Add(value) else
+                begin
+                  obj2 := TSuperObject.Create(stArray);
+                  Result[PChar(S)] := obj2;
+                  obj2.AsArray.Add(obj);
+                  obj2.AsArray.Add(value);
+                end;
+            end;
+        end else
+        begin
+          // unamed value ignored
         end;
-    end else
-    begin
-      Result := TSuperObject.Create(stArray);
-      with Result.AsArray do
-        for j := 0 to strlist.Count - 1 do
-          Add(TSuperObject.Create(trim(HTTPDecode(strlist.Strings[j]))));
+      end else
+        Result.AsArray.Add(TSuperObject.Create(HTTPDecode(S)));
+      if not StrictSep then
+        while src^ in [#1..' '] do
+          Inc(src);
+      if src^ = sep then
+      begin
+        P1 := src;
+        Inc(P1);
+        if (P1^ = #0) and not named then
+          Result.AsArray.Add(TSuperObject.Create(''));
+        repeat
+          Inc(src);
+        until not (not StrictSep and (src^ in [#1..' ']));
+      end;
     end;
-  finally
-    strlist.Free;
-  end;
 end;
+
+//  function GetValueFromIndex(strings: TStrings; Index: Integer): string;
+//  begin
+//    with strings do
+//      if Index >= 0 then
+//        Result := Copy(strings[Index], Length(Names[Index]) + 2, MaxInt) else
+//        Result := '';
+//  end;
+//var
+//  strlist: TStringList;
+//  j: integer;
+//  str: string;
+//  value: ISuperObject;
+//begin
+//  strlist := TStringList.Create;
+//  try
+//    strlist.Delimiter := sep;
+//    strlist.DelimitedText := src;
+//    if named then
+//    begin
+//      Result := TSuperObject.Create(stObject);
+//        for j := 0 to strlist.Count - 1 do
+//        begin
+//          str := trim(HTTPDecode(GetValueFromIndex(strlist, j)));
+//          value := TSuperObject.Parse(PChar(str), false);
+//          if value = nil then
+//            Result.S[HTTPDecode(strlist.Names[j])] := str else
+//            Result[HTTPDecode(strlist.Names[j])] := value;
+//        end;
+//    end else
+//    begin
+//      Result := TSuperObject.Create(stArray);
+//      with Result.AsArray do
+//        for j := 0 to strlist.Count - 1 do
+//          Add(TSuperObject.Create(trim(HTTPDecode(strlist.Strings[j]))));
+//    end;
+//  finally
+//    strlist.Free;
+//  end;
+//end;
 
 function HTTPDecode(const AStr: String): String;
 var
