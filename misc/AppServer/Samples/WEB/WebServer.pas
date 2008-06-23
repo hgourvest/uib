@@ -143,7 +143,6 @@ procedure THTTPConnexion.doBeforeProcessRequest(ctx: ISuperObject);
   end;
 var
   obj: ISuperObject;
-  i: integer;
 begin
   inherited;
   // default values
@@ -153,9 +152,7 @@ begin
   if obj <> nil then
   case obj.DataType of
     stString: ctx['session'].Merge(Base64ToStr(obj.AsString));
-    stArray:
-      for i := 0 to obj.AsArray.Length - 1 do
-        ctx['session'].Merge(Base64ToStr(obj.AsArray.S[i]));
+    stArray: ctx['session'].Merge(Base64ToStr(obj.AsArray.S[0]));
   end;
 
   // get parametters
@@ -180,11 +177,11 @@ begin
 
    obj := HTTPInterprete(PChar(Request.S['uri']), false, '/');
    begin
-     if interprete(PChar(obj.AsArray.S[0]), 'controler') then
-     if interprete(PChar(obj.AsArray.S[1]), 'action') then
-        interprete(PChar(obj.AsArray.S[2]), 'id');
+     if interprete(PChar(obj.AsArray.S[1]), 'controler') then
+     if interprete(PChar(obj.AsArray.S[2]), 'action') then
+        interprete(PChar(obj.AsArray.S[3]), 'id');
    end;
-   //writeln(ctx['params'].asjson);
+
   // default action is index
   if (ctx['params.controler'] <> nil) and (ctx['params.action'] = nil) then
     (ctx.S['params.action'] := 'index');

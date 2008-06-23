@@ -163,19 +163,14 @@ begin
         Inc(src);
     while src^ <> #0 do
     begin
-      if src^ = sep then
-        S := AnsiExtractQuotedStr(src, sep)
-      else
-      begin
-        P1 := src;
-        while ((not StrictSep and (src^ > ' ')) or
-              (StrictSep and (src^ <> #0))) and (src^ <> sep) do
-          Inc(src);
-        SetString(S, P1, src - P1);
-      end;
+      P1 := src;
+      while ((not StrictSep and (src^ > ' ')) or
+            (StrictSep and (src^ <> #0))) and (src^ <> sep) do
+        Inc(src);
+      SetString(S, P1, src - P1);
+      S := HTTPDecode(S);
       if named then
       begin
-        S := HTTPDecode(S);
         i := pos('=', S);
         // named
         if i > 1 then
@@ -202,7 +197,12 @@ begin
           // unamed value ignored
         end;
       end else
-        Result.AsArray.Add(TSuperObject.Create(HTTPDecode(S)));
+      begin
+        value := TSuperObject.Parse(PChar(S), false);
+        if value = nil then
+          value := TSuperObject.Create(s);
+        Result.AsArray.Add(value);
+      end;
       if not StrictSep then
         while src^ in [#1..' '] do
           Inc(src);
