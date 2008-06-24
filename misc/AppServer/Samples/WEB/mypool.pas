@@ -19,7 +19,11 @@ type
     constructor Create(MaxSize: Integer = 0); override;
   end;
 
-  function QueryToJson(qr: TUIBQuery): ISuperObject;
+type
+  TDataFormat = (dfArray, dfFirstOne, dfMeta);
+  TDataFormats = set of TDataFormat;
+
+  function QueryToJson(qr: TUIBQuery; df: TDataFormats): ISuperObject;
 
 var
   pool: TMyPool;
@@ -55,108 +59,132 @@ begin
   end;
 end;
 
-function QueryToJson(qr: TUIBQuery): ISuperObject;
+function QueryToJson(qr: TUIBQuery; df: TDataFormats): ISuperObject;
 var
-
-  meta, data, rec: ISuperObject;
-
-  i: integer;
-
+  meta, data: ISuperObject;
   str: string;
 
-begin
-
-  qr.Open;
-
-  Result := TSuperObject.Create(stObject);
-
-
-  meta := TSuperObject.Create(stArray);
-
-  Result.AsObject.Put('meta', meta);
-
-  for i := 0 to qr.Fields.FieldCount - 1 do
-
+  function getone: ISuperObject;
+  var
+    i: integer;
   begin
-
-    rec := TSuperObject.Create;
-
-    rec.S['name'] := qr.Fields.AliasName[i];
-
-    case qr.Fields.FieldType[i] of
-
-      uftChar, uftVarchar, uftCstring: rec.S['type'] := 'string';
-
-      uftSmallint, uftInteger, uftInt64: rec.S['type'] := 'int';
-
-      uftNumeric, uftFloat, uftDoublePrecision: rec.S['type'] := 'float';
-      uftBlob, uftBlobId:
-      begin
-        if qr.Fields.Data^.sqlvar[i].SqlSubType = 1 then
-          rec.S['type'] := 'string' else
-          rec.S['type'] := 'binary';
-      end;
-      uftTimestamp, uftDate, uftTime: rec.S['type'] := 'timestamp';
-      {$IFDEF IB7_UP}
-
-      uftBoolean: rec.S['type'] := 'bool';
-
-      {$ENDIF}
-
+    if (dfArray in df) then
+    begin
+      Result := TSuperObject.Create(stArray);
+      for i := 0 to qr.Fields.FieldCount - 1 do
+        if qr.Fields.IsNull[i] then
+          Result.AsArray.Add(nil) else
+        case qr.Fields.FieldType[i] of
+          uftChar, uftVarchar, uftCstring: Result.AsArray.Add(TSuperObject.Create(PChar(qr.Fields.AsString[i])));
+          uftSmallint, uftInteger, uftInt64: Result.AsArray.Add(TSuperObject.Create(qr.Fields.AsInteger[i]));
+          uftNumeric, uftFloat, uftDoublePrecision: Result.AsArray.Add(TSuperObject.Create(qr.Fields.AsDouble[i]));
+          uftBlob, uftBlobId:
+            begin
+              qr.ReadBlob(i, str);
+              if qr.Fields.Data^.sqlvar[i].SqlSubType = 1 then
+                Result.AsArray.Add(TSuperObject.Create(PChar(str))) else
+                Result.AsArray.Add(TSuperObject.Create(PChar(StrTobase64(str))));
+            end;
+          uftTimestamp, uftDate, uftTime: Result.AsArray.Add(TSuperObject.Create(PChar(qr.Fields.AsString[i])));
+          {$IFDEF IB7_UP}
+           uftBoolean: Result.AsArray.Add(ISuperObject.Create(PChar(qr.Fields.AsBoolean[i])));
+           {$ENDIF}
+         else
+           Result.AsArray.Add(nil);
+         end;
+    end else
+    begin
+      Result := TSuperObject.Create(stObject);
+      for i := 0 to qr.Fields.FieldCount - 1 do
+        if qr.Fields.IsNull[i] then
+          Result[qr.Fields.AliasName[i]] := nil else
+        case qr.Fields.FieldType[i] of
+          uftChar, uftVarchar, uftCstring: Result[qr.Fields.AliasName[i]] := TSuperObject.Create(PChar(qr.Fields.AsString[i]));
+          uftSmallint, uftInteger, uftInt64: Result[qr.Fields.AliasName[i]] := TSuperObject.Create(qr.Fields.AsInteger[i]);
+          uftNumeric, uftFloat, uftDoublePrecision: Result[qr.Fields.AliasName[i]] := TSuperObject.Create(qr.Fields.AsDouble[i]);
+          uftBlob, uftBlobId:
+            begin
+              qr.ReadBlob(i, str);
+              if qr.Fields.Data^.sqlvar[i].SqlSubType = 1 then
+                Result[qr.Fields.AliasName[i]] := TSuperObject.Create(PChar(str)) else
+                Result[qr.Fields.AliasName[i]] := TSuperObject.Create(PChar(StrTobase64(str)));
+            end;
+          uftTimestamp, uftDate, uftTime: Result[qr.Fields.AliasName[i]] := TSuperObject.Create(PChar(qr.Fields.AsString[i]));
+          {$IFDEF IB7_UP}
+           uftBoolean: Result[qr.Fields.AliasName[i]] := ISuperObject.Create(PChar(qr.Fields.AsBoolean[i]));
+           {$ENDIF}
+         else
+           Result[qr.Fields.AliasName[i]] := nil;
+         end;
     end;
-
-    meta.AsArray.add(rec);
-
   end;
 
-
-  data := TSuperObject.Create(stArray);
-
-  Result.AsObject.Put('data', data);
-
-  while not qr.Eof do
-
+var
+  i: Integer;
+  rec: ISuperObject;
+begin
+  qr.Open;
+  if (dfMeta in df) then
   begin
-
-    rec := TSuperObject.create(stArray);
-
-    data.AsArray.Add(rec);
-
-        for i := 0 to qr.Fields.FieldCount - 1 do
-
-      if qr.Fields.IsNull[i] then
-
-        rec.AsArray.Add(nil) else
-
+    Result := TSuperObject.Create(stObject);
+    if (dfArray in df) then
+      meta := TSuperObject.Create(stArray) else
+      meta := TSuperObject.Create(stObject);
+    Result.AsObject.Put('meta', meta);
+    for i := 0 to qr.Fields.FieldCount - 1 do
+    begin
+      rec := TSuperObject.Create(stObject);
+      if (dfArray in df) then
+      begin
+        rec.S['name'] := qr.Fields.AliasName[i];
+        meta.AsArray.add(rec);
+      end else
+        meta[qr.Fields.AliasName[i]] := rec;
       case qr.Fields.FieldType[i] of
-
-        uftChar, uftVarchar, uftCstring: rec.AsArray.Add(TSuperObject.Create(PChar(qr.Fields.AsString[i])));
-
-        uftSmallint, uftInteger, uftInt64: rec.AsArray.Add(TSuperObject.Create(qr.Fields.AsInteger[i]));
-
-        uftNumeric, uftFloat, uftDoublePrecision: rec.AsArray.Add(TSuperObject.Create(qr.Fields.AsDouble[i]));
+        uftChar, uftVarchar, uftCstring:
+        begin
+          rec.S['type'] := 'str';
+          rec.I['length'] := qr.Fields.SQLLen[i];
+        end;
+        uftSmallint, uftInteger, uftInt64: rec.S['type'] := 'int';
+        uftNumeric, uftFloat, uftDoublePrecision: rec.S['type'] := 'float';
         uftBlob, uftBlobId:
-          begin
-            qr.ReadBlob(i, str);
-            if qr.Fields.Data^.sqlvar[i].SqlSubType = 1 then
-              rec.AsArray.Add(TSuperObject.Create(PChar(str))) else
-              rec.AsArray.Add(TSuperObject.Create(PChar(StrTobase64(str))));
-          end;
-        uftTimestamp, uftDate, uftTime: rec.AsArray.Add(TSuperObject.Create(PChar(qr.Fields.AsString[i])));
+        begin
+          if qr.Fields.Data^.sqlvar[i].SqlSubType = 1 then
+            rec.S['type'] := 'str' else
+            rec.S['type'] := 'bin';
+        end;
+        uftTimestamp: rec.S['type'] := 'timestamp';
+        uftDate: rec.S['type'] := 'date';
+        uftTime: rec.S['type'] := 'time';
         {$IFDEF IB7_UP}
-
-        uftBoolean: rec.AsArray.Add(ISuperObject.Create(PChar(qr.Fields.AsBoolean[i])));
-
+        uftBoolean: rec.S['type'] := 'bool';
         {$ENDIF}
-
-      else
-
-        rec.AsArray.Add(nil);
-
       end;
+      if not qr.Fields.IsNullable[i] then
+        rec.B['notnull'] := true;
+    end;
+  end;
 
-    qr.next;
-
+  if not (dfFirstOne in df) then
+  begin
+    data := TSuperObject.Create(stArray);
+    if Result <> nil then
+      Result.AsObject.Put('data', data) else
+      Result := data;
+    while not qr.Eof do
+    begin
+      data.AsArray.Add(getone);
+      qr.next;
+    end;
+  end else
+  begin
+    if not qr.Eof then
+      data := getone else
+      data := nil;
+    if Result <> nil then
+      Result.AsObject.Put('data', data) else
+      Result := data;
   end;
 
 end;

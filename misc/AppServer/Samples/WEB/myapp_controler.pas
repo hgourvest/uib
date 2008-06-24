@@ -32,7 +32,7 @@ begin
     qr.Transaction := tr;
     qr.CachedFetch := false;
     qr.SQL.Text := 'select * from ' + Params.S['id'];
-    this['dataset'] := QueryToJson(qr);
+    this['dataset'] := QueryToJson(qr, [dfMeta, dfArray]);
   finally
     qr.Free;
     tr.Free;
@@ -58,7 +58,7 @@ begin
     qr.Transaction := tr;
     qr.CachedFetch := false;
     qr.SQL.Text := 'select country, currency from country order by 1';
-    this['dataset'] := QueryToJson(qr);
+    this['dataset'] := QueryToJson(qr, [dfArray, dfMeta]);
   finally
     qr.Free;
     tr.Free;
