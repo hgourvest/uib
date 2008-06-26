@@ -76,7 +76,7 @@ end;
 
 procedure HTTPRedirect(This: ISuperObject; const location: string);
 begin
-  This.I['response.response'] := 300;
+  This.I['response.response'] := 302;
   This.S['response.env.Location'] := PChar(Location);
 end;
 
@@ -240,7 +240,7 @@ begin
       end;
 
       // redirect ? ...
-      if Response.I['response'] = 300 then Exit;
+      if Response.I['response'] = 302 then Exit;
 
       // view
       proc := MVC.M[S['controler'] + '.' + S['action'] + '.' + S['format']];
