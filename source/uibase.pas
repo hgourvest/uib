@@ -2797,19 +2797,23 @@ const
 {$ENDIF MSWINDOWS}
 
 {$IFDEF UNIX}
-{$IFDEF FREEBSD}
-  GDS32DLL = 'libgds.so';
-{$ELSE}
-{$IFDEF FB15_UP}
-{$IFDEF FBEMBED}
-  GDS32DLL = 'libfbembed.so';
-{$ELSE}
-  GDS32DLL = 'libfbclient.so';
-{$ENDIF FBEMBED}
-{$ELSE}
-  GDS32DLL = 'libfbclient.so';
-{$ENDIF FB15_UP}
-{$ENDIF FREEBSD}
+  {$IFDEF FREEBSD}
+    GDS32DLL = 'libgds.so';
+  {$ELSE}
+    {$IFDEF Darwin}
+      GDS32DLL = 'libfbclient.dylib';
+    {$ELSE}
+      {$IFDEF FB15_UP}
+        {$IFDEF FBEMBED}
+          GDS32DLL = 'libfbembed.so';
+        {$ELSE}
+          GDS32DLL = 'libfbclient.so';
+        {$ENDIF FBEMBED}
+        {$ELSE}
+          GDS32DLL = 'libfbclient.so';
+      {$ENDIF FB15_UP}
+    {$ENDIF}
+  {$ENDIF FREEBSD}
 {$ENDIF UNIX}
 
 type
