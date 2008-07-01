@@ -47,10 +47,6 @@ type
   PThreadList = ^TThreadList;
   TThreadList = array[0..(Maxint div 16) - 1] of TPDGThread;
 
-{$IFNDEF FPC}
-  TThreadID = longword;
-{$ENDIF}
-
   TPDGThread = class(TInterfacedObject)
   private
     FThreadId: TThreadID;
@@ -160,7 +156,7 @@ begin
   InterlockedExchange(FStopped, 0);
   FOwner := AOwner;
   FThreadHandle := INVALID_HANDLE_VALUE;
-  FThreadId := 1;
+  FThreadId := ThreadIdNull;
   if (FOwner <> nil) then
     FOwner.ChildAdd(Self);
 end;

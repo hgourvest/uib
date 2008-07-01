@@ -34,8 +34,15 @@ uses Classes, SysUtils, uib
 , syncobjs
 ;
 
-type
+{$IFDEF Darwin}
+const
+  ThreadIdNull = nil;
+{$ELSE}
+const
+  ThreadIdNull = 1;
+{$ENDIF}
 
+type
 {$IFNDEF FPC}
   PtrInt = Longint;
   TThreadID = LongWord;
@@ -854,7 +861,7 @@ begin
     begin
       for i := 0 to FList.Count - 1 do
       begin
-        Assert(PConnexion(FList[i])^.ThreadId = 0);
+        Assert(PConnexion(FList[i])^.ThreadId = ThreadIdNull);
         PConnexion(FList[i])^.Database.Connected := False;
       end;
       Result := True;
@@ -875,7 +882,7 @@ begin
     for i := 0 to FList.Count - 1 do
       if PConnexion(FList[i])^.ThreadId = tid then
       begin
-        PConnexion(FList[i])^.ThreadId := 0;
+        PConnexion(FList[i])^.ThreadId := ThreadIdNull;
         if (FMaxSize > 0) and (FActiveCount > FMaxSize) then
         begin
           PConnexion(FList[i])^.Database.Free;
@@ -909,7 +916,7 @@ begin
 
     // get free slot
     for i := 0 to FList.Count - 1 do
-      if PConnexion(FList[i])^.ThreadId = 0 then
+      if PConnexion(FList[i])^.ThreadId = ThreadIdNull then
       begin
         PConnexion(FList[i])^.ThreadId := tid;
         Result := PConnexion(FList[i])^.Database;
@@ -962,7 +969,7 @@ begin
     for i := 0 to FList.Count - 1 do
       if count > 0 then
       begin
-        if PConnexion(FList[i])^.ThreadId = 0 then
+        if PConnexion(FList[i])^.ThreadId = ThreadIdNull then
         begin
           dec(count);
           if PConnexion(FList[i])^.Database.Connected then
