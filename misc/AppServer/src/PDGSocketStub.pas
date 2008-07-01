@@ -50,7 +50,7 @@ type
   TPDGThread = class(TInterfacedObject)
   private
     FThreadId: TThreadID;
-    FThreadHandle: THandle;
+    FThreadHandle: TThreadId;
     FPaused: boolean;
     FCriticalSection: TRtlCriticalSection;
     FOwner: TPDGThread;
@@ -121,7 +121,7 @@ var
 
 {$IFDEF FPC}
 const
-  INVALID_HANDLE_VALUE = THandle(-1);
+  INVALID_HANDLE_VALUE = TThreadId(-1);
   INVALID_SOCKET = longint(-1);
 {$ENDIF}
 
@@ -156,7 +156,7 @@ begin
   InterlockedExchange(FStopped, 0);
   FOwner := AOwner;
   FThreadHandle := INVALID_HANDLE_VALUE;
-  FThreadId := ThreadIdNull;
+  FThreadId := INVALID_HANDLE_VALUE;
   if (FOwner <> nil) then
     FOwner.ChildAdd(Self);
 end;
