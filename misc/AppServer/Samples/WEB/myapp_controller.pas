@@ -1,4 +1,4 @@
-unit myapp_controler;
+unit myapp_controller;
 {$IFDEF FPC}
   {$mode objfpc}{$H+}
 {$ENDIF}
@@ -6,7 +6,7 @@ unit myapp_controler;
 interface
 uses superobject;
 
-procedure app_controler_initialize(mvc: ISuperObject);
+procedure app_controller_initialize(mvc: ISuperObject);
 
 implementation
 uses SysUtils, webserver, mypool, uib;
@@ -17,7 +17,7 @@ uses SysUtils, webserver, mypool, uib;
 // getdata
 //**************************************************************
 
-procedure application_getdata_controler(This, Params: ISuperObject;
+procedure application_getdata_controller(This, Params: ISuperObject;
   var Result: ISuperObject);
 var
   db: TUIBDataBase;
@@ -183,21 +183,21 @@ end;
 // initialization
 //**************************************************************
 
-procedure app_controler_initialize(mvc: ISuperObject);
+procedure app_controller_initialize(mvc: ISuperObject);
 begin
 
 
   mvc.O['application.getdata.validate'] :=
     SO('{type: map, inherit: mvc, mapping: {id: {type: text}}}');
 
-  mvc.M['application.getdata.controler'] := @application_getdata_controler;
+  mvc.M['application.getdata.controller'] := @application_getdata_controller;
 
-  mvc.M['country.index.controler'] := @country_index;
+  mvc.M['country.index.controller'] := @country_index;
   mvc.O['country.add.validate'] :=
     SO('{type: map, inherit: mvc, mapping: {country: {type: text},currency: {type: text}}}');
-  mvc.M['country.add.controler'] := @country_add;
-  mvc.M['country.del.controler'] := @country_del;
-  mvc.M['country.edit.controler'] := @country_edit;
+  mvc.M['country.add.controller'] := @country_add;
+  mvc.M['country.del.controller'] := @country_del;
+  mvc.M['country.edit.controller'] := @country_edit;
 
 end;
 

@@ -7,7 +7,7 @@ uses
   PDGHTTPStub, PDGSocketStub, PDGUtils, 
 {$IFDEF FPC}sockets,{$ELSE}Winsock, {$ENDIF}
 {$IFDEF MSWINDOWS}Windows,{$ENDIF}
-  superobject, SyncObjs, classes, mypool, myapp_controler, myapp_view;
+  superobject, SyncObjs, classes, mypool, myapp_controller, myapp_view;
 
 type
   THTTPServer = class(TSocketServer)
@@ -177,13 +177,13 @@ begin
 
    obj := HTTPInterprete(PChar(Request.S['uri']), false, '/');
    begin
-     if interprete(PChar(obj.AsArray.S[1]), 'controler') then
+     if interprete(PChar(obj.AsArray.S[1]), 'controller') then
      if interprete(PChar(obj.AsArray.S[2]), 'action') then
         interprete(PChar(obj.AsArray.S[3]), 'id');
    end;
 
   // default action is index
-  if (ctx['params.controler'] <> nil) and (ctx['params.action'] = nil) then
+  if (ctx['params.controller'] <> nil) and (ctx['params.action'] = nil) then
     (ctx.S['params.action'] := 'index');
 
   // detect format
@@ -216,12 +216,12 @@ begin
       ctx.B['session.authenticate'] := false;
   end;
 
-  if ctx['params.controler'] <> nil then
+  if ctx['params.controller'] <> nil then
     with ctx['params'] do
     begin
-      // controler
+      // controller
 
-      valide := MVC[S['controler'] + '.' + S['action'] + '.validate'];
+      valide := MVC[S['controller'] + '.' + S['action'] + '.validate'];
       if (valide <> nil) and (ctx['params'] <> nil) then
       begin
          //writeln(ctx['params'].asjson);
@@ -232,7 +232,7 @@ begin
       end;
 
       //writeln(ctx.S['params']);
-      proc := MVC.M[S['controler'] + '.' + S['action'] + '.controler'];
+      proc := MVC.M[S['controller'] + '.' + S['action'] + '.controller'];
       if assigned(proc) then
       begin
         obj := nil;
@@ -243,7 +243,7 @@ begin
       if Response.I['response'] = 302 then Exit;
 
       // view
-      proc := MVC.M[S['controler'] + '.' + S['action'] + '.' + S['format']];
+      proc := MVC.M[S['controller'] + '.' + S['action'] + '.' + S['format']];
       if assigned(proc) then
       begin
         obj := nil;
@@ -287,9 +287,9 @@ begin
   Result := TSuperObject.Create;
 
   Result.O['schema'] :=
-    so('[{type: map, name: mvc, mapping: {controler: {type: str}, action: {type: str}, format: {type: str}}}]');
+    so('[{type: map, name: mvc, mapping: {controller: {type: str}, action: {type: str}, format: {type: str}}}]');
 
-  app_controler_initialize(Result);
+  app_controller_initialize(Result);
   app_view_initialize(Result);
 
 end;

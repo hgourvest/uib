@@ -74,7 +74,7 @@ function JsonRpc(url, params, doSuccess){
 
 function getdata(div, t){
 	
-	JsonRpc("/",{'controler':'application','action':'getdata', 'id': t}, function(r){
+	JsonRpc("/",{'controller':'application','action':'getdata', 'id': t}, function(r){
 	    
 		div.innerHTML = jsonT(r, 
 		    { "self": "<table><tbody>{$}</tbody></table>",

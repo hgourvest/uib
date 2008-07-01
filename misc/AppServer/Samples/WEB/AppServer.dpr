@@ -19,7 +19,7 @@ uses
   PDGSocketStub in '..\..\src\PDGSocketStub.pas',
   WebServer in 'WebServer.pas',
   PDGHTTPStub in '..\..\src\PDGHTTPStub.pas',
-  myapp_controler in 'myapp_controler.pas',
+  myapp_controller in 'myapp_controller.pas',
   mypool in 'mypool.pas',
   myapp_view in 'myapp_view.pas';
 

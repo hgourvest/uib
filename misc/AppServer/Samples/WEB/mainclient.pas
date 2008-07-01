@@ -39,7 +39,7 @@ begin
   cnx.setRequestHeader('Accept', 'application/json');
 
   params := SO;
-  params.S['controler'] := 'application';
+  params.S['controller'] := 'application';
   params.S['action'] := 'getdata';
   params.S['id'] := table.Text;
 
