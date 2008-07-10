@@ -9,7 +9,7 @@ uses superobject;
 procedure app_controller_initialize(mvc: ISuperObject);
 
 implementation
-uses SysUtils, webserver, mypool, uib;
+uses SysUtils, webserver, mypool, PDGDB;
 
 { HTTP Methods }
 
@@ -19,25 +19,9 @@ uses SysUtils, webserver, mypool, uib;
 
 procedure application_getdata_controller(This, Params: ISuperObject;
   var Result: ISuperObject);
-var
-  db: TUIBDataBase;
-  tr: TUIBTransaction;
-  qr: TUIBQuery;
 begin
-  db := pool.GetConnexion;
-  tr := TUIBTransaction.Create(nil);
-  qr := TUIBQuery.Create(nil);
-  try
-    tr.DataBase := db;
-    qr.Transaction := tr;
-    qr.CachedFetch := false;
-    qr.SQL.Text := 'select * from ' + Params.S['id'];
-    this['dataset'] := QueryToJson(qr, [dfMeta, dfArray]);
-  finally
-    qr.Free;
-    tr.Free;
-    pool.FreeConnexion;
-  end;
+  with pool.GetConnection.newContext do
+    this['dataset'] := Execute(newCommand('"select * from ' + Params.S['id'] + '"'));
   HTTPCompress(this);
 end;
 
@@ -45,80 +29,29 @@ end;
 // Country
 //**************************************************************
 procedure country_index(This, Params: ISuperObject; var Result: ISuperObject);
-var
-  db: TUIBDataBase;
-  tr: TUIBTransaction;
-  qr: TUIBQuery;
 begin
-  db := pool.GetConnexion;
-  tr := TUIBTransaction.Create(nil);
-  qr := TUIBQuery.Create(nil);
-  try
-    tr.DataBase := db;
-    qr.Transaction := tr;
-    qr.CachedFetch := false;
-    qr.SQL.Text := 'select country, currency from country order by 1';
-    this['dataset'] := QueryToJson(qr, [dfArray, dfMeta]);
-  finally
-    qr.Free;
-    tr.Free;
-    pool.FreeConnexion;
-  end;
+  with pool.GetConnection.newContext do
+    this['dataset'] := Execute(newCommand('"select country, currency from country order by 1"'));
   HTTPCompress(this);
 end;
 
 procedure country_add(This, Params: ISuperObject; var Result: ISuperObject);
-var
-  db: TUIBDataBase;
-  tr: TUIBTransaction;
-  qr: TUIBQuery;
 begin
   if HTTPIsPost(this) then
+  with pool.GetConnection.newContext do
   begin
-    db := pool.GetConnexion;
-    tr := TUIBTransaction.Create(nil);
-    qr := TUIBQuery.Create(nil);
-    try
-      tr.DataBase := db;
-      qr.Transaction := tr;
-      qr.CachedFetch := false;
-      qr.SQL.Text := 'INSERT INTO COUNTRY (country, currency) VALUES (?,?)';
-      qr.Params.AsString[0] := Params.S['country'];
-      qr.Params.AsString[1] := Params.S['currency'];
-      qr.Execute;
-      HTTPredirect(this,'/country/index');
-    finally
-      qr.Free;;
-      tr.Free;
-      pool.FreeConnexion;
-    end;
+    Execute(newCommand('"INSERT INTO COUNTRY (country, currency) VALUES (?,?)"'), Params['[country, currency]']);
+    HTTPredirect(this,'/country/index');
   end;
   HTTPCompress(this);
 end;
 
 procedure country_del(This, Params: ISuperObject; var Result: ISuperObject);
-var
-  db: TUIBDataBase;
-  tr: TUIBTransaction;
-  qr: TUIBQuery;
 begin
+  with pool.GetConnection.newContext do
   try
-    db := pool.GetConnexion;
-    tr := TUIBTransaction.Create(nil);
-    qr := TUIBQuery.Create(nil);
-    try
-      tr.DataBase := db;
-      qr.Transaction := tr;
-      qr.CachedFetch := false;
-      qr.SQL.Text := 'DELETE FROM COUNTRY WHERE COUNTRY = ?';
-      qr.Params.AsString[0] := Params.S['id'];
-      qr.Execute;
-      HTTPredirect(this,'/country/index');
-    finally
-      qr.Free;;
-      tr.Free;
-      pool.FreeConnexion;
-    end;
+    Execute(newCommand('"DELETE FROM COUNTRY WHERE COUNTRY = ?"'), Params['id']);
+    HTTPredirect(this,'/country/index');
   except
     on E: Exception do
     begin
@@ -132,41 +65,23 @@ end;
 
 procedure country_edit(This, Params: ISuperObject; var Result: ISuperObject);
 var
-  db: TUIBDataBase;
-  tr: TUIBTransaction;
-  qr: TUIBQuery;
+  obj: ISuperObject;
 begin
   try
-    db := pool.GetConnexion;
-    tr := TUIBTransaction.Create(nil);
-    qr := TUIBQuery.Create(nil);
-    try
-      tr.DataBase := db;
-      qr.Transaction := tr;
-      qr.CachedFetch := false;
-      if HTTPIsPost(this) then
+    with pool.GetConnection.newContext do
+    if HTTPIsPost(this) then
+    begin
+      Execute(newCommand('"UPDATE COUNTRY SET CURRENCY = :currency WHERE COUNTRY = :country"'), Params['formulaire']);
+      HTTPredirect(this,'/country/index');
+    end else
+    begin
+      obj := Execute(newCommand('{sql: "SELECT COUNTRY, CURRENCY FROM COUNTRY WHERE COUNTRY = ?", firstone: true}'), Params['id']);
+      if obj <> nil then
       begin
-        qr.SQL.Text := 'UPDATE COUNTRY SET CURRENCY = ? WHERE COUNTRY = ?';
-        qr.Params.AsString[0] := Params.S['formulaire.currency'];
-        qr.Params.AsString[1] := Params.S['formulaire.country'];
-        qr.Execute;
-        HTTPredirect(this,'/country/index');
+        This['country'] := obj['COUNTRY'];
+        This['currency'] := obj['CURRENCY'];
       end else
-      begin
-        qr.SQL.Text := 'SELECT COUNTRY, CURRENCY FROM COUNTRY WHERE COUNTRY = ?';
-        qr.Params.AsString[0] := Params.S['id'];
-        qr.Open;
-        if not qr.Eof then
-        begin
-          This.S['country'] := qr.Fields.AsString[0];
-          This.S['currency'] := qr.Fields.AsString[1];
-        end else
-          raise Exception.Create('country not found');
-      end;
-    finally
-      qr.Free;
-      tr.Free;
-      pool.FreeConnexion;
+        raise Exception.Create('country not found');
     end;
   except
     on E: Exception do

@@ -1,5 +1,5 @@
 {"database":
-	{"databasename":"/home/henri/employee.fdb",
+	{"databasename":"employee",
 	 "username":"SYSDBA",
 	 "password":"masterkey",
      "sqldialect":3}

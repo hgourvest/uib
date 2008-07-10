@@ -20,7 +20,7 @@ unit PDGUtils;
 {$I PDGAppServer.inc}
 
 interface
-uses Classes, SysUtils, uib
+uses Classes, SysUtils
 {$IFDEF MSWINDOWS}
 , windows
 {$ENDIF}
@@ -31,7 +31,6 @@ uses Classes, SysUtils, uib
 , WinSock
 , PDGZLib
 {$ENDIF}
-, syncobjs
 ;
 
 {$IFDEF Darwin}
@@ -77,27 +76,6 @@ type
     destructor Destroy; override;
   end;
 
-  TConnexionPool = class
-  private
-    FActiveCount: integer;
-    FCriticalSection: TCriticalSection;
-    FList: TList;
-    FMaxSize: integer;
-    function GetActiveCount: integer;
-    function GetCount: integer;
-  protected
-    procedure ConfigureConnexion(Database: TUIBDataBase); virtual; abstract;
-  public
-    constructor Create(MaxSize: Integer = 0); virtual;
-    destructor Destroy; override;
-    function GetConnexion: TUIBDatabase;
-    procedure FreeConnexion;
-    function TryDisconnect: boolean;
-    function AdjustSize(count: integer): Integer;
-    property ActiveCount: integer read GetActiveCount;
-    property Count: integer read GetCount;
-  end;
-
 function InterLockedRead(var Value: Integer): Integer;
 
 function CompressStream(inStream, outStream: TStream; level: Integer = Z_DEFAULT_COMPRESSION): boolean; overload;
@@ -119,7 +97,7 @@ implementation
 
 
 const
-  Base64Code    = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  Base64Code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 function StrTobase64(Buf: string): string;
 var
@@ -263,13 +241,6 @@ begin
 {$ENDIF}
 {$IFEND}
 end;
-
-type
-  PConnexion = ^TConnexion;
-  TConnexion = record
-    Database: TUIBDataBase;
-    ThreadId: TThreadID;
-  end;
 
 const
   bufferSize = 32768;
@@ -824,165 +795,4 @@ begin
     Write(str[1], s)
 end;
 
-{ TConnexionPool }
-
-constructor TConnexionPool.Create(MaxSize: Integer = 0);
-begin
-  FMaxSize := MaxSize;
-  FCriticalSection := TCriticalSection.Create;
-  FList := TList.Create;              
-  FActiveCount := 0;
-end;
-
-destructor TConnexionPool.Destroy;
-var i: integer;
-begin
-  // Wait for theads leaving
-  FCriticalSection.Free;
-  for i := 0 to FList.Count - 1 do
-  begin
-    PConnexion(FList[i])^.Database.Free;
-    FreeMem(FList[i]);
-  end;
-  FList.Free;
-  inherited;
-end;
-
-function TConnexionPool.TryDisconnect: boolean;
-var i: integer;
-begin
-  FCriticalSection.Enter;
-  try
-    if FActiveCount > 0 then
-    begin
-      Result := False;
-      Exit;
-    end else
-    begin
-      for i := 0 to FList.Count - 1 do
-      begin
-        Assert(PConnexion(FList[i])^.ThreadId = ThreadIdNull);
-        PConnexion(FList[i])^.Database.Connected := False;
-      end;
-      Result := True;
-    end;
-  finally
-    FCriticalSection.Leave;
-  end;
-end;
-
-procedure TConnexionPool.FreeConnexion;
-var
-  i: integer;
-  tid: TThreadID;
-begin
-  FCriticalSection.Enter;
-  try
-    tid := GetCurrentThreadId;
-    for i := 0 to FList.Count - 1 do
-      if PConnexion(FList[i])^.ThreadId = tid then
-      begin
-        PConnexion(FList[i])^.ThreadId := ThreadIdNull;
-        if (FMaxSize > 0) and (FActiveCount > FMaxSize) then
-        begin
-          PConnexion(FList[i])^.Database.Free;
-          FreeMem(FList[i]);
-          FList.Delete(i);
-        end;
-        dec(FActiveCount);
-        Break;
-      end;
-  finally
-    FCriticalSection.Leave;
-  end;
-end;
-
-function TConnexionPool.GetConnexion: TUIBDatabase;
-var
-  i: integer;
-  tid: TThreadID;
-  p: PConnexion;
-begin
-  FCriticalSection.Enter;
-  try
-    // one connexion per thread
-    tid := GetCurrentThreadId;
-    for i := 0 to FList.Count - 1 do
-      if PConnexion(FList[i])^.ThreadId = tid then
-      begin
-        Result := PConnexion(FList[i])^.Database;
-        Exit;
-      end;
-
-    // get free slot
-    for i := 0 to FList.Count - 1 do
-      if PConnexion(FList[i])^.ThreadId = ThreadIdNull then
-      begin
-        PConnexion(FList[i])^.ThreadId := tid;
-        Result := PConnexion(FList[i])^.Database;
-        inc(FActiveCount);
-        Exit;
-      end;
-
-    // Create new slot
-    GetMem(p, SizeOf(TConnexion));
-    p^.ThreadId := tid;
-    inc(FActiveCount);
-    p^.Database := TUIBDataBase.Create(nil);
-    ConfigureConnexion(p^.Database);
-    FList.Add(p);
-    Result := p^.Database;
-  finally
-    FCriticalSection.Leave;
-  end;
-end;
-
-function TConnexionPool.GetActiveCount: integer;
-begin
-  FCriticalSection.Enter;
-  try
-    result := FActiveCount;
-  finally
-    FCriticalSection.Leave;
-  end;
-end;
-
-function TConnexionPool.GetCount: integer;
-begin
-  FCriticalSection.Enter;
-  try
-    result := FList.Count;
-  finally
-    FCriticalSection.Leave;
-  end;
-end;
-
-function TConnexionPool.AdjustSize(count: integer): Integer;
-var i: integer;
-begin
-  Result := 0;
-  FCriticalSection.Enter;
-  try
-    if FActiveCount > count then
-      count := FList.Count - FActiveCount else
-      count := FList.Count - count;
-    for i := 0 to FList.Count - 1 do
-      if count > 0 then
-      begin
-        if PConnexion(FList[i])^.ThreadId = ThreadIdNull then
-        begin
-          dec(count);
-          if PConnexion(FList[i])^.Database.Connected then
-          begin
-            inc(Result);
-            PConnexion(FList[i])^.Database.Connected := False;
-          end;
-        end;
-      end else
-        Break;
-  finally
-    FCriticalSection.Leave;
-  end;
-end;
-      
 end.

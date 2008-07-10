@@ -39,7 +39,8 @@ end;
 
 procedure country_index_html(This, Params: ISuperObject; var Result: ISuperObject);
 var
-  data, line: TSuperArray;
+  data: TSuperArray;
+  line: ISuperObject;
 
   i: integer;
 begin
@@ -49,13 +50,13 @@ begin
     HTTPOutput(This, format('<b>%s</b><br/>', [This.S['error']]));
   end;
 
-  data := this['dataset.data'].AsArray;
+  data := this['dataset'].AsArray;
   HTTPOutput(this, '<table><th><tr><td>Country</td><td>Currency</td><td>Suppr</td><td>Edit</td></tr></th>');
   for i :=  0 to data.Length - 1 do
   begin
-    line := data.O[i].asArray;
+    line := data.O[i];
     HTTPOutput(this, Format('<tr><td>%s</td><td>%s</td><td><a href="/country/del/%0:s">suppr</a></td><td><a href="/country/edit/%0:s">edit</a></td></tr>',
-      [line.S[0] , line.S[1]]));
+      [line.S['COUNTRY'] , line.S['CURRENCY']]));
   end;
   HTTPOutput(this, '</table>');
   HTTPOutput(this, '<form action="/country/add" method="POST"><input type="text" name="country"/><input type="text" name="currency"/><input type="submit"/></form>');
