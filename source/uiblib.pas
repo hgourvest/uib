@@ -590,7 +590,7 @@ type
     FParamCount: Word;
     function FindParam(const name: string; out Index: Word): boolean;
     function GetFieldName(const Index: Word): string;
-    procedure AllocateDataBuffer;
+    procedure AllocateDataBuffer(AInit: boolean = true);
   protected
     function AddField(const name: string): Word;
     procedure SetFieldType(const Index: Word; Size: Integer; Code: SmallInt;
@@ -1884,6 +1884,8 @@ const
   end;
 
   procedure TUIBLibrary.DSQLDescribeBind(var StmtHandle: IscStmtHandle; Dialect: Word; Sqlda: TSQLParams);
+  var
+    i: Integer;
   begin
   {$IFDEF UIBTHREADSAFE}
     FLIBCritSec.Enter;
@@ -1891,12 +1893,12 @@ const
   {$ENDIF}
       CheckUIBApiCall(isc_dsql_describe_bind(@FStatusVector, @StmtHandle, Dialect,
         GetSQLDAData(Sqlda)));
-      Sqlda.AllocateDataBuffer;
   {$IFDEF UIBTHREADSAFE}
     finally
       FLIBCritSec.Leave;
     end;
   {$ENDIF}
+    Sqlda.AllocateDataBuffer(false);
   end;
 
   procedure  TUIBLibrary.DSQLSetCursorName(var StmtHandle: IscStmtHandle; const cursor: string);
@@ -5980,14 +5982,14 @@ end;
     end;
   end;
 
-  procedure TSQLParams.AllocateDataBuffer;
+  procedure TSQLParams.AllocateDataBuffer(AInit: boolean);
   var
     i, j: integer;
   begin
     for i := 0 to FXSQLDA.sqln - 1 do
       with FXSQLDA.sqlvar[i] do
       begin
-        Init := true;
+        Init := AInit;
         if SqlLen > 0 then
           GetMem(sqldata, SqlLen) else
           sqldata := nil;
