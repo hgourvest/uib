@@ -375,7 +375,8 @@ begin
       begin
         with params.AsArray do
         begin
-          if Length = FSQLParams.FieldCount then
+
+          if (Length = FSQLParams.FieldCount) and not(ObjectGetType(O[0]) in [stObject, stArray]) then
           begin
             for j := 0 to Length - 1 do
               SetParam(j, O[j]);
