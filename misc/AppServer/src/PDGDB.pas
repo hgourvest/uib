@@ -9,12 +9,12 @@ type
   IPDGContext = interface;
   IPDGCommand = interface;
 
-  IPDGConnectionPool = interface(ISuperObject)
+  IPDGConnectionPool = interface
     ['{27621D9A-AAE9-4E24-82F5-A18D84E415F3}']
     function GetConnection: IPDGConnection;
   end;
 
-  IPDGConnection = interface(ISuperObject)
+  IPDGConnection = interface
   ['{843E105A-B8E0-42A9-AFA0-CF5AA843DB8B}']
     function newContext(Options: ISuperObject = nil): IPDGContext; overload;
     function newCommand(Options: ISuperObject = nil): IPDGCommand; overload;
@@ -22,7 +22,7 @@ type
     function newCommand(const Options: string): IPDGCommand; overload;
   end;
 
-  IPDGContext = interface(ISuperObject)
+  IPDGContext = interface
   ['{51992399-2D1A-47EF-9DB1-C5654325F41B}']
     function newCommand(Options: ISuperObject = nil): IPDGCommand; overload;
     function newCommand(const Options: string): IPDGCommand; overload;
@@ -32,7 +32,7 @@ type
     function Execute(Command: IPDGCommand; const params: Variant): ISuperObject; overload;
   end;
 
-  IPDGCommand = interface(ISuperObject)
+  IPDGCommand = interface
   ['{A39B974A-96EA-4047-A57B-A2B3EBE7BABD}']
     function Execute(params: ISuperObject = nil; context: IPDGContext = nil): ISuperObject; overload;
     function Execute(params: array of const; context: IPDGContext = nil): ISuperObject; overload;

@@ -325,7 +325,7 @@ var
 
   procedure Process;
   begin
-    with FConnection, FLibrary, TPDGUIBContext(context.DataPtr) do
+    with FConnection, FLibrary, TPDGUIBContext((context as ISuperObject).DataPtr) do
       if FSQLResult.FieldCount > 0 then
       begin
         DSQLSetCursorName(FStHandle, 'C' + inttostr(PtrInt(FStHandle)));
@@ -409,7 +409,7 @@ begin
     end else
       Process;
   except
-    context.B['rollback'] := true;
+    (context as ISuperObject).B['rollback'] := true;
     raise;
   end;
 end;
@@ -460,7 +460,7 @@ begin
     end;
     if Result = nil then
       Result := TPDGUIBConnexion.Create(O['options']);
-    a.Add(Result);
+    a.Add(Result as ISuperObject);
   finally
     FCriticalSection.Leave;
   end;

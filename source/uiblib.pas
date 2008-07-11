@@ -1885,20 +1885,41 @@ const
 
   procedure TUIBLibrary.DSQLDescribeBind(var StmtHandle: IscStmtHandle; Dialect: Word; Sqlda: TSQLParams);
   var
-    i: Integer;
+    i, len: Integer;
+    da: PUIBSQLDa;
+    src, dst: PUIBSQLVar;
   begin
+    if Sqlda = nil then Exit;
   {$IFDEF UIBTHREADSAFE}
     FLIBCritSec.Enter;
     try
   {$ENDIF}
-      CheckUIBApiCall(isc_dsql_describe_bind(@FStatusVector, @StmtHandle, Dialect,
-        GetSQLDAData(Sqlda)));
+      len := XSQLDA_LENGTH(sqlda.Data.sqln);
+      GetMem(da, len);
+      try
+        FillChar(da^, len, 0);
+        da.version := Sqlda.Data.version;
+        da.sqln := sqlda.Data.sqln;
+        da.sqld := sqlda.Data.sqld;
+        CheckUIBApiCall(isc_dsql_describe_bind(@FStatusVector, @StmtHandle, Dialect, PXSQLDA(da)));
+        for i := 0 to Sqlda.FieldCount - 1 do
+          with Sqlda.Data^.sqlvar[i] do
+          begin
+            src := @Sqlda.Data^.sqlvar[i];
+            dst := @da^.sqlvar[i];
+            src^.SqlType := dst.sqltype;
+            src^.SqlLen  := dst.sqllen;
+            src^.SqlSubType := dst.sqlsubtype;
+          end;
+         Sqlda.AllocateDataBuffer(false); 
+      finally
+        FreeMem(da);
+      end;
   {$IFDEF UIBTHREADSAFE}
     finally
       FLIBCritSec.Leave;
     end;
   {$ENDIF}
-    Sqlda.AllocateDataBuffer(false);
   end;
 
   procedure  TUIBLibrary.DSQLSetCursorName(var StmtHandle: IscStmtHandle; const cursor: string);
