@@ -20,7 +20,7 @@ type
     destructor Destroy; override;
   end;
 
-  TPDGUIBConnexion = class(TSuperObject, IPDGConnection)
+  TPDGUIBConnection = class(TSuperObject, IPDGConnection)
   private
     FLibrary: TUIBLibrary;
     FDbHandle: IscDbHandle;
@@ -38,7 +38,7 @@ type
   TPDGUIBContext = class(TSuperObject, IPDGContext)
   private
     FTrHandle: IscTrHandle;
-    FConnection: TPDGUIBConnexion;
+    FConnection: TPDGUIBConnection;
   protected
     function newCommand(Options: ISuperObject = nil): IPDGCommand; overload;
     function newCommand(const Options: string): IPDGCommand; overload;
@@ -47,14 +47,14 @@ type
     function Execute(Command: IPDGCommand; const params: string): ISuperObject; overload;
     function Execute(Command: IPDGCommand; const params: Variant): ISuperObject; overload;
   public
-    constructor Create(Connection: TPDGUIBConnexion; Options: ISuperObject); virtual;
+    constructor Create(Connection: TPDGUIBConnection; Options: ISuperObject); virtual;
     destructor Destroy; override;
   end;
 
   TPDGCommand = class(TSuperObject, IPDGCommand)
   private
     FStHandle: IscStmtHandle;
-    FConnection: TPDGUIBConnexion;
+    FConnection: TPDGUIBConnection;
     FSQLResult: TSQLResult;
     FSQLParams: TSQLParams;
     FStatementType: TUIBStatementType;
@@ -64,16 +64,16 @@ type
     function Execute(const params: string; context: IPDGContext = nil): ISuperObject; overload;
     function Execute(const params: Variant; context: IPDGContext = nil): ISuperObject; overload;
   public
-    constructor Create(Connection: TPDGUIBConnexion; Context: TPDGUIBContext; Options: ISuperObject); virtual;
+    constructor Create(Connection: TPDGUIBConnection; Context: TPDGUIBContext; Options: ISuperObject); virtual;
     destructor Destroy; override;
   end;
 
 implementation
 uses sysutils;
 
-{ TPDGUIBConnexion }
+{ TPDGUIBConnection }
 
-constructor TPDGUIBConnexion.Create(Options: ISuperObject);
+constructor TPDGUIBConnection.Create(Options: ISuperObject);
 var
   param: ISuperObject;
   option: string;
@@ -106,36 +106,36 @@ begin
     FDbHandle := nil;
 end;
 
-destructor TPDGUIBConnexion.Destroy;
+destructor TPDGUIBConnection.Destroy;
 begin
   FLibrary.DetachDatabase(FDbHandle);
   FLibrary.Free;
   inherited;
 end;
 
-function TPDGUIBConnexion.newCommand(Options: ISuperObject): IPDGCommand;
+function TPDGUIBConnection.newCommand(Options: ISuperObject): IPDGCommand;
 begin
   Result := newContext.newCommand(Options);
 end;
 
-function TPDGUIBConnexion.newContext(Options: ISuperObject): IPDGContext;
+function TPDGUIBConnection.newContext(Options: ISuperObject): IPDGContext;
 begin
   Result := TPDGUIBContext.Create(Self, Options);
 end;
 
-function TPDGUIBConnexion.newCommand(const Options: string): IPDGCommand;
+function TPDGUIBConnection.newCommand(const Options: string): IPDGCommand;
 begin
-  Result := newCommand(SO(Options));
+  Result := newContext.newCommand(Options);
 end;
 
-function TPDGUIBConnexion.newContext(const Options: string): IPDGContext;
+function TPDGUIBConnection.newContext(const Options: string): IPDGContext;
 begin
   Result := newContext(SO(Options));
 end;
 
 { TPDGUIBContext }
 
-constructor TPDGUIBContext.Create(Connection: TPDGUIBConnexion; Options: ISuperObject);
+constructor TPDGUIBContext.Create(Connection: TPDGUIBConnection; Options: ISuperObject);
 begin
   inherited Create(stObject);
   DataPtr := Self;
@@ -165,8 +165,13 @@ begin
 end;
 
 function TPDGUIBContext.newCommand(const Options: string): IPDGCommand;
+var
+  opt: ISuperObject;
 begin
-  Result := newCommand(so(Options));
+  opt := TSuperObject.Parse(PChar(Options), false);
+  if opt <> nil then
+    Result := newCommand(opt) else
+    Result := newCommand(TSuperObject.Create(PChar(Options)));
 end;
 
 function TPDGUIBContext.Execute(Command: IPDGCommand;
@@ -194,7 +199,7 @@ end;
 
 { TPDGCommand }
 
-constructor TPDGCommand.Create(Connection: TPDGUIBConnexion;
+constructor TPDGCommand.Create(Connection: TPDGUIBConnection;
   Context: TPDGUIBContext; Options: ISuperObject);
 begin
   inherited Create(stObject);
@@ -367,7 +372,6 @@ begin
 
   for j := 0 to FSQLParams.FieldCount - 1 do
     FSQLParams.IsNull[j] := true;
-
   try
     if FSQLParams.FieldCount > 0 then
     begin
@@ -375,7 +379,6 @@ begin
       begin
         with params.AsArray do
         begin
-
           if (Length = FSQLParams.FieldCount) and not(ObjectGetType(O[0]) in [stObject, stArray]) then
           begin
             for j := 0 to Length - 1 do
@@ -460,7 +463,7 @@ begin
       end;
     end;
     if Result = nil then
-      Result := TPDGUIBConnexion.Create(O['options']);
+      Result := TPDGUIBConnection.Create(O['options']);
     a.Add(Result as ISuperObject);
   finally
     FCriticalSection.Leave;

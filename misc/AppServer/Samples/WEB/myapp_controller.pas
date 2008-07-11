@@ -21,7 +21,7 @@ procedure application_getdata_controller(This, Params: ISuperObject;
   var Result: ISuperObject);
 begin
   with pool.GetConnection.newContext do
-    this['dataset'] := Execute(newCommand('"select * from ' + Params.S['id'] + '"'));
+    this['dataset'] := Execute(newCommand('select * from ' + Params.S['id']));
   HTTPCompress(this);
 end;
 
@@ -31,7 +31,7 @@ end;
 procedure country_index(This, Params: ISuperObject; var Result: ISuperObject);
 begin
   with pool.GetConnection.newContext do
-    this['dataset'] := Execute(newCommand('"select country, currency from country order by 1"'));
+    this['dataset'] := Execute(newCommand('select country, currency from country order by 1'));
   HTTPCompress(this);
 end;
 
@@ -40,7 +40,7 @@ begin
   if HTTPIsPost(this) then
   with pool.GetConnection.newContext do
   begin
-    Execute(newCommand('"INSERT INTO COUNTRY (country, currency) VALUES (?,?)"'), Params['[country, currency]']);
+    Execute(newCommand('INSERT INTO COUNTRY (country, currency) VALUES (?,?)'), Params['[country, currency]']);
     HTTPredirect(this,'/country/index');
   end;
   HTTPCompress(this);
@@ -50,7 +50,7 @@ procedure country_del(This, Params: ISuperObject; var Result: ISuperObject);
 begin
   with pool.GetConnection.newContext do
   try
-    Execute(newCommand('"DELETE FROM COUNTRY WHERE COUNTRY = ?"'), Params['id']);
+    Execute(newCommand('DELETE FROM COUNTRY WHERE COUNTRY = ?'), Params['id']);
     HTTPredirect(this,'/country/index');
   except
     on E: Exception do
@@ -71,7 +71,7 @@ begin
     with pool.GetConnection.newContext do
     if HTTPIsPost(this) then
     begin
-      Execute(newCommand('"UPDATE COUNTRY SET CURRENCY = :currency WHERE COUNTRY = :country"'), Params['formulaire']);
+      Execute(newCommand('UPDATE COUNTRY SET CURRENCY = :currency WHERE COUNTRY = :country'), Params['formulaire']);
       HTTPredirect(this,'/country/index');
     end else
     begin
