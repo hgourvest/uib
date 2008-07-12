@@ -16,7 +16,7 @@ type
   protected
     function GetConnection: IPDGConnection;
   public
-    constructor Create(Options: ISuperObject); virtual;
+    constructor Create(Options: ISuperObject); reintroduce; 
     destructor Destroy; override;
   end;
 
@@ -31,7 +31,7 @@ type
     function newCommand(Options: ISuperObject = nil): IPDGCommand; overload;
     function newCommand(const Options: string): IPDGCommand; overload;
   public
-    constructor Create(Options: ISuperObject); virtual;
+    constructor Create(Options: ISuperObject); reintroduce;
     destructor Destroy; override;
   end;
 
@@ -47,7 +47,7 @@ type
     function Execute(Command: IPDGCommand; const params: string): ISuperObject; overload;
     function Execute(Command: IPDGCommand; const params: Variant): ISuperObject; overload;
   public
-    constructor Create(Connection: TPDGUIBConnection; Options: ISuperObject); virtual;
+    constructor Create(Connection: TPDGUIBConnection; Options: ISuperObject); reintroduce;
     destructor Destroy; override;
   end;
 
@@ -64,7 +64,7 @@ type
     function Execute(const params: string; context: IPDGContext = nil): ISuperObject; overload;
     function Execute(const params: Variant; context: IPDGContext = nil): ISuperObject; overload;
   public
-    constructor Create(Connection: TPDGUIBConnection; Context: TPDGUIBContext; Options: ISuperObject); virtual;
+    constructor Create(Connection: TPDGUIBConnection; Context: TPDGUIBContext; Options: ISuperObject); reintroduce;
     destructor Destroy; override;
   end;
 
@@ -438,7 +438,7 @@ end;
 
 function TPDGUIBConnectionPool.GetConnection: IPDGConnection;
 var
-  a: TSuperArray;
+  ar: TSuperArray;
   cnx: ISuperObject;
   j, k: Integer;
 begin
@@ -446,10 +446,10 @@ begin
 
   FCriticalSection.Enter;
   try
-    a := O['pool'].AsArray;
-    for j := 0 to a.Length - 1 do
+    ar := O['pool'].AsArray;
+    for j := 0 to ar.Length - 1 do
     begin
-      cnx := a.O[j];
+      cnx := ar.O[j];
       k := cnx._AddRef;
       try
         if k = 3 then
@@ -464,7 +464,7 @@ begin
     end;
     if Result = nil then
       Result := TPDGUIBConnection.Create(O['options']);
-    a.Add(Result as ISuperObject);
+    ar.Add(Result as ISuperObject);
   finally
     FCriticalSection.Leave;
   end;

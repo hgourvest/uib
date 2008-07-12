@@ -1,5 +1,7 @@
 unit PDGDB;
-
+{$ifdef FPC}
+{$mode ObjFpc}{$H+}
+{$endif}
 interface
 uses superobject;
 
