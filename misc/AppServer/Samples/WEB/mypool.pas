@@ -190,9 +190,9 @@ uses SysUtils, {uiblib,} PDGSocketStub, PDGUtils;
 //end;
 
 initialization
-  pool := TPDGUIBConnectionPool.Create(
-    SO(FileToString(ExtractFilePath(ParamStr(0)) + 'appserver.json')).O['database']);
-
+  with SO(FileToString(ExtractFilePath(ParamStr(0)) + 'appserver.json')) do
+    pool := TPDGUIBConnectionPool.Create(O['database']);
+  
 finalization
   while TPDGThread.ThreadCount > 0 do sleep(100);
   pool := nil;
