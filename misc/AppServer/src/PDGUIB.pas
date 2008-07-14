@@ -4,10 +4,11 @@ unit PDGUIB;
 {$ENDIF}
 
 interface
-uses PDGDB, uibase, uiblib, superobject, syncobjs, PDGUtils
+uses 
 {$IFDEF MSWINDOWS}
-, windows
-{$ENDIF};
+  windows,
+{$ENDIF}
+  PDGDB, uibase, uiblib, superobject, syncobjs, PDGUtils;
 
 type
   TPDGUIBConnectionPool = class(TSuperObject, IPDGConnectionPool)
@@ -457,9 +458,9 @@ begin
           Result := cnx as IPDGConnection;
           Exit;
         end;
-        cnx := nil;
       finally
         cnx._Release;
+	cnx := nil;
       end;
     end;
     if Result = nil then
