@@ -80,6 +80,8 @@ var
   option: string;
 begin
   inherited Create(stObject);
+  FDbHandle := nil;
+  
   DataPtr := Self;
   Merge(Options, true);
   FCommandes := TSuperObject.Create(stObject);
@@ -109,7 +111,8 @@ end;
 
 destructor TPDGUIBConnection.Destroy;
 begin
-  FLibrary.DetachDatabase(FDbHandle);
+  if FDbHandle <> nil then
+    FLibrary.DetachDatabase(FDbHandle);
   FLibrary.Free;
   inherited;
 end;
