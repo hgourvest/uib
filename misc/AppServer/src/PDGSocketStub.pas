@@ -23,6 +23,7 @@ interface
 uses
   {$IFNDEF FPC}Windows,{$ENDIF}
   {$IFDEF FPC}sockets,{$ELSE}Winsock,{$ENDIF}
+  {$IFDEF UNIX}baseunix,{$ENDIF}
   PDGUtils;
 
 {$IFDEF FPC}
@@ -216,7 +217,7 @@ end;
 function TPDGThread.Run: Cardinal;
 begin
   Result := 0;
-  raise Exception.Create('not implemented');
+//  raise Exception.Create('not implemented');
 end;
 
 // Childs ...
@@ -389,9 +390,7 @@ var
   SO_True: Integer;
 begin
   SO_True := -1;
-
   Result := 0;
-  //SetThreadPriority(GetCurrentThread, THREAD_PRIORITY_ABOVE_NORMAL);
 {$IFDEF FPC}
   FSocketHandle := fpsocket(AF_INET, SOCK_STREAM, 0);
 {$ELSE}
@@ -456,11 +455,25 @@ begin
 end;
 
 procedure TSocketServer.Stop;
+{$IFDEF UNIX}
+var
+  addr: TSockAddr;
+  ASocket: longint;
+{$ENDIF}
 begin
   inherited;
   if FSocketHandle <> INVALID_SOCKET then
   begin
-    CloseSocket(FSocketHandle);
+    closesocket(FSocketHandle);
+  {$IFDEF UNIX}
+    // connect to itself to stop waiting
+    ASocket := socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    addr.sin_family := AF_INET;
+    addr.sin_port := htons(FPort);
+    addr.sin_addr.S_addr := $0100007F; // 127.0.0.1
+    fpconnect(ASocket, @addr, sizeof(addr));
+    closesocket(ASocket);
+  {$ENDIF}
     InterlockedExchange(LongInt(FSocketHandle), LongInt(INVALID_SOCKET));
   end;
 end;
