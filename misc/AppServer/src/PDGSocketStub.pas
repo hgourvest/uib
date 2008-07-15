@@ -467,7 +467,7 @@ begin
     closesocket(FSocketHandle);
   {$IFDEF UNIX}
     // connect to itself to stop waiting
-    ASocket := socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ASocket := fpsocket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     addr.sin_family := AF_INET;
     addr.sin_port := htons(FPort);
     addr.sin_addr.S_addr := $0100007F; // 127.0.0.1
