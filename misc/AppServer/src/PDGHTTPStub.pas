@@ -92,7 +92,9 @@ function HTTPDecode(const AStr: String): String;
 function HttpResponseStrings(code: integer): string;
 
 implementation
-uses SysUtils, StrUtils {$ifdef madExcept}, madexcept {$endif} ;
+uses SysUtils, StrUtils {$ifdef madExcept}, madexcept {$endif}
+{$IFDEF UNIX}, baseunix{$ENDIF}
+;
 
 
 function HttpResponseStrings(code: integer): string;
@@ -218,46 +220,6 @@ begin
       end;
     end;
 end;
-
-//  function GetValueFromIndex(strings: TStrings; Index: Integer): string;
-//  begin
-//    with strings do
-//      if Index >= 0 then
-//        Result := Copy(strings[Index], Length(Names[Index]) + 2, MaxInt) else
-//        Result := '';
-//  end;
-//var
-//  strlist: TStringList;
-//  j: integer;
-//  str: string;
-//  value: ISuperObject;
-//begin
-//  strlist := TStringList.Create;
-//  try
-//    strlist.Delimiter := sep;
-//    strlist.DelimitedText := src;
-//    if named then
-//    begin
-//      Result := TSuperObject.Create(stObject);
-//        for j := 0 to strlist.Count - 1 do
-//        begin
-//          str := trim(HTTPDecode(GetValueFromIndex(strlist, j)));
-//          value := TSuperObject.Parse(PChar(str), false);
-//          if value = nil then
-//            Result.S[HTTPDecode(strlist.Names[j])] := str else
-//            Result[HTTPDecode(strlist.Names[j])] := value;
-//        end;
-//    end else
-//    begin
-//      Result := TSuperObject.Create(stArray);
-//      with Result.AsArray do
-//        for j := 0 to strlist.Count - 1 do
-//          Add(TSuperObject.Create(trim(HTTPDecode(strlist.Strings[j]))));
-//    end;
-//  finally
-//    strlist.Free;
-//  end;
-//end;
 
 function HTTPDecode(const AStr: String): String;
 var
@@ -525,11 +487,18 @@ var
   cursor, line, len: integer;
   c: char;
   ctx: ISuperObject;
+{$IFDEF UNIX}
+  FDSet: TFDSet;
+  TimeOut: TTimeVal;
+  r: integer;
+{$ENDIF}
 begin
   result := 0;
   cursor := 0;
   len := 0;
   line := 0;
+
+
   while not Stopped do
   begin
     inc(cursor);
@@ -545,6 +514,17 @@ begin
        (line > DEFAULT_LIMIT_REQUEST_FIELDS) then
       Exit;
 
+{$IFDEF UNIX}
+    repeat
+      // stop listening when stoped
+      fpFD_ZERO(FDSet);
+      fpFD_SET(SocketHandle, FDSet);
+      TimeOut.tv_sec := 1; //1 sec
+      TimeOut.tv_usec := 0;
+      r := fpSelect(SocketHandle + 1, @FDSet, nil, nil, @TimeOut);
+      if Stopped then exit;
+    until r > 0;
+{$ENDIF}
     if receive(SocketHandle, c, 1, 0) <> 1 then exit;
     case c of
     CR: dec(cursor){->LF};
