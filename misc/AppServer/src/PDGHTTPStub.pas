@@ -178,18 +178,18 @@ begin
         if i > 1 then
         begin
           S[i] := #0;
-          obj := Result[PChar(S)];
+          obj := Result[S];
           value := TSuperObject.Parse(PChar(@S[i+1]), false);
           if value = nil then
             value := TSuperObject.Create(PChar(@S[i+1]));
           if obj = nil then
-            Result[PChar(S)] := value else
+            Result[S] := value else
             begin
               if obj.IsType(stArray) then
                 obj.AsArray.Add(value) else
                 begin
                   obj2 := TSuperObject.Create(stArray);
-                  Result[PChar(S)] := obj2;
+                  Result[S] := obj2;
                   obj2.AsArray.Add(obj);
                   obj2.AsArray.Add(value);
                 end;
@@ -383,7 +383,7 @@ begin
   result := false;
   marker := StrScan(str, SP);
   if marker = nil then exit;
-  FRequest.s['method'] := PChar(copy(str, 0, marker - str));
+  FRequest.S['method'] := copy(str, 0, marker - str);
   str := marker;
 
   // SP
@@ -398,7 +398,7 @@ begin
   if (str > marker) and (str^ <> NL) then
   begin
     if DecodeURI(marker, str - marker, value) then
-      FRequest.s['uri'] := PChar(value) else
+      FRequest.S['uri'] := value else
       exit;
   end else
     exit;
@@ -416,7 +416,7 @@ begin
                if (param <> '') and (str > marker) then
                begin
                  if not DecodeURI(marker, str - marker, value) then exit;
-                 FRequest['@params'].s[HTTPDecode(param)] := PChar(HTTPDecode(value));
+                 FRequest['@params'].S[HTTPDecode(param)] := HTTPDecode(value);
                end;
                if (str^ in [SP, NL]) then
                  Break;

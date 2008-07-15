@@ -77,7 +77,7 @@ end;
 procedure HTTPRedirect(This: ISuperObject; const location: string);
 begin
   This.I['response.response'] := 302;
-  This.S['response.env.Location'] := PChar(Location);
+  This.S['response.env.Location'] := Location;
 end;
 
 
@@ -116,7 +116,7 @@ end;
 
 procedure THTTPConnexion.doAfterProcessRequest(ctx: ISuperObject);
 begin
-  Response.S['env.Set-Cookie'] := PChar(COOKIE_NAME + '=' + StrTobase64(ctx['session'].AsJSon));
+  Response.S['env.Set-Cookie'] := COOKIE_NAME + '=' + StrTobase64(ctx['session'].AsJSon);
   Response.S['Cache-Control'] := 'no-cache';
   inherited;
 end;
@@ -253,15 +253,15 @@ begin
   if str[Length(str)] in ['/','\'] then
   begin
     if FileExists(path + str + 'index.html') then
-      Request.S['uri'] := PChar(Request.S['uri'] + 'index.html') else
+      Request.S['uri'] := Request.S['uri'] + 'index.html' else
     if FileExists(path + Request.S['uri'] + 'index.htm') then
-      Request.S['uri'] := PChar(Request.S['uri'] + 'index.htm');
+      Request.S['uri'] := Request.S['uri'] + 'index.htm';
   end;
 
   if FileExists(path + Request.S['uri']) then
   begin
     Response.S['env.Content-Type'] := FFormats.S[ctx.S['params.format']];
-    Response.S['sendfile'] := PChar(path + Request.S['uri']);
+    Response.S['sendfile'] := path + Request.S['uri'];
     exit;
   end else
     Response.I['response'] :=  404;
