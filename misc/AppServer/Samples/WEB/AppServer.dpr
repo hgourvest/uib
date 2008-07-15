@@ -1,7 +1,9 @@
 program AppServer;
 
 {$IFDEF CONSOLEAPP}
+{$IFNDEF FPC}
   {$APPTYPE CONSOLE}
+{$ENDIF}
 {$ENDIF}
 uses
   //FastMM4,
@@ -24,7 +26,7 @@ uses
   myapp_view in 'myapp_view.pas';
 
 begin
-  Application.Name := 'PDGIWEBSRV';
+  Application.Name := 'PDGWEBSRV';
   Application.DisplayName := 'Progdigy WEB Server';
   Application.Run;
 end.
