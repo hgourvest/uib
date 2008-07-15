@@ -4494,7 +4494,13 @@ begin
     Exit;
 {$ENDIF}
   if (Value) then
-    RegisterEvents else
+  begin
+    if FDatabase <> nil then
+    begin
+      FDatabase.Connected := true;
+      RegisterEvents
+    end;
+  end else
     UnRegisterEvents;
 end;
 
