@@ -223,15 +223,9 @@ begin
 
       valide := MVC[S['controller'] + '.' + S['action'] + '.validate'];
       if (valide <> nil) and (ctx['params'] <> nil) then
-      begin
-         //writeln(ctx['params'].asjson);
-         //writeln(valide.asjson);
-         //writeln(MVC['schema'].asjson);
          if not ctx['params'].Validate(valide, MVC['schema']) then
            Exit;
-      end;
 
-      //writeln(ctx.S['params']);
       proc := MVC.M[S['controller'] + '.' + S['action'] + '.controller'];
       if assigned(proc) then
       begin
