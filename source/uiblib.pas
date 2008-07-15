@@ -446,7 +446,7 @@ type
 
   PBlobData = ^TBlobData;
   TBlobData = packed record
-    Size: Cardinal;
+    Size: Integer;
     Buffer: Pointer;
   end;
 
@@ -754,13 +754,13 @@ type
     procedure BlobReadString(var BlobHandle: IscBlobHandle; var Str: String); overload;
     procedure BlobReadVariant(var BlobHandle: IscBlobHandle; var Value: Variant);
     // you must free memory allocated by this method !!
-    procedure BlobReadBuffer(var BlobHandle: IscBlobHandle; var Size: Cardinal;
+    procedure BlobReadBuffer(var BlobHandle: IscBlobHandle; var Size: Integer;
       var Buffer: Pointer; realloc: boolean = false);
     // the buffer size if known and Pointer allocated.
     procedure BlobReadSizedBuffer(var BlobHandle: IscBlobHandle; Buffer: Pointer); overload;
     // DBexpress and SP: the component set the max blob size
     procedure BlobReadSizedBuffer(var BlobHandle: IscBlobHandle;
-      Buffer: Pointer; MaxSize: Cardinal); overload;
+      Buffer: Pointer; MaxSize: Integer); overload;
     function  BlobCreate(var DBHandle: IscDbHandle; var TraHandle: IscTrHandle;
       var BlobHandle: IscBlobHandle; BPB: string = ''): TISCQuad;
     procedure BlobWriteSegment(var BlobHandle: IscBlobHandle; BufferLength: Cardinal; Buffer: PChar);
@@ -2437,7 +2437,7 @@ type
     Info: Char;
     Length: Word;
     case byte of
-      0: (CardType: Cardinal);
+      0: (CardType: Integer);
       1: (ByteType: Byte);
   end;
 
@@ -2561,7 +2561,7 @@ type
     BlobInfos: array[0..2] of TBlobInfo;
     CurrentLength: Word;
     Buffer: Pointer;
-    Len: Cardinal;
+    Len: Integer;
   begin
   {$IFDEF UIBTHREADSAFE}
     FLIBCritSec.Enter;
@@ -2587,13 +2587,13 @@ type
     end;
   end;
 
-  procedure TUIBLibrary.BlobReadBuffer(var BlobHandle: IscBlobHandle; var Size: Cardinal;
+  procedure TUIBLibrary.BlobReadBuffer(var BlobHandle: IscBlobHandle; var Size: Integer;
     var Buffer: Pointer; realloc: boolean);
   var
     BlobInfos: array[0..2] of TBlobInfo;
     CurrentLength: Word;
     TMP: Pointer;
-    Len: Cardinal;
+    Len: Integer;
   begin
   {$IFDEF UIBTHREADSAFE}
     FLIBCritSec.Enter;
@@ -2636,7 +2636,7 @@ type
     BlobInfos: array[0..2] of TBlobInfo;
     CurrentLength: Word;
     TMP: Pointer;
-    Len: Cardinal;
+    Len: Integer;
   begin
   {$IFDEF UIBTHREADSAFE}
     FLIBCritSec.Enter;
@@ -2662,12 +2662,12 @@ type
   end;
 
   procedure TUIBLibrary.BlobReadSizedBuffer(var BlobHandle: IscBlobHandle;
-    Buffer: Pointer; MaxSize: Cardinal);
+    Buffer: Pointer; MaxSize: Integer);
   var
     BlobInfos: array[0..2] of TBlobInfo;
     CurrentLength: Word;
     TMP: Pointer;
-    Len: Cardinal;
+    Len: Integer;
   begin
   {$IFDEF UIBTHREADSAFE}
     FLIBCritSec.Enter;
@@ -2699,7 +2699,7 @@ type
   var
     BlobInfos: array[0..2] of TBlobInfo;
     CurrentLength: Word;
-    Len: Cardinal;
+    Len: Integer;
     Buffer: Pointer;
   begin
   {$IFDEF UIBTHREADSAFE}
