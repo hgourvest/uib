@@ -41,19 +41,8 @@ const
   ReadTimeOut: Integer = 60000; // 1 minute
   COOKIE_NAME = 'PDGCookie';
 
-{$IFDEF FPC}
-function GetTickCount : Cardinal;
-  var
-     h,m,s,s1000 : word;
-  begin
-     decodetime(time,h,m,s,s1000);
-     result:=Cardinal(h*3600000+m*60000+s*1000+s1000);
-  end;
-{$ENDIF}
-
-
-procedure HTTPOutput(this, obj: ISuperObject; format: boolean); overload;
-begin
+procedure HTTPOutput(this, obj: ISuperObject; format: boolean); overload;
+begin
   obj.SaveTo(THTTPMessage(this['response'].DataPtr).Content, format);
 end;
 
