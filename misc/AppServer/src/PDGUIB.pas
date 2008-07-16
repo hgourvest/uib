@@ -187,7 +187,7 @@ end;
 function TPDGUIBContext.Execute(Command: IPDGCommand;
   params: array of const): ISuperObject;
 begin
-  Result := Command.Execute(so(params), Self);
+  Result := Command.Execute(SA(params), Self);
 end;
 
 function TPDGUIBContext.Execute(Command: IPDGCommand;
@@ -251,7 +251,7 @@ end;
 function TPDGCommand.Execute(params: array of const;
   context: IPDGContext): ISuperObject;
 begin
-  Result := Execute(SO(params), context);
+  Result := Execute(SA(params), context);
 end;
 
 function TPDGCommand.Execute(params: ISuperObject; context: IPDGContext): ISuperObject;
