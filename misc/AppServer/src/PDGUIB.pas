@@ -4,7 +4,7 @@ unit PDGUIB;
 {$ENDIF}
 
 interface
-uses 
+uses
 {$IFDEF MSWINDOWS}
   windows,
 {$ENDIF}
@@ -17,42 +17,34 @@ type
   protected
     function GetConnection: IPDGConnection;
   public
-    constructor Create(Options: ISuperObject); reintroduce; 
+    constructor Create(Options: ISuperObject); reintroduce;
     destructor Destroy; override;
   end;
 
-  TPDGUIBConnection = class(TSuperObject, IPDGConnection)
+  TPDGUIBConnection = class(TPDGConnection)
   private
     FLibrary: TUIBLibrary;
     FDbHandle: IscDbHandle;
     FCommandes: ISuperObject;
   protected
-    function newContext(Options: ISuperObject = nil): IPDGContext; overload;
-    function newContext(const Options: string): IPDGContext; overload;
-    function newCommand(Options: ISuperObject = nil): IPDGCommand; overload;
-    function newCommand(const Options: string): IPDGCommand; overload;
+    function newContext(Options: ISuperObject = nil): IPDGContext; override;
   public
     constructor Create(Options: ISuperObject); reintroduce;
     destructor Destroy; override;
   end;
 
-  TPDGUIBContext = class(TSuperObject, IPDGContext)
+  TPDGUIBContext = class(TPDGContext)
   private
     FTrHandle: IscTrHandle;
     FConnection: TPDGUIBConnection;
   protected
-    function newCommand(Options: ISuperObject = nil): IPDGCommand; overload;
-    function newCommand(const Options: string): IPDGCommand; overload;
-    function Execute(Command: IPDGCommand; params: ISuperObject = nil): ISuperObject; overload;
-    function Execute(Command: IPDGCommand; params: array of const): ISuperObject; overload;
-    function Execute(Command: IPDGCommand; const params: string): ISuperObject; overload;
-    function Execute(Command: IPDGCommand; const params: Variant): ISuperObject; overload;
+    function newCommand(Options: ISuperObject = nil): IPDGCommand; override;
   public
     constructor Create(Connection: TPDGUIBConnection; Options: ISuperObject); reintroduce;
     destructor Destroy; override;
   end;
 
-  TPDGCommand = class(TSuperObject, IPDGCommand)
+  TPDGUIBCommand = class(TPDGCommand)
   private
     FStHandle: IscStmtHandle;
     FConnection: TPDGUIBConnection;
@@ -60,10 +52,7 @@ type
     FSQLParams: TSQLParams;
     FStatementType: TUIBStatementType;
   protected
-    function Execute(params: ISuperObject = nil; context: IPDGContext = nil): ISuperObject; overload;
-    function Execute(params: array of const; context: IPDGContext = nil): ISuperObject; overload;
-    function Execute(const params: string; context: IPDGContext = nil): ISuperObject; overload;
-    function Execute(const params: Variant; context: IPDGContext = nil): ISuperObject; overload;
+    function Execute(params: ISuperObject = nil; context: IPDGContext = nil): ISuperObject; override;
   public
     constructor Create(Connection: TPDGUIBConnection; Context: TPDGUIBContext; Options: ISuperObject); reintroduce;
     destructor Destroy; override;
@@ -81,7 +70,7 @@ var
 begin
   inherited Create(stObject);
   FDbHandle := nil;
-  
+
   DataPtr := Self;
   Merge(Options, true);
   FCommandes := TSuperObject.Create(stObject);
@@ -117,24 +106,9 @@ begin
   inherited;
 end;
 
-function TPDGUIBConnection.newCommand(Options: ISuperObject): IPDGCommand;
-begin
-  Result := newContext.newCommand(Options);
-end;
-
 function TPDGUIBConnection.newContext(Options: ISuperObject): IPDGContext;
 begin
   Result := TPDGUIBContext.Create(Self, Options);
-end;
-
-function TPDGUIBConnection.newCommand(const Options: string): IPDGCommand;
-begin
-  Result := newContext.newCommand(Options);
-end;
-
-function TPDGUIBConnection.newContext(const Options: string): IPDGContext;
-begin
-  Result := newContext(SO(Options));
 end;
 
 { TPDGUIBContext }
@@ -162,48 +136,14 @@ begin
   inherited Destroy;
 end;
 
-function TPDGUIBContext.Execute(Command: IPDGCommand;
-  const params: Variant): ISuperObject;
-begin
-  Result := Command.Execute(so(params), Self);
-end;
-
-function TPDGUIBContext.newCommand(const Options: string): IPDGCommand;
-var
-  opt: ISuperObject;
-begin
-  opt := TSuperObject.Parse(PChar(Options), false);
-  if opt <> nil then
-    Result := newCommand(opt) else
-    Result := newCommand(TSuperObject.Create(PChar(Options)));
-end;
-
-function TPDGUIBContext.Execute(Command: IPDGCommand;
-  const params: string): ISuperObject;
-begin
-  Result := Command.Execute(so(params), Self);
-end;
-
-function TPDGUIBContext.Execute(Command: IPDGCommand;
-  params: array of const): ISuperObject;
-begin
-  Result := Command.Execute(SA(params), Self);
-end;
-
-function TPDGUIBContext.Execute(Command: IPDGCommand;
-  params: ISuperObject = nil): ISuperObject;
-begin
-  Result := Command.Execute(params, Self);
-end;
-
 function TPDGUIBContext.newCommand(Options: ISuperObject): IPDGCommand;
 begin
-  Result := TPDGCommand.Create(FConnection, Self, Options);
+  Result := TPDGUIBCommand.Create(FConnection, Self, Options);
 end;
 
 { TPDGCommand }
 
-constructor TPDGCommand.Create(Connection: TPDGUIBConnection;
+constructor TPDGUIBCommand.Create(Connection: TPDGUIBConnection;
   Context: TPDGUIBContext; Options: ISuperObject);
 begin
   inherited Create(stObject);
@@ -228,7 +168,7 @@ begin
   end;
 end;
 
-destructor TPDGCommand.Destroy;
+destructor TPDGUIBCommand.Destroy;
 begin
   FSQLResult.Free;
   FSQLParams.Free;
@@ -236,25 +176,7 @@ begin
   inherited;
 end;
 
-function TPDGCommand.Execute(const params: Variant;
-  context: IPDGContext): ISuperObject;
-begin
-  Result := Execute(SO(params), context);
-end;
-
-function TPDGCommand.Execute(const params: string;
-  context: IPDGContext): ISuperObject;
-begin
-  Result := Execute(SO(params), context);
-end;
-
-function TPDGCommand.Execute(params: array of const;
-  context: IPDGContext): ISuperObject;
-begin
-  Result := Execute(SA(params), context);
-end;
-
-function TPDGCommand.Execute(params: ISuperObject; context: IPDGContext): ISuperObject;
+function TPDGUIBCommand.Execute(params: ISuperObject; context: IPDGContext): ISuperObject;
 var
   dfArray, dfFirstOne: boolean;
   str: string;
@@ -463,7 +385,7 @@ begin
         end;
       finally
         cnx._Release;
-	cnx := nil;
+        cnx := nil;
       end;
     end;
     if Result = nil then
@@ -475,6 +397,3 @@ begin
 end;
 
 end.
-
-
-
