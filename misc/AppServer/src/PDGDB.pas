@@ -188,7 +188,7 @@ end;
 
 constructor TPDGBlob.Create;
 begin
-  inherited Create(stNull);
+  inherited Create(stString);
   FStream := TPooledMemoryStream.Create;
 end;
 
@@ -208,32 +208,32 @@ function TPDGBlob.Write(writer: TSuperWriter; format: boolean;
 const
   Base64Code: PChar = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 var
-  B: array[0..2] of byte;
+  V: array[0..2] of byte;
   C: array[0..3] of char;
 begin
   FStream.Seek(0, soFromBeginning);
   Result := 0;
   inc(Result, writer.Append('"', 1));
   while true do
-    case FStream.Read(B, 3) of
+    case FStream.Read(V, 3) of
     3: begin
-         C[0] := Base64Code[(B[0] shr 2) and $3F];
-         C[1] := Base64Code[((B[0] shl 4) and $3F) or B[1] shr 4];
-         C[2] := Base64Code[((B[1] shl 2) and $3F) or B[2] shr 6];
-         C[3] := Base64Code[B[2] and $3F];
+         C[0] := Base64Code[(V[0] shr 2) and $3F];
+         C[1] := Base64Code[((V[0] shl 4) and $3F) or V[1] shr 4];
+         C[2] := Base64Code[((V[1] shl 2) and $3F) or V[2] shr 6];
+         C[3] := Base64Code[V[2] and $3F];
          inc(Result, writer.Append(@C, 4));
        end;
     2: begin
-         C[0] := Base64Code[(B[0] shr 2) and $3F];
-         C[1] := Base64Code[((B[0] shl 4) and $3F) or B[1] shr 4];
-         C[2] := Base64Code[((B[1] shl 2) and $3F) or 0    shr 6];
+         C[0] := Base64Code[(V[0] shr 2) and $3F];
+         C[1] := Base64Code[((V[0] shl 4) and $3F) or V[1] shr 4];
+         C[2] := Base64Code[((V[1] shl 2) and $3F) or 0    shr 6];
          inc(Result, writer.Append(@C, 3));
          inc(Result, writer.Append('=', 1));
          Break;
        end;
     1: begin
-         C[0] := Base64Code[(B[0] shr 2) and $3F];
-         C[1] := Base64Code[((B[0] shl 4) and $3F) or 0 shr 4];
+         C[0] := Base64Code[(V[0] shr 2) and $3F];
+         C[1] := Base64Code[((V[0] shl 4) and $3F) or 0 shr 4];
          inc(Result, writer.Append(@C, 2));
          inc(Result, writer.Append('==', 2));
          Break;

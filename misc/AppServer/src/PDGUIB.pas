@@ -184,6 +184,7 @@ var
   function getone: ISuperObject;
   var
     i: integer;
+    blob: IPDGBlob;
   begin
     if dfArray then
     begin
@@ -197,15 +198,21 @@ var
           uftNumeric, uftFloat, uftDoublePrecision: Result.AsArray.Add(TSuperObject.Create(FSQLResult.AsDouble[i]));
           uftBlob, uftBlobId:
             begin
-              FSQLResult.ReadBlob(i, str);
               if FSQLResult.Data^.sqlvar[i].SqlSubType = 1 then
-                Result.AsArray.Add(TSuperObject.Create(PChar(str))) else
-                Result.AsArray.Add(TSuperObject.Create(PChar(StrTobase64(str))));
+              begin
+                FSQLResult.ReadBlob(i, str);
+                Result.AsArray.Add(TSuperObject.Create(str));
+              end else
+              begin
+                blob := TPDGBlob.Create;
+                FSQLResult.ReadBlob(i, blob.getData);
+                Result.AsArray.Add(blob as ISuperObject);
+              end;
             end;
-          uftTimestamp, uftDate, uftTime: Result.AsArray.Add(TSuperObject.Create(PChar(FSQLResult.AsString[i])));
-          {$IFDEF IB7_UP}
-           uftBoolean: Result.AsArray.Add(ISuperObject.Create(PChar(FSQLResult.AsBoolean[i])));
-           {$ENDIF}
+          uftTimestamp, uftDate, uftTime: Result.AsArray.Add(TSuperObject.Create(DelphiToJavaDateTime(FSQLResult.AsDateTime[i])));
+        {$IFDEF IB7_UP}
+          uftBoolean: Result.AsArray.Add(TSuperObject.Create(PChar(FSQLResult.AsBoolean[i])));
+        {$ENDIF}
          else
            Result.AsArray.Add(nil);
          end;
@@ -221,15 +228,21 @@ var
           uftNumeric, uftFloat, uftDoublePrecision: Result[FSQLResult.AliasName[i]] := TSuperObject.Create(FSQLResult.AsDouble[i]);
           uftBlob, uftBlobId:
             begin
-              FSQLResult.ReadBlob(i, str);
               if FSQLResult.Data^.sqlvar[i].SqlSubType = 1 then
-                Result[FSQLResult.AliasName[i]] := TSuperObject.Create(PChar(str)) else
-                Result[FSQLResult.AliasName[i]] := TSuperObject.Create(PChar(StrTobase64(str)));
+              begin
+                FSQLResult.ReadBlob(i, str);
+                Result[FSQLResult.AliasName[i]] := TSuperObject.Create(str);
+              end else
+              begin
+                blob := TPDGBlob.Create;
+                FSQLResult.ReadBlob(i, blob.getData);
+                Result[FSQLResult.AliasName[i]] := blob as ISuperObject;
+              end;
             end;
-          uftTimestamp, uftDate, uftTime: Result[FSQLResult.AliasName[i]] := TSuperObject.Create(PChar(FSQLResult.AsString[i]));
-          {$IFDEF IB7_UP}
-           uftBoolean: Result[FSQLResult.AliasName[i]] := ISuperObject.Create(PChar(FSQLResult.AsBoolean[i]));
-          {$ENDIF}
+          uftTimestamp, uftDate, uftTime: Result[FSQLResult.AliasName[i]] := TSuperObject.Create(DelphiToJavaDateTime(FSQLResult.AsDateTime[i]));
+        {$IFDEF IB7_UP}
+          uftBoolean: Result[FSQLResult.AliasName[i]] := TSuperObject.Create(PChar(FSQLResult.AsBoolean[i]));
+        {$ENDIF}
          else
            Result[FSQLResult.AliasName[i]] := nil;
          end;
@@ -237,6 +250,10 @@ var
   end;
 
   procedure SetParam(index: Integer; value: ISuperObject);
+  var
+    BlobHandle: IscBlobHandle;
+    blob: IPDGBlob;
+    str: string;
   begin
     if ObjectIsType(value, stNull) then
       FSQLParams.IsNull[index] := true else
@@ -249,6 +266,20 @@ var
         uftDoublePrecision: FSQLParams.AsDouble[index] := value.AsDouble;
         uftDate, uftTime, uftTimestamp: FSQLParams.AsDateTime[index] := JavaToDelphiDateTime(value.AsInteger);
         uftInt64: FSQLParams.AsInt64[index] := value.AsInteger;
+        uftBlob, uftBlobId:
+          if ObjectIsType(value, stString) then
+            with FConnection, FLibrary, TPDGUIBContext((context as ISuperObject).DataPtr) do
+            begin
+              BlobHandle := nil;
+              FSQLParams.AsQuad[Index] := BlobCreate(FDbHandle, FTrHandle, BlobHandle);
+              if value.QueryInterface(IPDGBlob, blob) = 0 then
+                BlobWriteStream(BlobHandle, blob.getData) else
+                begin
+                  str := value.AsString;
+                  BlobWriteString(BlobHandle, str);
+                end;
+              BlobClose(BlobHandle);
+            end;
       else
         raise Exception.Create('not yet implemented');
       end;
