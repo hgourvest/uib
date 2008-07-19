@@ -76,11 +76,13 @@ type
     function Execute(const params: Variant; context: IPDGContext = nil): ISuperObject; overload; virtual;
   end;
 
-  TPDGBlob = class(TSuperObject, IPDGBlob)
+  TPDGBinary = class(TSuperObject, IPDGBlob)
   private
     FStream: TPooledMemoryStream;
   public
-    constructor Create; reintroduce;
+    constructor Create(stream: TStream = nil); reintroduce; overload;
+    constructor Create(const filename: string); reintroduce; overload;
+    constructor Create(buffer: Pointer; len: Integer); reintroduce; overload;
     destructor Destroy; override;
     function Clone: ISuperObject; override;
     function Write(writer: TSuperWriter; format: boolean; level: integer): Integer; override;
@@ -90,7 +92,26 @@ type
     function AsInteger: SuperInt; override;
   end;
 
+  function blob(stream: TStream = nil): ISuperObject; overload;
+  function blob(const filename: string): ISuperObject; overload;
+  function blob(buffer: Pointer; len: Integer): ISuperObject; overload;
+
 implementation
+
+function blob(stream: TStream = nil): ISuperObject; overload;
+begin
+  Result := TPDGBinary.Create(stream);
+end;
+
+function blob(const filename: string): ISuperObject; overload;
+begin
+  Result := TPDGBinary.Create(filename);
+end;
+
+function blob(buffer: Pointer; len: Integer): ISuperObject; overload;
+begin
+  Result := TPDGBinary.Create(buffer, len);
+end;
 
 { TPDGConnection }
 
@@ -165,45 +186,63 @@ begin
   Result := Execute(SA(params), context);
 end;
 
-{ TPDGBlob }
+{ TPDGBinary }
 
-function TPDGBlob.AsBoolean: Boolean;
+function TPDGBinary.AsBoolean: Boolean;
 begin
   Result := FStream.Size > 0;
 end;
 
-function TPDGBlob.AsInteger: SuperInt;
+function TPDGBinary.AsInteger: SuperInt;
 begin
   Result := FStream.Size;
 end;
 
-function TPDGBlob.Clone: ISuperObject;
+function TPDGBinary.Clone: ISuperObject;
 var
-  blob: TPDGBlob;
+  blob: TPDGBinary;
 begin
-  blob := TPDGBlob.Create;
+  blob := TPDGBinary.Create;
   blob.FStream.LoadFromStream(FStream);
   Result := blob;
 end;
 
-constructor TPDGBlob.Create;
+constructor TPDGBinary.Create(stream: TStream);
 begin
-  inherited Create(stString);
+  inherited Create('[BINARY]');
   FStream := TPooledMemoryStream.Create;
+  if Stream <> nil then
+    FStream.LoadFromStream(stream);
 end;
 
-destructor TPDGBlob.Destroy;
+constructor TPDGBinary.Create(const filename: string);
+begin
+  inherited Create('[BINARY]');
+  FStream := TPooledMemoryStream.Create;
+  if filename <> '' then
+    FStream.LoadFromFile(filename);
+end;
+
+constructor TPDGBinary.Create(buffer: Pointer; len: Integer);
+begin
+  inherited Create('[BINARY]');
+  FStream := TPooledMemoryStream.Create;
+  if (buffer <> nil) and (len > 0) then
+    FStream.Write(buffer^, len);
+end;
+
+destructor TPDGBinary.Destroy;
 begin
   FStream.Free;
   inherited;
 end;
 
-function TPDGBlob.getData: TStream;
+function TPDGBinary.getData: TStream;
 begin
   Result := FStream;
 end;
 
-function TPDGBlob.Write(writer: TSuperWriter; format: boolean;
+function TPDGBinary.Write(writer: TSuperWriter; format: boolean;
   level: integer): Integer;
 const
   Base64Code: PChar = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
