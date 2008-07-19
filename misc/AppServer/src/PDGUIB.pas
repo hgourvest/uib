@@ -17,7 +17,8 @@ type
   protected
     function GetConnection: IPDGConnection;
   public
-    constructor Create(Options: ISuperObject); reintroduce;
+    constructor Create(Options: ISuperObject); reintroduce; overload;
+    constructor Create(const Options: string); reintroduce; overload;
     destructor Destroy; override;
   end;
 
@@ -29,7 +30,8 @@ type
   protected
     function newContext(Options: ISuperObject = nil): IPDGContext; override;
   public
-    constructor Create(Options: ISuperObject); reintroduce;
+    constructor Create(Options: ISuperObject); reintroduce; overload;
+    constructor Create(const Options: string); reintroduce; overload;
     destructor Destroy; override;
   end;
 
@@ -96,6 +98,11 @@ begin
   if param <> nil then
     FLibrary.AttachDatabase(param.AsString, FDbHandle, option) else
     FDbHandle := nil;
+end;
+
+constructor TPDGUIBConnection.Create(const Options: string);
+begin
+  Create(SO(Options));
 end;
 
 destructor TPDGUIBConnection.Destroy;
@@ -382,8 +389,12 @@ begin
   DataPtr := Self;
   O['options'] := Options;
   O['pool'] := TSuperObject.Create(stArray);
-
   FCriticalSection := TCriticalSection.Create;
+end;
+
+constructor TPDGUIBConnectionPool.Create(const Options: string);
+begin
+  Create(SO(Options));
 end;
 
 destructor TPDGUIBConnectionPool.Destroy;

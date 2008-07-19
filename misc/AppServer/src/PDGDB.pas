@@ -88,8 +88,8 @@ type
     function Write(writer: TSuperWriter; format: boolean; level: integer): Integer; override;
     function getData: TStream;
 
-    function AsBoolean: Boolean; override;
-    function AsInteger: SuperInt; override;
+    function AsBoolean: Boolean; override; // true if length > 0
+    function AsInteger: SuperInt; override; // stream length
   end;
 
   function blob(stream: TStream = nil): ISuperObject; overload;
