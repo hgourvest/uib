@@ -3028,7 +3028,7 @@ type
   procedure EncodeTimeStamp(const DateTime: TDateTime; v: PISCTimeStamp);
   begin
     v.timestamp_date := Round(int(DateTime)) + DateOffset;
-    v.timestamp_time := ISC_TIME(Round(Frac(DateTime) * TimeCoeff));
+    v.timestamp_time := ISC_TIME(Round(Abs(Frac(DateTime) * TimeCoeff)));
   end;
 
   procedure EncodeTimeStamp(const Date: Integer; v: PISCTimeStamp);
