@@ -19,9 +19,14 @@ uses SysUtils, webserver, mypool, PDGDB;
 
 procedure application_getdata_controller(This, Params: ISuperObject;
   var Result: ISuperObject);
+var
+  cmd: IPDGCommand;
 begin
   with pool.GetConnection.newContext do
-    this['dataset'] := Execute(newCommand('select * from ' + Params.S['id']));
+  begin
+    cmd := newCommand(so(['sql', 'select * from ' + Params.S['id'], 'array', true]));
+    this['dataset'] := so(['meta', cmd.GetOutputMeta, 'data', Execute(cmd)]);
+  end;
   HTTPCompress(this);
 end;
 

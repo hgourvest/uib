@@ -55,6 +55,8 @@ type
     FStatementType: TUIBStatementType;
   protected
     function Execute(params: ISuperObject = nil; context: IPDGContext = nil): ISuperObject; override;
+    function GetInputMeta: ISuperObject; override;
+    function GetOutputMeta: ISuperObject; override;
   public
     constructor Create(Connection: TPDGUIBConnection; Context: TPDGUIBContext; Options: ISuperObject); reintroduce;
     destructor Destroy; override;
@@ -148,7 +150,7 @@ begin
   Result := TPDGUIBCommand.Create(FConnection, Self, Options);
 end;
 
-{ TPDGCommand }
+{ TPDGUIBCommand }
 
 constructor TPDGUIBCommand.Create(Connection: TPDGUIBConnection;
   Context: TPDGUIBContext; Options: ISuperObject);
@@ -379,6 +381,102 @@ begin
     (context as ISuperObject).B['rollback'] := true;
     raise;
   end;
+end;
+
+function TPDGUIBCommand.GetInputMeta: ISuperObject;
+var
+  j: Integer;
+  rec: ISuperObject;
+  prm: PUIBSQLVar;
+begin
+  if FSQLParams.FieldCount > 0 then
+  begin
+    Result := TSuperObject.Create(stArray);
+    with Result.AsArray do
+      for j := 0 to FSQLParams.FieldCount - 1 do
+      begin
+        rec := TSuperObject.Create(stObject);
+        prm := @FSQLParams.Data.sqlvar[j];
+        if prm.ParamNameLength > 0 then
+          rec.S['name'] := copy(prm.ParamName, 1, prm.ParamNameLength);
+        add(rec);
+        case FSQLParams.FieldType[j] of
+          uftChar, uftVarchar, uftCstring:
+          begin
+            rec.S['type'] := 'str';
+            rec.I['length'] := FSQLParams.SQLLen[j];
+          end;
+          uftSmallint, uftInteger, uftInt64: rec.S['type'] := 'int';
+          uftNumeric, uftFloat, uftDoublePrecision: rec.S['type'] := 'float';
+          uftBlob, uftBlobId:
+          begin
+            if FSQLParams.Data^.sqlvar[j].SqlSubType = 1 then
+              rec.S['type'] := 'str' else
+              rec.S['type'] := 'bin';
+          end;
+          uftTimestamp: rec.S['type'] := 'timestamp';
+          uftDate: rec.S['type'] := 'date';
+          uftTime: rec.S['type'] := 'time';
+          {$IFDEF IB7_UP}
+          uftBoolean: rec.S['type'] := 'bool';
+          {$ENDIF}
+        end;
+        if not FSQLParams.IsNullable[j] then
+          rec.B['notnull'] := true;
+      end;
+  end else
+    Result := nil;
+end;
+
+function TPDGUIBCommand.GetOutputMeta: ISuperObject;
+var
+  j: Integer;
+  rec: ISuperObject;
+  dfArray: Boolean;
+begin
+  if FSQLResult.FieldCount > 0 then
+  begin
+    dfArray := B['array'];
+    if dfArray then
+      Result := TSuperObject.Create(stArray) else
+      Result := TSuperObject.Create(stObject);
+
+      for j := 0 to FSQLResult.FieldCount - 1 do
+      begin
+        rec := TSuperObject.Create(stObject);
+        if dfArray then
+        begin
+          rec.S['name'] := FSQLResult.AliasName[j];
+          Result.asArray.add(rec);
+        end else
+          Result.AsObject.Put(PChar(FSQLResult.AliasName[j]), rec);
+
+        case FSQLResult.FieldType[j] of
+          uftChar, uftVarchar, uftCstring:
+          begin
+            rec.S['type'] := 'str';
+            rec.I['length'] := FSQLResult.SQLLen[j];
+          end;
+          uftSmallint, uftInteger, uftInt64: rec.S['type'] := 'int';
+          uftNumeric, uftFloat, uftDoublePrecision: rec.S['type'] := 'float';
+          uftBlob, uftBlobId:
+          begin
+            if FSQLResult.Data^.sqlvar[j].SqlSubType = 1 then
+              rec.S['type'] := 'str' else
+              rec.S['type'] := 'bin';
+          end;
+          uftTimestamp: rec.S['type'] := 'timestamp';
+          uftDate: rec.S['type'] := 'date';
+          uftTime: rec.S['type'] := 'time';
+          {$IFDEF IB7_UP}
+          uftBoolean: rec.S['type'] := 'bool';
+          {$ENDIF}
+        end;
+        if not FSQLResult.IsNullable[j] then
+          rec.B['notnull'] := true;
+      end;
+  end else
+    Result := nil;
 end;
 
 { TPDGUIBConnectionPool }

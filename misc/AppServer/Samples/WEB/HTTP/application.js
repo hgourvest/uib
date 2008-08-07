@@ -77,9 +77,11 @@ function getdata(div, t){
 	JsonRpc("/",{'controller':'application','action':'getdata', 'id': t}, function(r){
 	    
 		div.innerHTML = jsonT(r, 
-		    { "self": "<table>{$}</table>",
-              "self[*]": "<tr>{$}</tr>",
-              "[*][*]": "<td>{$}</td>"});
+		    { "self": "<table><tbody>{$}</tbody></table>",
+              "meta": "<tr>{$}</tr>",
+              "meta[*]": "<th>{$.name}({$.type})</th>",
+              "data[*]": "<tr>{$}</tr>",
+              "data[*][*]": "<td>{$}</td>"});
 	});	
 }
 	

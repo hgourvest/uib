@@ -41,6 +41,8 @@ type
     function Execute(params: array of const; context: IPDGContext = nil): ISuperObject; overload;
     function Execute(const params: string; context: IPDGContext = nil): ISuperObject; overload;
     function Execute(const params: Variant; context: IPDGContext = nil): ISuperObject; overload;
+    function GetInputMeta: ISuperObject;
+    function GetOutputMeta: ISuperObject;
   end;
 
   IPDGBlob = interface
@@ -74,6 +76,8 @@ type
     function Execute(params: array of const; context: IPDGContext = nil): ISuperObject; overload; virtual;
     function Execute(const params: string; context: IPDGContext = nil): ISuperObject; overload; virtual;
     function Execute(const params: Variant; context: IPDGContext = nil): ISuperObject; overload; virtual;
+    function GetInputMeta: ISuperObject; virtual; abstract;
+    function GetOutputMeta: ISuperObject; virtual; abstract;
   end;
 
   TPDGBinary = class(TSuperObject, IPDGBlob)

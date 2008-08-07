@@ -45,8 +45,8 @@ begin
 
   cnx.send(string(params.AsString));
 
+  dataset := SO(string(cnx.responseText));
 
-  dataset := SO(cnx.responseText);
   meta := dataset['meta'];
   data := dataset['data'];
 
