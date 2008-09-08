@@ -30,7 +30,7 @@ requires
   uibD7R,
   designide,
 {$IFDEF HAVE_SYNEDIT}
-  SynEdit_D7,
+  SynEdit_R7,
 {$ENDIF}
   dcldb;
 

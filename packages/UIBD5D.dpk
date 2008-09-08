@@ -31,7 +31,7 @@ requires
   Vcldb50,
   Vclx50,
 {$IFDEF HAVE_SYNEDIT}
-  SynEdit_D5,
+  SynEdit_R5,
 {$ENDIF}
   dcldb50;
 

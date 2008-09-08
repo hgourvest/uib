@@ -34,7 +34,7 @@ requires
   vcl,
   vclx,
 {$IFDEF HAVE_SYNEDIT}
-  SynEdit_D6,
+  SynEdit_R6,
 {$ENDIF}
   vcldb,
   dclact,
