@@ -510,6 +510,7 @@ begin
     {$ELSE}
       AName := AliasName[i];
       Precision:=-1;
+      Size := 0;
     {$ENDIF}
       FieldNo := i;
       Required := not IsNullable[i];
