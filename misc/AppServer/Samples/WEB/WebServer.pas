@@ -105,7 +105,7 @@ end;
 
 procedure THTTPConnexion.doAfterProcessRequest(ctx: ISuperObject);
 begin
-  Response.S['env.Set-Cookie'] := COOKIE_NAME + '=' + StrTobase64(ctx['session'].AsJSon);
+  Response.S['env.Set-Cookie'] := COOKIE_NAME + '=' + StrTobase64(ctx['session'].AsJSon) + '; path=/';
   Response.S['Cache-Control'] := 'no-cache';
   inherited;
 end;
@@ -192,18 +192,18 @@ begin
   inherited;
 
   // Authenticate
-  if ctx.B['session.authenticate'] then
-  begin
-    user := Request.S['authorization.user'];
-    pass := Request.S['authorization.pass'];
-    if not((user = 'user') and (pass = 'pass')) then
-    begin
-      Response.I['response'] := 401;
-      Response['@env'].AsObject.Put('WWW-Authenticate', TSuperObject.Create('Basic'));
-      exit;
-    end else
-      ctx.B['session.authenticate'] := false;
-  end;
+//  if ctx.B['session.authenticate'] then
+//  begin
+//    user := Request.S['authorization.user'];
+//    pass := Request.S['authorization.pass'];
+//    if not((user = 'user') and (pass = 'pass')) then
+//    begin
+//      Response.I['response'] := 401;
+//      Response['@env'].AsObject.Put('WWW-Authenticate', TSuperObject.Create('Basic'));
+//      exit;
+//    end else
+//      ctx.B['session.authenticate'] := false;
+//  end;
 
   if ctx['params.controller'] <> nil then
     with ctx['params'] do
