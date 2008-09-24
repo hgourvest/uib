@@ -900,7 +900,7 @@ begin
     case Param.dsc_dtype of
       dtype_d_float,
       dtype_double    : PDouble(Param.dsc_address)^   := Value;
-      dtype_timestamp : EncodeTimeStamp(Value, PISCTimeStamp(Param.dsc_address));
+      dtype_timestamp : EncodeTimeStamp(Integer(Value), PISCTimeStamp(Param.dsc_address));
       dtype_sql_date  : PInteger(Param.dsc_address)^ := Value + DateOffset;
       dtype_sql_time  : PCardinal(Param.dsc_address)^ := 0;
       dtype_long      : PInteger(Param.dsc_address)^ := Value;
