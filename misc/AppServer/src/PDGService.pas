@@ -55,8 +55,8 @@ type
 {$ENDIF}
   public
     procedure Run;
-    procedure CreateServer(clazz: TSocketServerClass; Port: Word);
-    procedure CreateThread(clazz: TPDGThreadClass);
+    function CreateServer(clazz: TSocketServerClass; Port: Word): TSocketServer;
+    function CreateThread(clazz: TPDGThreadClass): TPDGThread;
     constructor Create; virtual;
     destructor Destroy; override;
     property Name: string read FName write FName;
@@ -506,14 +506,14 @@ begin
   FThreads.Resume;
 end;
 
-procedure TPDGService.CreateServer(clazz: TSocketServerClass; Port: Word);
+function TPDGService.CreateServer(clazz: TSocketServerClass; Port: Word): TSocketServer;
 begin
-  clazz.CreateServer(FThreads, Port);
+  Result := clazz.CreateServer(FThreads, Port);
 end;
 
-procedure TPDGService.CreateThread(clazz: TPDGThreadClass);
+function TPDGService.CreateThread(clazz: TPDGThreadClass): TPDGThread;
 begin
-  clazz.Create(FThreads);
+  Result := clazz.Create(FThreads);
 end;
 
 initialization
