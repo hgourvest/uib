@@ -43,8 +43,8 @@ function DescGetAsSingle(Param: PParamDsc): Single;
 procedure DescSetAsSingle(Param: PParamDsc; const Value: Single);
 function DescGetAsSmallint(Param: PParamDsc): Smallint;
 procedure DescSetAsSmallint(Param: PParamDsc; const Value: Smallint);
-function DescGetAsString(Param: PParamDsc): String;
-procedure DescSetAsString(Param: PParamDsc; const Value: String);
+function DescGetAsString(Param: PParamDsc): AnsiString;
+procedure DescSetAsString(Param: PParamDsc; const Value: AnsiString);
 function DescGetAsDateTime(Param: PParamDsc): TDateTime;
 procedure DescSetAsDateTime(Param: PParamDsc; const Value: TDateTime);
 function DescGetAsDate(Param: PParamDsc): Integer;
@@ -53,12 +53,12 @@ function DescGetAsTime(Param: PParamDsc): Cardinal;
 procedure DescSetAsTime(Param: PParamDsc; const Value: Cardinal);
 
 function DescBlobGetSegment(Param: PBlobCallBack; out length: Word;
-  BufferLength: Cardinal; Buffer: PChar): boolean;
-procedure DescBlobReadString(Param: PBlobCallBack; var Str: String);
+  BufferLength: Cardinal; Buffer: Pointer): boolean;
+procedure DescBlobReadString(Param: PBlobCallBack; var Str: AnsiString);
 procedure DescBlobSaveToStream(Param: PBlobCallBack; Stream: TStream);
 procedure DescBlobReadSizedBuffer(Param: PBlobCallBack; Buffer: Pointer);
-procedure DescBlobWriteSegment(Param: PBlobCallBack; BufferLength: Cardinal; Buffer: PChar);
-procedure DescBlobWriteString(Param: PBlobCallBack; var Str: String);
+procedure DescBlobWriteSegment(Param: PBlobCallBack; BufferLength: Cardinal; Buffer: Pointer);
+procedure DescBlobWriteString(Param: PBlobCallBack; var Str: AnsiString);
 procedure DescBlobWriteStream(Param: PBlobCallBack; Stream: TStream);
 
 {$ENDIF}
@@ -74,114 +74,111 @@ type
 const
   DefaultSegmentSize = 16*1024;
 
-function IntToStr(value: integer): string;
+function IntToStr(value: integer): AnsiString;
 begin
   str(value, result);
 end;
 
-function WordToStr(value: word): string;
+function WordToStr(value: word): AnsiString;
 begin
   str(value, result);
 end;
 
-function CardToStr(value: Cardinal): string;
+function CardToStr(value: Cardinal): AnsiString;
 begin
   str(value, result);
 end;
 
-function SmallToStr(value: smallint): string;
+function SmallToStr(value: smallint): AnsiString;
 begin
   str(value, result);
 end;
 
-function Int64ToStr(value: int64): string;
+function Int64ToStr(value: int64): AnsiString;
 begin
   str(value, result);
 end;
 
-function FloatToStr(value: double): string;
+function FloatToStr(value: double): AnsiString;
 begin
   str(value, result);
 end;
 
-function SingToStr(value: Single): string;
+function SingToStr(value: Single): AnsiString;
 begin
   str(value, result);
 end;
 
-function CurrToStr(value: currency): string;
+function CurrToStr(value: currency): AnsiString;
 begin
   str(value, result);
 end;
 
-
-
-
-function StrToInt(const value: string): integer;
+function StrToInt(const value: AnsiString): integer;
 var
   code: integer;
 begin
-  val(value, Result, code);
+  val(string(value), Result, code);
   if code <> 0 then
     Result := 0;
 end;
 
-function StrToWord(const value: string): word;
+function StrToWord(const value: AnsiString): word;
 var
   code: integer;
 begin
-  val(value, Result, code);
+  val(string(value), Result, code);
   if code <> 0 then
     Result := 0;
 end;
 
-function StrToCard(const value: string): Cardinal;
+function StrToCard(const value: AnsiString): Cardinal;
 var
   code: integer;
 begin
-  val(value, Result, code);
+  val(string(value), Result, code);
   if code <> 0 then
     Result := 0;
 end;
 
-function StrToSmall(const value: string): smallint;
+function StrToSmall(const value: AnsiString): smallint;
 var
   code: integer;
 begin
-  val(value, Result, code);
+  val(string(value), Result, code);
   if code <> 0 then
     Result := 0;
 end;
 
-function StrToInt64(const value: string): int64;
+function StrToInt64(const value: AnsiString): int64;
 var
   code: integer;
 begin
-  val(value, Result, code);
+  val(string(value), Result, code);
   if code <> 0 then
     Result := 0;
 end;
 
-function StrToFloat(const value: string): double;
+function StrToFloat(const value: AnsiString): double;
 var
   code: integer;
 begin
-  val(value, Result, code);
+  val(string(value), Result, code);
   if code <> 0 then
     Result := 0;
 end;
 
-function StrToSing(const value: string): Single;
+function StrToSing(const value: AnsiString): Single;
 var
   code: integer;
 begin
-  val(value, Result, code);
+  val(string(value), Result, code);
   if code <> 0 then
     Result := 0;
 end;
 
 
-procedure DescDecodeString(Param: PParamDsc; out str: String); overload;
+procedure DescDecodeString(Param: PParamDsc; out str: AnsiString); overload;
 begin
   case Param.dsc_dtype of
     dtype_text    : SetString(str, Param.dsc_address, Param.dsc_length);
@@ -189,7 +186,7 @@ begin
   end;
 end;
 
-function DescDecodeString(Param: PParamDsc): String; overload;
+function DescDecodeString(Param: PParamDsc): AnsiString; overload;
 begin
   case Param.dsc_dtype of
     dtype_text    : SetString(Result, Param.dsc_address, Param.dsc_length);
@@ -197,7 +194,7 @@ begin
   end;
 end;
 
-function TimeStampToSQLStr(TimeStamp: PISCTimeStamp): String;
+function TimeStampToSQLStr(TimeStamp: PISCTimeStamp): AnsiString;
 var
   Year: SmallInt;
   Month, Day: Word;
@@ -210,7 +207,7 @@ begin
     WordToStr(Hour) + ':' + WordToStr(Minute) + ':' + WordToStr(Second) + '.' + CardToStr(Fractions);
 end;
 
-function DateTimeToSQLStr(value: TDateTime): String;
+function DateTimeToSQLStr(value: TDateTime): AnsiString;
 var
   Year: Word;
   Month, Day: Word;
@@ -222,7 +219,7 @@ begin
     WordToStr(Hour) + ':' + WordToStr(Minute) + ':' + WordToStr(Second) + '.' + CardToStr(Fractions * 10);
 end;
 
-function DateToSQLStr(value: integer): String;
+function DateToSQLStr(value: integer): AnsiString;
 var
   Year: SmallInt;
   Month, Day: Word;
@@ -231,7 +228,7 @@ begin
   Result := SmallToStr(Year) + '-' + WordToStr(Month) + '-' + WordToStr(Day);
 end;
 
-function TimeToSQLStr(Value: cardinal): string;
+function TimeToSQLStr(Value: cardinal): AnsiString;
 var
   Hour, Minute, Second: Word;
   Fractions: LongWord;
@@ -240,13 +237,13 @@ begin
   Result := WordToStr(Hour) + ':' + WordToStr(Minute) + ':' + WordToStr(Second) + '.' + CardToStr(Fractions);
 end;
 
-function DecodeSQLStrDateTime(const str: string; out Year: SmallInt; out Month, Day: Word;
+function DecodeSQLStrDateTime(const str: AnsiString; out Year: SmallInt; out Month, Day: Word;
   out Hour, Minute, Second: Word; out Fractions: LongWord): boolean;
 var
-  p: PChar;
+  p: PAnsiChar;
   v: Word;
   c: integer;
-  s: char;
+  s: AnsiChar;
 label
   lbMinutes, lbError;
 begin
@@ -259,10 +256,10 @@ begin
   Second := 0;
   Fractions := 0;
 
-  p := PChar(str);
+  p := PAnsiChar(str);
 
   // year
-  val(p, v, c);
+  val(string(p), v, c);
   if c = 0 then goto lbError;
   inc(p, c);
   case p[-1] of
@@ -281,7 +278,7 @@ begin
   end;
 
   // month
-  val(p, Month, c);
+  val(string(p), Month, c);
   if (c = 0) then
     goto lbError;
   inc(p, c);
@@ -289,12 +286,12 @@ begin
     goto lbError;
 
   // Day
-  val(p, Day, c);
+  val(string(p), Day, c);
   if c = 0 then exit;
   inc(p, c);
 
   // Hour
-  val(p, Hour, c);
+  val(string(p), Hour, c);
   if c = 0 then goto lbError;
   inc(p, c);
   if p[-1] <> ':' then
@@ -302,7 +299,7 @@ begin
 
 lbMinutes:
   // Minute
-  val(p, Minute, c);
+  val(string(p), Minute, c);
   if c = 0 then exit;
   inc(p, c);
 
@@ -310,24 +307,24 @@ lbMinutes:
     Exit;
 
   // Second
-  val(p, Second, c);
+  val(string(p), Second, c);
   if c = 0 then exit;
   inc(p, c);
 
   if p[-1] = '.' then
-    val(p, Fractions, c) else
+    val(string(p), Fractions, c) else
     Exit;
 
 lbError:
   Result := False;
 end;
 
-function DecodeSQLStrDate(const str: string; out Year: SmallInt; out Month, Day: Word): boolean;
+function DecodeSQLStrDate(const str: AnsiString; out Year: SmallInt; out Month, Day: Word): boolean;
 var
-  p: PChar;
+  p: PAnsiChar;
   v: Word;
   c: integer;
-  s: char;
+  s: AnsiChar;
 label
   lbError;
 begin
@@ -336,10 +333,10 @@ begin
   Month := 0;
   Day := 0;
 
-  p := PChar(str);
+  p := PAnsiChar(str);
 
   // year
-  val(p, v, c);
+  val(string(p), v, c);
   if c = 0 then goto lbError;
   inc(p, c);
   case p[-1] of
@@ -354,7 +351,7 @@ begin
   end;
 
   // month
-  val(p, Month, c);
+  val(string(p), Month, c);
   if (c = 0) then
     goto lbError;
   inc(p, c);
@@ -362,7 +359,7 @@ begin
     goto lbError;
 
   // Day
-  val(p, Day, c);
+  val(string(p), Day, c);
   if c = 0 then exit;
 
   Exit;
@@ -371,9 +368,9 @@ lbError:
   Result := False;
 end;
 
-function DecodeSQLStrTime(const str: string; out Hour, Minute, Second: Word; out Fractions: LongWord): boolean;
+function DecodeSQLStrTime(const str: AnsiString; out Hour, Minute, Second: Word; out Fractions: LongWord): boolean;
 var
-  p: PChar;
+  p: PAnsiChar;
   c: integer;
 label
   lbError;
@@ -384,17 +381,17 @@ begin
   Second := 0;
   Fractions := 0;
 
-  p := PChar(str);
+  p := PAnsiChar(str);
 
   // Hour
-  val(p, Hour, c);
+  val(string(p), Hour, c);
   if c = 0 then goto lbError;
   inc(p, c);
   if p[-1] <> ':' then
     goto lbError;
 
   // Minute
-  val(p, Minute, c);
+  val(string(p), Minute, c);
   if c = 0 then exit;
   inc(p, c);
 
@@ -402,19 +399,19 @@ begin
     Exit;
 
   // Second
-  val(p, Second, c);
+  val(string(p), Second, c);
   if c = 0 then exit;
   inc(p, c);
 
   if p[-1] = '.' then
-    val(p, Fractions, c) else
+    val(string(p), Fractions, c) else
     Exit;
 
 lbError:
   Result := False;
 end;
 
-function EncodeSQLStrDateTime(const str: string; Value: PISCTimeStamp): boolean;
+function EncodeSQLStrDateTime(const str: AnsiString; Value: PISCTimeStamp): boolean;
 var
   Year: SmallInt;
   Month, Day: Word;
@@ -429,7 +426,7 @@ begin
   end;
 end;
 
-function EncodeSQLStrDate(const str: string; out Value: Integer): boolean;
+function EncodeSQLStrDate(const str: AnsiString; out Value: Integer): boolean;
 var
   Year: SmallInt;
   Month, Day: Word;
@@ -439,7 +436,7 @@ begin
      Value := EncodeSQLDate(Year, Month, Day);
 end;
 
-function EncodeSQLStrTime(const str: string; out Value: Cardinal): boolean;
+function EncodeSQLStrTime(const str: AnsiString; out Value: Cardinal): boolean;
 var
   Hour, Minute, Second: Word;
   Fractions: LongWord;
@@ -449,7 +446,7 @@ begin
      Value := EncodeSQLTime(Hour, Minute, Second, Fractions);
 end;
 
-procedure DescEncodeString(Param: PParamDsc; const str: String);
+procedure DescEncodeString(Param: PParamDsc; const str: AnsiString);
 var
   len: word;
 begin
@@ -460,13 +457,13 @@ begin
         if len > Param.dsc_length then
           len := Param.dsc_length;
         FillChar(Param.dsc_address^, Param.dsc_length, 0);
-        move(PChar(str)^, Param.dsc_address^, len);
+        move(PAnsiChar(str)^, Param.dsc_address^, len);
       end;
     dtype_varying :
       begin
         if len > Param.dsc_length - 2 then
           len := Param.dsc_length - 2;
-        move(PChar(str)^, PVary(Param.dsc_address).vary_string, len);
+        move(PAnsiChar(str)^, PVary(Param.dsc_address).vary_string, len);
         PVary(Param.dsc_address).vary_length := len;
       end
   end;
@@ -476,7 +473,7 @@ procedure DescConvertString(Param: PParamDsc; out value: Integer); overload;
 var
   code: integer;
 begin
-  val(DescDecodeString(Param), value, code);
+  val(string(DescDecodeString(Param)), value, code);
   if code <> 0 then
     value := 0;
 end;
@@ -485,7 +482,7 @@ procedure DescConvertString(Param: PParamDsc; out value: Smallint); overload;
 var
   code: integer;
 begin
-  val(DescDecodeString(Param), value, code);
+  val(string(DescDecodeString(Param)), value, code);
   if code <> 0 then
     value := 0;
 end;
@@ -494,7 +491,7 @@ procedure DescConvertString(Param: PParamDsc; out value: double); overload;
 var
   code: integer;
 begin
-  val(DescDecodeString(Param), value, code);
+  val(string(DescDecodeString(Param)), value, code);
   if code <> 0 then
     value := 0;
 end;
@@ -508,7 +505,7 @@ procedure DescConvertString(Param: PParamDsc; out value: single); overload;
 var
   code: integer;
 begin
-  val(DescDecodeString(Param), value, code);
+  val(string(DescDecodeString(Param)), value, code);
   if code <> 0 then
     value := 0;
 end;
@@ -517,7 +514,7 @@ procedure DescConvertString(Param: PParamDsc; out value: int64); overload;
 var
   code: integer;
 begin
-  val(DescDecodeString(Param), value, code);
+  val(string(DescDecodeString(Param)), value, code);
   if code <> 0 then
     value := 0;
 end;
@@ -527,7 +524,7 @@ var
   code: integer;
   d: double;
 begin
-  val(DescDecodeString(Param), d, code);
+  val(string(DescDecodeString(Param)), d, code);
   if code = 0 then
     value := d else
     value := 0;
@@ -1053,8 +1050,8 @@ begin
     DescSetIsNull(Param, false);
 end;
 
-function DescGetAsString(Param: PParamDsc): String;
-  function BoolToStr(const Value: boolean): string;
+function DescGetAsString(Param: PParamDsc): AnsiString;
+  function BoolToStr(const Value: boolean): AnsiString;
   begin if Value then result := sUIBTrue else result := sUIBFalse; end;
 begin
   Result := '';
@@ -1091,7 +1088,7 @@ begin
 end;
 
 
-procedure DescSetAsString(Param: PParamDsc; const Value: String);
+procedure DescSetAsString(Param: PParamDsc; const Value: AnsiString);
 begin
   // Is Numeric ?
   if (Param.dsc_scale < 0)  then
@@ -1340,7 +1337,7 @@ end;
 //******************************************************************************
 
 function DescBlobGetSegment(Param: PBlobCallBack; out length: Word;
-  BufferLength: Cardinal; Buffer: PChar): boolean;
+  BufferLength: Cardinal; Buffer: Pointer): boolean;
 var
   AStatus: ISCStatus;
 begin
@@ -1350,14 +1347,14 @@ begin
   Result := (AStatus <> 0);
 end;
 
-procedure DescBlobReadString(Param: PBlobCallBack; var Str: String);
+procedure DescBlobReadString(Param: PBlobCallBack; var Str: AnsiString);
 var
   CurrentLength: Word;
   Buffer: Pointer;
   Len: Cardinal;
 begin
   SetLength(Str, Param.blob_total_length);
-  Buffer := PChar(Str);
+  Buffer := PAnsiChar(Str);
   len := 0;
   while DescBlobGetSegment(Param, CurrentLength, Cardinal(Param.blob_total_length) - len, Buffer) do
   begin
@@ -1384,8 +1381,9 @@ begin
   Stream.Seek(0, soFromBeginning);
 end;
 
-procedure DescBlobWriteSegment(Param: PBlobCallBack; BufferLength: Cardinal; Buffer: PChar);
-var size: Word;
+procedure DescBlobWriteSegment(Param: PBlobCallBack; BufferLength: Cardinal; Buffer: Pointer);
+var
+  size: Word;
 begin
   while BufferLength > 0 do
   begin
@@ -1395,18 +1393,18 @@ begin
 
     Param.blob_put_segment(Param.blob_handle, Buffer, Size);
     dec(BufferLength, size);
-    inc(Buffer, size);
+    inc(PByte(Buffer), size);
   end;
 end;
 
-procedure DescBlobWriteString(Param: PBlobCallBack; var Str: String);
+procedure DescBlobWriteString(Param: PBlobCallBack; var Str: AnsiString);
 begin
-  DescBlobWriteSegment(Param, Length(Str), PChar(Str));
+  DescBlobWriteSegment(Param, Length(Str), PAnsiChar(Str));
 end;
 
 procedure DescBlobWriteStream(Param: PBlobCallBack; Stream: TStream);
 var
-  Buffer: PChar;
+  Buffer: PAnsiChar;
 begin
   Stream.Seek(0, soFromBeginning);
   if Stream is TCustomMemoryStream then

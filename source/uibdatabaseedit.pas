@@ -203,7 +203,7 @@ procedure TUIBDatabaseEditForm.FormCreate(Sender: TObject);
 var i: TCharacterSet;
 begin
   for i := low(TCharacterSet) to high(TCharacterSet) do
-    CharacterSet.Items.Add(CharacterSetStr[i]);
+    CharacterSet.Items.Add(string(CharacterSetStr[i]));
 end;
 
 procedure TUIBDatabaseEditForm.UserNameChange(Sender: TObject);

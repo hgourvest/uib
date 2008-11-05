@@ -37,7 +37,7 @@
 {.$DEFINE FB103}
 {.$DEFINE FB15}
 {.$DEFINE FB20}
-{.$DEFINE FB21}
+{$DEFINE FB21}
 {.$DEFINE FBEMBED}
 
 //----------
@@ -60,8 +60,8 @@
 //----------
 // Languages
 //----------
-{$DEFINE UIBLANG_EN}  // English
-{.$DEFINE UIBLANG_FR} // French
+{.$DEFINE UIBLANG_EN}  // English
+{$DEFINE UIBLANG_FR} // French
 {.$DEFINE UIBLANG_CZ} // Czech
 {.$DEFINE UIBLANG_DE} // Deutch
 {.$DEFINE UIBLANG_RU} // Russian
@@ -69,7 +69,9 @@
 {.$DEFINE UIBLANG_TR} // Turkish
 
 // use SYNEDIT (sql editor)
+{$IFNDEF UNICODE}
 {$DEFINE HAVE_SYNEDIT}
+{$ENDIF}
 
 // no components
 {.$DEFINE UIB_NO_COMPONENT}
@@ -78,7 +80,7 @@
 {$DEFINE GUID_TYPE}
 
 // set this to handle GUID as VARCHAR(38) instead of standard VARCHAR(16) "octets"
-{.$DEFINE GUID_AS_TEXT}
+{$DEFINE GUID_AS_TEXT}
 
 // ***************
 // END USER DEFINE

@@ -29,8 +29,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ExtCtrls, AppEvnts,
-  JclSysUtils, JclDebug;
+  Dialogs, StdCtrls, ExtCtrls, AppEvnts, JclSysUtils, JclDebug, JclAnsiStrings;
 
 const
   UM_CREATEDETAILS = WM_USER + $100;

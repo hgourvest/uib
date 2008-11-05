@@ -25,6 +25,10 @@ uses
   SysUtils, Classes, DB, uib, uiblib, uibase, uibconst;
 
 type
+{$IFNDEF UNICODE}
+  TRecordBuffer = PAnsiChar;
+{$ENDIF}
+
 
   TUIBBookMark = record
     Bookmark: Longint;
@@ -94,12 +98,12 @@ type
     procedure InternalClose; override;
     function IsCursorOpen: Boolean; override;
 
-    function AllocRecordBuffer: PChar; override;
-    procedure InternalInitRecord(Buffer: PChar); override;
-    procedure FreeRecordBuffer(var Buffer: PChar); override;
+    function AllocRecordBuffer: TRecordBuffer; override;
+    procedure InternalInitRecord(Buffer: TRecordBuffer); override;
+    procedure FreeRecordBuffer(var Buffer: TRecordBuffer); override;
     function GetRecordSize: Word; override;
 
-    function GetRecord(Buffer: PChar; GetMode: TGetMode;
+    function GetRecord(Buffer: TRecordBuffer; GetMode: TGetMode;
       DoCheck: Boolean): TGetResult; override;
     procedure InternalFirst; override;
     procedure InternalLast; override;
@@ -108,11 +112,11 @@ type
     procedure SetRecNo(Value: Integer); override;
 
     procedure InternalGotoBookmark(Bookmark: Pointer); override;
-    procedure InternalSetToRecord(Buffer: PChar); override;
-    procedure SetBookmarkData(Buffer: PChar; Data: Pointer); override;
-    procedure GetBookmarkData(Buffer: PChar; Data: Pointer); override;
-    procedure SetBookmarkFlag(Buffer: PChar; Value: TBookmarkFlag); override;
-    function GetBookmarkFlag(Buffer: PChar): TBookmarkFlag; override;
+    procedure InternalSetToRecord(Buffer: TRecordBuffer); override;
+    procedure SetBookmarkData(Buffer: TRecordBuffer; Data: Pointer); override;
+    procedure GetBookmarkData(Buffer: TRecordBuffer; Data: Pointer); override;
+    procedure SetBookmarkFlag(Buffer: TRecordBuffer; Value: TBookmarkFlag); override;
+    function GetBookmarkFlag(Buffer: TRecordBuffer): TBookmarkFlag; override;
 
     procedure InternalHandleException; override;
     procedure InternalInitFieldDefs; override;
@@ -155,17 +159,17 @@ type
     procedure BuildStoredProc(const StoredProc: string; forSelect: boolean);
 
     procedure ReadBlob(const Index: Word; Stream: TStream); overload;
-    procedure ReadBlob(const Index: Word; var str: string); overload;
+    procedure ReadBlob(const Index: Word; var str: AnsiString); overload;
     procedure ReadBlob(const Index: Word; var Value: Variant); overload;
     procedure ReadBlob(const name: string; Stream: TStream); overload;
-    procedure ReadBlob(const name: string; var str: string); overload;
+    procedure ReadBlob(const name: string; var str: AnsiString); overload;
     procedure ReadBlob(const name: string; var Value: Variant); overload;
 
     procedure ParamsSetBlob(const Index: Word; Stream: TStream); overload;
-    procedure ParamsSetBlob(const Index: Word; var str: string); overload;
+    procedure ParamsSetBlob(const Index: Word; var str: AnsiString); overload;
     procedure ParamsSetBlob(const Index: Word; Buffer: Pointer; Size: Word); overload;
     procedure ParamsSetBlob(const Name: string; Stream: TStream); overload;
-    procedure ParamsSetBlob(const Name: string; var str: string); overload;
+    procedure ParamsSetBlob(const Name: string; var str: AnsiString); overload;
     procedure ParamsSetBlob(const Name: string; Buffer: Pointer; Size: Word); overload;
 
     property InternalFields: TSQLResult read GetInternalFields;
@@ -239,7 +243,7 @@ begin
     FCurrentRecord := ReqBookmark
 end;
 
-procedure TUIBCustomDataSet.InternalSetToRecord (Buffer: PChar);
+procedure TUIBCustomDataSet.InternalSetToRecord (Buffer: TRecordBuffer);
 var
   ReqBookmark: Integer;
 begin
@@ -248,12 +252,12 @@ begin
 end;
 
 function TUIBCustomDataSet.GetBookmarkFlag (
-  Buffer: PChar): TBookmarkFlag;
+  Buffer: TRecordBuffer): TBookmarkFlag;
 begin
   Result := PUIBBookMark(Buffer + FRecordSize).BookmarkFlag;
 end;
 
-procedure TUIBCustomDataSet.SetBookmarkFlag (Buffer: PChar;
+procedure TUIBCustomDataSet.SetBookmarkFlag (Buffer: TRecordBuffer;
   Value: TBookmarkFlag);
 begin
   PUIBBookMark(Buffer + FRecordSize).BookmarkFlag := Value;
@@ -275,14 +279,14 @@ begin
 end;
 
 procedure TUIBCustomDataSet.GetBookmarkData (
-  Buffer: PChar; Data: Pointer);
+  Buffer: TRecordBuffer; Data: Pointer);
 begin
   Integer(Data^) :=
     PUIBBookMark(Buffer + FRecordSize).Bookmark;
 end;
 
 procedure TUIBCustomDataSet.SetBookmarkData (
-  Buffer: PChar; Data: Pointer);
+  Buffer: TRecordBuffer; Data: Pointer);
 begin
   PUIBBookMark(Buffer + FRecordSize).Bookmark :=
     Integer(Data^);
@@ -310,7 +314,7 @@ begin
   end;
 end;
 
-function TUIBCustomDataSet.GetRecord(Buffer: PChar;
+function TUIBCustomDataSet.GetRecord(Buffer: TRecordBuffer;
   GetMode: TGetMode; DoCheck: Boolean): TGetResult;
 begin
   if (FCurrentRecord <> -1) and FStatement.CachedFetch and
@@ -382,12 +386,12 @@ begin
   end;
 end;
 
-procedure TUIBCustomDataSet.InternalInitRecord(Buffer: PChar);
+procedure TUIBCustomDataSet.InternalInitRecord(Buffer: TRecordBuffer);
 begin
   FillChar(Buffer^, FRecordBufferSize, #0);
 end;
 
-procedure TUIBCustomDataSet.FreeRecordBuffer (var Buffer: PChar);
+procedure TUIBCustomDataSet.FreeRecordBuffer (var Buffer: TRecordBuffer);
 begin
   FreeMem (Buffer);
 end;
@@ -397,7 +401,7 @@ begin
   Result := FRecordSize;
 end;
 
-function TUIBCustomDataSet.AllocRecordBuffer: PChar;
+function TUIBCustomDataSet.AllocRecordBuffer: TRecordBuffer;
 begin
   GetMem(Result, FRecordBufferSize);
 end;
@@ -738,12 +742,12 @@ begin
       uftCstring:
         begin
           Move(sqldata^, Buffer^, SqlLen);
-          PChar(Buffer)[SqlLen] := #0;
+          PAnsiChar(Buffer)[SqlLen] := #0;
         end;
       uftVarchar:
         begin
           Move(PVary(sqldata).vary_string, Buffer^, PVary(sqldata).vary_length);
-          PChar(Buffer)[PVary(sqldata).vary_length] := #0;
+          PAnsiChar(Buffer)[PVary(sqldata).vary_length] := #0;
         end;
       uftSmallint: PSmallint(Buffer)^ := PSmallint(sqldata)^;
       uftInteger : PInteger(Buffer)^ := PInteger(sqldata)^;
@@ -890,7 +894,7 @@ begin
 end;
 
 procedure TUIBCustomDataSet.ParamsSetBlob(const Name: string;
-  var str: string);
+  var str: AnsiString);
 begin
   FStatement.ParamsSetBlob(Name, str);
 end;
@@ -908,7 +912,7 @@ begin
 end;
 
 procedure TUIBCustomDataSet.ParamsSetBlob(const Index: Word;
-  var str: string);
+  var str: AnsiString);
 begin
   FStatement.ParamsSetBlob(Index, str);
 end;
@@ -926,7 +930,7 @@ begin
 end;
 
 procedure TUIBCustomDataSet.ReadBlob(const name: string;
-  var str: string);
+  var str: AnsiString);
 begin
   FStatement.ReadBlob(name, str);
 end;
@@ -942,7 +946,7 @@ begin
   FStatement.ReadBlob(Index, Stream);
 end;
 
-procedure TUIBCustomDataSet.ReadBlob(const Index: Word; var str: string);
+procedure TUIBCustomDataSet.ReadBlob(const Index: Word; var str: AnsiString);
 begin
   FStatement.ReadBlob(Index, str);
 end;

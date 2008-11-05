@@ -230,7 +230,6 @@ type
     function GetRole: string;
     procedure SetRole(const Value: string);
     procedure ClearEvents;
-    procedure DoParamsChange(Sender: TObject);
   protected
     function CanConnect : Boolean; virtual;
     procedure DoOnConnectionLost(Lib: TUIBLibrary); virtual;
@@ -549,7 +548,7 @@ type
     FOptions   : TTransParams;
     FLockRead  : string;
     FLockWrite : string;
-    FSQLDialect: Integer;
+   // FSQLDialect: Integer;
     FOnStartTransaction: TNotifyEvent;
     FOnEndTransaction: TOnEndTransaction;
     FAutoRetain: boolean;
@@ -560,7 +559,7 @@ type
     FLockTimeout: Word;
   {$ENDIF}
     function GetInTransaction: boolean;
-    function TPB: string;
+    function TPB: AnsiString;
     function GetOptions: TTransParams;
     procedure SetOptions(const Value: TTransParams);
     function GetLockRead: string;
@@ -726,7 +725,8 @@ type
 
     procedure InternalGetBlobSize(sqlda: TSQLDA; const Index: Word; out Size: Cardinal);
     procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; Stream: TStream); overload;
-    procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; var str: string); overload;
+    procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; var str: AnsiString); overload;
+    procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; var str: UnicodeString); overload;
     procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; var Value: Variant); overload;
     procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; Buffer: Pointer); overload;
 
@@ -766,8 +766,10 @@ type
     procedure First;
     { Read a the blob in a stream by index. }
     procedure ReadBlob(const Index: Word; Stream: TStream); overload;
-    { Read a the blob in a string by index. }
-    procedure ReadBlob(const Index: Word; var str: string); overload;
+    { Read a the blob in a AnsiString by index. }
+    procedure ReadBlob(const Index: Word; var str: AnsiString); overload;
+    { Read a the blob in a UnicodeString by index. }
+    procedure ReadBlob(const Index: Word; var str: UnicodeString); overload;
     { Read a the blob in a Variant by index. }
     procedure ReadBlob(const Index: Word; var Value: Variant); overload;
     { Read a the blob in a PREALLOCATED buffer by index. }
@@ -775,7 +777,9 @@ type
     { Read a the blob in a stream by name. }
     procedure ReadBlob(const name: string; Stream: TStream); overload;
     { Read a the blob in a string by name. }
-    procedure ReadBlob(const name: string; var str: string); overload;
+    procedure ReadBlob(const name: string; var str: AnsiString); overload;
+    { Read a the blob in a string by name. }
+    procedure ReadBlob(const name: string; var str: UnicodeString); overload;
     { Read a the blob in a Variant by name. }
     procedure ReadBlob(const name: string; var Value: Variant); overload;
     { Read a the blob in a PREALLOCATED buffer by name. }
@@ -784,14 +788,18 @@ type
     { The the blob value of a parametter using a Stream. }
     procedure ParamsSetBlob(const Index: Word; Stream: TStream); overload;
     { The the blob value of a parametter using a string. }
-    procedure ParamsSetBlob(const Index: Word; var str: string); overload;
+    procedure ParamsSetBlob(const Index: Word; var str: AnsiString); overload;
+    { The the blob value of a parametter using a string. }
+    procedure ParamsSetBlob(const Index: Word; var str: UnicodeString); overload;
     { The the blob value of a parametter using a Buffer. }
     procedure ParamsSetBlob(const Index: Word; Buffer: Pointer; Size: Cardinal); overload;
 
     { The the blob value of a parametter using a Stream. }
     procedure ParamsSetBlob(const Name: string; Stream: TStream); overload;
     { The the blob value of a parametter using a string. }
-    procedure ParamsSetBlob(const Name: string; var str: string); overload;
+    procedure ParamsSetBlob(const Name: string; var str: AnsiString); overload;
+    { The the blob value of a parametter using a string. }
+    procedure ParamsSetBlob(const Name: string; var str: UnicodeString); overload;
     { The the blob value of a parametter using a Buffer. }
     procedure ParamsSetBlob(const Name: string; Buffer: Pointer; Size: Cardinal); overload;
 
@@ -923,8 +931,8 @@ type
     FHandle  : IscSvcHandle;
     procedure BeginService; virtual;
     procedure EndService; virtual;
-    function CreateParam(code: char; const Value: string): string; overload;
-    function CreateParam(code: char; Value: Integer): string; overload;
+    function CreateParam(code: AnsiChar; const Value: AnsiString): AnsiString; overload;
+    function CreateParam(code: AnsiChar; Value: Integer): AnsiString; overload;
   public
     constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
     destructor Destroy; override;
@@ -946,7 +954,7 @@ type
     FOnVerbose: TVerboseEvent;
     FVerbose: boolean;
     procedure SetBackupFiles(const Value: TStrings);
-    function CreateStartSPB: string; virtual; abstract;
+    function CreateStartSPB: AnsiString; virtual; abstract;
   public
     constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
     destructor Destroy; override;
@@ -966,7 +974,7 @@ type
   TUIBBackup = class(TUIBBackupRestore)
   private
     FOptions: TBackupOptions;
-    function CreateStartSPB: string; override;
+    function CreateStartSPB: AnsiString; override;
   published
     property Options: TBackupOptions read FOptions write FOptions default [];
   end;
@@ -981,7 +989,7 @@ type
   private
     FOptions: TRestoreOptions;
     FPageSize: Cardinal;
-    function CreateStartSPB: string; override;
+    function CreateStartSPB: AnsiString; override;
   public
     constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
   published
@@ -1063,7 +1071,7 @@ type
     FOptions: TRepairOptions;
     FDatabase: string;
   protected
-    function CreateStartSPB: string; virtual;
+    function CreateStartSPB: AnsiString; virtual;
   public
     procedure Run;
   published
@@ -1114,9 +1122,9 @@ type
   private
     FCurrentEvent: Integer;
     FEventID: Integer;
-    FEventBuffer: PChar;
+    FEventBuffer: PAnsiChar;
     FEventBufferLen: Smallint;
-    FResultBuffer: PChar;
+    FResultBuffer: PAnsiChar;
     FSignal: TSimpleEvent;
     FQueueEvent: boolean;
     FBlock: integer;
@@ -1175,7 +1183,6 @@ type
 
 implementation
 uses uibmetadata;
-//{$IFDEF FPC}{$IFDEF UNIX},cthreads{$ENDIF}{$ENDIF}
 
 type
   PExceptionInfo = ^TExceptionInfo;
@@ -1228,7 +1235,6 @@ begin
   FEventNotifiers := TList.Create;
   FMetadata := nil;
   FMetaDataOptions := TMetaDataOptions.Create;
-  TStringList(FParams).OnChange := DoParamsChange;
 end;
 
 destructor TUIBDataBase.Destroy;
@@ -1269,9 +1275,11 @@ end;
 function TUIBDataBase.GetCharacterSet: TCharacterSet;
 var
   i: TCharacterSet;
-  S: String;
+  S: AnsiString;
 begin
-  S := trim(UpperCase(ReadParamString('lc_ctype', 'NONE')));
+  S := AnsiString(ReadParamString('lc_ctype', 'NONE'));
+  StrUpper(PAnsiChar(S));
+  S := AnsiTrim(S);
   Result := csNONE;
   for i := low(TCharacterSet) to high(TCharacterSet) do
     if (S = CharacterSetStr[i]) then
@@ -1313,7 +1321,7 @@ end;
 procedure TUIBDataBase.ExecuteImmediate(const Statement: string);
 begin
   FLibrary.Load(FLiBraryName);
-  FLibrary.DSQLExecuteImmediate(Statement, SQLDialect);
+  FLibrary.DSQLExecuteImmediate(AnsiString(Statement), SQLDialect);
 end;
 
 procedure TUIBDataBase.CreateDatabase(PageSize: Integer = 2048);
@@ -1326,8 +1334,8 @@ begin
   Connected := False;
   FLibrary.Load(FLiBraryName);
   FLibrary.DSQLExecuteImmediate(FDbHandle, TrHandle,
-    Format(CreateDb, [DatabaseName, UserName, PassWord, PageSize,
-    CharacterSetStr[CharacterSet]]), SQLDialect);
+    AnsiString(Format(CreateDb, [DatabaseName, UserName, PassWord, PageSize,
+    CharacterSetStr[CharacterSet]])), SQLDialect);
 end;
 
 procedure TUIBDataBase.DropDatabase;
@@ -1389,7 +1397,7 @@ end;
 
 procedure TUIBDataBase.SetCharacterSet(const Value: TCharacterSet);
 begin
-  WriteParamString('lc_ctype', CharacterSetStr[Value]);
+  WriteParamString('lc_ctype', string(CharacterSetStr[Value]));
 end;
 
 procedure TUIBDataBase.SetConnected(const Value: boolean);
@@ -1408,7 +1416,7 @@ begin
           if Assigned(BeforeConnect) then BeforeConnect(Self);
           FLibrary.Load(FLiBraryName);
           if not FHandleShared then
-            AttachDatabase(FDatabaseName, FDbHandle, FParams.Text, BreakLine);
+            AttachDatabase(AnsiString(FDatabaseName), FDbHandle, AnsiString(FParams.Text), BreakLine);
           RegisterEvents;
           if Assigned(AfterConnect) then AfterConnect(Self);
         end;
@@ -1695,7 +1703,7 @@ begin
       isc_info_base_level:
       result := byte(FLibrary.DatabaseInfoString(FDbHandle, item, 8)[5]);
     else
-      result := FLibrary.DatabaseInfoIntValue(FDbHandle, char(item));
+      result := FLibrary.DatabaseInfoIntValue(FDbHandle, AnsiChar(item));
     end;
 {$IFDEF UIBTHREADSAFE}
   finally
@@ -1727,14 +1735,16 @@ begin
 end;
 
 function TUIBDataBase.GetInfoStringValue(const item: integer): string;
-var size: byte;
+var
+  size: byte;
+  data: AnsiString;
 begin
   SetConnected(true);
 {$IFDEF UIBTHREADSAFE}
   Lock;
   try
 {$ENDIF}
-    result := FLibrary.DatabaseInfoString(FDbHandle, item, 256);
+    data := FLibrary.DatabaseInfoString(FDbHandle, item, 256);
 {$IFDEF UIBTHREADSAFE}
   finally
     UnLock;
@@ -1743,21 +1753,22 @@ begin
   case Item of
     isc_info_cur_logfile_name, isc_info_wal_prv_ckpt_fname:
       begin
-        size := byte(result[4]);
-        Move(result[5], result[1], size);
-        SetLength(Result, size);
+        size := byte(data[4]);
+        Move(data[5], data[1], size);
+        SetLength(data, size);
       end;
   else
-    size := byte(result[5]);
-    Move(result[6], result[1], size);
-    SetLength(Result, size);
+    size := byte(data[5]);
+    Move(data[6], data[1], size);
+    SetLength(data, size);
   end;
+  Result := string(data);
 end;
 
 function TUIBDataBase.GetInfoOperationsCount(
   const item: Integer): Integer;
 var
-  data: string;
+  data: AnsiString;
   i: Integer;
   p: PTableOperation;
 begin
@@ -1792,8 +1803,8 @@ end;
 
 function TUIBDataBase.GetInfoIntCount(const item: Integer): Integer;
 var
-  data: string;
-  p: PChar;
+  data: AnsiString;
+  p: PAnsiChar;
 begin
   SetConnected(true);
 {$IFDEF UIBTHREADSAFE}
@@ -1806,7 +1817,7 @@ begin
     UnLock;
   end;
 {$ENDIF}
-  p := PChar(data);
+  p := PAnsiChar(data);
   result := 0;
   while byte(p^) = item do
   begin
@@ -1824,8 +1835,8 @@ end;
 
 function TUIBDataBase.GetInfoStringCount(const item: Integer): Integer;
 var
-  data: string;
-  p: PChar;
+  data: AnsiString;
+  p: PAnsiChar;
   len: integer;
 begin
   SetConnected(true);
@@ -1839,7 +1850,7 @@ begin
     UnLock;
   end;
 {$ENDIF}
-  p := PChar(data);
+  p := PAnsiChar(data);
   result := 0;
   while byte(p^) = item do
   begin
@@ -1849,7 +1860,7 @@ begin
     case item of
       isc_info_user_names:
         if assigned(FOnInfoUserNames) then
-          FOnInfoUserNames(self, copy(p, 0, len));
+          FOnInfoUserNames(self, string(copy(p, 0, len)));
     end;
     inc(p, len);
   end;
@@ -1857,8 +1868,8 @@ end;
 
 function TUIBDataBase.GetInfoDbId(const Index: Integer): string;
 var
-  data: string;
-  p: PChar;
+  data: AnsiString;
+  p: PAnsiChar;
   i: Integer;
 begin
   SetConnected(true);
@@ -1877,7 +1888,7 @@ begin
   begin
     if Index = i then
     begin
-      result := copy(p+1, 0, ord(p^));
+      result := string(copy(p+1, 0, ord(p^)));
       Break;
     end;
     inc(p, ord(p^)+1);
@@ -2061,18 +2072,6 @@ begin
     TUIBEvents(FEventNotifiers[i]).SetDatabase(nil);
 end;
 
-procedure TUIBDataBase.DoParamsChange(Sender: TObject);
-var
-  i, Dialect: integer;
-begin
-  if (FTransactions <> nil) then
-  begin
-    Dialect := GetSQLDialect;
-    for i := 0 to FTransactions.Count - 1 do
-      TUIBTransaction(FTransactions[i]).FSQLDialect := Dialect;
-  end;
-end;
-
 function TUIBDataBase.CanConnect: Boolean;
 begin
   Result := True;
@@ -2093,7 +2092,11 @@ begin
     end;
     FTransaction := Transaction;
     if (Transaction <> nil) then
+    begin
       Transaction.AddSQLComponent(Self);
+      if Transaction.DataBase <> nil then
+        FParameter.CharacterSet := Transaction.DataBase.CharacterSet;
+    end;
     FCurrentState := qsDataBase;
   end;
 end;
@@ -2109,6 +2112,7 @@ begin
         InternalClose(etmStayIn, True);
     end;
     FDataBase := ADataBase;
+    FParameter.CharacterSet := FDataBase.CharacterSet;
   end;
 end;
 
@@ -2202,8 +2206,8 @@ begin
       with FindDataBase, FLibrary do
       try
         if FSQLResult.FetchBlobs then
-          DSQLFetchWithBlobs(FDbHandle, FTransaction.FTrHandle, FStHandle, FTransaction.FSQLDialect, FSQLResult) else
-          DSQLFetch(FDbHandle, FTransaction.FTrHandle, FStHandle, FTransaction.FSQLDialect, FSQLResult);
+          DSQLFetchWithBlobs(FDbHandle, FTransaction.FTrHandle, FStHandle, GetSQLDialect, FSQLResult) else
+          DSQLFetch(FDbHandle, FTransaction.FTrHandle, FStHandle, GetSQLDialect, FSQLResult);
       except
         if FOnError <> etmStayIn then
           EndExecute(FOnError, False);
@@ -2225,6 +2229,15 @@ begin
       Fields.CurrentRecord := Fields.CurrentRecord - 1;
   end else
     raise Exception.Create(EUIB_CACHEDFETCHNOTSET);
+end;
+
+procedure TUIBStatement.InternalReadBlob(sqlda: TSQLDA; const Index: Word;
+  var str: UnicodeString);
+var
+  aStr: AnsiString;
+begin
+  InternalReadBlob(sqlda, Index, aStr);
+  str := MBDecode(aStr, sqlda.CharacterSet);
 end;
 
 procedure TUIBStatement.EndTransaction(const ETM: TEndTransMode; Auto: boolean);
@@ -2288,7 +2301,8 @@ end;
 procedure TUIBStatement.BeginPrepare(describeParams: boolean = false);
 begin
   if (FStHandle = nil) then BeginStatement;
-  FSQLResult := ResultClass.Create(0, FCachedFetch, FFetchBlobs, FBufferChunks);
+
+  FSQLResult := ResultClass.Create(FindDataBase.CharacterSet, 0, FCachedFetch, FFetchBlobs, FBufferChunks);
 {$IFDEF UIBTHREADSAFE}
   Lock;
   try
@@ -2297,14 +2311,14 @@ begin
     try
       if (FQuickScript or (not FParseParams)) then
         FStatementType := DSQLPrepare(FDbHandle, FTransaction.FTrHandle, FStHandle,
-          FSQL.Text, FTransaction.FSQLDialect, FSQLResult) else
+          AnsiString(FSQL.Text), GetSQLDialect, FSQLResult) else
         FStatementType := DSQLPrepare(FDbHandle, FTransaction.FTrHandle, FStHandle,
-          FParsedSQL, FTransaction.FSQLDialect, FSQLResult);
+          AnsiString(FParsedSQL), GetSQLDialect, FSQLResult);
         FCursorName := 'C' + inttostr(PtrInt(FStHandle));
         if FUseCursor then
-          DSQLSetCursorName(FStHandle, FCursorName);
+          DSQLSetCursorName(FStHandle, AnsiString(FCursorName));
         if describeParams and (FParameter.ParamCount > 0) then
-          DSQLDescribeBind(FStHandle, FTransaction.FSQLDialect, FParameter);
+          DSQLDescribeBind(FStHandle, GetSQLDialect, FParameter);
     except
       FSQLResult.free;
       FSQLResult := nil;
@@ -2334,13 +2348,13 @@ begin
   Lock;
   try
 {$ENDIF}
-    with FindDataBase.FLibrary do
+    with FindDataBase, FLibrary do
     try
       if (FStatementType = stExecProcedure) then
         DSQLExecute2(FTransaction.FTrHandle, FStHandle,
-          FTransaction.FSQLDialect, FParameter, FSQLResult) else
+          GetSQLDialect, FParameter, FSQLResult) else
         DSQLExecute(FTransaction.FTrHandle, FStHandle,
-          FTransaction.FSQLDialect, FParameter);
+          GetSQLDialect, FParameter);
     except
       if (FOnError <> etmStayIn) then
         EndPrepare(FOnError, False);
@@ -2363,17 +2377,17 @@ end;
 procedure TUIBStatement.BeginExecImme;
 var
   I: Integer;
-  procedure ExecuteQuery(const AQuery: String; Params: TSQLParams);
+  procedure ExecuteQuery(const AQuery: AnsiString; sqlParams: TSQLParams);
   begin
-    if (Trim(AQuery) = '') then exit;
+    if (AnsiTrim(AQuery) = '') then exit;
   {$IFDEF UIBTHREADSAFE}
     Lock;
     try
   {$ENDIF}
-      with FindDataBase.FLibrary do
+      with FindDataBase, FLibrary do
       try
         DSQLExecuteImmediate(FindDataBase.FDbHandle, FTransaction.FTrHandle,
-          AQuery, FTransaction.FSQLDialect, Params);
+          AQuery, GetSQLDialect, sqlParams);
       except
         if (FOnError <> etmStayIn) then
           EndExecImme(FOnError, False);
@@ -2390,11 +2404,11 @@ begin
   if FQuickScript then
     for i := 0 to FSQL.Count - 1 do
     begin
-      ExecuteQuery(FSQL.Strings[i], nil);
+      ExecuteQuery(AnsiString(FSQL.Strings[i]), nil);
     end else
       if FParseParams then
-        ExecuteQuery(FParsedSQL, FParameter) else
-        ExecuteQuery(FSQL.Text, FParameter);
+        ExecuteQuery(AnsiString(FParsedSQL), FParameter) else
+        ExecuteQuery(AnsiString(FSQL.Text), FParameter);
   FCurrentState := qsExecImme;
 end;
 
@@ -2523,7 +2537,7 @@ begin
   FetchBlobs   := False;
   FQuickScript := False;
   FOnError     := etmRollback;
-  FParameter   := ParamsClass.Create;
+  FParameter   := ParamsClass.Create(csNONE);
   FCursorName  := '';
   FBufferChunks := 1000;
   FParseParams := True;
@@ -2538,7 +2552,7 @@ begin
   inherited;
 end;
 
-procedure TUIBStatement.ReadBlob(const Index: Word; var Str: string);
+procedure TUIBStatement.ReadBlob(const Index: Word; var Str: AnsiString);
 begin
   if Fields.FetchBlobs then
     Fields.ReadBlob(Index, Str) else
@@ -2561,17 +2575,17 @@ end;
 
 procedure TUIBStatement.ReadBlob(const name: string; Stream: TStream);
 begin
-  ReadBlob(Fields.GetFieldIndex(name), Stream);
+  ReadBlob(Fields.GetFieldIndex(AnsiString(Name)), Stream);
 end;
 
-procedure TUIBStatement.ReadBlob(const name: string; var str: string);
+procedure TUIBStatement.ReadBlob(const name: string; var str: AnsiString);
 begin
-  ReadBlob(Fields.GetFieldIndex(name), str);
+  ReadBlob(Fields.GetFieldIndex(AnsiString(Name)), str);
 end;
 
 procedure TUIBStatement.ReadBlob(const name: string; var Value: Variant);
 begin
-  ReadBlob(Fields.GetFieldIndex(name), Value);
+  ReadBlob(Fields.GetFieldIndex(AnsiString(Name)), Value);
 end;
 
 procedure TUIBStatement.ParamsSetBlob(const Index: Word; Stream: TStream);
@@ -2601,8 +2615,9 @@ begin
 {$ENDIF}
 end;
 
-procedure TUIBStatement.ParamsSetBlob(const Index: Word; var str: string);
-var BlobHandle: IscBlobHandle;
+procedure TUIBStatement.ParamsSetBlob(const Index: Word; var str: AnsiString);
+var
+  BlobHandle: IscBlobHandle;
 begin
   if (FCurrentState < qsTransaction) then
     BeginTransaction;
@@ -2683,8 +2698,9 @@ begin
 {$ENDIF}
 end;
 
-procedure TUIBStatement.ParamsSetBlob(const Name: string; var str: string);
-var BlobHandle: IscBlobHandle;
+procedure TUIBStatement.ParamsSetBlob(const Name: string; var str: AnsiString);
+var
+  BlobHandle: IscBlobHandle;
 begin
   if (FCurrentState < qsTransaction) then
     BeginTransaction;
@@ -2710,6 +2726,14 @@ begin
 {$ENDIF}
 end;
 
+procedure TUIBStatement.ParamsSetBlob(const Name: string; var str: UnicodeString);
+var
+  aStr: AnsiString;
+begin
+  aStr := MBEncode(str, Params.CharacterSet);
+  ParamsSetBlob(Name, aStr)
+end;
+
 procedure TUIBStatement.ParamsSetBlob(const Name: string; Buffer: Pointer; Size: Cardinal);
 var BlobHandle: IscBlobHandle;
 begin
@@ -2726,6 +2750,37 @@ begin
         FTransaction.FTrHandle, BlobHandle);
       try
         BlobWriteSegment(BlobHandle, Size, Buffer);
+      finally
+        BlobClose(BlobHandle);
+      end;
+    end;
+{$IFDEF UIBTHREADSAFE}
+  finally
+    UnLock;
+  end;
+{$ENDIF}
+end;
+
+procedure TUIBStatement.ParamsSetBlob(const Index: Word;
+  var str: UnicodeString);
+var
+  BlobHandle: IscBlobHandle;
+  aStr: AnsiString;
+begin
+  if (FCurrentState < qsTransaction) then
+    BeginTransaction;
+  BlobHandle := nil;
+{$IFDEF UIBTHREADSAFE}
+  Lock;
+  try
+{$ENDIF}
+    with FindDataBase.FLibrary do
+    begin
+      Params.AsQuad[Index] := BlobCreate(FindDataBase.FDbHandle,
+        FTransaction.FTrHandle, BlobHandle);
+      try
+        aStr := MBEncode(str, Params.CharacterSet);
+        BlobWriteString(BlobHandle, aStr);
       finally
         BlobClose(BlobHandle);
       end;
@@ -2770,7 +2825,7 @@ begin
 end;
 
 procedure TUIBStatement.InternalReadBlob(sqlda: TSQLDA; const Index: Word;
-  var str: string);
+  var str: AnsiString);
 var
   BlobHandle: IscBlobHandle;
 begin
@@ -2897,7 +2952,19 @@ end;
 
 procedure TUIBStatement.ReadBlob(const name: string; Buffer: Pointer);
 begin
-  ReadBlob(Fields.GetFieldIndex(name), Buffer);
+  ReadBlob(Fields.GetFieldIndex(AnsiString(Name)), Buffer);
+end;
+
+procedure TUIBStatement.ReadBlob(const name: string; var str: UnicodeString);
+begin
+  ReadBlob(Fields.GetFieldIndex(AnsiString(Name)), str);
+end;
+
+procedure TUIBStatement.ReadBlob(const Index: Word; var str: UnicodeString);
+begin
+  if Fields.FetchBlobs then
+    Fields.ReadBlob(Index, Str) else
+    InternalReadBlob(Fields, Index, str);
 end;
 
 procedure TUIBStatement.InternalReadBlob(sqlda: TSQLDA;
@@ -3192,7 +3259,7 @@ type
 var
   Buffer: Pointer;
   i: Integer;
-  ATPB: string;
+  ATPB: AnsiString;
 begin
   BeginDataBase;
 {$IFDEF UIBTHREADSAFE}
@@ -3218,7 +3285,7 @@ begin
             begin
               Handle  := @TUIBDatabase(FDataBases[i]).FDbHandle;
               Len     := Length(ATPB);
-              Address := PChar(ATPB);
+              Address := PAnsiChar(ATPB);
             end;
           TransactionStartMultiple(FTrHandle, FDataBases.Count, Buffer);
         finally
@@ -3356,7 +3423,6 @@ begin
     Close(etmDefault, True);
     FDataBases.Add(ADataBase);
     ADataBase.AddTransaction(Self);
-    FSQLDialect := ADatabase.SQLDialect;
   end;
 end;
 
@@ -3443,28 +3509,28 @@ begin
 {$ENDIF}
 end;
 
-function TUIBTransaction.TPB: string;
+function TUIBTransaction.TPB: AnsiString;
 var
   tp: TTransParam;
-procedure ParseStrOption(const code: Char; const Value: string);
-var
-  P, Start: PChar;
-  S: string;
-begin
-  P := Pointer(Value);
-  if P <> nil then
-    while P^ <> #0 do
-    begin
-      Start := P;
-      while not (P^ in [#0, ';']) do Inc(P);
-      if (P - Start) > 0 then
+  procedure ParseStrOption(const code: AnsiChar; const Value: AnsiString);
+  var
+    P, Start: PAnsiChar;
+    S: AnsiString;
+  begin
+    P := Pointer(Value);
+    if P <> nil then
+      while (P^ <> #0) do
       begin
-        SetString(S, Start, P - Start);
-        Result := Result + code + Char(P - Start) + S;
+        Start := P;
+        while not (P^ in [#0, ';']) do Inc(P);
+        if (P - Start) > 0 then
+        begin
+          SetString(S, Start, P - Start);
+          Result := Result + code + AnsiChar(P - Start) + S;
+        end;
+        if P^ =';' then inc(P);
       end;
-      if P^ =';' then inc(P);
-    end;
-end;
+  end;
 begin
   if FOptions = [tpConcurrency,tpWait,tpWrite] then
     result := ''
@@ -3475,13 +3541,13 @@ begin
         if (tp in FOptions) then
         begin
           case tp of
-            tpLockRead    : ParseStrOption(Char(Ord(tp)+1), FLockRead);
-            tpLockWrite   : ParseStrOption(Char(Ord(tp)+1), FLockWrite);
+            tpLockRead    : ParseStrOption(AnsiChar(Ord(tp)+1), AnsiString(FLockRead));
+            tpLockWrite   : ParseStrOption(AnsiChar(Ord(tp)+1), AnsiString(FLockWrite));
           {$IFDEF FB20_UP}
-            tpLockTimeout : Result := Result + Char(Ord(tp)+1) + PChar(@FLockTimeout)[0] + PChar(@FLockTimeout)[1];
+            tpLockTimeout : Result := Result + AnsiChar(Ord(tp)+1) + PAnsiChar(@FLockTimeout)[0] + PAnsiChar(@FLockTimeout)[1];
           {$ENDIF}
           else
-            Result := Result + Char(Ord(tp)+1);
+            Result := Result + AnsiChar(Ord(tp)+1);
           end;
         end;
     end;
@@ -3631,8 +3697,9 @@ begin
   try
 {$ENDIF}
     BeginTransaction;
-    FDataBase.FLibrary.DSQLExecuteImmediate(FDataBase.FDbHandle,
-      FTrHandle, sql, FSQLDialect);
+    with FDataBase, FLibrary do
+    DSQLExecuteImmediate(FDataBase.FDbHandle,
+      FTrHandle, AnsiString(sql), GetSQLDialect);
 {$IFDEF UIBTHREADSAFE}
   finally
     UnLock;
@@ -3675,21 +3742,23 @@ end;
 { TUIBService }
 
 procedure TUIBService.BeginService;
-var SPB: string;
-  procedure AddString(id: char; const Value: string);
+var
+  SPB: AnsiString;
+
+  procedure AddString(id: AnsiChar; const Value: AnsiString);
   begin
     if (Value <> '') then
-      SPB := SPB + id + Char(length(Value)) + Value;
+      SPB := SPB + id + AnsiChar(length(Value)) + Value;
   end;
 begin
   SPB := isc_spb_version + isc_spb_current_version;
-  AddString(isc_spb_user_name, FUserName);
-  AddString(isc_spb_password, FPassWord);
+  AddString(isc_spb_user_name, AnsiString(FUserName));
+  AddString(isc_spb_password, AnsiString(FPassWord));
   FLibrary.Load(FLiBraryName);
   case FProtocol of
     proLocalHost : FLibrary.ServiceAttach('service_mgr', FHandle, SPB);
-    proTCPIP     : FLibrary.ServiceAttach(Fhost + ':service_mgr', FHandle, SPB);
-    proNetBEUI   : FLibrary.ServiceAttach('\\'+ Fhost + '\service_mgr', FHandle, SPB);
+    proTCPIP     : FLibrary.ServiceAttach(AnsiString(Fhost) + ':service_mgr', FHandle, SPB);
+    proNetBEUI   : FLibrary.ServiceAttach('\\' + AnsiString(Fhost) + '\service_mgr', FHandle, SPB);
   end;
 end;
 
@@ -3719,19 +3788,19 @@ begin
   FLibrary.ServiceDetach(FHandle);
 end;
 
-function TUIBService.CreateParam(code: char;
-  const Value: string): string;
+function TUIBService.CreateParam(code: AnsiChar;
+  const Value: AnsiString): AnsiString;
 var Len: Word;
 begin
   Len := Length(Value);
   if len > 0 then
-    Result := code + PChar(@Len)[0] + PChar(@Len)[1] + Value else
+    Result := code + PAnsiChar(@Len)[0] + PAnsiChar(@Len)[1] + Value else
     result := '';
 end;
 
-function TUIBService.CreateParam(code: char; Value: Integer): string;
+function TUIBService.CreateParam(code: AnsiChar; Value: Integer): ANsiString;
 begin
-  result := code + PChar(@Value)[0] + PChar(@Value)[1] + PChar(@Value)[2] + PChar(@Value)[3];
+  result := code + PAnsiChar(@Value)[0] + PAnsiChar(@Value)[1] + PAnsiChar(@Value)[2] + PAnsiChar(@Value)[3];
 end;
 
 { TUIBBackupRestore }
@@ -3756,7 +3825,7 @@ end;
 
 procedure TUIBBackupRestore.Run;
 var
-  Buffer: string;
+  Buffer: AnsiString;
   Len: Word;
 begin
   BeginService;
@@ -3774,7 +3843,7 @@ begin
         if (len > 0)  then
         begin
           if Assigned(FOnVerbose) then
-            FOnVerbose(self, copy(Buffer, 4, len));
+            FOnVerbose(self, string(copy(Buffer, 4, len)));
         end else
           Break;
       end;
@@ -3786,11 +3855,11 @@ end;
 
 { TUIBBackup }
 
-function TUIBBackup.CreateStartSPB: string;
+function TUIBBackup.CreateStartSPB: AnsiString;
 var
   Len: Word;
   i: Integer;
-  FileName: string;
+  FileName: AnsiString;
   FileLength: Integer;
   function GetValue(Index: Integer): string;
   begin
@@ -3805,27 +3874,27 @@ begin
   // DB Name
   Result := Result + isc_spb_dbname;
   Len := Length(FDatabase);
-  Result := Result + PChar(@Len)[0] + PChar(@Len)[1];
-  Result := Result + FDatabase;
+  Result := Result + PAnsiChar(@Len)[0] + PAnsiChar(@Len)[1];
+  Result := Result + AnsiString(FDatabase);
 
   for i := 0 to FBackupFiles.Count - 1 do
   begin
-    FileName := FBackupFiles.Names[i];
+    FileName := AnsiString(FBackupFiles.Names[i]);
     if FileName = '' then
-      FileName := FBackupFiles[i];
+      FileName := AnsiString(FBackupFiles[i]);
     if FileName <> '' then
     begin
       // Backup file
       Result := Result + isc_spb_bkp_file;
       Len := Length(FileName);
-      Result := Result + PChar(@Len)[0] + PChar(@Len)[1];
+      Result := Result + PAnsiChar(@Len)[0] + PAnsiChar(@Len)[1];
       Result := Result + FileName;
       // Backup file length
       if TryStrToInt(GetValue(i), FileLength) then
       begin
         Result := Result + isc_spb_bkp_length;
-        Result := Result + PChar(@FileLength)[0] + PChar(@FileLength)[1] +
-          PChar(@FileLength)[2] + PChar(@FileLength)[3];
+        Result := Result + PAnsiChar(@FileLength)[0] + PAnsiChar(@FileLength)[1] +
+          PAnsiChar(@FileLength)[2] + PAnsiChar(@FileLength)[3];
       end;
     end;
   end;
@@ -3834,7 +3903,7 @@ begin
     Result := Result + isc_spb_verbose;
 
   if (FOptions <> []) then
-    Result := Result + isc_spb_options + PChar(@FOptions)^ + #0#0#0;
+    Result := Result + isc_spb_options + PAnsiChar(@FOptions)^ + #0#0#0;
 end;
 
 { TUIBRestore }
@@ -3846,11 +3915,11 @@ begin
   FPageSize := 0;
 end;
 
-function TUIBRestore.CreateStartSPB: string;
+function TUIBRestore.CreateStartSPB: AnsiString;
 var
   Len: Word;
   i: Integer;
-  FileName: string;
+  FileName: AnsiString;
   Opts: Cardinal;
 begin
   // backup service   ibservices
@@ -3858,13 +3927,13 @@ begin
 
   for i := 0 to FBackupFiles.Count - 1 do
   begin
-    FileName := FBackupFiles[i];
+    FileName := AnsiString(FBackupFiles[i]);
     if FileName <> '' then
     begin
       // Backup file
       Result := Result + isc_spb_bkp_file;
       Len := Length(FileName);
-      Result := Result + PChar(@Len)[0] + PChar(@Len)[1];
+      Result := Result + PAnsiChar(@Len)[0] + PAnsiChar(@Len)[1];
       Result := Result + FileName;
     end;
   end;
@@ -3872,8 +3941,8 @@ begin
   // DB Name
   Result := Result + isc_spb_dbname;
   Len := Length(FDatabase);
-  Result := Result + PChar(@Len)[0] + PChar(@Len)[1];
-  Result := Result + FDatabase;
+  Result := Result + PAnsiChar(@Len)[0] + PAnsiChar(@Len)[1];
+  Result := Result + AnsiString(FDatabase);
 
   if FVerbose then
     Result := Result + isc_spb_verbose;
@@ -3881,13 +3950,13 @@ begin
   if (FOptions <> []) then
   begin
     Opts := PByte(@FOptions)^ shl 8;
-    Result := Result + isc_spb_options + PChar(@Opts)[0] +
-      PChar(@Opts)[1] + PChar(@Opts)[2] + PChar(@Opts)[3];
+    Result := Result + isc_spb_options + PAnsiChar(@Opts)[0] +
+      PAnsiChar(@Opts)[1] + PAnsiChar(@Opts)[2] + PAnsiChar(@Opts)[3];
   end;
 
   if FPageSize > 0 then
-    Result := Result + isc_spb_res_page_size + PChar(@FPageSize)[0] +
-      PChar(@FPageSize)[1] + PChar(@FPageSize)[2] + PChar(@FPageSize)[3];
+    Result := Result + isc_spb_res_page_size + PAnsiChar(@FPageSize)[0] +
+      PAnsiChar(@FPageSize)[1] + PAnsiChar(@FPageSize)[2] + PAnsiChar(@FPageSize)[3];
 end;
 
 { TUIBSecurity }
@@ -3974,24 +4043,25 @@ end;
 
 procedure TUIBSecurity.RunAction(aAction: TSecurityAction);
 const
-  IscActions : array[TSecurityAction] of Char = (
+  IscActions : array[TSecurityAction] of AnsiChar = (
     isc_action_svc_add_user, isc_action_svc_delete_user, isc_action_svc_modify_user,
     isc_action_svc_display_user, isc_action_svc_display_user);
-  IscParams : array[TSecurityParam] of Char = (
+  IscParams : array[TSecurityParam] of AnsiChar = (
     isc_spb_sql_role_name, isc_spb_sec_username, isc_spb_sec_password,
     isc_spb_sec_firstname, isc_spb_sec_middlename, isc_spb_sec_lastname,
     isc_spb_sec_userid, isc_spb_sec_groupid);
 var
-  StartParams, Buffer: string; Position: Integer;
+  StartParams, Buffer: AnsiString;
+  Position: Integer;
 
   procedure AddStringParam(P: TSecurityParam);
   var
-    Value : string;
+    Value : AnsiString;
     Len : UShort;
   begin
-    Value := GetStringParam(ord(P));
+    Value := AnsiString(GetStringParam(ord(P)));
     Len := Length(Value);
-    StartParams := StartParams + IscParams[P] + PChar(@Len)[0] + PChar(@Len)[1] + Value;
+    StartParams := StartParams + IscParams[P] + PAnsiChar(@Len)[0] + PAnsiChar(@Len)[1] + Value;
   end;
 
   procedure AddIntegerParam(P: TSecurityParam);
@@ -3999,11 +4069,11 @@ var
     Value : Integer;
   begin
     Value := GetIntegerParam(ord(P));
-    StartParams := StartParams + IscParams[P] + PChar(@Value)[0] + PChar(@Value)[1] +
-                                                PChar(@Value)[2] + PChar(@Value)[3];
+    StartParams := StartParams + IscParams[P] + PAnsiChar(@Value)[0] + PAnsiChar(@Value)[1] +
+                                                PAnsiChar(@Value)[2] + PAnsiChar(@Value)[3];
   end;
 
-  procedure ParseCode(Code: Char);
+  procedure ParseCode(Code: AnsiChar);
   begin
     if (Buffer[Position] <> Code) then
       raise Exception.Create(EUIB_SERVICESPARSING);
@@ -4017,7 +4087,7 @@ var
     ParseCode(IscParams[P]);
     Len := PWord(@Buffer[Position])^;
     Position := Position + 2;
-    SetString(Result, PChar(@Buffer[Position]), Len);
+    SetString(Result, PAnsiChar(@Buffer[Position]), Len);
     Position := Position + Len;
   end;
 
@@ -4064,12 +4134,12 @@ begin
     if aAction in [saDisplayUser, saDisplayUsers] then
     begin
       SetLength(Buffer, 32000);
-      FLibrary.ServiceQuery(FHandle, '', Char(isc_info_svc_get_users), Buffer);
+      FLibrary.ServiceQuery(FHandle, AnsiString(''), AnsiChar(isc_info_svc_get_users), Buffer);
       Position := 1;
       ParseCode(isc_info_svc_get_users);
       FUserInfos.Clear;
       Inc(Position, 2); // skip combined length info
-      while Buffer[Position] <> Char(isc_info_end) do
+      while Buffer[Position] <> AnsiChar(isc_info_end) do
       begin
         U := TUserInfo.Create;
         with U do
@@ -4119,7 +4189,7 @@ var
   j: TCharacterSet;
   Dialect: Integer;
   TrHandle: IscTrHandle;
-  str: string;
+  str: String;
   Found: boolean;
   Handled: boolean;
 
@@ -4175,7 +4245,7 @@ begin
             str := Parser.Params.Values['CHARACTER'];
             Found := false;
             for j := low(TCharacterSet) to high(TCharacterSet) do
-              if (CompareText(CharacterSetStr[j], str) = 0) then
+              if (CompareText(string(CharacterSetStr[j]), str) = 0) then
               begin
                 FQuery.FindDataBase.CharacterSet := j;
                 found := true;
@@ -4199,7 +4269,7 @@ begin
               try
             {$ENDIF}
                 FLibrary.DSQLExecuteImmediate(
-                  FDbHandle, TrHandle, Parser.Statement, SQLDialect);
+                  FDbHandle, TrHandle, AnsiString(Parser.Statement), SQLDialect);
             {$IFDEF UIBTHREADSAFE}
               finally
                 FQuery.FindDataBase.UnLock;
@@ -4335,7 +4405,7 @@ end;
 
 { TUIBRepair }
 
-function TUIBRepair.CreateStartSPB: string;
+function TUIBRepair.CreateStartSPB: AnsiString;
 var
   Len: Word;
   Param: byte;
@@ -4345,8 +4415,8 @@ begin
   // DB Name
   Result := Result + isc_spb_dbname;
   Len := Length(FDatabase);
-  Result := Result + PChar(@Len)[0] + PChar(@Len)[1];
-  Result := Result + FDatabase;
+  Result := Result + PAnsiChar(@Len)[0] + PAnsiChar(@Len)[1];
+  Result := Result + AnsiString(FDatabase);
 
   if (roSweepDB in FOptions) then
     Param := isc_spb_rpr_sweep_db else
@@ -4355,7 +4425,7 @@ begin
     Param := Param or isc_spb_rpr_validate_db;
 
   if (Param <> 0) then
-    Result := Result + isc_spb_options + char(Param) + #0#0#0;
+    Result := Result + isc_spb_options + AnsiChar(Param) + #0#0#0;
 
   if (roListLimboTrans in FOptions) then
     Param := isc_spb_rpr_list_limbo_trans else
@@ -4375,8 +4445,7 @@ begin
        Param := Param or isc_spb_rpr_validate_db;
   end;
   if (Param <> 0) then
-    Result := Result + isc_spb_options + char(Param) + #0#0#0;
-
+    Result := Result + isc_spb_options + AnsiChar(Param) + #0#0#0;
 end;
 
 procedure TUIBRepair.Run;
@@ -4524,7 +4593,7 @@ begin
     raise Exception.Create(EUIB_DATABASENOTDEF);
 end;
 
-procedure EventCallback(UserData: Pointer; Length: Smallint; Updated: PChar); cdecl;
+procedure EventCallback(UserData: Pointer; Length: Smallint; Updated: PAnsiChar); cdecl;
 begin
   if (Assigned(UserData) and Assigned(Updated)) then
   with TUIBEventThread(UserData) do
@@ -4569,7 +4638,7 @@ end;
 
 procedure TUIBEventThread.Execute;
 var
-  arr: array[0..14] of PChar;
+  arr: array[0..14] of AnsiString;
   count, i: integer;
   first: boolean;
 begin
@@ -4582,11 +4651,13 @@ begin
   if count > 15 then
     count := 15;
   for i := 0 to count - 1 do
-    Arr[i] := PChar(FOwner.FEvents[i + FBlock * 15]);
+    Arr[i] := AnsiString(FOwner.FEvents[i + FBlock * 15]);
   with FindDataBase.FLibrary do
     FEventBufferLen := EventBlock(FEventBuffer, FResultBuffer, count,
-      Arr[0], Arr[1], Arr[2], Arr[3], Arr[4], Arr[5], Arr[6], Arr[7], Arr[8],
-      Arr[9], Arr[10], Arr[11], Arr[12], Arr[13], Arr[14]);
+      PAnsiChar(Arr[0]), PAnsiChar(Arr[1]), PAnsiChar(Arr[2]), PAnsiChar(Arr[3]),
+      PAnsiChar(Arr[4]), PAnsiChar(Arr[5]), PAnsiChar(Arr[6]), PAnsiChar(Arr[7]),
+      PAnsiChar(Arr[8]), PAnsiChar(Arr[9]), PAnsiChar(Arr[10]), PAnsiChar(Arr[11]),
+      PAnsiChar(Arr[12]), PAnsiChar(Arr[13]), PAnsiChar(Arr[14]));
   FSignal.ResetEvent;
   if FSyncMainThread then
     Synchronize(SyncEventQueue) else
@@ -4744,7 +4815,7 @@ begin
   BeginService;
   try
     FLibrary.ServiceStart(FHandle, isc_action_svc_properties +
-      CreateParam(isc_spb_dbname, FDatabaseName) +
+      CreateParam(isc_spb_dbname, AnsiString(FDatabaseName)) +
       CreateParam(isc_spb_options, isc_spb_prp_activate));
   finally
     EndService;
@@ -4756,7 +4827,7 @@ begin
   BeginService;
   try
     FLibrary.ServiceStart(FHandle, isc_action_svc_properties +
-      CreateParam(isc_spb_dbname, FDatabaseName) +
+      CreateParam(isc_spb_dbname, AnsiString(FDatabaseName)) +
       CreateParam(isc_spb_options, isc_spb_prp_db_online));
   finally
     EndService;
@@ -4765,13 +4836,13 @@ end;
 
 procedure TUIBConfig.SetAsyncMode(Value: Boolean);
 const
-  AsyncMode: array[boolean] of char =
+  AsyncMode: array[boolean] of AnsiChar =
     (isc_spb_prp_wm_sync, isc_spb_prp_wm_async);
 begin
   BeginService;
   try
     FLibrary.ServiceStart(FHandle, isc_action_svc_properties +
-      CreateParam(isc_spb_dbname, FDatabaseName) +
+      CreateParam(isc_spb_dbname, AnsiString(FDatabaseName)) +
       isc_spb_prp_write_mode + AsyncMode[Value]);
   finally
     EndService;
@@ -4783,7 +4854,7 @@ begin
   BeginService;
   try
     FLibrary.ServiceStart(FHandle, isc_action_svc_properties +
-      CreateParam(isc_spb_dbname, FDatabaseName) +
+      CreateParam(isc_spb_dbname, AnsiString(FDatabaseName)) +
       CreateParam(isc_spb_prp_set_sql_dialect, Value));
   finally
     EndService;
@@ -4795,7 +4866,7 @@ begin
   BeginService;
   try
     FLibrary.ServiceStart(FHandle, isc_action_svc_properties +
-      CreateParam(isc_spb_dbname, FDatabaseName) +
+      CreateParam(isc_spb_dbname, AnsiString(FDatabaseName)) +
       CreateParam(isc_spb_prp_page_buffers, Value));
   finally
     EndService;
@@ -4804,13 +4875,13 @@ end;
 
 procedure TUIBConfig.SetReadOnly(Value: Boolean);
 const
-  ReadOnly: array[boolean] of char =
+  ReadOnly: array[boolean] of AnsiChar =
     (isc_spb_prp_am_readwrite, isc_spb_prp_am_readonly);
 begin
   BeginService;
   try
     FLibrary.ServiceStart(FHandle, isc_action_svc_properties +
-      CreateParam(isc_spb_dbname, FDatabaseName) +
+      CreateParam(isc_spb_dbname, AnsiString(FDatabaseName)) +
       isc_spb_prp_access_mode + ReadOnly[Value]);
   finally
     EndService;
@@ -4819,13 +4890,13 @@ end;
 
 procedure TUIBConfig.SetReserveSpace(Value: Boolean);
 const
-  ReserveSpace: array[boolean] of char =
+  ReserveSpace: array[boolean] of AnsiChar =
     (isc_spb_prp_res_use_full, isc_spb_prp_res);
 begin
   BeginService;
   try
     FLibrary.ServiceStart(FHandle, isc_action_svc_properties +
-      CreateParam(isc_spb_dbname, FDatabaseName) +
+      CreateParam(isc_spb_dbname, AnsiString(FDatabaseName)) +
       isc_spb_prp_reserve_space + ReserveSpace[Value]);
   finally
     EndService;
@@ -4837,7 +4908,7 @@ begin
   BeginService;
   try
     FLibrary.ServiceStart(FHandle, isc_action_svc_properties +
-      CreateParam(isc_spb_dbname, FDatabaseName) +
+      CreateParam(isc_spb_dbname, AnsiString(FDatabaseName)) +
       CreateParam(isc_spb_prp_sweep_interval, Value));
   finally
     EndService;
@@ -4847,13 +4918,13 @@ end;
 procedure TUIBConfig.ShutdownDatabase(Options: TShutdownMode;
   Wait: Integer);
 const
-  ShutdownMode: array[TShutdownMode] of char =
+  ShutdownMode: array[TShutdownMode] of AnsiChar =
     (isc_spb_prp_shutdown_db, isc_spb_prp_deny_new_transactions, isc_spb_prp_deny_new_attachments);
 begin
   BeginService;
   try
     FLibrary.ServiceStart(FHandle, isc_action_svc_properties +
-      CreateParam(isc_spb_dbname, FDatabaseName) +
+      CreateParam(isc_spb_dbname, AnsiString(FDatabaseName)) +
       CreateParam(ShutdownMode[Options], Wait));
   finally
     EndService;
@@ -4864,11 +4935,11 @@ end;
 
 procedure TUIBServerInfo.GetServerInfo;
 var
-  Buffer: String;
+  Buffer: AnsiString;
   Code: Byte;
   Position: Integer;
   Value: Integer;
-  DbName: String;
+  DbName: AnsiString;
 
   function ParseByte: Byte;
   begin
@@ -4888,7 +4959,7 @@ var
     Inc(Position, 4);
   end;
 
-  function ParseString: String;
+  function ParseString: AnsiString;
   var
     Len: Word;
   begin
@@ -4925,7 +4996,7 @@ begin
 
   { Parse response }
   Position := 2;
-  while Buffer[Position] <> Char(isc_info_flag_end) do
+  while Buffer[Position] <> AnsiChar(isc_info_flag_end) do
   begin
     Code := ParseByte;
     case Code of
@@ -4947,7 +5018,7 @@ begin
       begin
         DbName := ParseString;
         if Assigned(FOnInfoDbName) then
-          FOnInfoDbName(Self,DbName);
+          FOnInfoDbName(Self, string(DbName));
       end;
     end;
   end;

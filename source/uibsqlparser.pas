@@ -101,10 +101,10 @@ type
   private
     FStrings: TStrings;
     FParams: TStringlist;
-    FStr: string;
+    FStr: AnsiString;
     FValue: string;
     FLine: Integer;
-    FCursor: PChar;
+    FCursor: PAnsiChar;
     FMarkerLine: Integer;
     FMarkerPos: Integer;
     FOnComment: TOnComment;
@@ -125,7 +125,7 @@ type
 implementation
 
 const
-  CM: array[char] of char = (
+  CM: array[AnsiChar] of AnsiChar = (
     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
     ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
@@ -167,9 +167,9 @@ procedure TUIBSQLParser.Error(const msg: string = '');
 var E: EUIBSQLParseError;
 begin
   E := EUIBSQLParseError.CreateFmt('Parse error at line %d, pos %d'#13'%s',
-    [FLine, FCursor - PChar(FStr), msg]);
+    [FLine, FCursor - PAnsiChar(FStr), msg]);
   E.FLine := FLine;
-  E.FPos := FCursor - PChar(FStr);
+  E.FPos := FCursor - PAnsiChar(FStr);
   raise E;
 end;
 
@@ -183,12 +183,12 @@ begin
   begin
     str := FStrings[i];
     if (FMarkerLine = FLine) then
-      Result := copy(str, FMarkerPos +1, FCursor - PChar(FStr) - FMarkerPos ) else
+      Result := copy(str, FMarkerPos +1, FCursor - PAnsiChar(FStr) - FMarkerPos ) else
       if (FMarkerLine = i) then
         Result := copy(str, FMarkerPos + 1, Length(Str) - FMarkerPos) else
         if i <> FLine then
           Result := Result + #13#10 + str else
-          Result := Result + #13#10 + copy(str, 0, FCursor - PChar(FStr) - FMarkerPos)
+          Result := Result + #13#10 + copy(str, 0, FCursor - PAnsiChar(FStr) - FMarkerPos)
   end;
 end;
 
@@ -198,8 +198,8 @@ begin
   result := (FLine < FStrings.Count);
   if result then
   begin
-    FStr := FStrings[FLine];
-    FCursor := PChar(FStr);
+    FStr := AnsiString(FStrings[FLine]);
+    FCursor := PAnsiChar(FStr);
   end;
 end;
 
@@ -240,7 +240,7 @@ begin
     end else
     begin
       FMarkerLine := FLine;
-      FMarkerPos := FCursor - PChar(FStr);
+      FMarkerPos := FCursor - PAnsiChar(FStr);
     end;
   end else
   begin
@@ -516,8 +516,9 @@ end;
 // lexical analyser method
 function TUIBSQLParser.NextToken: TSQLToken;
 label next;
-var p: PChar;
-  function get: char;
+var
+  p: PAnsiChar;
+  function get: AnsiChar;
   begin
     inc(FCursor);
     result := CM[FCursor^];
@@ -544,7 +545,7 @@ next:
                     begin
                       if assigned(FOnComment) then
                       begin
-                        FValue := FValue + copy(p, 0, FCursor - p);
+                        FValue := FValue + string(copy(p, 0, FCursor - p));
                         FOnComment(self, FValue, csMultiLine);
                       end;
                       inc(FCursor, 2);
@@ -554,7 +555,7 @@ next:
                #00:
                     begin
                       if assigned(FOnComment) then
-                        FValue := FValue + copy(p, 0, FCursor - p) + #13#10;
+                        FValue := FValue + string(copy(p, 0, FCursor - p)) + #13#10;
                       if NextLine then
                         p := FCursor else
                         Error('unterminated comment');
@@ -573,7 +574,7 @@ next:
     '-': if (FCursor[1] = '-') then
          begin
            if Assigned(FOnComment) then
-             FOnComment(self, PChar(@FCursor[2]), csSingleLine);
+             FOnComment(self, string(PAnsiChar(@FCursor[2])), csSingleLine);
            if not NextLine then
              exit;
            goto next;
@@ -592,12 +593,12 @@ next:
                        inc(FCursor, 2) else
                        begin
                          inc(FCursor);
-                         FValue := FValue + copy(p, 0, FCursor - p);
+                         FValue := FValue + string(copy(p, 0, FCursor - p));
                          result := toValString;
                          Break;
                        end;
                #00: begin
-                        FValue := FValue + copy(p, 0, FCursor - p)+ #13#10;
+                        FValue := FValue + string(copy(p, 0, FCursor - p))+ #13#10;
                         if NextLine then
                           p := FCursor else
                           Error('Unterminated string.');
@@ -617,12 +618,12 @@ next:
                        inc(FCursor, 2) else
                        begin
                          inc(FCursor);
-                         FValue := FValue + copy(p, 0, FCursor - p);
+                         FValue := FValue + string(copy(p, 0, FCursor - p));
                          result := toSymbol;
                          Break;
                        end;
                #00: begin
-                      FValue := FValue + copy(p, 0, FCursor - p) + #13#10;
+                      FValue := FValue + string(copy(p, 0, FCursor - p)) + #13#10;
                       if NextLine then
                         p := FCursor else
                         Error('Unterminated Symbol, expected: ".');
@@ -652,7 +653,7 @@ next:
                Break;
              end;
            until not(FCursor^ in ['0'..'9','.']);
-           FValue := copy(p, 0, FCursor - p);
+           FValue := string(copy(p, 0, FCursor - p));
          end;
     '!', '^', '~':
            begin
@@ -1577,7 +1578,7 @@ next:
           if (result = toSymbol) then
           begin
             while (CM[FCursor^] <> ' ') do inc(FCursor);
-            FValue := copy(p, 0, FCursor - p);
+            FValue := string(copy(p, 0, FCursor - p));
           end;
       end;
     // EOL

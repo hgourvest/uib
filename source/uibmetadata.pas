@@ -24,8 +24,7 @@ uses
 {$IFDEF MSWINDOWS}
   Windows, 
 {$ENDIF}
-  Classes, SysUtils,
-  uibase, uiblib, uib, uibconst, uibkeywords, uibavl;
+  Classes, SysUtils, uibase, uiblib, uib, uibconst, uibkeywords, uibavl;
 
 type
   TTriggerPrefix = (tpBefore, tpAfter);
@@ -316,7 +315,6 @@ type
     property OnDelete: TUpdateRule read FOnDelete;
     property OnUpdate: TUpdateRule read FOnUpdate;
     property IndexName: string read FIndexName;
-    //property
   end;
 
   TMetaIndex = class(TMetaConstraint)
@@ -686,9 +684,9 @@ type
 
   { Used to store temporary grantees }
   TGrantee = record
-    User: String[31];
+    User: string;
     UserType: Integer;
-    Grantor: String[31];
+    Grantor: string;
     Option: Boolean;
   end;
 
@@ -848,13 +846,13 @@ implementation
 
 const
 
-  TriggerPrefixTypes: array [TTriggerPrefix] of PChar =
+  TriggerPrefixTypes: array [TTriggerPrefix] of string =
     ('BEFORE', 'AFTER');
 
-  TriggerSuffixTypes: array [TTriggerSuffix] of PChar =
+  TriggerSuffixTypes: array [TTriggerSuffix] of string =
     ('INSERT', 'UPDATE', 'DELETE');
 
-  FieldTypes: array [TUIBFieldType] of PChar =
+  FieldTypes: array [TUIBFieldType] of string =
    ('', 'NUMERIC', 'CHAR', 'VARCHAR', 'CSTRING', 'SMALLINT', 'INTEGER', 'QUAD',
     'FLOAT', 'DOUBLE PRECISION', 'TIMESTAMP', 'BLOB', 'BLOBID', 'DATE', 'TIME',
     'BIGINT' , 'ARRAY'{$IFDEF IB7_UP}, 'BOOLEAN' {$ENDIF});
@@ -1050,7 +1048,7 @@ begin
   Len := Length(Str);
   Stream.Write(Len, SizeOf(Len));
   if Len > 0 then
-    Stream.Write(PChar(Str)^, Len);
+    Stream.Write(PChar(Str)^, Len * SizeOf(Char));
 end;
 
 procedure ReadString(Stream: TStream; var Str: string);
@@ -1060,7 +1058,7 @@ begin
   Stream.Read(Len, SizeOf(Len));
   SetLength(Str, Len);
   if Len > 0 then
-    Stream.Read(PChar(Str)^, Len);
+    Stream.Read(PChar(Str)^, Len * SizeOf(Char));
 end;
 
 { TAVLString }
@@ -1413,9 +1411,9 @@ var
   Previous: TGrantee;
   CurrentPrivilege, PreviousPrivilege: TFieldPrivilege;
   Grant: TMetaFieldGrant;
-  Privilege: Char;
+  Privilege: AnsiChar;
   Fields: TStringList;
-  FieldName: String;
+  FieldName: string;
 
   function DecodePrivilege: TFieldPrivilege;
   begin
@@ -1442,7 +1440,7 @@ begin
       if G.Fields.IsNull[2] then
         Privilege := #0
       else
-        Privilege := G.Fields.AsString[2][1];
+        Privilege := G.Fields.AsAnsiString[2][1];
 
       FieldName := Trim(G.Fields.AsString[5]);
 
@@ -1457,7 +1455,7 @@ begin
       begin
         Previous := Current;
         PreviousPrivilege := CurrentPrivilege;
-        Fields.Add(FieldName);
+        Fields.Add(string(FieldName));
       end
       else
       begin
@@ -1468,7 +1466,7 @@ begin
            (Current.Grantor = Previous.Grantor) then
         begin
           // Même privilège (avec option), même utilisateur
-          Fields.Add(FieldName);
+          Fields.Add(string(FieldName));
         end
         else
         begin
@@ -1485,7 +1483,7 @@ begin
           Previous := Current;
           PreviousPrivilege := CurrentPrivilege;
           Fields.Clear;
-          Fields.Add(FieldName);
+          Fields.Add(string(FieldName));
         end;
       end;
 
@@ -1515,7 +1513,7 @@ var
   Previous: TGrantee;
   Privileges: TTablePrivileges;
   Grant: TMetaTableGrant;
-  Privilege: Char;
+  Privilege: AnsiChar;
 
   procedure IncludePrivilege;
   begin
@@ -1540,7 +1538,7 @@ begin
     if G.Fields.IsNull[2] then
       Privilege := #0
     else
-      Privilege := G.Fields.AsString[2][1];
+      Privilege := G.Fields.AsAnsiString[2][1];
 
     Current.User := Trim(G.Fields.AsString[0]);
     Current.Grantor := Trim(G.Fields.AsString[1]);
@@ -2198,7 +2196,7 @@ begin
     if OIDDBCharset in FOIDDatabases then
     begin
       QDefaultCharset.Open;
-      FDefaultCharset := StrToCharacterSet(trim(QDefaultCharset.Fields.AsString[0]));
+      FDefaultCharset := StrToCharacterSet(AnsiTrim(QDefaultCharset.Fields.AsAnsiString[0]));
       QDefaultCharset.Close(etmStayIn);
     end;
 

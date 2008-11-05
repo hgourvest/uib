@@ -52,7 +52,7 @@ type
 {$IFNDEF COMPILER6_UP}
 {$IFNDEF FPC}
   PPointer = ^Pointer;
-  PPChar = ^PChar;
+  PPChar = ^PAnsiChar;
 
   PCardinal = ^Cardinal;
   PSmallInt = ^Smallint;
@@ -66,13 +66,13 @@ type
 {$ENDIF BCB}
 {$ENDIF COMPILER6_UP}
 
-  UCHAR = {$IFDEF TYPE_IDENTITY} type {$ENDIF} Char;
+  UCHAR = {$IFDEF TYPE_IDENTITY} type {$ENDIF} AnsiChar;
   {$IFNDEF FPC}{$NODEFINE UCHAR}{$ENDIF}
   USHORT = {$IFDEF TYPE_IDENTITY} type {$ENDIF} Word;
   {$IFNDEF FPC}{$NODEFINE USHORT}{$ENDIF}
   ULONG = {$IFDEF TYPE_IDENTITY} type {$ENDIF} Cardinal;
   {$IFNDEF FPC}{$NODEFINE ULONG}{$ENDIF}
-  SCHAR = {$IFDEF TYPE_IDENTITY} type {$ENDIF} Char;
+  SCHAR = {$IFDEF TYPE_IDENTITY} type {$ENDIF} AnsiChar;
   {$IFNDEF FPC}{$NODEFINE SCHAR}{$ENDIF}
   SSHORT = {$IFDEF TYPE_IDENTITY} type {$ENDIF} Smallint;
   {$IFNDEF FPC}{$NODEFINE SSHORT}{$ENDIF}
@@ -102,7 +102,7 @@ type
   PVary = ^TVary;
   vary = record
     vary_length: USHORT;
-    vary_string: array [0..0] of Char;
+    vary_string: array [0..0] of AnsiChar;
   end;
   TVary = vary;
 
@@ -117,10 +117,10 @@ type
   {$ENDIF FB15_UP}
 
 {$IFNDEF FPC}
-  TEXT = {$IFDEF TYPE_IDENTITY} type {$ENDIF} Char; (* To be expunged over time *)
+  TEXT = {$IFDEF TYPE_IDENTITY} type {$ENDIF} AnsiChar; (* To be expunged over time *)
 {$ENDIF FPC}
-  STEXT = {$IFDEF TYPE_IDENTITY} type {$ENDIF} Char; (* Signed text - very rare *)
-  UTEXT = {$IFDEF TYPE_IDENTITY} type {$ENDIF} Char; (* Unsigned text - common *)
+  STEXT = {$IFDEF TYPE_IDENTITY} type {$ENDIF} AnsiChar; (* Signed text - very rare *)
+  UTEXT = {$IFDEF TYPE_IDENTITY} type {$ENDIF} AnsiChar; (* Unsigned text - common *)
   SBYTE = {$IFDEF TYPE_IDENTITY} type {$ENDIF} Byte; (* Signed byte - rare usage *)
   {$IFNDEF FPC}{$NODEFINE SBYTE}{$ENDIF}
   STATUS = {$IFDEF TYPE_IDENTITY} type  {$ENDIF} Longint;
@@ -193,7 +193,7 @@ type
   PISCStatus = ^ISCStatus;
   PPISCStatus = ^PISCStatus;
 
-  ISC_UCHAR = {$IFDEF TYPE_IDENTITY} type {$ENDIF} Char;
+  ISC_UCHAR = {$IFDEF TYPE_IDENTITY} type {$ENDIF} AnsiChar;
   ISCUChar = ISC_UCHAR;
   PISCUChar = ^ISCUChar;
 
@@ -283,8 +283,8 @@ type
     array_desc_subtype: byte;
     array_desc_scale: byte;
     array_desc_length: Word;
-    array_desc_field_name: array [0..METADATALENGTH - 1] of Char;
-    array_desc_relation_name: array [0..METADATALENGTH - 1] of Char;
+    array_desc_field_name: array [0..METADATALENGTH - 1] of AnsiChar;
+    array_desc_relation_name: array [0..METADATALENGTH - 1] of AnsiChar;
     array_desc_dimensions: Smallint;
     array_desc_flags: Smallint;
     array_desc_bounds: array [0..15] of TISCArrayBound;
@@ -303,8 +303,8 @@ type
     blob_desc_subtype: Smallint;
     blob_desc_charset: Smallint;
     blob_desc_segment_size: Smallint;
-    blob_desc_field_name: array [0..METADATALENGTH - 1] of Char;
-    blob_desc_relation_name: array [0..METADATALENGTH - 1] of Char;
+    blob_desc_field_name: array [0..METADATALENGTH - 1] of AnsiChar;
+    blob_desc_relation_name: array [0..METADATALENGTH - 1] of AnsiChar;
   end;
   TISCBlobDescV2 = ISC_BLOB_DESC_V2;
 
@@ -320,8 +320,8 @@ type
     array_desc_dtype: byte;
     array_desc_scale: byte;
     array_desc_length: Word;
-    array_desc_field_name: array [0..METADATALENGTH - 1] of Char;
-    array_desc_relation_name: array [0..METADATALENGTH - 1] of Char;
+    array_desc_field_name: array [0..METADATALENGTH - 1] of AnsiChar;
+    array_desc_relation_name: array [0..METADATALENGTH - 1] of AnsiChar;
     array_desc_dimensions: Smallint;
     array_desc_flags: Smallint;
     array_desc_bounds: array [0..15] of TISCArrayBound;
@@ -333,8 +333,8 @@ type
     blob_desc_subtype: Smallint;
     blob_desc_charset: Smallint;
     blob_desc_segment_size: Smallint;
-    blob_desc_field_name: array [0..METADATALENGTH - 1] of Char;
-    blob_desc_relation_name: array [0..METADATALENGTH - 1] of Char;
+    blob_desc_field_name: array [0..METADATALENGTH - 1] of AnsiChar;
+    blob_desc_relation_name: array [0..METADATALENGTH - 1] of AnsiChar;
   end;
   TISCBlobDesc = {$IFDEF TYPE_IDENTITY} type {$ENDIF} ISC_BLOB_DESC;
 
@@ -352,8 +352,8 @@ type
     ctl_buffer_length: Word;           // Length of buffer
     ctl_segment_length: Word;          // Length of current segment
     ctl_bpb_length: Word;              // Length of blob parameter  block
-    ctl_bpb: PChar;                    // Address of blob parameter block
-    ctl_buffer: PChar;                 // Address of segment buffer
+    ctl_bpb: PAnsiChar;                // Address of blob parameter block
+    ctl_buffer: PAnsiChar;             // Address of segment buffer
     ctl_max_segment: ISCLong;          // Length of longest segment
     ctl_number_segments: ISCLong;      // Total number of segments
     ctl_total_length: ISCLong;         // Total length of blob
@@ -368,12 +368,12 @@ type
 
   PBStream = ^TBStream;
   BSTREAM = record
-    bstr_blob: PPointer;   // Blob handle
-    bstr_buffer: PChar;    // Address of buffer
-    bstr_ptr: PChar;       // Next character
-    bstr_length: Smallint; // Length of buffer
-    bstr_cnt: Smallint;    // Characters in buffer
-    bstr_mode: Char;       // (mode) ? OUTPUT : INPUT
+    bstr_blob: PPointer;    // Blob handle
+    bstr_buffer: PAnsiChar; // Address of buffer
+    bstr_ptr: PAnsiChar;    // Next character
+    bstr_length: Smallint;  // Length of buffer
+    bstr_cnt: Smallint;     // Characters in buffer
+    bstr_mode: AnsiChar;    // (mode) ? OUTPUT : INPUT
   end;
   TBStream = BSTREAM;
 
@@ -407,10 +407,10 @@ const
 
 type
 
-  TBlobGetSegmentFn = function(hnd: Pointer; buffer: PChar; buf_size: ISCUShort;
+  TBlobGetSegmentFn = function(hnd: Pointer; buffer: PAnsiChar; buf_size: ISCUShort;
     var result_len: ISCUShort): Smallint; cdecl;
 
-  TBlobPutSegmentFn = procedure(hnd: PPointer; buffer: PChar;
+  TBlobPutSegmentFn = procedure(hnd: PPointer; buffer: PAnsiChar;
     buf_size: ISCUShort); cdecl;
 
   TBlobLSeekFn = function(hnd: PPointer; mode: ISCUShort; offset: ISCLong): ISCLong; cdecl;
@@ -448,7 +448,7 @@ type
     dsc_length: ISCUShort;
     dsc_sub_type: Smallint;
     dsc_flags: ISCUShort;
-    dsc_address: PChar;
+    dsc_address: PAnsiChar;
   end;
   TParamDsc = PARAMDSC;
 
@@ -457,7 +457,7 @@ type
   PParamVary = ^TParamVary;
   PARAMVARY = record
     vary_length: ISCUShort;
-    vary_string: array [0..0] of Char;
+    vary_string: array [0..0] of AnsiChar;
   end;
   TParamVary = PARAMVARY;
 
@@ -525,16 +525,16 @@ type
     sqlscale: Smallint; // scale factor
     sqlsubtype: Smallint; // datatype subtype
     sqllen: Smallint; // length of data area
-    sqldata: PChar; // address of data
+    sqldata: PAnsiChar; // address of data
     sqlind: PSmallInt; // address of indicator variable
     sqlname_length: Smallint; // length of sqlname field
-    sqlname: array [0..METADATALENGTH - 1] of Char; // name of field, name length + space for NULL
+    sqlname: array [0..METADATALENGTH - 1] of AnsiChar; // name of field, name length + space for NULL
     relname_length: Smallint; // length of relation name
-    relname: array [0..METADATALENGTH - 1] of Char; // field's relation name + space for NULL
+    relname: array [0..METADATALENGTH - 1] of AnsiChar; // field's relation name + space for NULL
     ownname_length: Smallint; // length of owner name
-    ownname: array [0..METADATALENGTH - 1] of Char; // relation's owner name + space for NULL
+    ownname: array [0..METADATALENGTH - 1] of AnsiChar; // relation's owner name + space for NULL
     aliasname_length: Smallint; // length of alias name
-    aliasname: array [0..METADATALENGTH - 1] of Char; // relation's alias name + space for  NULL
+    aliasname: array [0..METADATALENGTH - 1] of AnsiChar; // relation's alias name + space for  NULL
   end;
   TXSQLVarV1 = XSQLVAR_V1;
 
@@ -545,16 +545,16 @@ type
     sqlprecision: Smallint; // precision : Reserved for future
     sqlsubtype: Smallint; // datatype subtype
     sqllen: Smallint; // length of data area
-    sqldata: PChar; // address of data
+    sqldata: PAnsiChar; // address of data
     sqlind: PSmallint; // address of indicator variable
     sqlname_length: Smallint; // length of sqlname field
-    sqlname: array [0..METADATALENGTH - 1] of Char; // name of field, name length + space  for NULL
+    sqlname: array [0..METADATALENGTH - 1] of AnsiChar; // name of field, name length + space  for NULL
     relname_length: Smallint; // length of relation name
-    relname: array [0..METADATALENGTH - 1] of Char; // field's relation name + space for NULL
+    relname: array [0..METADATALENGTH - 1] of AnsiChar; // field's relation name + space for NULL
     ownname_length: Smallint; // length of owner name
-    ownname: array [0..METADATALENGTH - 1] of Char; // relation's owner name + space for  NULL
+    ownname: array [0..METADATALENGTH - 1] of AnsiChar; // relation's owner name + space for  NULL
     aliasname_length: Smallint; // length of alias name
-    aliasname: array [0..METADATALENGTH - 1] of Char; // relation's alias name + space for NULL
+    aliasname: array [0..METADATALENGTH - 1] of AnsiChar; // relation's alias name + space for NULL
   end;
 
 {$ELSE}
@@ -566,16 +566,16 @@ type
     sqlscale: Smallint; // scale factor
     sqlsubtype: Smallint; // datatype subtype - BLOBs & Text types only
     sqllen: Smallint; // length of data area
-    sqldata: PChar; // address of data
+    sqldata: PAnsiChar; // address of data
     sqlind: PSmallint; // address of indicator variable
     sqlname_length: Smallint; // length of sqlname field
-    sqlname: array [0..METADATALENGTH - 1] of Char; // name of field, name length + space for NULL
+    sqlname: array [0..METADATALENGTH - 1] of AnsiChar; // name of field, name length + space for NULL
     relname_length: Smallint; // length of relation name
-    relname: array [0..METADATALENGTH - 1] of Char; // field's relation name + space for NULL
+    relname: array [0..METADATALENGTH - 1] of AnsiChar; // field's relation name + space for NULL
     ownname_length: Smallint; // length of owner name
-    ownname: array [0..METADATALENGTH - 1] of Char; // relation's owner name + space for  NULL
+    ownname: array [0..METADATALENGTH - 1] of AnsiChar; // relation's owner name + space for  NULL
     aliasname_length: Smallint; // length of alias name
-    aliasname: array [0..METADATALENGTH - 1] of Char; // relation's alias name + space for NULL
+    aliasname: array [0..METADATALENGTH - 1] of AnsiChar; // relation's alias name + space for NULL
   end;
 
 {$ENDIF IB7_UP}
@@ -585,7 +585,7 @@ type
   PXSQLDA = ^TXSQLDA;
   XSQLDA = record
     version: Smallint; // version of this XSQLDA
-    sqldaid: array [0..7] of Char; // XSQLDA name field          ->  RESERVED
+    sqldaid: array [0..7] of AnsiChar; // XSQLDA name field          ->  RESERVED
     sqldabc: ISCLong; // length in bytes of SQLDA   ->  RESERVED
     sqln: Smallint; // number of fields allocated
     sqld: Smallint; // actual number of fields
@@ -677,7 +677,7 @@ type
   TISCTEB = record
     Handle: PIscDbHandle;
     Len: Integer;
-    Address: PChar;
+    Address: PAnsiChar;
   end;
 
 (*************************************
@@ -713,15 +713,15 @@ type
     uid: Integer; // the user's id
     gid: Integer; // the user's group id
     protocol: Integer; // protocol to use for connection
-    server: PChar; // server to administer
-    user_name: PChar; // the user's name
-    password: PChar; // the user's password
-    group_name: PChar; // the group name
-    first_name: PChar; // the user's first name
-    middle_name: PChar; // the user's middle name
-    last_name: PChar; // the user's last name
-    dba_user_name: PChar; // the dba user name
-    dba_password: PChar; // the dba password
+    server: PAnsiChar; // server to administer
+    user_name: PAnsiChar; // the user's name
+    password: PAnsiChar; // the user's password
+    group_name: PAnsiChar; // the group name
+    first_name: PAnsiChar; // the user's first name
+    middle_name: PAnsiChar; // the user's middle name
+    last_name: PAnsiChar; // the user's last name
+    dba_user_name: PAnsiChar; // the dba user name
+    dba_password: PAnsiChar; // the dba password
   end;
   TUserSecData = USER_SEC_DATA;
 
@@ -729,8 +729,8 @@ type
  * Service manager functions             *
  *****************************************)
 
-procedure ADD_SPB_LENGTH(var p: PChar; length: Integer);
-procedure ADD_SPB_NUMERIC(var p: PChar; data: Integer);
+procedure ADD_SPB_LENGTH(var p: PAnsiChar; length: Integer);
+procedure ADD_SPB_NUMERIC(var p: PAnsiChar; data: Integer);
 
 (***************************************************
  * Actions to pass to the blob filter (ctl_source) *
@@ -1429,34 +1429,34 @@ const
    * Service parameter block stuff *
    *********************************)
 
-  isc_spb_version1 = #1;
-  isc_spb_current_version = #2;
+  isc_spb_version1 = AnsiChar(#1);
+  isc_spb_current_version = AnsiChar(#2);
   isc_spb_version = isc_spb_current_version;
-  isc_spb_user_name = Char(isc_dpb_user_name);
-  isc_spb_sys_user_name = Char(isc_dpb_sys_user_name);
-  isc_spb_sys_user_name_enc = Char(isc_dpb_sys_user_name_enc);
-  isc_spb_password = Char(isc_dpb_password);
-  isc_spb_password_enc = Char(isc_dpb_password_enc);
-  isc_spb_command_line = #105;
-  isc_spb_dbname = #106;
-  isc_spb_verbose = #107;
-  isc_spb_options = #108;
+  isc_spb_user_name = AnsiChar(isc_dpb_user_name);
+  isc_spb_sys_user_name = AnsiChar(isc_dpb_sys_user_name);
+  isc_spb_sys_user_name_enc = AnsiChar(isc_dpb_sys_user_name_enc);
+  isc_spb_password = AnsiChar(isc_dpb_password);
+  isc_spb_password_enc = AnsiChar(isc_dpb_password_enc);
+  isc_spb_command_line = AnsiChar(#105);
+  isc_spb_dbname = AnsiChar(#106);
+  isc_spb_verbose = AnsiChar(#107);
+  isc_spb_options = AnsiChar(#108);
 {$IFDEF IB75_UP}
-  isc_spb_user_dbname = #109;
+  isc_spb_user_dbname = AnsiChar(#109);
 {$ENDIF}
 {$IFDEF FB20_UP}
-  isc_spb_address_path = #109;
+  isc_spb_address_path = AnsiChar(#109);
 {$ENDIF}
 
 {$IFDEF FB21_UP}
-  isc_spb_process_id = #110;
-  isc_spb_trusted_auth = #111;
-  isc_spb_process_name = #112;
+  isc_spb_process_id = AnsiChar(#110);
+  isc_spb_trusted_auth = AnsiChar(#111);
+  isc_spb_process_name = AnsiChar(#112);
 {$ENDIF}
 
-  isc_spb_connect_timeout = Char(isc_dpb_connect_timeout);
-  isc_spb_dummy_packet_interval = Char(isc_dpb_dummy_packet_interval);
-  isc_spb_sql_role_name = Char(isc_dpb_sql_role_name);
+  isc_spb_connect_timeout = AnsiChar(isc_dpb_connect_timeout);
+  isc_spb_dummy_packet_interval = AnsiChar(isc_dpb_dummy_packet_interval);
+  isc_spb_sql_role_name = AnsiChar(isc_dpb_sql_role_name);
 
   (*********************************
    * Information call declarations *
@@ -2835,73 +2835,73 @@ type
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
   {$IFDEF INTERBASEORFIREBIRD}
     BLOB_display: function(blob_id: PISCQuad; database: IscDbHandle; transaction: IscTrHandle;
-      field_name: PChar): Integer;
+      field_name: PAnsiChar): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
   {$ENDIF INTERBASEORFIREBIRD}
     BLOB_dump: function(blob_id: PISCQuad; database: IscDbHandle; transaction: IscTrHandle;
-      file_name: PChar): Integer;
+      file_name: PAnsiChar): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     BLOB_edit: function(blob_id: PISCQuad; database: IscDbHandle; transaction: IscTrHandle;
-      field_name: PChar): Integer;
+      field_name: PAnsiChar): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     BLOB_get: function(Stream: PBStream): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     BLOB_load: function(blob_id: PISCQuad; database: IscDbHandle; transaction: IscTrHandle;
-      file_name: PChar): Integer;
+      file_name: PAnsiChar): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    BLOB_open: function(blob: IscBlobHandle; buffer: PChar; length: Integer): PBStream;
+    BLOB_open: function(blob: IscBlobHandle; buffer: PAnsiChar; length: Integer): PBStream;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    BLOB_put: function(x: Char; Stream: PBStream): Integer;
+    BLOB_put: function(x: AnsiChar; Stream: PBStream): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     BLOB_text_dump: function(blob_id: PISCQuad; database: IscDbHandle; transaction: IscTrHandle;
-      file_name: PChar): Integer;
+      file_name: PAnsiChar): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     BLOB_text_load: function(blob_id: PISCQuad; database: IscDbHandle; transaction: IscTrHandle;
-      file_name: PChar): Integer;
+      file_name: PAnsiChar): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     Bopen: function(blob_id: PISCQuad; database: IscDbHandle; transaction: IscTrHandle;
-      mode: PChar): PBStream;
+      mode: PAnsiChar): PBStream;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_add_user: function(status: PISCStatus; user_data: PUserSecData): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_array_gen_sdl: function(status: PISCStatus; desc: PISCArrayDesc; sdl_buffer_length: PSmallInt;
-      sdl_buffer: PChar; sdl_length: PSmallInt): ISCStatus;
+      sdl_buffer: PAnsiChar; sdl_length: PSmallInt): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_array_get_slice: function(status: PISCStatus; db_handle: PIscDbHandle;
       trans_handle: PIscTrHandle; array_id: PISCQuad; desc: PISCArrayDesc; array_: PPointer;
       slice_length: PISCLong): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_array_lookup_bounds: function(status: PISCStatus; db_handle: PIscDbHandle;
-      trans_handle: PIscTrHandle; relation_name, field_name: PChar;
+      trans_handle: PIscTrHandle; relation_name, field_name: PAnsiChar;
       desc: PISCArrayDesc): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_array_lookup_desc: function(status: PISCStatus; db_handle: PIscDbHandle;
-      trans_handle: PIscTrHandle; relation_name, field_name: PChar;
+      trans_handle: PIscTrHandle; relation_name, field_name: PAnsiChar;
       desc: PISCArrayDesc): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_array_put_slice: function(status: PISCStatus; db_handle: PIscDbHandle;
       trans_handle: PIscTrHandle; array_id: PISCQuad; desc: PISCArrayDesc; array_: PPointer;
       slice_length: PISCLong): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_array_set_desc: function(status: PISCStatus; relation_name, field_name: PChar;
+    isc_array_set_desc: function(status: PISCStatus; relation_name, field_name: PAnsiChar;
       sql_dtype, sql_length, dimensions: PSmallint; desc: PISCArrayDesc): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_attach_database: function(user_status: PISCStatus; file_length: Smallint;
-      file_name: PChar; handle: PIscDbHandle; dpb_length: Smallint; dpb: PChar): ISCStatus;
+      file_name: PAnsiChar; handle: PIscDbHandle; dpb_length: Smallint; dpb: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_blob_default_desc: procedure(desc: PISCBlobDesc; relation_name, field_name: PChar);
+    isc_blob_default_desc: procedure(desc: PISCBlobDesc; relation_name, field_name: PAnsiChar);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_blob_gen_bpb: function(status: PISCStatus; to_desc, from_desc: PISCBlobDesc;
-      bpb_buffer_length: Word; bpb_buffer: PChar; bpb_length: PWord): ISCStatus;
+      bpb_buffer_length: Word; bpb_buffer: PAnsiChar; bpb_length: PWord): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_blob_info: function(user_status: PISCStatus; blob_handle: PIscBlobHandle;
-      item_length: Smallint; items: PChar; buffer_length: Smallint; buffer: PChar): ISCStatus;
+      item_length: Smallint; items: PAnsiChar; buffer_length: Smallint; buffer: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_blob_lookup_desc: function(status: PISCStatus; db_handle: PIscDbHandle;
-      trans_handle: PIscTrHandle; relation_name, field_name: PChar; desc: PISCBlobDesc;
-      global: PChar): ISCStatus;
+      trans_handle: PIscTrHandle; relation_name, field_name: PAnsiChar; desc: PISCBlobDesc;
+      global: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_blob_set_desc: function(status: PISCStatus; relation_name, field_name: PChar;
+    isc_blob_set_desc: function(status: PISCStatus; relation_name, field_name: PAnsiChar;
       subtype, charset, segment_size: Smallint; desc: PISCBlobDesc): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_cancel_blob: function(user_status: PISCStatus; blob_handle: PIscBlobHandle): ISCStatus;
@@ -2909,7 +2909,7 @@ type
     isc_cancel_events: function(user_status: PISCStatus; handle: PIscDbHandle;
       id: PISCLong): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_close: function(user_status: PISCStatus; name: PChar): ISCStatus;
+    isc_close: function(user_status: PISCStatus; name: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_close_blob: function(user_status: PISCStatus;
       blob_handle: PIscBlobHandle): ISCStatus;
@@ -2922,11 +2922,11 @@ type
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_compile_request: function(user_status: PISCStatus; db_handle: PIscDbHandle;
       req_handle: PIscReqHandle; blr_length: Smallint;
-      blr: PChar): ISCStatus;
+      blr: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_compile_request2: function(user_status: PISCStatus; db_handle: PIscDbHandle;
       req_handle: PIscReqHandle; blr_length: Smallint;
-      blr: PChar): ISCStatus;
+      blr: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_create_blob: function(user_status: PISCStatus; db_handle: PIscDbHandle;
       tra_handle: PIscTrHandle; blob_handle: PIscBlobHandle;
@@ -2934,21 +2934,21 @@ type
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_create_blob2: function(user_status: PISCStatus; db_handle: PIscDbHandle;
       tra_handle: PIscTrHandle; blob_handle: PIscBlobHandle; blob_id: PISCQuad;
-      bpb_length: Smallint; bpb: PChar): ISCStatus;
+      bpb_length: Smallint; bpb: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_create_database: function(user_status: PISCStatus; file_length: Smallint;
-      file_name: PChar; handle: PIscDbHandle; dpb_length: Smallint; dpb: PChar;
+      file_name: PAnsiChar; handle: PIscDbHandle; dpb_length: Smallint; dpb: PAnsiChar;
       db_type: Smallint): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_database_info: function(user_status: PISCStatus; handle: PIscDbHandle;
-      item_length: Smallint; items: PChar; buffer_length: Smallint;
-      buffer: PChar): ISCStatus;
+      item_length: Smallint; items: PAnsiChar; buffer_length: Smallint;
+      buffer: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_ddl: function(user_status: PISCStatus; db_handle: PIscDbHandle; tra_handle: PIscTrHandle;
-      length: Smallint; ddl: PChar): ISCStatus;
+      length: Smallint; ddl: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_declare: function(user_status: PISCStatus; statement,
-      cursor: PChar): ISCStatus;
+      cursor: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_decode_date: procedure(date: PISCQuad; times: PPointer);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
@@ -2960,9 +2960,9 @@ type
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_delete_user: function(status: PISCStatus; user_data: PUserSecData): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_describe: function(user_status: PISCStatus; name: PChar; sqlda: PXSQLDA): ISCStatus;
+    isc_describe: function(user_status: PISCStatus; name: PAnsiChar; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_describe_bind: function(user_status: PISCStatus; name: PChar; sqlda: PXSQLDA): ISCStatus;
+    isc_describe_bind: function(user_status: PISCStatus; name: PAnsiChar; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_detach_database: function(user_status: PISCStatus; handle: PIscDbHandle): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
@@ -2981,42 +2981,42 @@ type
       dialect: Word; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_exec_immed2: function(user_status: PISCStatus; db_handle: PIscDbHandle;
-      tra_handle: PIscTrHandle; length: Word; string_: PChar; dialect: Word; in_sqlda,
+      tra_handle: PIscTrHandle; length: Word; string_: PAnsiChar; dialect: Word; in_sqlda,
       out_sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_exec_immed3_m: function(user_status: PISCStatus; db_handle: PIscDbHandle;
-      tra_handle: PIscTrHandle; Length: Word; string_: PChar; dialect, in_blr_length: Word;
-      in_blr: PChar; in_msg_type, in_msg_length: Word; in_msg: PChar; out_blr_length: Word;
-      out_blr: PChar; out_msg_type, out_msg_length: Word; out_msg: PChar): ISCStatus;
+      tra_handle: PIscTrHandle; Length: Word; string_: PAnsiChar; dialect, in_blr_length: Word;
+      in_blr: PAnsiChar; in_msg_type, in_msg_length: Word; in_msg: PAnsiChar; out_blr_length: Word;
+      out_blr: PAnsiChar; out_msg_type, out_msg_length: Word; out_msg: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_execute: function(user_status: PISCStatus; tra_handle: PIscTrHandle;
       stmt_handle: PIscStmtHandle; dialect: Word; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_execute_immediate: function(user_status: PISCStatus; db_handle: PIscDbHandle;
-      tra_handle: PIscTrHandle; length: Word; string_: PChar; dialect: Word;
+      tra_handle: PIscTrHandle; length: Word; string_: PAnsiChar; dialect: Word;
       sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_execute_immediate_m: function(user_status: PISCStatus; db_handle: PIscDbHandle;
-      tra_handle: PIscTrHandle; length: Word; string_: PChar; dialect, blr_length: Word;
-      blr: PChar; msg_type, msg_length: Word; msg: PChar): ISCStatus;
+      tra_handle: PIscTrHandle; length: Word; string_: PAnsiChar; dialect, blr_length: Word;
+      blr: PAnsiChar; msg_type, msg_length: Word; msg: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_execute_m: function(user_status: PISCStatus; tra_handle: PIscTrHandle;
-      stmt_handle: PIscStmtHandle; blr_length: Word; blr: PChar; msg_type, msg_length: Word;
-      msg: PChar): ISCStatus;
+      stmt_handle: PIscStmtHandle; blr_length: Word; blr: PAnsiChar; msg_type, msg_length: Word;
+      msg: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_execute2: function(user_status: PISCStatus; tra_handle: PIscTrHandle;
       stmt_handle: PIscStmtHandle; dialect: Word; in_sqlda, out_sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_execute2_m: function(user_status: PISCStatus; tra_handle: PIscTrHandle;
-      stmt_handle: PIscStmtHandle; in_blr_length: Word; in_blr: PChar; in_msg_type,
-      in_msg_length: Word; in_msg: PChar; out_blr_length: Word; out_blr: PChar;
-      out_msg_type, out_msg_length: Word; out_msg: PChar): ISCStatus;
+      stmt_handle: PIscStmtHandle; in_blr_length: Word; in_blr: PAnsiChar; in_msg_type,
+      in_msg_length: Word; in_msg: PAnsiChar; out_blr_length: Word; out_blr: PAnsiChar;
+      out_msg_type, out_msg_length: Word; out_msg: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_fetch: function(user_status: PISCStatus; stmt_handle: PIscStmtHandle;
       dialect: Word; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_fetch_m: function(user_status: PISCStatus; stmt_handle: PIscStmtHandle;
-      blr_length: Word; blr: PChar; msg_type, msg_length: Word; msg: PChar): ISCStatus;
+      blr_length: Word; blr: PAnsiChar; msg_type, msg_length: Word; msg: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_finish: function(db_handle: PIscDbHandle): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
@@ -3027,61 +3027,61 @@ type
       dialect: Word; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_insert_m: function(user_status: PISCStatus; stmt_handle: PIscStmtHandle;
-      blr_length: Word; blr: PChar; msg_type, msg_length: Word; msg: PChar): ISCStatus;
+      blr_length: Word; blr: PAnsiChar; msg_type, msg_length: Word; msg: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_prepare: function(user_status: PISCStatus; tra_handle: PIscTrHandle;
-      stmt_handle: PIscStmtHandle; length: Word; string_: PChar; dialect: Word;
+      stmt_handle: PIscStmtHandle; length: Word; string_: PAnsiChar; dialect: Word;
       sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_prepare_m: function(user_status: PISCStatus; tra_handle: PIscTrHandle;
-      stmt_handle: PIscStmtHandle; length: Word; string_: PChar; dialect, item_length: Word;
-      items: PChar; buffer_length: Word; buffer: PChar): ISCStatus;
+      stmt_handle: PIscStmtHandle; length: Word; string_: PAnsiChar; dialect, item_length: Word;
+      items: PAnsiChar; buffer_length: Word; buffer: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_dsql_release: function(user_status: PISCStatus; name: PChar): ISCStatus;
+    isc_dsql_release: function(user_status: PISCStatus; name: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_set_cursor_name: function(user_status: PISCStatus; stmt_handle: PIscStmtHandle;
-      cursor: PChar; type_: Word): ISCStatus;
+      cursor: PAnsiChar; type_: Word): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_dsql_sql_info: function(user_status: PISCStatus; stmt_handle: PIscStmtHandle;
-      item_length: Smallint; items: PChar; buffer_length: Smallint; buffer: PChar): ISCStatus;
+      item_length: Smallint; items: PAnsiChar; buffer_length: Smallint; buffer: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_embed_dsql_close: function(user_status: PISCStatus; name: PChar): ISCStatus;
+    isc_embed_dsql_close: function(user_status: PISCStatus; name: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_embed_dsql_declare: function(user_status: PISCStatus; stmt_name, cursor: PChar): ISCStatus;
+    isc_embed_dsql_declare: function(user_status: PISCStatus; stmt_name, cursor: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_embed_dsql_describe: function(user_status: PISCStatus; stmt_name: PChar;
+    isc_embed_dsql_describe: function(user_status: PISCStatus; stmt_name: PAnsiChar;
       dialect: Word; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_embed_dsql_describe_bind: function(user_status: PISCStatus; stmt_name: PChar;
+    isc_embed_dsql_describe_bind: function(user_status: PISCStatus; stmt_name: PAnsiChar;
       dialect: Word; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_embed_dsql_execute: function(user_status: PISCStatus; trans_handle: PIscTrHandle;
-      stmt_name: PChar; dialect: Word; sqlda: PXSQLDA): ISCStatus;
+      stmt_name: PAnsiChar; dialect: Word; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_embed_dsql_execute_immed: function(user_status: PISCStatus; db_handle: PIscDbHandle;
-      trans_handle: PIscTrHandle; length: Word; string_: PChar; dialect: Word;
+      trans_handle: PIscTrHandle; length: Word; string_: PAnsiChar; dialect: Word;
       sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_embed_dsql_execute2: function(user_status: PISCStatus; trans_handle: PIscTrHandle;
-      stmt_name: PChar; dialect: Word; in_sqlda, out_sqlda: PXSQLDA): ISCStatus;
+      stmt_name: PAnsiChar; dialect: Word; in_sqlda, out_sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_embed_dsql_fetch: function(user_status: PISCStatus; cursor_name: PChar;
+    isc_embed_dsql_fetch: function(user_status: PISCStatus; cursor_name: PAnsiChar;
       dialect: Word; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_embed_dsql_insert: function(user_status: PISCStatus; cursor_name: PChar;
+    isc_embed_dsql_insert: function(user_status: PISCStatus; cursor_name: PAnsiChar;
       dialect: Word; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_embed_dsql_open: function(user_status: PISCStatus; trans_handle: PIscTrHandle;
-      cursor_name: PChar; dialect: Word; sqlda: PXSQLDA): ISCStatus;
+      cursor_name: PAnsiChar; dialect: Word; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_embed_dsql_open2: function(user_status: PISCStatus; trans_handle: PIscTrHandle;
-      cursor_name: PChar; dialect: Word; in_sqlda, out_sqlda: PXSQLDA): ISCStatus;
+      cursor_name: PAnsiChar; dialect: Word; in_sqlda, out_sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_embed_dsql_prepare: function(user_status: PISCStatus; db_handle: PIscDbHandle;
-      trans_handle: PIscTrHandle; stmt_name: PChar; length: Word; string_: PChar;
+      trans_handle: PIscTrHandle; stmt_name: PAnsiChar; length: Word; string_: PAnsiChar;
       dialect: Word; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_embed_dsql_release: function(user_status: PISCStatus; stmt_name: PChar): ISCStatus;
+    isc_embed_dsql_release: function(user_status: PISCStatus; stmt_name: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_encode_date: procedure(times: PPointer; date: PISCQuad);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
@@ -3092,46 +3092,46 @@ type
     isc_encode_timestamp: procedure(times_arg: PPointer; date: PISCTimeStamp);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_event_block: function(event_buffer, result_buffer: PPChar; count: Word;
-      v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15: PChar): ISCLong; cdecl;
+      v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15: PAnsiChar): ISCLong; cdecl;
 {$IFDEF FB21_UP}
     isc_event_block_a: function(event_buffer, result_buffer: PPChar; count: Word; name_buffer: PPChar): Word;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
 {$ENDIF}
     isc_event_counts: procedure(ser_status: PISCStatus; buffer_length: Smallint;
-      event_buffer, result_buffer: PChar);
+      event_buffer, result_buffer: PAnsiChar);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_execute: function(user_status: PISCStatus; trans_handle: PIscTrHandle;
-      name: PChar; sqlda: PXSQLDA): ISCStatus;
+      name: PAnsiChar; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_execute_immediate: function(user_status: PISCStatus; db_handle: PIscDbHandle;
-      trans_handle: PIscTrHandle; length: PSmallint; string_: PChar): ISCStatus;
+      trans_handle: PIscTrHandle; length: PSmallint; string_: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_expand_dpb: procedure(dpb: PPChar; dpb_size: PSmallint; name_buffer: PPChar); cdecl;
-    isc_fetch: function(user_status: PISCStatus; name: PChar; sqlda: PXSQLDA): ISCStatus;
+    isc_fetch: function(user_status: PISCStatus; name: PAnsiChar; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_free: function(blk: PChar): ISCLong;
+    isc_free: function(blk: PAnsiChar): ISCLong;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_ftof: function(string_: PChar; length1: Word; field: PChar; length2: Word): ISCStatus;
+    isc_ftof: function(string_: PAnsiChar; length1: Word; field: PAnsiChar; length2: Word): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_get_segment: function(user_status: PISCStatus; blob_handle: PIscBlobHandle; length: PWord;
-      buffer_length: Word; buffer: PChar): ISCStatus;
+      buffer_length: Word; buffer: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_get_slice: function(user_status: PISCStatus; db_handle: PIscDbHandle; tra_handle: PIscTrHandle;
-      array_id: PISCQuad; sdl_length: Smallint; sdl: PChar; param_length: Smallint; param: PISCLong;
+      array_id: PISCQuad; sdl_length: Smallint; sdl: PAnsiChar; param_length: Smallint; param: PISCLong;
       slice_length: ISCLong; slice: PPointer; return_length: PISCLong): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_interprete: function(buffer: PChar; status_vector: PPISCStatus): ISCStatus;
+    isc_interprete: function(buffer: PAnsiChar; status_vector: PPISCStatus): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
   {$IFDEF FB20_UP}
-    fb_interpret: function(buffer: PChar; v: integer; status_vector: PPISCStatus): ISCStatus;
+    fb_interpret: function(buffer: PAnsiChar; v: integer; status_vector: PPISCStatus): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
   {$ENDIF}
     isc_modify_dpb: function(dpb: PPChar; dpb_length: PSmallint; type_: Word;
-      str: PChar; str_len: Smallint): Integer;
+      str: PAnsiChar; str_len: Smallint): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_modify_user: function(status: PISCStatus; user_data: PUserSecData): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_open: function(user_status: PISCStatus; trans_handle: PIscTrHandle; name: PChar;
+    isc_open: function(user_status: PISCStatus; trans_handle: PIscTrHandle; name: PAnsiChar;
       sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_open_blob: function(user_status: PISCStatus; db_handle: PIscDbHandle;
@@ -3139,12 +3139,12 @@ type
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_open_blob2: function(user_status: PISCStatus; db_handle: PIscDbHandle;
       tra_handle: PIscTrHandle; blob_handle: PIscBlobHandle; blob_id: PISCQuad; bpb_length: Word;
-      bpb: PChar): ISCStatus;
+      bpb: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_portable_integer: function(ptr: PChar; length: Smallint): ISCInt64;
+    isc_portable_integer: function(ptr: PAnsiChar; length: Smallint): ISCInt64;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_prepare: function(user_status: PISCStatus; db_handle: PIscDbHandle;
-      trans_handle: PIscTrHandle; name: PChar; length: PSmallint; string_: PChar;
+      trans_handle: PIscTrHandle; name: PAnsiChar; length: PSmallint; string_: PAnsiChar;
       sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_prepare_transaction: function(user_status: PISCStatus; tra_handle: PIscTrHandle): ISCStatus;
@@ -3152,7 +3152,7 @@ type
     isc_prepare_transaction2: function(user_status: PISCStatus; tra_handle: PIscTrHandle;
       msg_length: ISCUShort; msg: PISCUChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_print_blr: function(blr: PChar; callback: IscCallback; callback_argument: PPointer;
+    isc_print_blr: function(blr: PAnsiChar; callback: IscCallback; callback_argument: PPointer;
       language: Smallint): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_print_sqlerror: procedure(sqlcode: ISCShort; status_vector: PISCStatus);
@@ -3160,27 +3160,27 @@ type
     isc_print_status: function(status_vector: PISCStatus): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_put_segment: function(user_status: PISCStatus; blob_handle: PIscBlobHandle;
-      buffer_length: Word; buffer: PChar): ISCStatus;
+      buffer_length: Word; buffer: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_put_slice: function(user_status: PISCStatus; db_handle: PIscDbHandle; tra_handle: PIscTrHandle;
-      array_id: PISCQuad; sdl_length: Smallint; sdl: PChar; param_length: Smallint; param: PISCLong;
+      array_id: PISCQuad; sdl_length: Smallint; sdl: PAnsiChar; param_length: Smallint; param: PISCLong;
       slice_length: ISCLong; slice: PPointer): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_qtoq: procedure(quad1, quad2: PISCQuad);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_que_events: function(user_status: PISCStatus; handle: PIscDbHandle; id: PISCLong;
-      length: ISCUShort; events: PChar; ast: IscCallback; arg: PPointer): ISCStatus;
+      length: ISCUShort; events: PAnsiChar; ast: IscCallback; arg: PPointer): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_receive: function(user_status: PISCStatus; req_handle: PIscReqHandle; msg_type,
       msg_length: Smallint; msg: PPointer; level: Smallint): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_reconnect_transaction: function(user_status: PISCStatus; db_handle: PIscDbHandle;
-      tra_handle: PIscTrHandle; length: Smallint; id: PChar): ISCStatus;
+      tra_handle: PIscTrHandle; length: Smallint; id: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_release_request: function(user_status: PISCStatus; req_handle: PIscReqHandle): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_request_info: function(user_status: PISCStatus; req_handle: PIscReqHandle; level,
-      item_length: Smallint; items: PChar; buffer_length: Smallint; buffer: PChar): ISCStatus;
+      item_length: Smallint; items: PAnsiChar; buffer_length: Smallint; buffer: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_rollback_retaining: function(status_vector: PISCStatus; trans_handle: PIscTrHandle): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
@@ -3193,22 +3193,22 @@ type
       msg_length: Smallint; msg: PPointer; level: Smallint): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_service_attach: function(status_vector: PISCStatus; service_length: Word;
-      service_name: PChar; handle: PIscSvcHandle; spb_length: Word; spb: PChar): ISCStatus;
+      service_name: PAnsiChar; handle: PIscSvcHandle; spb_length: Word; spb: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_service_detach: function(status_vector: PISCStatus; handle: PIscSvcHandle): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_service_query: function(status_vector: PISCStatus; svc_handle: PIscSvcHandle;
-      reserved: PIscResvHandle; send_spb_length: Word; send_spb: PChar; request_spb_length: Word;
-      request_spb: PChar; buffer_length: Word; buffer: PChar): ISCStatus;
+      reserved: PIscResvHandle; send_spb_length: Word; send_spb: PAnsiChar; request_spb_length: Word;
+      request_spb: PAnsiChar; buffer_length: Word; buffer: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_service_start: function(status_vector: PISCStatus; svc_handle: PIscSvcHandle;
-      reserved: PIscResvHandle; spb_length: Word; spb: PChar): ISCStatus;
+      reserved: PIscResvHandle; spb_length: Word; spb: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     {$IFDEF INTERBASEORFIREBIRD}
     isc_set_debug: procedure(flag: Integer);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     {$ENDIF INTERBASEORFIREBIRD}
-    isc_sql_interprete: procedure(SQLCODE: Smallint; buffer: PChar; buffer_length: Smallint);
+    isc_sql_interprete: procedure(SQLCODE: Smallint; buffer: PAnsiChar; buffer_length: Smallint);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_sqlcode: function(user_status: PISCStatus): ISCLong;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
@@ -3223,70 +3223,70 @@ type
       tra_handle: PIscTrHandle; level: Smallint): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_start_transaction: function(user_status: PISCStatus; tra_handle: PIscTrHandle; count: Smallint;
-      db_handle: PIscDbHandle; tpb_length: ISCUShort; tpb_ad: PChar): ISCStatus; cdecl;
+      db_handle: PIscDbHandle; tpb_length: ISCUShort; tpb_ad: PAnsiChar): ISCStatus; cdecl;
     isc_transact_request: function(user_status: PISCStatus; db_handle: PIscDbHandle;
-      tra_handle: PIscTrHandle; blr_length: Word; blr: PChar; in_msg_length: Word; in_msg: PChar;
-      out_msg_length: Word; out_msg: PChar): ISCStatus;
+      tra_handle: PIscTrHandle; blr_length: Word; blr: PAnsiChar; in_msg_length: Word; in_msg: PAnsiChar;
+      out_msg_length: Word; out_msg: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_transaction_info: function(user_status: PISCStatus; tra_handle: PIscTrHandle; item_length: Smallint;
-      items: PChar; buffer_length: Smallint; buffer: PChar): ISCStatus;
+      items: PAnsiChar; buffer_length: Smallint; buffer: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_unwind_request: function(user_status: PISCStatus; req_handle: PIscTrHandle;
       level: Smallint): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_vax_integer: function(ptr: PChar; length: Smallint): ISCLong;
+    isc_vax_integer: function(ptr: PAnsiChar; length: Smallint): ISCLong;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_version: function(db_handle: PIscDbHandle; callback: IscCallback;
       callback_argument: PPointer): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_vtof: procedure(string1, string2: PChar; length: Word);
+    isc_vtof: procedure(string1, string2: PAnsiChar; length: Word);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_vtov: procedure(string1, string2: PChar; length: Smallint);
+    isc_vtov: procedure(string1, string2: PAnsiChar; length: Smallint);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_wait_for_event: function(user_status: PISCStatus; handle: PIscDbHandle;
-      length: Smallint; events, buffer: PChar): ISCStatus;
+      length: Smallint; events, buffer: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     {$IFDEF FB15_UP}{$IFNDEF UNIX}
     isc_reset_fpe: function(fpe_status: Word): ISCLong; stdcall;
     {$ENDIF}{$ENDIF FB15_UP}
     {$IFDEF IB7_UP}
     isc_array_gen_sdl2: function(status: PISCStatus; desc: PISCArrayDescV2;
-      sdl_buffer_length: PSmallInt; sdl_buffer: PChar; sdl_length: PSmallInt): ISCStatus;
+      sdl_buffer_length: PSmallInt; sdl_buffer: PAnsiChar; sdl_length: PSmallInt): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_array_get_slice2: function(status: PISCStatus; db_handle: PIscDbHandle;
       trans_handle: PIscTrHandle; array_id: PISCQuad; desc: PISCArrayDescV2; array_: PPointer;
       slice_length: PISCLong): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_array_lookup_bounds2: function(status: PISCStatus; db_handle: PIscDbHandle;
-      trans_handle: PIscTrHandle; relation_name, field_name: PChar; desc: PISCArrayDescV2): ISCStatus;
+      trans_handle: PIscTrHandle; relation_name, field_name: PAnsiChar; desc: PISCArrayDescV2): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_array_lookup_desc2: function(status: PISCStatus; db_handle: PIscDbHandle;
-      trans_handle: PIscTrHandle; relation_name, field_name: PChar;
+      trans_handle: PIscTrHandle; relation_name, field_name: PAnsiChar;
       desc: PISCArrayDescV2): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_array_put_slice2: function(status: PISCStatus; db_handle: PIscDbHandle;
       trans_handle: PIscTrHandle; array_id: PISCQuad; desc: PISCArrayDescV2; array_: PPointer;
       slice_length: PISCLong): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_array_set_desc2: function(status: PISCStatus; relation_name, field_name: PChar;
+    isc_array_set_desc2: function(status: PISCStatus; relation_name, field_name: PAnsiChar;
       sql_dtype, sql_length, dimensions: PSmallint; desc: PISCArrayDescV2): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_blob_default_desc2: procedure(desc: PISCBlobDescV2; relation_name,
-      field_name: PChar);
+      field_name: PAnsiChar);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_blob_gen_bpb2: function(status: PISCStatus; to_desc, from_desc: PISCBlobDescV2;
-      bpb_buffer_length: Word; bpb_buffer: PChar; bpb_length: PWord): ISCStatus;
+      bpb_buffer_length: Word; bpb_buffer: PAnsiChar; bpb_length: PWord): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_blob_lookup_desc2: function(status: PISCStatus; db_handle: PIscDbHandle;
-      trans_handle: PIscTrHandle; relation_name, field_name: PChar; desc: PISCBlobDescV2;
-      global: PChar): ISCStatus;
+      trans_handle: PIscTrHandle; relation_name, field_name: PAnsiChar; desc: PISCBlobDescV2;
+      global: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_blob_set_desc2: function(status: PISCStatus; relation_name, field_name: PChar; subtype, charset,
+    isc_blob_set_desc2: function(status: PISCStatus; relation_name, field_name: PAnsiChar; subtype, charset,
       segment_size: Smallint; desc: PISCBlobDescV2): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     {$ENDIF IB7_UP}
     {$IFDEF IB7ORFB15}
-    isc_get_client_version: procedure(version: PChar);
+    isc_get_client_version: procedure(version: PAnsiChar);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_get_client_major_version: function: Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
@@ -3295,21 +3295,21 @@ type
     {$ENDIF IB7ORFB15}
     {$IFDEF IB71_UP}
     isc_release_savepoint: function(status: PISCStatus; TrHandle: PIscTrHandle;
-      name: PChar): ISCStatus;
+      name: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_rollback_savepoint: function(status: PISCStatus; TrHandle: PIscTrHandle;
-      name: PChar; Option: Word): ISCStatus;
+      name: PAnsiChar; Option: Word): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_start_savepoint: function(status: PISCStatus; TrHandle: PIscTrHandle;
-      name: PChar): ISCStatus;
+      name: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     {$ENDIF IB71_UP}
   public
     constructor Create; virtual;
     destructor Destroy; override;
-    function getb(p: PBStream): Char;
-    function putb(x: Char; p: PBStream): Integer;
-    function putbx(x: Char; p: PBStream): Integer;
+    function getb(p: PBStream): AnsiChar;
+    function putb(x: AnsiChar; p: PBStream): Integer;
+    function putbx(x: AnsiChar; p: PBStream): Integer;
     function Loaded: Boolean; virtual;
     function Unload: Boolean; virtual;
     function Load(const lib: string = GDS32DLL): Boolean; virtual;
@@ -3329,23 +3329,23 @@ begin
   Result := SizeOf(TXSQLDA) + ((n - 1) * SizeOf(TXSQLVAR));
 end;
 
-procedure ADD_SPB_LENGTH(var p: PChar; length: Integer);
+procedure ADD_SPB_LENGTH(var p: PAnsiChar; length: Integer);
 begin
-  p^ := Char(length);
+  p^ := AnsiChar(length);
   Inc(p);
-  p^ := Char(length shr 8);
+  p^ := AnsiChar(length shr 8);
   Inc(p);
 end;
 
-procedure ADD_SPB_NUMERIC(var p: PChar; data: Integer);
+procedure ADD_SPB_NUMERIC(var p: PAnsiChar; data: Integer);
 begin
-  p^ := Char(data);
+  p^ := AnsiChar(data);
   Inc(p);
-  p^ := Char(data shr 8);
+  p^ := AnsiChar(data shr 8);
   Inc(p);
-  p^ := Char(data shr 16);
+  p^ := AnsiChar(data shr 16);
   Inc(p);
-  p^ := Char(data shr 24);
+  p^ := AnsiChar(data shr 24);
   Inc(p);
 end;
 
@@ -3365,39 +3365,39 @@ begin
 {$ENDIF UNIX}
 end;
 
-function TUIBaseLibrary.getb(p: PBStream): Char;
+function TUIBaseLibrary.getb(p: PBStream): AnsiChar;
 begin
   Dec(p^.bstr_cnt);
   if p^.bstr_cnt >= 0 then
   begin
-    Result := Char(Integer(p^.bstr_ptr^) and $FF);
+    Result := AnsiChar(Integer(p^.bstr_ptr^) and $FF);
     Inc(p^.bstr_ptr);
   end
   else
-    Result := Char(BLOB_get(p));
+    Result := AnsiChar(BLOB_get(p));
 end;
 
-function TUIBaseLibrary.putb(x: Char; p: PBStream): Integer;
+function TUIBaseLibrary.putb(x: AnsiChar; p: PBStream): Integer;
 begin
   Dec(p^.bstr_cnt);
   if (x = #10) or (p^.bstr_cnt = 0) then
     Result := BLOB_put(x, p)
   else
   begin
-    p^.bstr_ptr^ := Char(x);
+    p^.bstr_ptr^ := AnsiChar(x);
     Inc(p^.bstr_ptr);
     Result := Cardinal(x);
   end;
 end;
 
-function TUIBaseLibrary.putbx(x: Char; p: PBStream): Integer;
+function TUIBaseLibrary.putbx(x: AnsiChar; p: PBStream): Integer;
 begin
   Dec(p^.bstr_cnt);
   if p^.bstr_cnt = 0 then
     Result := BLOB_put(x, p)
   else
   begin
-    p^.bstr_ptr^ := Char(x);
+    p^.bstr_ptr^ := AnsiChar(x);
     Inc(p^.bstr_ptr);
     Result := Cardinal(x);
   end;
@@ -3629,7 +3629,7 @@ const
 function TUIBaseLibrary.Load(const lib: string = GDS32DLL): Boolean;
 
 {$IFDEF UNIX}
-function GetProcAddress(Lib: Pointer; Name: PChar): Pointer;
+function GetProcAddress(Lib: Pointer; Name: PAnsiChar): Pointer;
 begin
   Result := dlsym(Lib, Name);
 end;

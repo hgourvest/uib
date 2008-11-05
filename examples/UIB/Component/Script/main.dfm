@@ -1,9 +1,9 @@
 object MainForm: TMainForm
   Left = 192
   Top = 107
+  Caption = 'Script Runner'
   Width = 436
   Height = 244
-  Caption = 'Script Runner'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -220,7 +220,7 @@ object MainForm: TMainForm
       '    PROJ_ID CHAR(5) CHARACTER SET NONE)'
       'AS'
       'BEGIN'
-      '  EXIT;'
+      '  SUSPEND;'
       'END;'
       ''
       ''
@@ -232,7 +232,7 @@ object MainForm: TMainForm
       '    LANG VARCHAR(15) CHARACTER SET NONE)'
       'AS'
       'BEGIN'
-      '  EXIT;'
+      '  SUSPEND;'
       'END;'
       ''
       ''
@@ -240,7 +240,7 @@ object MainForm: TMainForm
       '    EMP_NUM INTEGER)'
       'AS'
       'BEGIN'
-      '  EXIT;'
+      '  SUSPEND;'
       'END;'
       ''
       ''
@@ -250,7 +250,7 @@ object MainForm: TMainForm
       '    TOT NUMERIC(15,2))'
       'AS'
       'BEGIN'
-      '  EXIT;'
+      '  SUSPEND;'
       'END;'
       ''
       ''
@@ -260,7 +260,7 @@ object MainForm: TMainForm
       '    PROJ_ID CHAR(5) CHARACTER SET NONE)'
       'AS'
       'BEGIN'
-      '  EXIT;'
+      '  SUSPEND;'
       'END;'
       ''
       ''
@@ -275,7 +275,7 @@ object MainForm: TMainForm
       '    LINE6 CHAR(40) CHARACTER SET NONE)'
       'AS'
       'BEGIN'
-      '  EXIT;'
+      '  SUSPEND;'
       'END;'
       ''
       ''
@@ -288,7 +288,7 @@ object MainForm: TMainForm
       '    EMP_CNT INTEGER)'
       'AS'
       'BEGIN'
-      '  EXIT;'
+      '  SUSPEND;'
       'END;'
       ''
       ''
@@ -296,7 +296,7 @@ object MainForm: TMainForm
       '    PO_NUM CHAR(8) CHARACTER SET NONE)'
       'AS'
       'BEGIN'
-      '  EXIT;'
+      '  SUSPEND;'
       'END;'
       ''
       ''
@@ -308,7 +308,7 @@ object MainForm: TMainForm
       '    LANGUAGES VARCHAR(15) CHARACTER SET NONE)'
       'AS'
       'BEGIN'
-      '  EXIT;'
+      '  SUSPEND;'
       'END;'
       ''
       ''
@@ -321,7 +321,7 @@ object MainForm: TMainForm
       '    MAX_BUDGET NUMERIC(15,2))'
       'AS'
       'BEGIN'
-      '  EXIT;'
+      '  SUSPEND;'
       'END;'
       ''
       ''
@@ -1890,12 +1890,12 @@ object MainForm: TMainForm
       '    LANG VARCHAR(15) CHARACTER SET NONE)'
       'AS'
       '    BEGIN'
-      ' FOR SELECT job_code, job_grade, job_country FROM job '
+      ' FOR SELECT job_code, job_grade, job_country FROM job'
       '  INTO :code, :grade, :country'
       ''
       ' DO'
       ' BEGIN'
-      '     FOR SELECT languages FROM show_langs '
+      '     FOR SELECT languages FROM show_langs'
       '       (:code, :grade, :country) INTO :lang DO'
       '         SUSPEND;'
       '     /* Put nice separators between rows */'
@@ -2199,7 +2199,7 @@ object MainForm: TMainForm
       
         '    IF (languages = '#39' '#39') THEN  /* Prints '#39'NULL'#39' instead of blank' +
         's */'
-      '       languages = '#39'NULL'#39';         '
+      '       languages = '#39'NULL'#39';'
       '    i = i +1;'
       '    SUSPEND;'
       '  END'
@@ -2306,8 +2306,7 @@ object MainForm: TMainForm
         'N;'
       
         'GRANT EXECUTE ON PROCEDURE SUB_TOT_BUDGET TO PUBLIC WITH GRANT O' +
-        'PTION;'
-      '')
+        'PTION;')
     OnParse = ScriptParse
     Left = 248
     Top = 32
@@ -2320,6 +2319,7 @@ object MainForm: TMainForm
       'user_name='
       'sql_role_name=SYSDBA')
     LibraryName = 'gds32.dll'
+    Role = 'SYSDBA'
     Left = 184
     Top = 32
   end
