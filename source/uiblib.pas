@@ -113,8 +113,13 @@ type
 {$IFDEF FB20_UP}
   ,csKOI8R, csKOI8U, csUTF8
 {$ENDIF}
+{$IFDEF FB21_UP}
+  ,csWIN1258
+  ,csTIS620
+  ,csGBK
+  ,csCP943C
+{$ENDIF}
   );
-
 
 const
   CharacterSetStr : array[TCharacterSet] of AnsiString = (
@@ -132,6 +137,12 @@ const
 {$ENDIF}
 {$IFDEF FB20_UP}
     ,'KOI8R', 'KOI8U', 'UTF8'
+{$ENDIF}
+{$IFDEF FB21_UP}
+    ,'WIN1258'
+    ,'TIS620'
+    ,'GBK'
+    ,'CP943C'
 {$ENDIF}
     );
 
@@ -192,14 +203,26 @@ const
   ,21866 //csKOI8U koi8-u	Ukrainian (KOI8-U); Cyrillic (KOI8-U)
   ,65001 // csUTF8 utf-8	Unicode (UTF-8)
 {$ENDIF}
+{$IFDEF FB21_UP}
+  ,1258 //csWIN1258 ANSI/OEM Vietnamese; Vietnamese (Windows)
+  ,874 //csTIS620 windows-874	ANSI/OEM Thai (same as 28605, ISO 8859-15); Thai (Windows)
+  ,936 //gb2312	ANSI/OEM Simplified Chinese (PRC, Singapore); Chinese Simplified (GB2312)
+  ,932 //csCP943C Shift_JIS
+{$ENDIF}
   );
+
+
+
 
 {$IFDEF DLLREGISTRY}
   FBINSTANCES = 'SOFTWARE\Firebird Project\Firebird Server\Instances';
 {$ENDIF}
 
   function MBEncode(const str: UnicodeString; cs: TCharacterSet): AnsiString;
-  function MBDecode(const str: AnsiString; cs: TCharacterSet): UnicodeString;
+  function MBDecode(const str: AnsiString; cs: TCharacterSet): UnicodeString; overload;
+  procedure MBDecode(str: PAnsiChar; size: Integer; cs: TCharacterSet; buffer: PWideChar); overload;
+
+  function BytesPerCharacter(cs: TCharacterSet): Byte;
 
   function StrToCharacterSet(const CharacterSet: AnsiString): TCharacterSet;
   function CreateDBParams(Params: AnsiString; Delimiter: AnsiChar = ';'): AnsiString;
@@ -1078,6 +1101,38 @@ begin
   end else
 {$ENDIF}
     Result := UnicodeString(str);
+end;
+
+procedure MBDecode(str: PAnsiChar; size: Integer; cs: TCharacterSet; buffer: PWideChar);
+{$IFDEF MSWINDOWS}
+var
+  cp, len: Integer;
+{$ENDIF}
+begin
+{$IFDEF MSWINDOWS}
+  cp := CharacterSetCP[cs];
+  len := MultiByteToWideChar(cp, 0, str, size, nil, 0);
+  MultiByteToWideChar(cp, 0, str, size, buffer, len);
+  inc(buffer, len);
+  buffer^ := #0;
+{$ENDIF}
+end;
+
+function BytesPerCharacter(cs: TCharacterSet): Byte;
+begin
+  case cs of
+    csSJIS_0208, csEUCJ_0208, csKSC_5601, csBIG_5, csGB_2312
+{$IFDEF FB21_UP}
+    ,csGBK, csCP943C
+{$ENDIF}
+      : Result := 2;
+    csUNICODE_FSS: Result := 3;
+{$IFDEF FB20_UP}
+    csUTF8: Result := 4;
+{$ENDIF}
+  else
+    Result := 1;
+  end;
 end;
 
 (******************************************************************************)

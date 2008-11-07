@@ -577,11 +577,25 @@ begin
             end;
           end;
         uftChar,
-        uftCstring,
-        uftVarchar:
+        uftCstring:
           begin
+          {$IFDEF UNICODE}
+            DataType := ftWideString;
+            Size := SQLLen[i] div BytesPerCharacter(CharacterSet);
+          {$ELSE}
             DataType := ftString;
             Size := SQLLen[i];
+          {$ENDIF}
+          end;
+        uftVarchar:
+          begin
+          {$IFDEF UNICODE}
+            DataType := ftWideString;
+            Size := SQLLen[i] div BytesPerCharacter(CharacterSet);
+          {$ELSE}
+            DataType := ftString;
+            Size := SQLLen[i];
+          {$ENDIF}
           end;
         uftSmallint: DataType := ftSmallint;
         uftInteger : DataType := ftInteger;
@@ -591,9 +605,13 @@ begin
         uftBlob, uftBlobId:
           begin
             if Data.sqlvar[i].SqlSubType = 1 then
+            {$IFDEF UNICODE}
+              DataType := ftWideMemo else
+            {$ELSE}
               DataType := ftMemo else
+            {$ENDIF}
               DataType := ftBlob;
-            Size := SizeOf(TIscQuad);
+            Size := SizeOf(Pointer);
           end;
         uftDate : DataType := ftDate;
         uftTime : DataType := ftTime;
@@ -627,8 +645,13 @@ end;
 
 function TUIBCustomDataSet.GetFieldData(FieldNo: Integer;
   Buffer: Pointer): Boolean;
+const
+  UTF8BOM: array[0..2] of Byte = ($EF, $BB, $BF);
 var
-  FieldType: TUIBFieldType;
+  aFieldType: TUIBFieldType;
+{$IFDEF UNICODE}
+  uniStr: UnicodeString;
+{$ENDIF}
 begin
   dec(FieldNo);
   Result := False;
@@ -648,9 +671,9 @@ begin
     Result := True;
     Exit;
   end;
-  FieldType := FStatement.Fields.FieldType[FieldNo];
-  with FStatement.Fields.Data.sqlvar[FieldNo] do
-    case FieldType of
+  aFieldType := FStatement.Fields.FieldType[FieldNo];
+  with FStatement.Fields, Data.sqlvar[FieldNo] do
+    case aFieldType of
       uftNumeric:
         begin
           case FStatement.Fields.SQLType[FieldNo] of
@@ -741,13 +764,21 @@ begin
       uftChar,
       uftCstring:
         begin
+        {$IFDEF UNICODE}
+          MBDecode(sqldata, SqlLen, CharacterSet, PWideChar(buffer));
+        {$ELSE}
           Move(sqldata^, Buffer^, SqlLen);
           PAnsiChar(Buffer)[SqlLen] := #0;
+        {$ENDIF}
         end;
       uftVarchar:
         begin
+        {$IFDEF UNICODE}
+          MBDecode(@PVary(sqldata).vary_string, PVary(sqldata).vary_length, CharacterSet, PWideChar(buffer));
+        {$ELSE}
           Move(PVary(sqldata).vary_string, Buffer^, PVary(sqldata).vary_length);
           PAnsiChar(Buffer)[PVary(sqldata).vary_length] := #0;
+        {$ENDIF}
         end;
       uftSmallint: PSmallint(Buffer)^ := PSmallint(sqldata)^;
       uftInteger : PInteger(Buffer)^ := PInteger(sqldata)^;
@@ -768,8 +799,18 @@ begin
         begin
           if Buffer <> nil then
           begin
-            FStatement.ReadBlob(FieldNo, TStream(Buffer));
-            TStream(Buffer).Seek(0, soFromBeginning);
+          {$IFDEF UNICODE}
+            if SqlSubType = 1 then
+            begin
+              FStatement.ReadBlob(FieldNo, uniStr);
+              TStream(Buffer).Write(PWideChar(uniStr)^, Length(uniStr) * sizeof(WideChar));
+              TStream(Buffer).Seek(0, soFromBeginning);
+            end else
+          {$ENDIF}
+            begin
+              FStatement.ReadBlob(FieldNo, TStream(Buffer));
+              TStream(Buffer).Seek(0, soFromBeginning);
+            end;
           end;
         end;
       uftDate:
