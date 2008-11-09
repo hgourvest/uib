@@ -22,7 +22,7 @@ package uibD12Win32D;
 {$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
-{$DESCRIPTION 'UIB Components for Delphi/RAD Studio 2007'}
+{$DESCRIPTION 'UIB Components for Delphi/RAD Studio 2009'}
 {$DESIGNONLY}
 {$IMPLICITBUILD ON}
 
