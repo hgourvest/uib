@@ -29,13 +29,17 @@ type
   end;
 
 procedure HTTPOutput(this, obj: ISuperObject; format: boolean); overload;
-procedure HTTPOutput(this: ISuperObject; const str: string); overload;
+procedure HTTPOutput(this: ISuperObject; const str: AnsiString); overload;
 procedure HTTPCompress(this: ISuperObject; level: integer = 5);
 function HTTPIsPost(this: ISuperObject): boolean;
-procedure HTTPRedirect(This: ISuperObject; const location: string);
+procedure HTTPRedirect(This: ISuperObject; const location: AnsiString);
 
 implementation
-uses SysUtils, PDGService{$ifdef madExcept}, madExcept {$endif};
+uses
+{$IFDEF UNICODE}
+AnsiStrings,
+{$ENDIF}
+SysUtils, PDGService{$ifdef madExcept}, madExcept {$endif};
 
 const
   ReadTimeOut: Integer = 60000; // 1 minute
@@ -46,7 +50,7 @@ begin
   obj.SaveTo(THTTPMessage(this['response'].DataPtr).Content, format);
 end;
 
-procedure HTTPOutput(this: ISuperObject; const str: string); overload;
+procedure HTTPOutput(this: ISuperObject; const str: AnsiString); overload;
 begin
   THTTPMessage(this['response'].DataPtr).Content.WriteString(str, false);
 end;
@@ -63,7 +67,7 @@ begin
   Result := This.S['request.method'] = 'POST'
 end;
 
-procedure HTTPRedirect(This: ISuperObject; const location: string);
+procedure HTTPRedirect(This: ISuperObject; const location: AnsiString);
 begin
   This.I['response.response'] := 302;
   This.S['response.env.Location'] := Location;
@@ -111,21 +115,21 @@ begin
 end;
 
 procedure THTTPConnexion.doBeforeProcessRequest(ctx: ISuperObject);
-  function interprete(v: PChar; name: string): boolean;
+  function interprete(v: PAnsiChar; name: AnsiString): boolean;
   var
-    p: PChar;
-    str: string;
+    p: PAnsiChar;
+    str: AnsiString;
   begin
     str := trim(v);
     if str <> '' then
     begin
-      p := StrScan(PChar(str), '.');
+      p := StrScan(PAnsiChar(str), '.');
       if p <> nil then
       begin
         ctx.S['params.format'] := p + 1;
-        setlength(str, p - PChar(str));
+        setlength(str, p - PAnsiChar(str));
       end;
-      ctx['params'].S[name] := PChar(str);
+      ctx['params'].S[name] := PAnsiChar(str);
       Result := true;
     end else
       Result := false
@@ -155,7 +159,7 @@ begin
     end else
     if(Request.S['content-type[0]'] = 'application/x-www-form-urlencoded') then
     begin
-      obj := HTTPInterprete(PChar(Request.ContentString), true, '&');
+      obj := HTTPInterprete(PAnsiChar(Request.ContentString), true, '&');
       try
         ctx['params'].Merge(obj, true);
         ctx.S['params.format'] := 'html';
@@ -164,11 +168,11 @@ begin
       end;
     end;
 
-   obj := HTTPInterprete(PChar(Request.S['uri']), false, '/');
+   obj := HTTPInterprete(PAnsiChar(Request.S['uri']), false, '/');
    begin
-     if interprete(PChar(obj.AsArray.S[1]), 'controller') then
-     if interprete(PChar(obj.AsArray.S[2]), 'action') then
-        interprete(PChar(obj.AsArray.S[3]), 'id');
+     if interprete(PAnsiChar(obj.AsArray.S[1]), 'controller') then
+     if interprete(PAnsiChar(obj.AsArray.S[2]), 'action') then
+        interprete(PAnsiChar(obj.AsArray.S[3]), 'id');
    end;
 
   // default action is index
@@ -182,9 +186,9 @@ end;
 
 procedure THTTPConnexion.ProcessRequest(ctx: ISuperObject);
 var
-  user, pass: string;
-  str: string;
-  path: string;
+//  user, pass: AnsiString;
+  str: AnsiString;
+  path: AnsiString;
   obj: ISuperObject;
   proc: TSuperMethod;
   valide: ISuperObject;
@@ -237,17 +241,17 @@ begin
     end;
 
   str := Request.S['uri'];
-  path := ExtractFilePath(ParamStr(0)) + 'HTTP';
+  path := ExtractFilePath(AnsiString(ParamStr(0))) + 'HTTP';
 
   if str[Length(str)] in ['/','\'] then
   begin
-    if FileExists(path + str + 'index.html') then
+    if FileExists(string(path + str + 'index.html')) then
       Request.S['uri'] := Request.S['uri'] + 'index.html' else
-    if FileExists(path + Request.S['uri'] + 'index.htm') then
+    if FileExists(string(path + Request.S['uri'] + 'index.htm')) then
       Request.S['uri'] := Request.S['uri'] + 'index.htm';
   end;
 
-  if FileExists(path + Request.S['uri']) then
+  if FileExists(string(path + Request.S['uri'])) then
   begin
     Response.S['env.Content-Type'] := FFormats.S[ctx.S['params.format']];
     Response.S['sendfile'] := path + Request.S['uri'];

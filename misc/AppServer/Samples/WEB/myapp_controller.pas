@@ -61,7 +61,7 @@ begin
     on E: Exception do
     begin
       Params.S['action'] := 'index';
-      This.S['error'] := E.Message;
+      This.S['error'] := AnsiString(E.Message);
       country_index(This, Params, Result);
     end;
   end;
@@ -92,7 +92,7 @@ begin
     on E: Exception do
     begin
       Params.S['action'] := 'index';
-      This.S['error'] := E.Message;
+      This.S['error'] := AnsiString(E.Message);
       country_index(This, Params, Result);
     end;
   end;

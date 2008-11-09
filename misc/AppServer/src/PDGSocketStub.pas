@@ -404,8 +404,8 @@ begin
   fpsetsockopt(FSocketHandle, SOL_SOCKET, SO_REUSEADDR, PChar(@SO_True), SizeOf(SO_True));
   fpsetsockopt(FSocketHandle, IPPROTO_TCP, TCP_NODELAY, PChar(@SO_True), SizeOf(SO_True));
 {$ELSE}
-  SetSockOpt(FSocketHandle, SOL_SOCKET, SO_REUSEADDR, PChar(@SO_True), SizeOf(SO_True));
-  SetSockOpt(FSocketHandle, IPPROTO_TCP, TCP_NODELAY, PChar(@SO_True), SizeOf(SO_True));
+  SetSockOpt(FSocketHandle, SOL_SOCKET, SO_REUSEADDR, PAnsiChar(@SO_True), SizeOf(SO_True));
+  SetSockOpt(FSocketHandle, IPPROTO_TCP, TCP_NODELAY, PAnsiChar(@SO_True), SizeOf(SO_True));
 {$ENDIF}
 
 {$IFDEF FPC}

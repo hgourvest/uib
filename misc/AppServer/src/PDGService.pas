@@ -154,7 +154,7 @@ const
   SERVICE_DEMAND_START          = $00000003;
   SERVICE_DISABLED              = $00000004;
 
-  _DELETE                  = $00010000; 
+  _DELETE                  = $00010000;
 
   advapi32 = 'advapi32.dll';
 
@@ -164,28 +164,28 @@ function SetServiceStatus(hServiceStatus: SERVICE_STATUS_HANDLE;
 
 function RegisterServiceCtrlHandler(lpServiceName: PChar;
   lpHandlerProc: TFarProc): SERVICE_STATUS_HANDLE; stdcall;
-  external advapi32 name 'RegisterServiceCtrlHandlerA';
+  external advapi32 name {$IFDEF UNICODE}'RegisterServiceCtrlHandlerW'{$ELSE}'RegisterServiceCtrlHandlerA'{$ENDIF};
 
 function StartServiceCtrlDispatcher(
   var lpServiceStartTable: TServiceTableEntry): BOOL; stdcall;
-  external advapi32 name 'StartServiceCtrlDispatcherA';
+  external advapi32 name {$IFDEF UNICODE}'StartServiceCtrlDispatcherW'{$ELSE}'StartServiceCtrlDispatcherA'{$ENDIF};
 
 function OpenSCManager(lpMachineName, lpDatabaseName: PChar;
   dwDesiredAccess: DWORD): THandle; stdcall;
-  external advapi32 name 'OpenSCManagerA';
+  external advapi32 name {$IFDEF UNICODE}'OpenSCManagerW'{$ELSE}'OpenSCManagerA'{$ENDIF};
 
 function CreateService(hSCManager: THandle; lpServiceName, lpDisplayName: PChar;
   dwDesiredAccess, dwServiceType, dwStartType, dwErrorControl: DWORD;
   lpBinaryPathName, lpLoadOrderGroup: PChar; lpdwTagId: LPDWORD; lpDependencies,
   lpServiceStartName, lpPassword: PChar): THandle; stdcall;
-  external advapi32 name 'CreateServiceA';
+  external advapi32 name {$IFDEF UNICODE}'CreateServiceW'{$ELSE}'CreateServiceA'{$ENDIF};
 
 function CloseServiceHandle(hSCObject: THandle): BOOL; stdcall;
   external advapi32 name 'CloseServiceHandle';
 
 function OpenService(hSCManager: THandle; lpServiceName: PChar;
   dwDesiredAccess: DWORD): THandle; stdcall;
-  external advapi32 name 'OpenServiceA';
+  external advapi32 name {$IFDEF UNICODE}'OpenServiceW'{$ELSE}'OpenServiceA'{$ENDIF};
 
 function ControlService(hService: THandle; dwControl: DWORD;
   var lpServiceStatus: TServiceStatus): BOOL; stdcall;

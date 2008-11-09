@@ -63,7 +63,7 @@ type
     function Seek(Offset: Longint; Origin: Word): Longint; override;
     function Read(var Buffer; Count: Longint): Longint; override;
     function Write(const Buffer; Count: Longint): Longint; override;
-    procedure WriteString(const str: string; writesize: boolean);
+    procedure WriteString(const str: AnsiString; writesize: boolean);
     procedure WriteInteger(const V: Integer);
     function ReadString: string;
     procedure SaveToStream(Stream: TStream);
@@ -87,19 +87,19 @@ function DecompressStream(inSocket: longint; outStream: TStream): boolean; overl
 function receive(s: longint; var Buf; len, flags: Integer): Integer;
 
 // Base64 functions from <dirk.claessens.dc@belgium.agfa.com> (modified)
-function StrTobase64(Buf: string): string;
-function Base64ToStr(const B64: string): string;
+function StrTobase64(Buf: AnsiString): AnsiString;
+function Base64ToStr(const B64: AnsiString): AnsiString;
 
-function FileToString(const FileName: string): string;
-function StreamToString(stream: TStream): string;
+function FileToString(const FileName: string): AnsiString;
+function StreamToString(stream: TStream): AnsiString;
 
 implementation
 
 
 const
-  Base64Code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  Base64Code: AnsiString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
-function StrTobase64(Buf: string): string;
+function StrTobase64(Buf: AnsiString): AnsiString;
 var
   i: integer;
   x1, x2, x3, x4: byte;
@@ -163,8 +163,8 @@ begin
     end;
 end;
 
-function Base64ToStr(const B64: string): string;
-  function Char2IDx(c: char): byte;
+function Base64ToStr(const B64: AnsiString): AnsiString;
+  function Char2IDx(c: AnsiChar): byte;
   begin
     case c of
       'A'..'Z': Result := byte(c) - byte('A');
@@ -178,7 +178,6 @@ function Base64ToStr(const B64: string): string;
 end;
 var
   i, PadCount: integer;
-  Block: string[3];
   x1, x2, x3: byte;
 begin
   Result := '';
@@ -198,16 +197,15 @@ begin
   //
   Result := '';
   i := 1;
-  SetLength(Block, 3);
   while i <= Length(B64) - 3 do
   begin
     // reverse process of above
     x1 := (Char2Idx(B64[i]) shl 2) or (Char2IDx(B64[i + 1]) shr 4);
-    Result := Result + Chr(x1);
+    Result := Result + AnsiChar(x1);
     x2 := (Char2Idx(B64[i + 1]) shl 4) or (Char2IDx(B64[i + 2]) shr 2);
-    Result := Result + Chr(x2);
+    Result := Result + AnsiChar(x2);
     x3 := (Char2Idx(B64[i + 2]) shl 6) or (Char2IDx(B64[i + 3]));
-    Result := Result + Chr(x3);
+    Result := Result + AnsiChar(x3);
     inc(i, 4);
   end;
 
@@ -233,7 +231,7 @@ begin
 {$IFDEF FPC}
   Result := InterlockedCompareExchange(Value, 0, 0);
 {$ELSE}
-  {$if defined(VER160) or defined(VER170) or defined(VER180)}
+  {$if defined(VER160) or defined(VER170) or defined(VER180) or defined(VER200)}
     Result := Integer(InterlockedCompareExchange(Value, 0, 0));
   {$else}
     Result := Integer(InterlockedCompareExchange(Pointer(Value), nil, nil));
@@ -498,14 +496,14 @@ begin
   inflateEnd(zstream);
 end;
 
-function StreamToString(stream: TStream): string;
+function StreamToString(stream: TStream): AnsiString;
 begin
   stream.Seek(0, soFromBeginning);
   SetLength(Result, stream.Size);
-  stream.Read(PChar(Result)^, stream.Size);
+  stream.Read(PAnsiChar(Result)^, stream.Size);
 end;
 
-function FileToString(const FileName: string): string;
+function FileToString(const FileName: string): AnsiString;
 var
   strm: TFileStream;
 begin
@@ -784,7 +782,7 @@ begin
   Write(v, sizeof(v));
 end;
 
-procedure TPooledMemoryStream.WriteString(const str: string; writesize: boolean);
+procedure TPooledMemoryStream.WriteString(const str: AnsiString; writesize: boolean);
 var
   s: Integer;
 begin

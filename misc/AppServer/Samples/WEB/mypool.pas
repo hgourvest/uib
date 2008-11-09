@@ -12,10 +12,17 @@ var
 implementation
 uses SysUtils, PDGSocketStub, PDGUtils;
 
+procedure init;
+var
+  obj: ISuperObject;
+begin
+  obj := TSuperObject.Parse(PansiChar(FileToString(ExtractFilePath(ParamStr(0)) + 'appserver.json')));
+  pool := TPDGUIBConnectionPool.Create(obj['database']);
+end;
+
 initialization
-  with SO(FileToString(ExtractFilePath(ParamStr(0)) + 'appserver.json')) do
-    pool := TPDGUIBConnectionPool.Create(O['database']);
-  
+ init;
+
 finalization
   while TPDGThread.ThreadCount > 0 do sleep(100);
   pool := nil;

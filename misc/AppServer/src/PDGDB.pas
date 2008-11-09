@@ -21,17 +21,17 @@ type
   ['{843E105A-B8E0-42A9-AFA0-CF5AA843DB8B}']
     function newContext(Options: ISuperObject = nil): IPDGContext; overload;
     function newCommand(Options: ISuperObject = nil): IPDGCommand; overload;
-    function newContext(const Options: string): IPDGContext; overload;
-    function newCommand(const Options: string): IPDGCommand; overload;
+    function newContext(const Options: AnsiString): IPDGContext; overload;
+    function newCommand(const Options: AnsiString): IPDGCommand; overload;
   end;
 
   IPDGContext = interface
   ['{51992399-2D1A-47EF-9DB1-C5654325F41B}']
     function newCommand(Options: ISuperObject = nil): IPDGCommand; overload;
-    function newCommand(const Options: string): IPDGCommand; overload;
+    function newCommand(const Options: AnsiString): IPDGCommand; overload;
     function Execute(Command: IPDGCommand; params: ISuperObject = nil): ISuperObject; overload;
     function Execute(Command: IPDGCommand; params: array of const): ISuperObject; overload;
-    function Execute(Command: IPDGCommand; const params: string): ISuperObject; overload;
+    function Execute(Command: IPDGCommand; const params: AnsiString): ISuperObject; overload;
     function Execute(Command: IPDGCommand; const params: Variant): ISuperObject; overload;
   end;
 
@@ -39,7 +39,7 @@ type
   ['{A39B974A-96EA-4047-A57B-A2B3EBE7BABD}']
     function Execute(params: ISuperObject = nil; context: IPDGContext = nil): ISuperObject; overload;
     function Execute(params: array of const; context: IPDGContext = nil): ISuperObject; overload;
-    function Execute(const params: string; context: IPDGContext = nil): ISuperObject; overload;
+    function Execute(const params: AnsiString; context: IPDGContext = nil): ISuperObject; overload;
     function Execute(const params: Variant; context: IPDGContext = nil): ISuperObject; overload;
     function GetInputMeta: ISuperObject;
     function GetOutputMeta: ISuperObject;
@@ -55,18 +55,18 @@ type
   TPDGConnection = class(TSuperObject, IPDGConnection)
   protected
     function newContext(Options: ISuperObject = nil): IPDGContext; overload; virtual; abstract;
-    function newContext(const Options: string): IPDGContext; overload; virtual;
+    function newContext(const Options: AnsiString): IPDGContext; overload; virtual;
     function newCommand(Options: ISuperObject = nil): IPDGCommand; overload; virtual;
-    function newCommand(const Options: string): IPDGCommand; overload; virtual;
+    function newCommand(const Options: AnsiString): IPDGCommand; overload; virtual;
   end;
 
   TPDGContext = class(TSuperObject, IPDGContext)
   protected
     function newCommand(Options: ISuperObject = nil): IPDGCommand; overload; virtual; abstract;
-    function newCommand(const Options: string): IPDGCommand; overload; virtual;
+    function newCommand(const Options: AnsiString): IPDGCommand; overload; virtual;
     function Execute(Command: IPDGCommand; params: ISuperObject = nil): ISuperObject; overload; virtual;
     function Execute(Command: IPDGCommand; params: array of const): ISuperObject; overload; virtual;
-    function Execute(Command: IPDGCommand; const params: string): ISuperObject; overload; virtual;
+    function Execute(Command: IPDGCommand; const params: AnsiString): ISuperObject; overload; virtual;
     function Execute(Command: IPDGCommand; const params: Variant): ISuperObject; overload; virtual;
   end;
 
@@ -74,7 +74,7 @@ type
   protected
     function Execute(params: ISuperObject = nil; context: IPDGContext = nil): ISuperObject; overload; virtual; abstract;
     function Execute(params: array of const; context: IPDGContext = nil): ISuperObject; overload; virtual;
-    function Execute(const params: string; context: IPDGContext = nil): ISuperObject; overload; virtual;
+    function Execute(const params: AnsiString; context: IPDGContext = nil): ISuperObject; overload; virtual;
     function Execute(const params: Variant; context: IPDGContext = nil): ISuperObject; overload; virtual;
     function GetInputMeta: ISuperObject; virtual; abstract;
     function GetOutputMeta: ISuperObject; virtual; abstract;
@@ -124,14 +124,14 @@ begin
   Result := newContext.newCommand(Options);
 end;
 
-function TPDGConnection.newCommand(const Options: string): IPDGCommand;
+function TPDGConnection.newCommand(const Options: AnsiString): IPDGCommand;
 begin
   Result := newContext.newCommand(Options);
 end;
 
-function TPDGConnection.newContext(const Options: string): IPDGContext;
+function TPDGConnection.newContext(const Options: AnsiString): IPDGContext;
 begin
-  Result := newContext(SO(Options));
+  Result := newContext(TSuperObject.Parse(PAnsiChar(Options)));
 end;
 
 { TPDGContext }
@@ -142,20 +142,20 @@ begin
   Result := Command.Execute(so(params), Self);
 end;
 
-function TPDGContext.newCommand(const Options: string): IPDGCommand;
+function TPDGContext.newCommand(const Options: AnsiString): IPDGCommand;
 var
   opt: ISuperObject;
 begin
-  opt := TSuperObject.Parse(PChar(Options), false);
+  opt := TSuperObject.Parse(PAnsiChar(Options), false);
   if opt <> nil then
     Result := newCommand(opt) else
-    Result := newCommand(TSuperObject.Create(PChar(Options)));
+    Result := newCommand(TSuperObject.Create(PAnsiChar(Options)));
 end;
 
 function TPDGContext.Execute(Command: IPDGCommand;
-  const params: string): ISuperObject;
+  const params: AnsiString): ISuperObject;
 begin
-  Result := Command.Execute(so(params), Self);
+  Result := Command.Execute(TSuperObject.Parse(PAnsiChar(params)), Self);
 end;
 
 function TPDGContext.Execute(Command: IPDGCommand;
@@ -178,10 +178,10 @@ begin
   Result := Execute(SO(params), context);
 end;
 
-function TPDGCommand.Execute(const params: string;
+function TPDGCommand.Execute(const params: AnsiString;
   context: IPDGContext): ISuperObject;
 begin
-  Result := Execute(SO(params), context);
+  Result := Execute(TSuperObject.Parse(PAnsiChar(params)), context);
 end;
 
 function TPDGCommand.Execute(params: array of const;
