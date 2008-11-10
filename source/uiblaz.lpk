@@ -46,8 +46,8 @@
         <UnitName Value="uibdataset"/>
       </Item4>
       <Item5>
-        <Filename Value="jvuibavl.pas"/>
-        <UnitName Value="jvuibavl"/>
+        <Filename Value="uibavl.pas"/>
+        <UnitName Value="uibavl"/>
       </Item5>
     </Files>
     <Type Value="RunAndDesignTime"/>
