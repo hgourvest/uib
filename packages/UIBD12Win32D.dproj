@@ -1,11 +1,11 @@
 ﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 		<PropertyGroup>
 			<ProjectGuid>{d2d640b7-7482-49d7-bba2-460f2dbdadee}</ProjectGuid>
-			<MainSource>uibD12Win32D.dpk</MainSource>
+			<MainSource>UIBD12Win32D.dpk</MainSource>
 			<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
 			<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
-			<DCC_DependencyCheckOutputName>C:\Documents and Settings\All Users\Documents\RAD Studio\6.0\Bpl\uibD12Win32D.bpl</DCC_DependencyCheckOutputName>
+			<DCC_DependencyCheckOutputName>C:\Documents and Settings\All Users\Documents\RAD Studio\6.0\Bpl\UIBD12Win32D.bpl</DCC_DependencyCheckOutputName>
 			<ProjectVersion>12.0</ProjectVersion>
 			<Config Condition="'$(Config)'==''">Debug</Config>
 		</PropertyGroup>
@@ -42,7 +42,7 @@
 			<Version>7.0</Version>
 		</PropertyGroup>
 		<ItemGroup>
-			<DelphiCompile Include="uibD12Win32D.dpk">
+			<DelphiCompile Include="UIBD12Win32D.dpk">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
 			<DCCReference Include="rtl.dcp"/>
@@ -56,7 +56,7 @@
 			<DCCReference Include="vclx.dcp"/>
 			<DCCReference Include="dclstd.dcp"/>
 			<DCCReference Include="vcldb.dcp"/>
-			<DCCReference Include="uibD12Win32R.dcp"/>
+			<DCCReference Include="UIBD12Win32R.dcp"/>
 			<DCCReference Include="..\source\uibreg.pas"/>
 			<DCCReference Include="..\source\uibtransactionedit.pas"/>
 			<DCCReference Include="..\source\uibdatabaseedit.pas">
@@ -117,7 +117,7 @@
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
 					<Source>
-						<Source Name="MainSource">uibD12Win32D.dpk</Source>
+						<Source Name="MainSource">UIBD12Win32D.dpk</Source>
 					</Source>
 				</Delphi.Personality>
 			</BorlandProject>
