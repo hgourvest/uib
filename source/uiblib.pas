@@ -152,7 +152,7 @@ const
   0, //csNONE,
   0, //csASCII,
   950, //csBIG_5,
-  0, // csCYRL,
+  1251, // csCYRL,
   437, // csDOS437, IBM437	OEM United States
   850, // csDOS850, ibm850	OEM Multilingual Latin 1; Western European (DOS)
   852, // csDOS852,
@@ -620,6 +620,7 @@ type
     property ArrayInfos[const index: word]: PArrayInfo read GetArrayInfos;
     property ArrayCount: Word read GetArrayCount;
 
+    procedure ReadBlobData(const Index: Word; var data: AnsiString);
     procedure ReadBlob(const Index: Word; Stream: TStream); overload;
     procedure ReadBlob(const Index: Word; var str: AnsiString); overload;
     procedure ReadBlob(const Index: Word; var str: UnicodeString); overload;
@@ -5650,28 +5651,12 @@ procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
   end;
 
   procedure TSQLResult.ReadBlob(const Index: Word; var str: AnsiString);
-  var
-    BlobData: PBlobData;
-{$IFDEF UNICODE}
-    cp: Word;
-{$ENDIF}
   begin
-    CheckRange(Index);
-    if not FFetchBlobs then
-      raise Exception.Create(EUIB_FETCHBLOBNOTSET);
-    BlobData := GetDataQuadOffset(Index);
-    SetLength(str, BlobData.Size);
-    Move(BlobData.Buffer^, PAnsiChar(Str)^, BlobData.Size);
+    ReadBlobData(Index, str);
 {$IFDEF UNICODE}
     if (BytesPerCharacter(FCharacterSet) = 1) then
-      begin
-        cp := CharacterSetCP[FCharacterSet];
-        if cp > 0 then
-          PWord(PtrInt(str) - 12)^ := cp;
-      end else
-      begin
-      //  MBDecode()
-      end;
+      PWord(PtrInt(str) - 12)^ := CharacterSetCP[FCharacterSet] else
+      str := AnsiString(MBUDecode(str, CharacterSetCP[FCharacterSet]));
 {$ENDIF}
   end;
 
@@ -5716,7 +5701,7 @@ procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
   var
     aStr: AnsiString;
   begin
-    ReadBlob(Index, aStr);
+    ReadBlobData(Index, aStr);
     if FXSQLDA.sqlvar[Index].SqlSubType = 1 then  // is text ?
       str := MBUDecode(aStr, CharacterSetCP[FCharacterSet]) else
       str := UnicodeString(aStr);
@@ -5735,6 +5720,18 @@ procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
   procedure TSQLResult.ReadBlob(const name: string; Data: Pointer);
   begin
     ReadBlob(GetFieldIndex(AnsiString(Name)), Data);
+  end;
+
+  procedure TSQLResult.ReadBlobData(const Index: Word; var data: AnsiString);
+  var
+    BlobData: PBlobData;
+  begin
+    CheckRange(Index);
+    if not FFetchBlobs then
+      raise Exception.Create(EUIB_FETCHBLOBNOTSET);
+    BlobData := GetDataQuadOffset(Index);
+    SetLength(data, BlobData.Size);
+    Move(BlobData.Buffer^, PAnsiChar(data)^, BlobData.Size);
   end;
 
   procedure TSQLResult.ReadBlob(const name: string; var str: UnicodeString);

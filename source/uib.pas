@@ -725,6 +725,7 @@ type
 
     procedure InternalGetBlobSize(sqlda: TSQLDA; const Index: Word; out Size: Cardinal);
     procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; Stream: TStream); overload;
+    procedure InternalReadBlobData(sqlda: TSQLDA; const Index: Word; var str: AnsiString);
     procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; var str: AnsiString); overload;
     procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; var str: UnicodeString); overload;
     procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; var Value: Variant); overload;
@@ -2240,7 +2241,7 @@ procedure TUIBStatement.InternalReadBlob(sqlda: TSQLDA; const Index: Word;
 var
   aStr: AnsiString;
 begin
-  InternalReadBlob(sqlda, Index, aStr);
+  InternalReadBlobData(sqlda, Index, aStr);
   str := MBUDecode(aStr, CharacterSetCP[sqlda.CharacterSet]);
 end;
 
@@ -2832,35 +2833,13 @@ end;
 
 procedure TUIBStatement.InternalReadBlob(sqlda: TSQLDA; const Index: Word;
   var str: AnsiString);
-var
-  BlobHandle: IscBlobHandle;
 begin
-  if (not sqlda.IsBlob[Index]) then
-    raise EUIBConvertError.Create(EUIB_CASTERROR);
-  if sqlda.IsNull[Index] then
-     str := '' else
-  begin
-  {$IFDEF UIBTHREADSAFE}
-    Lock;
-    try
-  {$ENDIF}
-      with FindDataBase.FLibrary do
-      begin
-        BlobHandle := nil;
-        BlobOpen(FindDataBase.FDbHandle, FTransaction.FTrHandle,
-          BlobHandle, sqlda.AsQuad[Index]);
-        try
-          BlobReadString(BlobHandle, str);
-        finally
-          BlobClose(BlobHandle);
-        end;
-      end;
-  {$IFDEF UIBTHREADSAFE}
-    finally
-      UnLock;
-    end;
-  {$ENDIF}
-  end;
+  InternalReadBlobData(sqlda, Index, str);
+{$IFDEF UNICODE}
+  if BytesPerCharacter(sqlda.CharacterSet) = 1 then
+    PWord(PtrInt(str) - 12)^ := CharacterSetCP[sqlda.CharacterSet] else
+    str := AnsiString(MBUDecode(str, CharacterSetCP[sqlda.CharacterSet]))
+{$ENDIF}
 end;
 
 procedure TUIBStatement.InternalReadBlob(sqlda: TSQLDA; const Index: Word;
@@ -2994,6 +2973,39 @@ begin
           BlobHandle, sqlda.AsQuad[Index]);
         try
           BlobReadSizedBuffer(BlobHandle, Buffer);
+        finally
+          BlobClose(BlobHandle);
+        end;
+      end;
+  {$IFDEF UIBTHREADSAFE}
+    finally
+      UnLock;
+    end;
+  {$ENDIF}
+  end;
+end;
+
+procedure TUIBStatement.InternalReadBlobData(sqlda: TSQLDA; const Index: Word;
+  var str: AnsiString);
+var
+  BlobHandle: IscBlobHandle;
+begin
+  if (not sqlda.IsBlob[Index]) then
+    raise EUIBConvertError.Create(EUIB_CASTERROR);
+  if sqlda.IsNull[Index] then
+     str := '' else
+  begin
+  {$IFDEF UIBTHREADSAFE}
+    Lock;
+    try
+  {$ENDIF}
+      with FindDataBase.FLibrary do
+      begin
+        BlobHandle := nil;
+        BlobOpen(FindDataBase.FDbHandle, FTransaction.FTrHandle,
+          BlobHandle, sqlda.AsQuad[Index]);
+        try
+          BlobReadString(BlobHandle, str);
         finally
           BlobClose(BlobHandle);
         end;
