@@ -819,6 +819,9 @@ type
   end;
 
 implementation
+{$IFDEF UNICODE}
+  uses AnsiStrings;
+{$ENDIF}
 
 //   Database Tree
 //------------------------
@@ -2024,10 +2027,6 @@ begin
           FPrecision := 7;
         blr_int64, blr_quad, blr_double:
           FPrecision := 15;
-      // I already seen a case where FScale = 3 and the field was a blob - PrY -
-      //  blr_blob:
-      //    FFieldType := uftBlob;
-
       else
         raise EUIBError.Create(EUIB_UNEXPECTEDERROR);
       end;
@@ -2196,7 +2195,7 @@ begin
     if OIDDBCharset in FOIDDatabases then
     begin
       QDefaultCharset.Open;
-      FDefaultCharset := StrToCharacterSet(AnsiTrim(QDefaultCharset.Fields.AsAnsiString[0]));
+      FDefaultCharset := StrToCharacterSet(Trim(QDefaultCharset.Fields.AsAnsiString[0]));
       QDefaultCharset.Close(etmStayIn);
     end;
 

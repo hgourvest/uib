@@ -788,18 +788,18 @@ type
     { The the blob value of a parametter using a Stream. }
     procedure ParamsSetBlob(const Index: Word; Stream: TStream); overload;
     { The the blob value of a parametter using a string. }
-    procedure ParamsSetBlob(const Index: Word; var str: AnsiString); overload;
+    procedure ParamsSetBlob(const Index: Word; const str: AnsiString); overload;
     { The the blob value of a parametter using a string. }
-    procedure ParamsSetBlob(const Index: Word; var str: UnicodeString); overload;
+    procedure ParamsSetBlob(const Index: Word; const str: UnicodeString); overload;
     { The the blob value of a parametter using a Buffer. }
     procedure ParamsSetBlob(const Index: Word; Buffer: Pointer; Size: Cardinal); overload;
 
     { The the blob value of a parametter using a Stream. }
     procedure ParamsSetBlob(const Name: string; Stream: TStream); overload;
     { The the blob value of a parametter using a string. }
-    procedure ParamsSetBlob(const Name: string; var str: AnsiString); overload;
+    procedure ParamsSetBlob(const Name: string; const str: AnsiString); overload;
     { The the blob value of a parametter using a string. }
-    procedure ParamsSetBlob(const Name: string; var str: UnicodeString); overload;
+    procedure ParamsSetBlob(const Name: string; const str: UnicodeString); overload;
     { The the blob value of a parametter using a Buffer. }
     procedure ParamsSetBlob(const Name: string; Buffer: Pointer; Size: Cardinal); overload;
 
@@ -1182,7 +1182,11 @@ type
   end;
 
 implementation
-uses uibmetadata;
+uses
+{$IFDEF UNICODE}
+  AnsiStrings,
+{$ENDIF}
+  uibmetadata;
 
 type
   PExceptionInfo = ^TExceptionInfo;
@@ -1208,7 +1212,7 @@ end;
 procedure TUIBDataBase.ClearTransactions;
 begin
   while (FTransactions <> nil) do
-    TUIBTransaction(FTransactions.Last).RemoveDatabase(Self); 
+    TUIBTransaction(FTransactions.Last).RemoveDatabase(Self);
 end;
 
 procedure TUIBDataBase.CloseTransactions;
@@ -1279,7 +1283,7 @@ var
 begin
   S := AnsiString(ReadParamString('lc_ctype', 'NONE'));
   StrUpper(PAnsiChar(S));
-  S := AnsiTrim(S);
+  S := Trim(S);
   Result := csNONE;
   for i := low(TCharacterSet) to high(TCharacterSet) do
     if (S = CharacterSetStr[i]) then
@@ -2237,7 +2241,7 @@ var
   aStr: AnsiString;
 begin
   InternalReadBlob(sqlda, Index, aStr);
-  str := MBDecode(aStr, sqlda.CharacterSet);
+  str := MBUDecode(aStr, CharacterSetCP[sqlda.CharacterSet]);
 end;
 
 procedure TUIBStatement.EndTransaction(const ETM: TEndTransMode; Auto: boolean);
@@ -2379,7 +2383,7 @@ var
   I: Integer;
   procedure ExecuteQuery(const AQuery: AnsiString; sqlParams: TSQLParams);
   begin
-    if (AnsiTrim(AQuery) = '') then exit;
+    if (Trim(AQuery) = '') then exit;
   {$IFDEF UIBTHREADSAFE}
     Lock;
     try
@@ -2615,7 +2619,7 @@ begin
 {$ENDIF}
 end;
 
-procedure TUIBStatement.ParamsSetBlob(const Index: Word; var str: AnsiString);
+procedure TUIBStatement.ParamsSetBlob(const Index: Word; const str: AnsiString);
 var
   BlobHandle: IscBlobHandle;
 begin
@@ -2631,7 +2635,11 @@ begin
       Params.AsQuad[Index] := BlobCreate(FindDataBase.FDbHandle,
         FTransaction.FTrHandle, BlobHandle);
       try
+{$IFDEF UNICODE}
+        BlobWriteString(BlobHandle, MBAEncode(str, CharacterSetCP[Params.CharacterSet]));
+{$ELSE}
         BlobWriteString(BlobHandle, str);
+{$ENDIF}
       finally
         BlobClose(BlobHandle);
       end;
@@ -2698,7 +2706,7 @@ begin
 {$ENDIF}
 end;
 
-procedure TUIBStatement.ParamsSetBlob(const Name: string; var str: AnsiString);
+procedure TUIBStatement.ParamsSetBlob(const Name: string; const str: AnsiString);
 var
   BlobHandle: IscBlobHandle;
 begin
@@ -2726,11 +2734,11 @@ begin
 {$ENDIF}
 end;
 
-procedure TUIBStatement.ParamsSetBlob(const Name: string; var str: UnicodeString);
+procedure TUIBStatement.ParamsSetBlob(const Name: string; const str: UnicodeString);
 var
   aStr: AnsiString;
 begin
-  aStr := MBEncode(str, Params.CharacterSet);
+  aStr := MBUEncode(str, CharacterSetCP[Params.CharacterSet]);
   ParamsSetBlob(Name, aStr)
 end;
 
@@ -2762,10 +2770,9 @@ begin
 end;
 
 procedure TUIBStatement.ParamsSetBlob(const Index: Word;
-  var str: UnicodeString);
+  const str: UnicodeString);
 var
   BlobHandle: IscBlobHandle;
-  aStr: AnsiString;
 begin
   if (FCurrentState < qsTransaction) then
     BeginTransaction;
@@ -2779,8 +2786,7 @@ begin
       Params.AsQuad[Index] := BlobCreate(FindDataBase.FDbHandle,
         FTransaction.FTrHandle, BlobHandle);
       try
-        aStr := MBEncode(str, Params.CharacterSet);
-        BlobWriteString(BlobHandle, aStr);
+        BlobWriteString(BlobHandle, MBUEncode(str, CharacterSetCP[Params.CharacterSet]));
       finally
         BlobClose(BlobHandle);
       end;

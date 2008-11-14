@@ -765,7 +765,7 @@ begin
       uftCstring:
         begin
         {$IFDEF UNICODE}
-          MBDecode(sqldata, SqlLen, CharacterSet, PWideChar(buffer));
+          MBUDecode(sqldata, SqlLen, CharacterSetCP[CharacterSet], PWideChar(buffer));
         {$ELSE}
           Move(sqldata^, Buffer^, SqlLen);
           PAnsiChar(Buffer)[SqlLen] := #0;
@@ -774,7 +774,7 @@ begin
       uftVarchar:
         begin
         {$IFDEF UNICODE}
-          MBDecode(@PVary(sqldata).vary_string, PVary(sqldata).vary_length, CharacterSet, PWideChar(buffer));
+          MBUDecode(@PVary(sqldata).vary_string, PVary(sqldata).vary_length, CharacterSetCP[CharacterSet], PWideChar(buffer));
         {$ELSE}
           Move(PVary(sqldata).vary_string, Buffer^, PVary(sqldata).vary_length);
           PAnsiChar(Buffer)[PVary(sqldata).vary_length] := #0;

@@ -41,6 +41,7 @@ type
 
 {$IFNDEF UNICODE}
   UnicodeString = WideString;
+  RawByteString = AnsiString;
 {$ENDIF}
 
   TUIBFieldType = (uftUnKnown, uftNumeric, uftChar, uftVarchar, uftCstring, uftSmallint,
@@ -146,7 +147,7 @@ const
 {$ENDIF}
     );
 
-  CharacterSetCP: array[TCharacterSet] of Integer =
+  CharacterSetCP: array[TCharacterSet] of Word =
   (
   0, //csNONE,
   0, //csASCII,
@@ -211,20 +212,19 @@ const
 {$ENDIF}
   );
 
-
-
-
 {$IFDEF DLLREGISTRY}
   FBINSTANCES = 'SOFTWARE\Firebird Project\Firebird Server\Instances';
 {$ENDIF}
 
-  function MBEncode(const str: UnicodeString; cs: TCharacterSet): AnsiString;
-  function MBDecode(const str: AnsiString; cs: TCharacterSet): UnicodeString; overload;
-  procedure MBDecode(str: PAnsiChar; size: Integer; cs: TCharacterSet; buffer: PWideChar); overload;
+  function MBUEncode(const str: UnicodeString; cp: Word): RawByteString;
+  function MBUDecode(const str: RawByteString; cp: Word): UnicodeString; overload;
+  procedure MBUDecode(str: PAnsiChar; size: Integer; cp: Word; buffer: PWideChar); overload;
+  function MBAEncode(const str: AnsiString; cp: Word): RawByteString;
+  function MBADecode(const str: RawByteString; cp: Word): AnsiString;
 
   function BytesPerCharacter(cs: TCharacterSet): Byte;
 
-  function StrToCharacterSet(const CharacterSet: AnsiString): TCharacterSet;
+  function StrToCharacterSet(const CharacterSet: RawByteString): TCharacterSet;
   function CreateDBParams(Params: AnsiString; Delimiter: AnsiChar = ';'): AnsiString;
   function GetClientLibrary: string;
   function CreateBlobParams(Params: AnsiString; Delimiter: AnsiChar = ';'): AnsiString;
@@ -346,6 +346,7 @@ type
     function DecodeString(const Code: Smallint; Index: Word): UnicodeString; overload;
     procedure EncodeString(Code: Smallint; Index: Word; const str: AnsiString); overload;
     procedure EncodeString(Code: Smallint; Index: Word; const str: UnicodeString); overload;
+    procedure EncodeRawByteString(Code: Smallint; Index: Word; const str: RawByteString);
     function GetAsString(const Index: Word): string;
     procedure SetAsString(const Index: Word; const Value: string);
     function GetByNameAsString(const name: string): string;
@@ -869,7 +870,7 @@ type
     function  BlobCreate(var DBHandle: IscDbHandle; var TraHandle: IscTrHandle;
       var BlobHandle: IscBlobHandle; BPB: AnsiString = ''): TISCQuad;
     procedure BlobWriteSegment(var BlobHandle: IscBlobHandle; BufferLength: Cardinal; Buffer: Pointer);
-    procedure BlobWriteString(var BlobHandle: IscBlobHandle; var Str: AnsiString); overload;
+    procedure BlobWriteString(var BlobHandle: IscBlobHandle; const Str: RawByteString); overload;
     procedure BlobWriteStream(var BlobHandle: IscBlobHandle; Stream: TStream);
 
     function StreamBlobOpen(var BlobId: TISCQuad; var Database: IscDbHandle;
@@ -1062,21 +1063,17 @@ const
     1000000000,100000000,10000000,1000000,100000,10000,1000,100,10,1,10,100,
     1000);
 
-function AnsiTrim(const S: AnsiString): AnsiString;
-
 implementation
 
 uses
+{$IFDEF UNICODE}
+  AnsiStrings,
+{$ENDIF}
   Math, uibconst, uibkeywords;
 
-function MBEncode(const str: UnicodeString; cs: TCharacterSet): AnsiString;
-{$IFDEF MSWINDOWS}
-var
-  cp: Integer;
-{$ENDIF}
+function MBUEncode(const str: UnicodeString; cp: Word): RawByteString;
 begin
 {$IFDEF MSWINDOWS}
-  cp := CharacterSetCP[cs];
   if cp > 0 then
   begin
     SetLength(Result, WideCharToMultiByte(cp, 0, PWideChar(str), length(str), nil, 0, nil, nil));
@@ -1086,14 +1083,9 @@ begin
     Result := AnsiString(str);
 end;
 
-function MBDecode(const str: AnsiString; cs: TCharacterSet): UnicodeString;
-{$IFDEF MSWINDOWS}
-var
-  cp: Integer;
-{$ENDIF}
+function MBUDecode(const str: RawByteString; cp: Word): UnicodeString;
 begin
 {$IFDEF MSWINDOWS}
-  cp := CharacterSetCP[cs];
   if cp > 0 then
   begin
     SetLength(Result, MultiByteToWideChar(cp, 0, PAnsiChar(str), length(str), nil, 0));
@@ -1103,18 +1095,53 @@ begin
     Result := UnicodeString(str);
 end;
 
-procedure MBDecode(str: PAnsiChar; size: Integer; cs: TCharacterSet; buffer: PWideChar);
+procedure MBUDecode(str: PAnsiChar; size: Integer; cp: Word; buffer: PWideChar);
 {$IFDEF MSWINDOWS}
 var
-  cp, len: Integer;
+  len: Integer;
 {$ENDIF}
 begin
 {$IFDEF MSWINDOWS}
-  cp := CharacterSetCP[cs];
   len := MultiByteToWideChar(cp, 0, str, size, nil, 0);
   MultiByteToWideChar(cp, 0, str, size, buffer, len);
   inc(buffer, len);
   buffer^ := #0;
+{$ENDIF}
+end;
+
+function MBAEncode(const str: AnsiString; cp: Word): RawByteString;
+{$IFDEF MSWINDOWS}
+var
+  len: Integer;
+  pbuffer: Pointer;
+  buffer: array[0..(32767 div sizeof(WideChar)) - 1] of WideChar;
+{$ENDIF}
+begin
+{$IFDEF MSWINDOWS}
+  if (Length(str) > 0) and (cp > 0) and (cp <> PWord(PtrInt(str) - 12)^) then
+  begin
+    len := MultiByteToWideChar(PWord(PtrInt(str) - 12)^, 0, PAnsiChar(str), Length(str), nil, 0);
+    if len < sizeof(buffer) then
+      pbuffer := @buffer else
+      GetMem(pbuffer, len * sizeof(WideChar));
+    try
+      MultiByteToWideChar(PWord(PtrInt(str) - 12)^, 0, PAnsiChar(str), Length(str), pbuffer, len);
+      SetLength(Result, WideCharToMultiByte(cp, 0, pbuffer, len, nil, 0, nil, nil));
+      WideCharToMultiByte(cp, 0, pbuffer, len, PAnsiChar(Result), Length(Result), nil, nil);
+    finally
+      if pbuffer <> @buffer then
+        FreeMem(pbuffer);
+    end;
+  end else
+{$ENDIF}
+    Result := str;
+end;
+
+function MBADecode(const str: RawByteString; cp: Word): AnsiString;
+begin
+{$IFDEF MSWINDOWS}
+  Result := str;
+  PWord(PtrInt(Result) - 12)^ := cp;
 {$ENDIF}
 end;
 
@@ -1138,21 +1165,6 @@ end;
 (******************************************************************************)
 (* Errors handling                                                            *)
 (******************************************************************************)
-
-function AnsiTrim(const S: AnsiString): AnsiString;
-var
-  I, L: Integer;
-begin
-  L := Length(S);
-  I := 1;
-  while (I <= L) and (S[I] <= ' ') do Inc(I);
-  if I > L then Result := '' else
-  begin
-    while S[L] <= ' ' do Dec(L);
-    Result := Copy(S, I, L - I + 1);
-  end;
-end;
-
 
 {$IFNDEF COMPILER6_UP}
 function TryStrToInt(const S: string; out Value: Integer): Boolean;
@@ -1442,8 +1454,8 @@ const
           CurStr   := Copy(CurStr, 0, EqualPos-1);
         end;
         StrLower(PAnsiChar(CurStr));
-        CurStr := AnsiTrim(CurStr);
-        CurValue := AnsiTrim(CurValue);
+        CurStr := Trim(CurStr);
+        CurValue := Trim(CurValue);
         for Code := 1 to isc_dpb_Max_Value do
           with DPBInfos[Code] do
             if (Name = CurStr) then
@@ -1613,7 +1625,7 @@ const
   {$ENDIF}
   end;
 
-  function StrToCharacterSet(const CharacterSet: AnsiString): TCharacterSet;
+  function StrToCharacterSet(const CharacterSet: RawByteString): TCharacterSet;
   var
     len: Integer;
   begin
@@ -2548,8 +2560,8 @@ const
           CurStr   := Copy(CurStr, 0, EqualPos-1);
         end;
         StrLower(PAnsiChar(CurStr));
-        CurStr := AnsiTrim(CurStr);
-        CurValue := AnsiTrim(CurValue);
+        CurStr := Trim(CurStr);
+        CurValue := Trim(CurValue);
         for Code := 1 to isc_bpb_Max_Value do
           with BPBInfos[Code] do
             if (Name = CurStr) then
@@ -2993,7 +3005,7 @@ type
   {$ENDIF}
   end;
 
-  procedure TUIBLibrary.BlobWriteString(var BlobHandle: IscBlobHandle; var Str: AnsiString);
+  procedure TUIBLibrary.BlobWriteString(var BlobHandle: IscBlobHandle; const Str: RawByteString);
   begin
     BlobWriteSegment(BlobHandle, Length(Str), PAnsiChar(Str));
   end;
@@ -3413,18 +3425,32 @@ type
       SQL_TEXT    : SetString(Str, sqldata, sqllen);
       SQL_VARYING : SetString(Str, PVary(sqldata).vary_string, PVary(sqldata).vary_length);
     end;
+{$IFDEF UNICODE}
+    if BytesPerCharacter(FCharacterSet) = 1 then
+      PWord(PtrInt(Str) - 12)^ := CharacterSetCP[FCharacterSet] else
+      str := AnsiString(MBUDecode(Str, CharacterSetCP[FCharacterSet]));
+{$ENDIF}
   end;
 
   procedure TSQLDA.DecodeString(const Code: Smallint; Index: Word; out Str: UnicodeString);
   begin
     with FXSQLDA.sqlvar[Index] do
     case Code of
-      SQL_TEXT    : Str := MBDecode(Copy(sqldata, 0, sqllen), FCharacterSet);
-      SQL_VARYING : Str := MBDecode(Copy(PAnsiChar(@PVary(sqldata).vary_string), 0, PVary(sqldata).vary_length), FCharacterSet);
+      SQL_TEXT    : Str := MBUDecode(Copy(sqldata, 0, sqllen), CharacterSetCP[FCharacterSet]);
+      SQL_VARYING : Str := MBUDecode(Copy(PAnsiChar(@PVary(sqldata).vary_string), 0, PVary(sqldata).vary_length), CharacterSetCP[FCharacterSet]);
     end;
   end;
 
   procedure TSQLDA.EncodeString(Code: Smallint; Index: Word; const str: AnsiString);
+  begin
+  {$IFDEF UNICODE}
+    EncodeRawByteString(Code, Index, MBAEncode(str, CharacterSetCP[FCharacterSet]));
+  {$ELSE}
+    EncodeRawByteString(Code, Index, str);
+  {$ENDIF}
+  end;
+
+  procedure TSQLDA.EncodeRawByteString(Code: Smallint; Index: Word; const str: RawByteString);
   var
     i: smallint;
     OldLen: SmallInt;
@@ -3488,7 +3514,7 @@ type
 
   procedure TSQLDA.EncodeString(Code: Smallint; Index: Word; const str: UnicodeString);
   begin
-    EncodeString(Code, Index, MBEncode(str, FCharacterSet));
+    EncodeRawByteString(Code, Index, MBUEncode(str, CharacterSetCP[FCharacterSet]));
   end;
 
 {$IFDEF GUID_TYPE}
@@ -5624,7 +5650,11 @@ procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
   end;
 
   procedure TSQLResult.ReadBlob(const Index: Word; var str: AnsiString);
-  var BlobData: PBlobData;
+  var
+    BlobData: PBlobData;
+{$IFDEF UNICODE}
+    cp: Word;
+{$ENDIF}
   begin
     CheckRange(Index);
     if not FFetchBlobs then
@@ -5632,6 +5662,17 @@ procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
     BlobData := GetDataQuadOffset(Index);
     SetLength(str, BlobData.Size);
     Move(BlobData.Buffer^, PAnsiChar(Str)^, BlobData.Size);
+{$IFDEF UNICODE}
+    if (BytesPerCharacter(FCharacterSet) = 1) then
+      begin
+        cp := CharacterSetCP[FCharacterSet];
+        if cp > 0 then
+          PWord(PtrInt(str) - 12)^ := cp;
+      end else
+      begin
+      //  MBDecode()
+      end;
+{$ENDIF}
   end;
 
   procedure TSQLResult.ReadBlob(const Index: Word; Stream: TStream);
@@ -5677,7 +5718,7 @@ procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
   begin
     ReadBlob(Index, aStr);
     if FXSQLDA.sqlvar[Index].SqlSubType = 1 then  // is text ?
-      str := MBDecode(aStr, FCharacterSet) else
+      str := MBUDecode(aStr, CharacterSetCP[FCharacterSet]) else
       str := UnicodeString(aStr);
   end;
 
