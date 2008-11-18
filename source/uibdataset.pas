@@ -167,9 +167,11 @@ type
 
     procedure ParamsSetBlob(const Index: Word; Stream: TStream); overload;
     procedure ParamsSetBlob(const Index: Word; var str: AnsiString); overload;
+    procedure ParamsSetBlob(const Index: Word; var str: UnicodeString); overload;
     procedure ParamsSetBlob(const Index: Word; Buffer: Pointer; Size: Word); overload;
     procedure ParamsSetBlob(const Name: string; Stream: TStream); overload;
     procedure ParamsSetBlob(const Name: string; var str: AnsiString); overload;
+    procedure ParamsSetBlob(const Name: string; var str: UnicodeString); overload;
     procedure ParamsSetBlob(const Name: string; Buffer: Pointer; Size: Word); overload;
 
     property InternalFields: TSQLResult read GetInternalFields;
@@ -944,6 +946,18 @@ procedure TUIBCustomDataSet.ParamsSetBlob(const Name: string;
   Buffer: Pointer; Size: Word);
 begin
   FStatement.ParamsSetBlob(Name, Buffer, Size);
+end;
+
+procedure TUIBCustomDataSet.ParamsSetBlob(const Index: Word;
+  var str: UnicodeString);
+begin
+  FStatement.ParamsSetBlob(Index, str);
+end;
+
+procedure TUIBCustomDataSet.ParamsSetBlob(const Name: string;
+  var str: UnicodeString);
+begin
+  FStatement.ParamsSetBlob(Name, str);
 end;
 
 procedure TUIBCustomDataSet.ParamsSetBlob(const Index: Word;
