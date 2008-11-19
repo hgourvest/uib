@@ -1187,15 +1187,14 @@ begin
     Result := name;
     Exit;
   end;
-
-  if (len > 1) and (not (AnsiChar(name[1]) in ['A'..'Z'])) then
+  if (len > 1) and (not ({$IFDEF UNICODE}(name[1] < #256) and {$ENDIF} (AnsiChar(name[1]) in ['A'..'Z']))) then
   begin // non standard carracter: keep case
     Result := '"' + name + '"';
     Exit;
   end;
 
   for i := 1 to len do
-    if not (AnsiChar(name[i]) in ['A'..'Z', '0'..'9', '_', '$']) then
+    if not ({$IFDEF UNICODE}(name[1] < #256) and {$ENDIF} (AnsiChar(name[i]) in ['A'..'Z', '0'..'9', '_', '$'])) then
     begin // non standard carracter: keep case
       Result := '"' + name + '"';
       Exit;
@@ -1214,14 +1213,14 @@ begin
     Exit;
   end;
 
-  if (len > 1) and (not (AnsiChar(name[1]) in ['A'..'Z'])) then
+  if (len > 1) and (not ({$IFDEF UNICODE}(name[1] < #256) and {$ENDIF} (AnsiChar(name[1]) in ['A'..'Z']))) then
   begin // non standard carracter: keep case
     Result := name;
     Exit;
   end;
 
   for i := 1 to len do
-    if not (AnsiChar(name[i]) in ['A'..'Z', '0'..'9', '_', '$']) then
+    if not ({$IFDEF UNICODE}(name[1] < #256) and {$ENDIF} (AnsiChar(name[i]) in ['A'..'Z', '0'..'9', '_', '$'])) then
     begin // non standard carracter: keep case
       Result := name;
       Exit;
