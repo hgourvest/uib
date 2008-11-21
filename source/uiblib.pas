@@ -150,7 +150,7 @@ const
   CharacterSetCP: array[TCharacterSet] of Word =
   (
   0, //csNONE,
-  0, //csASCII,
+  20127, //csASCII,
   950, //csBIG_5,
   1251, // csCYRL,
   437, // csDOS437, IBM437	OEM United States
