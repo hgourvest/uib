@@ -620,7 +620,7 @@ type
     property ArrayInfos[const index: word]: PArrayInfo read GetArrayInfos;
     property ArrayCount: Word read GetArrayCount;
 
-    procedure ReadBlobData(const Index: Word; var data: AnsiString);
+    procedure ReadBlobData(const Index: Word; var data: RawByteString);
     procedure ReadBlob(const Index: Word; Stream: TStream); overload;
     procedure ReadBlob(const Index: Word; var str: AnsiString); overload;
     procedure ReadBlob(const Index: Word; var str: UnicodeString); overload;
@@ -856,9 +856,8 @@ type
     procedure BlobMaxSegment(var BlobHandle: IscBlobHandle; out Size: Cardinal);
     procedure BlobDefaultDesc(var Desc: TBlobDesc; const RelationName, FieldName: AnsiString);
     procedure BlobSaveToStream(var BlobHandle: IscBlobHandle; Stream: TStream);
-    function  BlobReadString(var BlobHandle: IscBlobHandle): AnsiString; overload;
-    procedure BlobReadString(var BlobHandle: IscBlobHandle; var Str: AnsiString); overload;
-    //procedure BlobReadString(var BlobHandle: IscBlobHandle; var Str: UnicodeString); overload;
+    function  BlobReadString(var BlobHandle: IscBlobHandle): RawByteString; overload;
+    procedure BlobReadString(var BlobHandle: IscBlobHandle; var Str: RawByteString); overload;
     procedure BlobReadVariant(var BlobHandle: IscBlobHandle; var Value: Variant);
     // you must free memory allocated by this method !!
     procedure BlobReadBuffer(var BlobHandle: IscBlobHandle; var Size: Integer;
@@ -2754,12 +2753,12 @@ type
     Stream.Seek(0, soFromBeginning);
   end;
 
-  function TUIBLibrary.BlobReadString(var BlobHandle: IscBlobHandle): AnsiString;
+  function TUIBLibrary.BlobReadString(var BlobHandle: IscBlobHandle): RawByteString;
   begin
     BlobReadString(BlobHandle, Result);
   end;
 
-  procedure TUIBLibrary.BlobReadString(var BlobHandle: IscBlobHandle; var Str: AnsiString);
+  procedure TUIBLibrary.BlobReadString(var BlobHandle: IscBlobHandle; var Str: RawByteString);
   var
     BlobInfos: array[0..2] of TBlobInfo;
     CurrentLength: Word;
@@ -5651,7 +5650,7 @@ procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
 
   procedure TSQLResult.ReadBlob(const Index: Word; var str: AnsiString);
   begin
-    ReadBlobData(Index, str);
+    ReadBlobData(Index, RawByteString(str));
 {$IFDEF UNICODE}
     if (BytesPerCharacter(FCharacterSet) = 1) then
       PWord(PtrInt(str) - 12)^ := CharacterSetCP[FCharacterSet] else
@@ -5698,12 +5697,15 @@ procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
 
   procedure TSQLResult.ReadBlob(const Index: Word; var str: UnicodeString);
   var
-    aStr: AnsiString;
+    aStr: RawByteString;
   begin
     ReadBlobData(Index, aStr);
     if FXSQLDA.sqlvar[Index].SqlSubType = 1 then  // is text ?
       str := MBUDecode(aStr, CharacterSetCP[FCharacterSet]) else
-      str := UnicodeString(aStr);
+      begin
+        SetLength(str, Length(aStr) div 2);
+        Move(PByte(aStr)^, PByte(str)^, Length(aStr) * 2);
+      end;
   end;
 
   procedure TSQLResult.ReadBlob(const Index: Word; Data: Pointer);
@@ -5721,7 +5723,7 @@ procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
     ReadBlob(GetFieldIndex(AnsiString(Name)), Data);
   end;
 
-  procedure TSQLResult.ReadBlobData(const Index: Word; var data: AnsiString);
+  procedure TSQLResult.ReadBlobData(const Index: Word; var data: RawByteString);
   var
     BlobData: PBlobData;
   begin

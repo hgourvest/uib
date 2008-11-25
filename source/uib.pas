@@ -725,7 +725,7 @@ type
 
     procedure InternalGetBlobSize(sqlda: TSQLDA; const Index: Word; out Size: Cardinal);
     procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; Stream: TStream); overload;
-    procedure InternalReadBlobData(sqlda: TSQLDA; const Index: Word; var str: AnsiString);
+    procedure InternalReadBlobData(sqlda: TSQLDA; const Index: Word; var str: RawByteString);
     procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; var str: AnsiString); overload;
     procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; var str: UnicodeString); overload;
     procedure InternalReadBlob(sqlda: TSQLDA; const Index: Word; var Value: Variant); overload;
@@ -767,6 +767,10 @@ type
     procedure First;
     { Read a the blob in a stream by index. }
     procedure ReadBlob(const Index: Word; Stream: TStream); overload;
+{$IFDEF UNICODE}
+    { Read a the blob in a RawByteString by index. }
+    procedure ReadBlob(const Index: Word; var str: RawByteString); overload;
+{$ENDIF}
     { Read a the blob in a AnsiString by index. }
     procedure ReadBlob(const Index: Word; var str: AnsiString); overload;
     { Read a the blob in a UnicodeString by index. }
@@ -788,7 +792,11 @@ type
 
     { The the blob value of a parametter using a Stream. }
     procedure ParamsSetBlob(const Index: Word; Stream: TStream); overload;
-    { The the blob value of a parametter using a string. }
+{$IFDEF UNICODE}
+    { The the blob value of a parametter using a RawByteString. }
+    procedure ParamsSetBlob(const Index: Word; const str: RawByteString); overload;
+{$ENDIF}
+    { The the blob value of a parametter using a AnsiString. }
     procedure ParamsSetBlob(const Index: Word; const str: AnsiString); overload;
     { The the blob value of a parametter using a string. }
     procedure ParamsSetBlob(const Index: Word; const str: UnicodeString); overload;
@@ -2241,7 +2249,7 @@ procedure TUIBStatement.InternalReadBlob(sqlda: TSQLDA; const Index: Word;
 var
   aStr: AnsiString;
 begin
-  InternalReadBlobData(sqlda, Index, aStr);
+  InternalReadBlobData(sqlda, Index, RawByteString(aStr));
   str := MBUDecode(aStr, CharacterSetCP[sqlda.CharacterSet]);
 end;
 
@@ -2557,6 +2565,15 @@ begin
   inherited;
 end;
 
+{$IFDEF UNICODE}
+procedure TUIBStatement.ReadBlob(const Index: Word; var str: RawByteString);
+begin
+  if Fields.FetchBlobs then
+    Fields.ReadBlobData(Index, Str) else
+    InternalReadBlobData(Fields, Index, str);
+end;
+{$ENDIF}
+
 procedure TUIBStatement.ReadBlob(const Index: Word; var Str: AnsiString);
 begin
   if Fields.FetchBlobs then
@@ -2651,6 +2668,36 @@ begin
   end;
 {$ENDIF}
 end;
+
+{$IFDEF UNICODE}
+procedure TUIBStatement.ParamsSetBlob(const Index: Word; const str: RawByteString);
+var
+  BlobHandle: IscBlobHandle;
+begin
+  if (FCurrentState < qsTransaction) then
+    BeginTransaction;
+  BlobHandle := nil;
+{$IFDEF UIBTHREADSAFE}
+  Lock;
+  try
+{$ENDIF}
+    with FindDataBase.FLibrary do
+    begin
+      Params.AsQuad[Index] := BlobCreate(FindDataBase.FDbHandle,
+        FTransaction.FTrHandle, BlobHandle);
+      try
+        BlobWriteString(BlobHandle, str);
+      finally
+        BlobClose(BlobHandle);
+      end;
+    end;
+{$IFDEF UIBTHREADSAFE}
+  finally
+    UnLock;
+  end;
+{$ENDIF}
+end;
+{$ENDIF}
 
 procedure TUIBStatement.ParamsSetBlob(const Index: Word; Buffer: Pointer;
   Size: Cardinal);
@@ -2834,7 +2881,7 @@ end;
 procedure TUIBStatement.InternalReadBlob(sqlda: TSQLDA; const Index: Word;
   var str: AnsiString);
 begin
-  InternalReadBlobData(sqlda, Index, str);
+  InternalReadBlobData(sqlda, Index, RawByteString(str));
 {$IFDEF UNICODE}
   if BytesPerCharacter(sqlda.CharacterSet) = 1 then
     PWord(PtrInt(str) - 12)^ := CharacterSetCP[sqlda.CharacterSet] else
@@ -2986,7 +3033,7 @@ begin
 end;
 
 procedure TUIBStatement.InternalReadBlobData(sqlda: TSQLDA; const Index: Word;
-  var str: AnsiString);
+  var str: RawByteString);
 var
   BlobHandle: IscBlobHandle;
 begin
