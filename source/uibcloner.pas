@@ -165,7 +165,7 @@ begin
         { Alloue une requête d'écriture }
         StHandle := nil;
         DSQLAllocateStatement(DbHandle, StHandle);
-        DSQLPrepare(DbHandle, TrHandle, StHandle, sql, 3, nil);
+        DSQLPrepare(DbHandle, TrHandle, StHandle, AnsiString(sql), 3, nil);
         { Ecrit les données }
         d := 0;
         while not RdrQuery.Eof do
