@@ -52,7 +52,7 @@ type
 {$IFNDEF COMPILER6_UP}
 {$IFNDEF FPC}
   PPointer = ^Pointer;
-  PPChar = ^PAnsiChar;
+  PPAnsiChar = ^PAnsiChar;
 
   PCardinal = ^Cardinal;
   PSmallInt = ^Smallint;
@@ -3091,10 +3091,10 @@ type
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_encode_timestamp: procedure(times_arg: PPointer; date: PISCTimeStamp);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_event_block: function(event_buffer, result_buffer: PPChar; count: Word;
+    isc_event_block: function(event_buffer, result_buffer: PPAnsiChar; count: Word;
       v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15: PAnsiChar): ISCLong; cdecl;
 {$IFDEF FB21_UP}
-    isc_event_block_a: function(event_buffer, result_buffer: PPChar; count: Word; name_buffer: PPChar): Word;
+    isc_event_block_a: function(event_buffer, result_buffer: PPAnsiChar; count: Word; name_buffer: PPAnsiChar): Word;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
 {$ENDIF}
     isc_event_counts: procedure(ser_status: PISCStatus; buffer_length: Smallint;
@@ -3106,7 +3106,7 @@ type
     isc_execute_immediate: function(user_status: PISCStatus; db_handle: PIscDbHandle;
       trans_handle: PIscTrHandle; length: PSmallint; string_: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    isc_expand_dpb: procedure(dpb: PPChar; dpb_size: PSmallint; name_buffer: PPChar); cdecl;
+    isc_expand_dpb: procedure(dpb: PPAnsiChar; dpb_size: PSmallint; name_buffer: PPAnsiChar); cdecl;
     isc_fetch: function(user_status: PISCStatus; name: PAnsiChar; sqlda: PXSQLDA): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_free: function(blk: PAnsiChar): ISCLong;
@@ -3126,7 +3126,7 @@ type
     fb_interpret: function(buffer: PAnsiChar; v: integer; status_vector: PPISCStatus): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
   {$ENDIF}
-    isc_modify_dpb: function(dpb: PPChar; dpb_length: PSmallint; type_: Word;
+    isc_modify_dpb: function(dpb: PPAnsiChar; dpb_length: PSmallint; type_: Word;
       str: PAnsiChar; str_len: Smallint): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_modify_user: function(status: PISCStatus; user_data: PUserSecData): Integer;

@@ -71,7 +71,7 @@ uses sysutils;
 constructor TPDGUIBConnection.Create(Options: ISuperObject);
 var
   param: ISuperObject;
-  option: AnsiString;
+  option: string;
 begin
   inherited Create(stObject);
   FDbHandle := nil;
@@ -100,14 +100,14 @@ begin
   param := O['characterset'];
   if param <> nil then
   begin
-    FCharacterSet := StrToCharacterSet(param.AsString);
-    option := option + ';lc_ctype=' + CharacterSetStr[FCharacterSet];
+    FCharacterSet := StrToCharacterSet(AnsiString(param.AsString));
+    option := option + ';lc_ctype=' + string(CharacterSetStr[FCharacterSet]);
   end else
     FCharacterSet := csNONE;
 
   param := O['databasename'];
   if param <> nil then
-    FLibrary.AttachDatabase(param.AsString, FDbHandle, option) else
+    FLibrary.AttachDatabase(AnsiString(param.AsString), FDbHandle, AnsiString(option)) else
     FDbHandle := nil;
 
 end;
@@ -181,7 +181,7 @@ begin
   begin
     DSQLAllocateStatement(FDbHandle, FStHandle);
     FStatementType := DSQLPrepare(FDbHandle, Context.FTrHandle, FStHandle,
-      FSQLParams.Parse(self.S['sql']), 3, FSQLResult);
+      AnsiString(FSQLParams.Parse(PChar(self.S['sql']))), 3, FSQLResult);
     if (FSQLParams.FieldCount > 0) then
       DSQLDescribeBind(FStHandle, 3, FSQLParams);
   end;
@@ -197,8 +197,8 @@ end;
 
 function TPDGUIBCommand.Execute(params: ISuperObject; context: IPDGContext): ISuperObject;
 var
-  dfArray, dfFirstOne: boolean;
-  str: AnsiString;
+  dfFunction, dfArray, dfFirstOne: boolean;
+  str: string;
 
   function getone: ISuperObject;
   var
@@ -212,7 +212,7 @@ var
         if FSQLResult.IsNull[i] then
           Result.AsArray.Add(nil) else
         case FSQLResult.FieldType[i] of
-          uftChar, uftVarchar, uftCstring: Result.AsArray.Add(TSuperObject.Create(PAnsiChar(FSQLResult.AsAnsiString[i])));
+          uftChar, uftVarchar, uftCstring: Result.AsArray.Add(TSuperObject.Create(FSQLResult.AsString[i]));
           uftSmallint, uftInteger, uftInt64: Result.AsArray.Add(TSuperObject.Create(FSQLResult.AsInteger[i]));
           uftNumeric, uftFloat, uftDoublePrecision: Result.AsArray.Add(TSuperObject.Create(FSQLResult.AsDouble[i]));
           uftBlob, uftBlobId:
@@ -242,7 +242,7 @@ var
         if FSQLResult.IsNull[i] then
           Result[FSQLResult.AliasName[i]] := nil else
         case FSQLResult.FieldType[i] of
-          uftChar, uftVarchar, uftCstring: Result[FSQLResult.AliasName[i]] := TSuperObject.Create(PAnsiChar(FSQLResult.AsAnsiString[i]));
+          uftChar, uftVarchar, uftCstring: Result[FSQLResult.AliasName[i]] := TSuperObject.Create(FSQLResult.AsString[i]);
           uftSmallint, uftInteger, uftInt64: Result[FSQLResult.AliasName[i]] := TSuperObject.Create(FSQLResult.AsInteger[i]);
           uftNumeric, uftFloat, uftDoublePrecision: Result[FSQLResult.AliasName[i]] := TSuperObject.Create(FSQLResult.AsDouble[i]);
           uftBlob, uftBlobId:
@@ -272,13 +272,12 @@ var
   var
     BlobHandle: IscBlobHandle;
     blob: IPDGBlob;
-    str: AnsiString;
   begin
     if ObjectIsType(value, stNull) then
       FSQLParams.IsNull[index] := true else
       case FSQLParams.FieldType[index] of
         uftNumeric: FSQLParams.AsDouble[index] := value.AsDouble;
-        uftChar, uftVarchar, uftCstring: FSQLParams.AsAnsiString[index] := value.AsString;
+        uftChar, uftVarchar, uftCstring: FSQLParams.AsString[index] := value.AsString;
         uftSmallint: FSQLParams.AsSmallint[index] := value.AsInteger;
         uftInteger: FSQLParams.AsInteger[index] := value.AsInteger;
         uftFloat: FSQLParams.AsSingle[index] := value.AsDouble;
@@ -292,10 +291,11 @@ var
             FSQLParams.AsQuad[Index] := BlobCreate(FDbHandle, FTrHandle, BlobHandle);
             if value.QueryInterface(IPDGBlob, blob) = 0 then
               BlobWriteStream(BlobHandle, blob.getData) else
-              begin
-                str := value.AsString;
-                BlobWriteString(BlobHandle, str);
-              end;
+{$IFDEF UNICODE}
+                BlobWriteString(BlobHandle, MBUEncode(value.AsString, CharacterSetCP[FCharacterSet]));
+{$ELSE}
+                BlobWriteString(BlobHandle, value.AsString);
+{$ENDIF}
             BlobClose(BlobHandle);
           end;
       else
@@ -308,7 +308,8 @@ var
     with FConnection, FLibrary, TPDGUIBContext((context as ISuperObject).DataPtr) do
       if FSQLResult.FieldCount > 0 then
       begin
-        DSQLSetCursorName(FStHandle, AnsiChar('C') + AnsiString(IntToStr(PtrInt(FStHandle))));
+        if not dfFunction then
+          DSQLSetCursorName(FStHandle, AnsiChar('C') + AnsiString(IntToStr(PtrInt(FStHandle))));
         try
           if (FStatementType = stExecProcedure) then
           begin
@@ -317,6 +318,8 @@ var
           end else
             DSQLExecute(FTrHandle, FStHandle, 3, FSQLParams);
 
+          if dfFunction then
+            Result := getone else
           if not dfFirstOne then
           begin
             Result := TSuperObject.Create(stArray);
@@ -327,7 +330,8 @@ var
               Result := getone else
               Result := nil;
         finally
-          DSQLFreeStatement(FStHandle, DSQL_close);
+          if not dfFunction then
+            DSQLFreeStatement(FStHandle, DSQL_close);
         end;
       end else
       begin
@@ -341,6 +345,7 @@ var
 begin
   dfFirstOne := B['firstone'];
   dfArray := B['array'];
+  dfFunction := B['function'];
 
   if context = nil then
     context := FConnection.newContext;
@@ -376,7 +381,7 @@ begin
       begin
         if ObjectFindFirst(params, f) then
         repeat
-          SetParam(FSQLParams.GetFieldIndex(f.key), f.val);
+          SetParam(FSQLParams.GetFieldIndex(AnsiString(f.key)), f.val);
         until not ObjectFindNext(f);
         ObjectFindClose(f);
         Process;
@@ -408,7 +413,7 @@ begin
         rec := TSuperObject.Create(stObject);
         prm := @FSQLParams.Data.sqlvar[j];
         if prm.ParamNameLength > 0 then
-          rec.S['name'] := copy(prm.ParamName, 1, prm.ParamNameLength);
+          rec.S['name'] := string(copy(prm.ParamName, 1, prm.ParamNameLength));
         add(rec);
         case FSQLParams.FieldType[j] of
           uftChar, uftVarchar, uftCstring:
@@ -459,7 +464,7 @@ begin
           rec.S['name'] := FSQLResult.AliasName[j];
           Result.asArray.add(rec);
         end else
-          Result.AsObject.Put(PAnsiChar(FSQLResult.AliasName[j]), rec);
+          Result.AsObject.Put(FSQLResult.AliasName[j], rec);
 
         case FSQLResult.FieldType[j] of
           uftChar, uftVarchar, uftCstring:

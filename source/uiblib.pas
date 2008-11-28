@@ -341,6 +341,7 @@ type
     procedure ConvertString(const Code: Smallint; Index: Word; out value: boolean); overload;
     procedure ConvertString(const Code: Smallint; Index: Word; out value: Cardinal); overload;
     procedure ConvertStringToDate(const Code: Smallint; Index: Word; out value: Integer);
+    procedure DecodeString(const Code: Smallint; Index: Word; out Str: RawByteString); overload;
     procedure DecodeString(const Code: Smallint; Index: Word; out Str: UnicodeString); overload;
     procedure DecodeString(const Code: Smallint; Index: Word; out Str: AnsiString); overload;
     function DecodeString(const Code: Smallint; Index: Word): UnicodeString; overload;
@@ -351,6 +352,9 @@ type
     procedure SetAsString(const Index: Word; const Value: string);
     function GetByNameAsString(const name: string): string;
     procedure SetByNameAsString(const name, Value: string);
+    function GetByNameAsRawByteString(const name: string): RawByteString;
+    procedure SetByNameAsRawByteString(const name: string;
+      const Value: RawByteString);
   {$IFDEF GUID_TYPE}
     procedure EncodeGUID(Code: Smallint; Index: Word; const G: TGUID);
   {$ENDIF}
@@ -375,6 +379,7 @@ type
     function GetAsInteger(const Index: Word): Integer;
     function GetAsSingle(const Index: Word): Single;
     function GetAsSmallint(const Index: Word): Smallint;
+    function GetAsRawByteString(const Index: Word): RawByteString; virtual;
     function GetAsAnsiString(const Index: Word): AnsiString; virtual;
     function GetAsUnicodeString(const Index: Word): UnicodeString; virtual;
     function GetAsQuad(const Index: Word): TISCQuad;
@@ -394,6 +399,7 @@ type
     procedure SetAsInteger(const Index: Word; const Value: Integer); virtual;
     procedure SetAsSingle(const Index: Word; const Value: Single); virtual;
     procedure SetAsSmallint(const Index: Word; const Value: Smallint); virtual;
+    procedure SetAsRawByteString(const Index: Word; const Value: RawByteString); virtual;
     procedure SetAsAnsiString(const Index: Word; const Value: AnsiString); virtual;
     procedure SetAsUnicodeString(const Index: Word; const Value: UnicodeString); virtual;
     procedure SetAsQuad(const Index: Word; const Value: TISCQuad); virtual;
@@ -473,6 +479,7 @@ type
     property AsCurrency   [const Index: Word]: Currency   read GetAsCurrency   write SetAsCurrency;
     property AsInt64      [const Index: Word]: Int64      read GetAsInt64      write SetAsInt64;
     property AsString     [const Index: Word]: string     read GetAsString write SetAsString;
+    property AsRawByteString[const Index: Word]: RawByteString  read GetAsRawByteString write SetAsRawByteString;
     property AsAnsiString [const Index: Word]: AnsiString  read GetAsAnsiString     write SetAsAnsiString;
     property AsUnicodeString [const Index: Word]: UnicodeString read GetAsUnicodeString write SetAsUnicodeString;
     property AsQuad       [const Index: Word]: TISCQuad   read GetAsQuad       write SetAsQuad;
@@ -496,6 +503,7 @@ type
     property ByNameAsInt64      [const name: string]: Int64      read GetByNameAsInt64      write SetByNameAsInt64;
     property ByNameAsString     [const name: string]: string     read GetByNameAsString     write SetByNameAsString;
     property ByNameAsAnsiString     [const name: string]: AnsiString     read GetByNameAsAnsiString     write SetByNameAsAnsiString;
+    property ByNameAsRawByteString  [const name: string]: RawByteString     read GetByNameAsRawByteString     write SetByNameAsRawByteString;
     property ByNameAsUnicodeString [const name: string]: UnicodeString read GetByNameAsUnicodeString write SetByNameAsUnicodeString;
     property ByNameAsQuad       [const name: string]: TISCQuad   read GetByNameAsQuad       write SetByNameAsQuad;
     property ByNameAsVariant    [const name: string]: Variant    read GetByNameAsVariant    write SetByNameAsVariant;
@@ -599,6 +607,7 @@ type
     function GetArrayCount: Word;
     function GetArrayInfos(const index: word): PArrayInfo;
   protected
+    function GetAsRawByteString(const Index: Word): RawByteString; override;
     function GetAsAnsiString(const Index: Word): AnsiString; override;
     function GetAsUnicodeString(const Index: Word): UnicodeString; override;
     function GetAsVariant(const Index: Word): Variant; override;
@@ -656,6 +665,7 @@ type
     property AsDouble     [const Index: Word]: Double     read GetAsDouble;
     property AsCurrency   [const Index: Word]: Currency   read GetAsCurrency;
     property AsInt64      [const Index: Word]: Int64      read GetAsInt64;
+    property AsRawByteString [const Index: Word]: RawByteString read GetAsRawByteString;
     property AsAnsiString [const Index: Word]: AnsiString read GetAsAnsiString;
     property AsUnicodeString [const Index: Word]: UnicodeString read GetAsUnicodeString;
     property AsVariant    [const Index: Word]: Variant    read GetAsVariant;
@@ -708,6 +718,7 @@ type
     procedure SetAsInteger(const Index: Word; const Value: Integer); override;
     procedure SetAsSingle(const Index: Word; const Value: Single); override;
     procedure SetAsSmallint(const Index: Word; const Value: Smallint); override;
+    procedure SetAsRawByteString(const Index: Word; const Value: RawByteString); override;
     procedure SetAsAnsiString(const Index: Word; const Value: AnsiString); override;
     procedure SetAsUnicodeString(const Index: Word; const Value: UnicodeString); override;
     procedure SetAsQuad(const Index: Word; const Value: TISCQuad); override;
@@ -3636,6 +3647,15 @@ type
     FCharacterSet := aCharacterSet;
   end;
 
+  procedure TSQLDA.DecodeString(const Code: Smallint; Index: Word; out Str: RawByteString);
+  begin
+    with FXSQLDA.sqlvar[Index] do
+    case Code of
+      SQL_TEXT    : SetString(Str, sqldata, sqllen);
+      SQL_VARYING : SetString(Str, PVary(sqldata).vary_string, PVary(sqldata).vary_length);
+    end;
+  end;
+
   procedure TSQLDA.ConvertString(const Code: Smallint; Index: Word; out value: Cardinal);
   begin
     value := StrToInt(DecodeString(Code, Index));
@@ -3994,6 +4014,52 @@ type
         end
       else
         Result := QuadNull;
+  end;
+
+  function TSQLDA.GetAsRawByteString(const Index: Word): RawByteString;
+    function BoolToStr(const Value: boolean): string;
+    begin if Value then result := sUIBTrue else result := sUIBFalse; end;
+  var ASQLCode: SmallInt;
+  begin
+    CheckRange(Index);
+    Result := '';
+    with FXSQLDA.sqlvar[Index] do
+    begin
+      if (sqlind <> nil) and (sqlind^ = -1) then Exit;
+      ASQLCode := (sqltype and not(1));
+      // Is Numeric ?
+      if (sqlscale < 0)  then
+      begin
+        case ASQLCode of
+          SQL_SHORT  : Result := RawByteString(FloatToStr(PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]));
+          SQL_LONG   : Result := RawByteString(FloatToStr(PInteger(sqldata)^  / ScaleDivisor[sqlscale]));
+          SQL_INT64,
+          SQL_QUAD   : Result := RawByteString(FloatToStr(PInt64(sqldata)^    / ScaleDivisor[sqlscale]));
+          SQL_D_FLOAT,
+          SQL_DOUBLE : Result := RawByteString(FloatToStr(PDouble(sqldata)^));
+        else
+          raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
+        end;
+      end else
+        case ASQLCode of
+          SQL_VARYING   : DecodeString(SQL_VARYING, Index, Result);
+          SQL_TEXT      : DecodeString(SQL_TEXT, Index, Result);
+          SQL_TIMESTAMP : Result := RawByteString(DateTimeToStr(DecodeTimeStamp(PISCTimeStamp(sqldata))));
+          SQL_TYPE_DATE : Result := RawByteString(DateToStr(PInteger(sqldata)^ - DateOffset));
+          SQL_TYPE_TIME : Result := RawByteString(TimeToStr(PCardinal(sqldata)^ / TimeCoeff));
+          SQL_D_FLOAT,
+          SQL_DOUBLE    : Result := RawByteString(FloatToStr(PDouble(sqldata)^));
+          SQL_LONG      : Result := RawByteString(IntToStr(PInteger(sqldata)^));
+          SQL_FLOAT     : Result := RawByteString(FloatToStr(PSingle(sqldata)^));
+{$IFDEF IB7_UP}
+          SQL_BOOLEAN   : Result := RawByteString(BoolToStr(PSmallint(sqldata)^ = 1));
+{$ENDIF}
+          SQL_SHORT     : Result := RawByteString(IntToStr(PSmallint(sqldata)^));
+          SQL_INT64     : Result := RawByteString(IntToStr(PInt64(sqldata)^));
+        else
+          raise EUIBConvertError.Create(EUIB_CASTERROR);
+        end;
+    end;
   end;
 
   function TSQLDA.GetAsVariant(const Index: Word): Variant;
@@ -4417,9 +4483,53 @@ end;
       end;
   end;
 
-  procedure TSQLDA.SetAsDateTime(const Index: Word;
-    const Value: TDateTime);
-  var ASQLCode: SmallInt;
+  procedure TSQLDA.SetAsRawByteString(const Index: Word; const Value: RawByteString);
+  var
+    ASQLCode: SmallInt;
+  begin
+    with FXSQLDA.sqlvar[Index] do
+    begin
+      ASQLCode := (sqltype and not(1));
+      // Is Numeric ?
+      if (sqlscale < 0)  then
+      begin
+        case ASQLCode of
+          SQL_SHORT  : PSmallInt(sqldata)^ := Trunc(StrToFloat(string(Value)) * ScaleDivisor[sqlscale]);
+          SQL_LONG   : PInteger(sqldata)^  := Trunc(StrToFloat(string(Value)) * ScaleDivisor[sqlscale]);
+          SQL_INT64,
+          SQL_QUAD   : PInt64(sqldata)^    := Trunc(StrToFloat(string(Value)) * ScaleDivisor[sqlscale]);
+          SQL_D_FLOAT,
+          SQL_DOUBLE : PDouble(sqldata)^   := StrToFloat(string(Value));
+        else
+          raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
+        end;
+      end else
+        case ASQLCode of
+          SQL_TEXT      : EncodeRawByteString(SQL_TEXT, Index, Value);
+          SQL_VARYING   : EncodeRawByteString(SQL_VARYING, Index, Value);
+          SQL_D_FLOAT,
+          SQL_DOUBLE    : PDouble(sqldata)^   := StrToFloat(string(Value));
+          SQL_TIMESTAMP : EncodeTimeStamp(StrToDateTime(string(Value)), PISCTimeStamp(sqldata));
+          SQL_TYPE_DATE : PInteger(sqldata)^ := Round(int(StrToDate(string(Value))) + dateoffset);
+          SQL_TYPE_TIME : PCardinal(sqldata)^ := Round(Frac(StrToTime(string(Value))) * TimeCoeff);
+          SQL_LONG      : PInteger(sqldata)^ := StrToInt(string(Value));
+          SQL_FLOAT     : PSingle(sqldata)^ := StrToFloat(string(Value));
+{$IFDEF IB7_UP}
+          SQL_BOOLEAN,
+{$ENDIF}
+          SQL_SHORT     : PSmallint(sqldata)^ := StrToInt(string(Value));
+          SQL_INT64     : PInt64(sqldata)^ := StrToInt64(string(Value));
+        else
+          raise EUIBConvertError.Create(EUIB_CASTERROR);
+        end;
+        if (sqlind <> nil) then
+          sqlind^ := 0;
+    end;
+  end;
+
+  procedure TSQLDA.SetAsDateTime(const Index: Word; const Value: TDateTime);
+  var
+    ASQLCode: SmallInt;
   begin
     with FXSQLDA.sqlvar[Index] do
     begin
@@ -4718,7 +4828,7 @@ end;
 {$ENDIF}
   end;
 
-procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
+  procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
   var
     ASQLCode: SmallInt;
   begin
@@ -5035,6 +5145,11 @@ procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
     Result := GetAsQuad(GetFieldIndex(AnsiString(Name)));
   end;
 
+  function TSQLDA.GetByNameAsRawByteString(const name: string): RawByteString;
+  begin
+    Result := GetAsRawByteString(GetFieldIndex(AnsiString(name)));
+  end;
+
   function TSQLDA.GetByNameAsVariant(const Name: string): Variant;
   begin
     Result := GetAsVariant(GetFieldIndex(AnsiString(Name)));
@@ -5158,8 +5273,12 @@ procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
     SetAsQuad(GetFieldIndex(AnsiString(Name)), Value);
   end;
 
-  procedure TSQLDA.SetByNameAsSingle(const Name: string;
-    const Value: Single);
+  procedure TSQLDA.SetByNameAsRawByteString(const name: string; const Value: RawByteString);
+  begin
+    SetAsRawByteString(GetFieldIndex(AnsiString(Name)), Value);
+  end;
+
+  procedure TSQLDA.SetByNameAsSingle(const Name: string; const Value: Single);
   begin
     SetAsSingle(GetFieldIndex(AnsiString(Name)), Value);
   end;
@@ -5704,7 +5823,7 @@ procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
       str := MBUDecode(aStr, CharacterSetCP[FCharacterSet]) else
       begin
         SetLength(str, Length(aStr) div 2);
-        Move(PByte(aStr)^, PByte(str)^, Length(aStr) * 2);
+        Move(PByte(aStr)^, PByte(str)^, Length(str) * 2);
       end;
   end;
 
@@ -5806,6 +5925,54 @@ procedure TSQLDA.SetAsAnsiString(const Index: Word; const Value: AnsiString);
           SQL_TEXT      : DecodeString(SQL_TEXT, Index, Result);
           SQL_VARYING   : DecodeString(SQL_VARYING, Index, Result);
           SQL_BLOB      : ReadBlob(Index, Result);
+          SQL_ARRAY     : Result := '(Array)';
+        else
+          raise EUIBConvertError.Create(EUIB_CASTERROR);
+        end;
+    end;
+  end;
+
+  function TSQLResult.GetAsRawByteString(const Index: Word): RawByteString;
+    function BoolToStr(const Value: boolean): string;
+    begin if Value then result := sUIBTrue else result := sUIBFalse; end;
+  var ASQLCode: SmallInt;
+  begin
+    CheckRange(Index);
+    Result := '';
+    with FXSQLDA.sqlvar[Index] do
+    begin
+      if (sqlind <> nil) and (sqlind^ = -1) then Exit;
+      ASQLCode := (sqltype and not(1));
+      // Is Numeric ?
+      if (sqlscale < 0)  then
+      begin
+        case ASQLCode of
+          SQL_SHORT  : Result := RawByteString(FloatToStr(PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]));
+          SQL_LONG   : Result := RawByteString(FloatToStr(PInteger(sqldata)^  / ScaleDivisor[sqlscale]));
+          SQL_INT64,
+          SQL_QUAD   : Result := RawByteString(FloatToStr(PInt64(sqldata)^    / ScaleDivisor[sqlscale]));
+          SQL_D_FLOAT,
+          SQL_DOUBLE : Result := RawByteString(FloatToStr(PDouble(sqldata)^));
+        else
+          raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
+        end;
+      end else
+        case ASQLCode of
+          SQL_D_FLOAT,
+          SQL_DOUBLE    : Result := RawByteString(FloatToStr(PDouble(sqldata)^));
+          SQL_TIMESTAMP : Result := RawByteString(DateTimeToStr(DecodeTimeStamp(PISCTimeStamp(sqldata))));
+          SQL_TYPE_DATE : Result := RawByteString(DateToStr(PInteger(sqldata)^ - DateOffset));
+          SQL_TYPE_TIME : Result := RawByteString(TimeToStr(PCardinal(sqldata)^ / TimeCoeff));
+          SQL_LONG      : Result := RawByteString(IntToStr(PInteger(sqldata)^));
+          SQL_FLOAT     : Result := RawByteString(FloatToStr(PSingle(sqldata)^));
+{$IFDEF IB7_UP}
+          SQL_BOOLEAN   : Result := RawByteString(BoolToStr(PSmallint(sqldata)^ = 1));
+{$ENDIF}
+          SQL_SHORT     : Result := RawByteString(IntToStr(PSmallint(sqldata)^));
+          SQL_INT64     : Result := RawByteString(IntToStr(PInt64(sqldata)^));
+          SQL_TEXT      : DecodeString(SQL_TEXT, Index, Result);
+          SQL_VARYING   : DecodeString(SQL_VARYING, Index, Result);
+          SQL_BLOB      : ReadBlobData(Index, Result);
           SQL_ARRAY     : Result := '(Array)';
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -6538,6 +6705,12 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
   procedure TSQLParams.SetAsQuad(const Index: Word; const Value: TISCQuad);
   begin
     SetFieldType(Index, sizeof(TISCQuad), SQL_QUAD + 1, 0);
+    inherited;
+  end;
+
+  procedure TSQLParams.SetAsRawByteString(const Index: Word; const Value: RawByteString);
+  begin
+    SetFieldType(Index, Length(Value), SQL_TEXT + 1, 0);
     inherited;
   end;
 
