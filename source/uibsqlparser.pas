@@ -101,10 +101,10 @@ type
   private
     FStrings: TStrings;
     FParams: TStringlist;
-    FStr: AnsiString;
+    FStr: string;
     FValue: string;
     FLine: Integer;
-    FCursor: PAnsiChar;
+    FCursor: PChar;
     FMarkerLine: Integer;
     FMarkerPos: Integer;
     FOnComment: TOnComment;
@@ -125,7 +125,7 @@ type
 implementation
 
 const
-  CM: array[AnsiChar] of AnsiChar = (
+  CM: array[AnsiChar] of char = (
     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
     ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
@@ -143,6 +143,17 @@ const
     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '
   );
+
+function getCM(c: Char): Char;
+begin
+{$IFDEF UNICODE}
+    if c > #255 then
+      Result := ' ' else
+      Result := CM[AnsiChar(c)];
+{$ELSE}
+    result := CM[c];
+{$ENDIF}
+end;
 
 { TUIBSQLParser }
 
@@ -167,9 +178,9 @@ procedure TUIBSQLParser.Error(const msg: string = '');
 var E: EUIBSQLParseError;
 begin
   E := EUIBSQLParseError.CreateFmt('Parse error at line %d, pos %d'#13'%s',
-    [FLine, FCursor - PAnsiChar(FStr), msg]);
+    [FLine, FCursor - PChar(FStr), msg]);
   E.FLine := FLine;
-  E.FPos := FCursor - PAnsiChar(FStr);
+  E.FPos := FCursor - PChar(FStr);
   raise E;
 end;
 
@@ -183,12 +194,12 @@ begin
   begin
     str := FStrings[i];
     if (FMarkerLine = FLine) then
-      Result := copy(str, FMarkerPos +1, FCursor - PAnsiChar(FStr) - FMarkerPos ) else
+      Result := copy(str, FMarkerPos +1, FCursor - PChar(FStr) - FMarkerPos ) else
       if (FMarkerLine = i) then
         Result := copy(str, FMarkerPos + 1, Length(Str) - FMarkerPos) else
         if i <> FLine then
           Result := Result + #13#10 + str else
-          Result := Result + #13#10 + copy(str, 0, FCursor - PAnsiChar(FStr) - FMarkerPos)
+          Result := Result + #13#10 + copy(str, 0, FCursor - PChar(FStr) - FMarkerPos)
   end;
 end;
 
@@ -198,8 +209,8 @@ begin
   result := (FLine < FStrings.Count);
   if result then
   begin
-    FStr := AnsiString(FStrings[FLine]);
-    FCursor := PAnsiChar(FStr);
+    FStr := FStrings[FLine];
+    FCursor := PChar(FStr);
   end;
 end;
 
@@ -240,7 +251,7 @@ begin
     end else
     begin
       FMarkerLine := FLine;
-      FMarkerPos := FCursor - PAnsiChar(FStr);
+      FMarkerPos := FCursor - PChar(FStr);
     end;
   end else
   begin
@@ -516,12 +527,11 @@ end;
 // lexical analyser method
 function TUIBSQLParser.NextToken: TSQLToken;
 label next;
-var
-  p: PAnsiChar;
-  function get: AnsiChar;
+var p: PChar;
+  function get: char;
   begin
     inc(FCursor);
-    result := CM[FCursor^];
+    Result := getCM(FCursor^);
   end;
 begin
   FValue := '';
@@ -545,7 +555,7 @@ next:
                     begin
                       if assigned(FOnComment) then
                       begin
-                        FValue := FValue + string(copy(p, 0, FCursor - p));
+                        FValue := FValue + copy(p, 0, FCursor - p);
                         FOnComment(self, FValue, csMultiLine);
                       end;
                       inc(FCursor, 2);
@@ -555,7 +565,7 @@ next:
                #00:
                     begin
                       if assigned(FOnComment) then
-                        FValue := FValue + string(copy(p, 0, FCursor - p)) + #13#10;
+                        FValue := FValue + copy(p, 0, FCursor - p) + #13#10;
                       if NextLine then
                         p := FCursor else
                         Error('unterminated comment');
@@ -574,7 +584,7 @@ next:
     '-': if (FCursor[1] = '-') then
          begin
            if Assigned(FOnComment) then
-             FOnComment(self, string(PAnsiChar(@FCursor[2])), csSingleLine);
+             FOnComment(self, PChar(@FCursor[2]), csSingleLine);
            if not NextLine then
              exit;
            goto next;
@@ -593,12 +603,12 @@ next:
                        inc(FCursor, 2) else
                        begin
                          inc(FCursor);
-                         FValue := FValue + string(copy(p, 0, FCursor - p));
+                         FValue := FValue + copy(p, 0, FCursor - p);
                          result := toValString;
                          Break;
                        end;
                #00: begin
-                        FValue := FValue + string(copy(p, 0, FCursor - p))+ #13#10;
+                        FValue := FValue + copy(p, 0, FCursor - p)+ #13#10;
                         if NextLine then
                           p := FCursor else
                           Error('Unterminated string.');
@@ -618,12 +628,12 @@ next:
                        inc(FCursor, 2) else
                        begin
                          inc(FCursor);
-                         FValue := FValue + string(copy(p, 0, FCursor - p));
+                         FValue := FValue + copy(p, 0, FCursor - p);
                          result := toSymbol;
                          Break;
                        end;
                #00: begin
-                      FValue := FValue + string(copy(p, 0, FCursor - p)) + #13#10;
+                      FValue := FValue + copy(p, 0, FCursor - p) + #13#10;
                       if NextLine then
                         p := FCursor else
                         Error('Unterminated Symbol, expected: ".');
@@ -640,20 +650,20 @@ next:
            repeat;
              inc(FCursor);
              if (FCursor[0] = '.') then
-             if (FCursor[1] in ['0'..'9']) then
+             if {$IFDEF UNICODE} (FCursor[1] < #256) and {$ENDIF} (AnsiChar(FCursor[1]) in ['0'..'9']) then
              begin
                Result := toValFloat;
                inc(FCursor);
                repeat
                  inc(FCursor);
-               until not(FCursor^ in ['0'..'9']);
+               until not({$IFDEF UNICODE} (FCursor^ < #256) and {$ENDIF} (AnsiChar(FCursor^) in ['0'..'9']));
              end else
              begin
                inc(FCursor);
                Break;
              end;
-           until not(FCursor^ in ['0'..'9','.']);
-           FValue := string(copy(p, 0, FCursor - p));
+           until not({$IFDEF UNICODE} (FCursor^ < #256) and {$ENDIF} (AnsiChar(FCursor^) in ['0'..'9','.']));
+           FValue := copy(p, 0, FCursor - p);
          end;
     '!', '^', '~':
            begin
@@ -724,7 +734,7 @@ next:
       begin
         result := toSymbol;
         p := FCursor;
-        case CM[FCursor[0]] of
+        case GetCM(FCursor[0]) of
           'A': case get of
                  'C': if (get = 'T') and (get = 'I') then
                         case get of
@@ -853,7 +863,7 @@ next:
                                'L': if (get = 'A') and (get = 'T') then
                                     case get of
                                       'E': if (get = ' ') then result := toCOLLATE;
-                                      'I': if (get = 'O') and (get = 'N') and (get = ' ') then Result := toCOLLATION; 
+                                      'I': if (get = 'O') and (get = 'N') and (get = ' ') then Result := toCOLLATION;
                                     end;
                                'U': if (get = 'M') and (get = 'N') and (get = ' ') then
                                       result := toCOLUMN;
@@ -1024,7 +1034,7 @@ next:
                       end;
                end;
           'F': case get of
-                 'E': if (get = 'T') and (get = 'C') and (get = 'H') and (get = ' ') then Result := toFETCH; 
+                 'E': if (get = 'T') and (get = 'C') and (get = 'H') and (get = ' ') then Result := toFETCH;
                  'I': case get of
                         'L': case get of
                                'E': if (get = ' ') then
@@ -1183,7 +1193,7 @@ next:
                         case get of
                           ' ': result := toMIN;
                           'U': if (get = 'T') and (get = 'E') and (get = ' ') then
-                                 result := toMINUTE;  
+                                 result := toMINUTE;
                         end;
                  'O': case get of
                         'D': if (get = 'U') and (get = 'L') and (get = 'E') and
@@ -1211,14 +1221,14 @@ next:
                  'E': if (get = 'X') and (get = 'T') and (get = ' ') then Result := toNEXT;
                  'O': case get of
                         ' ': result := toNO;
-                        'T': if (get = ' ') then result := toNOT; 
+                        'T': if (get = ' ') then result := toNOT;
                       end;
                  'U': case get of
                         'L': if (get = 'L') then
                                case get of
                                  ' ': result := toNULL;
                                  'I': if (get = 'F') and (get = ' ') then result := toNULLIF;
-                                 'S': if (get = ' ') then result := toNULLS; 
+                                 'S': if (get = ' ') then result := toNULLS;
                                end;
                         'M': case get of
                                '_': if (get = 'L') and (get = 'O') and (get = 'G') and (get = '_') and
@@ -1233,7 +1243,7 @@ next:
           'O': case get of
                  'C': if (get = 'T') and (get = 'E') and (get = 'T') and (get = '_') and (get = 'L') and
                         (get = 'E') and (get = 'N') and (get = 'G') and (get = 'T') and (get = 'H') and
-                        (get = ' ') then Result := toOCTET_LENGTH; 
+                        (get = ' ') then Result := toOCTET_LENGTH;
                  'F': case get of
                         ' ': result := toOF;
                         'F': if get = ' ' then result := toOFF;
@@ -1243,7 +1253,7 @@ next:
                         'L': if (get = 'Y') and (get = ' ') then result := toONLY;
                       end;
                  'P': case get of
-                        'E': if (get = 'N') and (get = ' ') then Result := toOPEN; 
+                        'E': if (get = 'N') and (get = ' ') then Result := toOPEN;
                         'T': if (get = 'I') and (get = 'O') and (get = 'N') and (get = ' ') then result := toOPTION;
                       end;
                  'R': case get of
@@ -1271,7 +1281,7 @@ next:
                                  '_': if (get = 'S') and (get = 'I') and (get = 'Z') and
                                          (get = 'E') and (get = ' ') then
                                         result := toPAGE_SIZE;
-                                 'S': if (get = ' ') then result := toPAGES;       
+                                 'S': if (get = ' ') then result := toPAGES;
                                end;
                         'R': if (get = 'A') and (get = 'M') and (get = 'E') and (get = 'T') and
                                 (get = 'E') and (get = 'R') and (get = ' ') then
@@ -1326,7 +1336,7 @@ next:
                         'A': case get of
                                'D': if (get = ' ') then result := toREAD;
                                'L': if (get = ' ') then result := toREAL;
-                             end;   
+                             end;
                         'C': case get of
                                'O': if (get = 'R') and (get = 'D') and (get = '_') and (get = 'V') and
                                        (get = 'E') and (get = 'R') and (get = 'S') and (get = 'I') and
@@ -1382,7 +1392,7 @@ next:
                                '_': if (get = 'C') and (get = 'O') and (get = 'U') and
                                      (get = 'N') and (get = 'T') and (get = ' ') then result := toROW_COUNT;
                                'S': if (get = ' ') then Result := toROWS;
-                             end;  
+                             end;
                       end;
                end;
           'S': case get of
@@ -1577,8 +1587,8 @@ next:
         end;
           if (result = toSymbol) then
           begin
-            while (CM[FCursor^] <> ' ') do inc(FCursor);
-            FValue := string(copy(p, 0, FCursor - p));
+            while (getCM(FCursor^) <> ' ') do inc(FCursor);
+            FValue := copy(p, 0, FCursor - p);
           end;
       end;
     // EOL

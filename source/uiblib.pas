@@ -807,11 +807,11 @@ type
     procedure TransactionPrepare(var TraHandle: IscTrHandle);
     procedure TransactionRollbackRetaining(var TraHandle: IscTrHandle);
     procedure DSQLExecuteImmediate(var DBHandle: IscDbHandle; var TraHandle: IscTrHandle;
-      const Statement: AnsiString; Dialect: Word; Sqlda: TSQLDA = nil); overload;
-    procedure DSQLExecuteImmediate(const Statement: AnsiString; Dialect: Word; Sqlda: TSQLDA = nil); overload;
+      const Statement: RawbyteString; Dialect: Word; Sqlda: TSQLDA = nil); overload;
+    procedure DSQLExecuteImmediate(const Statement: RawbyteString; Dialect: Word; Sqlda: TSQLDA = nil); overload;
     procedure DSQLAllocateStatement(var DBHandle: IscDbHandle; var StmtHandle: IscStmtHandle);
     function DSQLPrepare(var DbHandle: IscDbHandle; var TraHandle: IscTrHandle; var StmtHandle: IscStmtHandle;
-      Statement: AnsiString; Dialect: Word; Sqlda: TSQLResult = nil): TUIBStatementType;
+      Statement: RawbyteString; Dialect: Word; Sqlda: TSQLResult = nil): TUIBStatementType;
     procedure DSQLExecute(var TraHandle: IscTrHandle; var StmtHandle: IscStmtHandle;
       Dialect: Word; Sqlda: TSQLDA = nil);
     procedure DSQLExecute2(var TraHandle: IscTrHandle; var StmtHandle: IscStmtHandle;
@@ -825,7 +825,7 @@ type
     procedure DSQLDescribeBind(var StmtHandle: IscStmtHandle; Dialect: Word; Sqlda: TSQLParams);
     procedure DSQLSetCursorName(var StmtHandle: IscStmtHandle; const cursor: AnsiString);
     procedure DSQLExecImmed2(var DBHhandle: IscDbHandle; var TraHandle: IscTrHandle;
-      const Statement: AnsiString; dialect: Word; InSqlda, OutSqlda: TSQLDA);
+      const Statement: RawbyteString; dialect: Word; InSqlda, OutSqlda: TSQLDA);
 
     procedure DSQLInfo(var StmtHandle: IscStmtHandle; const Items: array of byte; var buffer: AnsiString);
     function  DSQLInfoPlan(var StmtHandle: IscStmtHandle): string;
@@ -1783,7 +1783,7 @@ const
   //****************************************
 
   procedure TUIBLibrary.DSQLExecuteImmediate(var DBHandle: IscDbHandle; var TraHandle: IscTrHandle;
-    const Statement: AnsiString; Dialect: Word; Sqlda: TSQLDA = nil);
+    const Statement: RawbyteString; Dialect: Word; Sqlda: TSQLDA = nil);
   begin
   {$IFDEF UIBTHREADSAFE}
     FLIBCritSec.Enter;
@@ -1798,7 +1798,7 @@ const
   {$ENDIF}
   end;
 
-  procedure TUIBLibrary.DSQLExecuteImmediate(const Statement: AnsiString; Dialect: Word; Sqlda: TSQLDA = nil);
+  procedure TUIBLibrary.DSQLExecuteImmediate(const Statement: RawbyteString; Dialect: Word; Sqlda: TSQLDA = nil);
   var p: pointer;
   begin
   {$IFDEF UIBTHREADSAFE}
@@ -1830,7 +1830,7 @@ const
   end;
 
   function TUIBLibrary.DSQLPrepare(var DbHandle: IscDbHandle; var TraHandle: IscTrHandle; var StmtHandle: IscStmtHandle;
-    Statement: AnsiString; Dialect: Word; Sqlda: TSQLResult = nil): TUIBStatementType;
+    Statement: RawbyteString; Dialect: Word; Sqlda: TSQLResult = nil): TUIBStatementType;
   var
     STInfo: packed record
       InfoCode: byte;
@@ -2149,7 +2149,7 @@ const
   end;
 
   procedure TUIBLibrary.DSQLExecImmed2(var DBHhandle: IscDbHandle; var TraHandle: IscTrHandle;
-    const Statement: AnsiString; dialect: Word; InSqlda, OutSqlda: TSQLDA);
+    const Statement: RawbyteString; dialect: Word; InSqlda, OutSqlda: TSQLDA);
   begin
   {$IFDEF UIBTHREADSAFE}
     FLIBCritSec.Enter;

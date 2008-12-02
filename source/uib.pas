@@ -169,6 +169,8 @@ type
     FExceptions: TList;
     FMetadata: TObject;
     FEventNotifiers: TList;
+    FCharacterSet: TCharacterSet;
+    FSQLDialect: Word;
 
     FMetaDataOptions: TMetaDataOptions;
     FOnInfoReadSeqCount: TOnInfoTableOpCount;
@@ -211,6 +213,7 @@ type
     procedure SetSegmentSize(const Value: Word);
     function GetShutdown: TShutdownOptions;
     procedure SetShutdown(const Value: TShutdownOptions);
+    procedure doOnParamChange(Sender: TObject);
 
     procedure UnRegisterEvents;
     procedure RegisterEvents;
@@ -559,7 +562,7 @@ type
     FLockTimeout: Word;
   {$ENDIF}
     function GetInTransaction: boolean;
-    function TPB: AnsiString;
+    function TPB: RawByteString;
     function GetOptions: TTransParams;
     procedure SetOptions(const Value: TTransParams);
     function GetLockRead: string;
@@ -940,8 +943,8 @@ type
     FHandle  : IscSvcHandle;
     procedure BeginService; virtual;
     procedure EndService; virtual;
-    function CreateParam(code: AnsiChar; const Value: AnsiString): AnsiString; overload;
-    function CreateParam(code: AnsiChar; Value: Integer): AnsiString; overload;
+    function CreateParam(code: AnsiChar; const Value: RawByteString): RawByteString; overload;
+    function CreateParam(code: AnsiChar; Value: Integer): RawByteString; overload;
   public
     constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
     destructor Destroy; override;
@@ -963,7 +966,7 @@ type
     FOnVerbose: TVerboseEvent;
     FVerbose: boolean;
     procedure SetBackupFiles(const Value: TStrings);
-    function CreateStartSPB: AnsiString; virtual; abstract;
+    function CreateStartSPB: RawByteString; virtual; abstract;
   public
     constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
     destructor Destroy; override;
@@ -983,7 +986,7 @@ type
   TUIBBackup = class(TUIBBackupRestore)
   private
     FOptions: TBackupOptions;
-    function CreateStartSPB: AnsiString; override;
+    function CreateStartSPB: RawByteString; override;
   published
     property Options: TBackupOptions read FOptions write FOptions default [];
   end;
@@ -998,14 +1001,13 @@ type
   private
     FOptions: TRestoreOptions;
     FPageSize: Cardinal;
-    function CreateStartSPB: AnsiString; override;
+    function CreateStartSPB: RawByteString; override;
   public
     constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
   published
     property Options: TRestoreOptions read FOptions write FOptions default [roCreateNewDB];
     property PageSize: Cardinal read FPageSize write FPageSize default 0;
   end;
-
 
   TSecurityAction = (saAddUser, saDeleteUser, saModifyUser, saDisplayUser, saDisplayUsers);
   TSecurityParam = (spRole, spUser, spPass, spFirstName, spMiddleName, spLastName, spUserID, spGroupID);
@@ -1080,7 +1082,7 @@ type
     FOptions: TRepairOptions;
     FDatabase: string;
   protected
-    function CreateStartSPB: AnsiString; virtual;
+    function CreateStartSPB: RawByteString; virtual;
   public
     procedure Run;
   published
@@ -1242,6 +1244,7 @@ begin
   FDbHandle := nil;
   FHandleShared := False;
   FParams := TStringList.Create;
+  TStringList(FParams).OnChange := doOnParamChange;
   SQLDialect := 3;
   CharacterSet := csNONE;
   FExceptions := TList.Create;
@@ -1286,20 +1289,8 @@ begin
 end;
 
 function TUIBDataBase.GetCharacterSet: TCharacterSet;
-var
-  i: TCharacterSet;
-  S: AnsiString;
 begin
-  S := AnsiString(ReadParamString('lc_ctype', 'NONE'));
-  StrUpper(PAnsiChar(S));
-  S := Trim(S);
-  Result := csNONE;
-  for i := low(TCharacterSet) to high(TCharacterSet) do
-    if (S = CharacterSetStr[i]) then
-    begin
-      Result := i;
-      Break;
-    end;
+  Result := FCharacterSet;
 end;
 
 function TUIBDataBase.GetConnected: boolean;
@@ -1323,18 +1314,17 @@ end;
 
 function TUIBDataBase.GetSQLDialect: Integer;
 begin
-  try
-    Result := ReadParamInteger('sql_dialect', 3);
-  except
-    WriteParamInteger('sql_dialect', 3);
-    raise;
-  end;
+  Result := FSQLDialect;
 end;
 
 procedure TUIBDataBase.ExecuteImmediate(const Statement: string);
 begin
   FLibrary.Load(FLiBraryName);
-  FLibrary.DSQLExecuteImmediate(AnsiString(Statement), SQLDialect);
+{$IFDEF UNICODE}
+  FLibrary.DSQLExecuteImmediate(MBUEncode(Statement, CharacterSetCP[CharacterSet]), SQLDialect);
+{$ELSE}
+  FLibrary.DSQLExecuteImmediate(Statement, SQLDialect);
+{$ENDIF}
 end;
 
 procedure TUIBDataBase.CreateDatabase(PageSize: Integer = 2048);
@@ -1346,9 +1336,15 @@ begin
   TrHandle := nil;
   Connected := False;
   FLibrary.Load(FLiBraryName);
+{$IFDEF UNICODE}
   FLibrary.DSQLExecuteImmediate(FDbHandle, TrHandle,
-    AnsiString(Format(CreateDb, [DatabaseName, UserName, PassWord, PageSize,
-    CharacterSetStr[CharacterSet]])), SQLDialect);
+    MBUEncode(Format(CreateDb, [DatabaseName, UserName, PassWord, PageSize,
+    CharacterSetStr[CharacterSet]]), CharacterSetCP[CharacterSet]), SQLDialect);
+{$ELSE}
+  FLibrary.DSQLExecuteImmediate(FDbHandle, TrHandle,
+    Format(CreateDb, [DatabaseName, UserName, PassWord, PageSize,
+    CharacterSetStr[CharacterSet]]), SQLDialect);
+{$ENDIF}
 end;
 
 procedure TUIBDataBase.DropDatabase;
@@ -1410,7 +1406,7 @@ end;
 
 procedure TUIBDataBase.SetCharacterSet(const Value: TCharacterSet);
 begin
-  WriteParamString('lc_ctype', string(CharacterSetStr[Value]));
+  WriteParamString('lc_ctype', string(CharacterSetStr[FCharacterSet]));
 end;
 
 procedure TUIBDataBase.SetConnected(const Value: boolean);
@@ -1636,6 +1632,12 @@ begin
   Excep := EUIBException;
 end;
 
+procedure TUIBDataBase.doOnParamChange(Sender: TObject);
+begin
+  FCharacterSet := StrToCharacterSet(RawbyteString(ReadParamString('lc_ctype', 'NONE')));
+  FSQLDialect := ReadParamInteger('sql_dialect', 3);
+end;
+
 function TUIBDataBase.GetMetadata(Refresh: boolean = False): TObject;
 var
   Transaction: TUIBTransaction;
@@ -1750,7 +1752,7 @@ end;
 function TUIBDataBase.GetInfoStringValue(const item: integer): string;
 var
   size: byte;
-  data: AnsiString;
+  data: RawByteString;
 begin
   SetConnected(true);
 {$IFDEF UIBTHREADSAFE}
@@ -2323,10 +2325,17 @@ begin
     with FindDataBase, FLibrary do
     try
       if (FQuickScript or (not FParseParams)) then
+{$IFDEF UNICODE}
         FStatementType := DSQLPrepare(FDbHandle, FTransaction.FTrHandle, FStHandle,
-          AnsiString(FSQL.Text), GetSQLDialect, FSQLResult) else
+          MBUEncode(FSQL.Text, CharacterSetCP[CharacterSet]), GetSQLDialect, FSQLResult) else
         FStatementType := DSQLPrepare(FDbHandle, FTransaction.FTrHandle, FStHandle,
-          AnsiString(FParsedSQL), GetSQLDialect, FSQLResult);
+          MBUEncode(FParsedSQL, CharacterSetCP[CharacterSet]), GetSQLDialect, FSQLResult);
+{$ELSE}
+        FStatementType := DSQLPrepare(FDbHandle, FTransaction.FTrHandle, FStHandle,
+          FSQL.Text, GetSQLDialect, FSQLResult) else
+        FStatementType := DSQLPrepare(FDbHandle, FTransaction.FTrHandle, FStHandle,
+          FParsedSQL, GetSQLDialect, FSQLResult);
+{$ENDIF}
         FCursorName := 'C' + inttostr(PtrInt(FStHandle));
         if FUseCursor then
           DSQLSetCursorName(FStHandle, AnsiString(FCursorName));
@@ -2390,7 +2399,7 @@ end;
 procedure TUIBStatement.BeginExecImme;
 var
   I: Integer;
-  procedure ExecuteQuery(const AQuery: AnsiString; sqlParams: TSQLParams);
+  procedure ExecuteQuery(const AQuery: string; sqlParams: TSQLParams);
   begin
     if (Trim(AQuery) = '') then exit;
   {$IFDEF UIBTHREADSAFE}
@@ -2399,8 +2408,13 @@ var
   {$ENDIF}
       with FindDataBase, FLibrary do
       try
-        DSQLExecuteImmediate(FindDataBase.FDbHandle, FTransaction.FTrHandle,
+{$IFDEF UNICODE}
+        DSQLExecuteImmediate(FDbHandle, FTransaction.FTrHandle,
+          MBUEncode(AQuery, CharacterSetCP[CharacterSet]), GetSQLDialect, sqlParams);
+{$ELSE}
+        DSQLExecuteImmediate(FDbHandle, FTransaction.FTrHandle,
           AQuery, GetSQLDialect, sqlParams);
+{$ENDIF}
       except
         if (FOnError <> etmStayIn) then
           EndExecImme(FOnError, False);
@@ -2417,11 +2431,11 @@ begin
   if FQuickScript then
     for i := 0 to FSQL.Count - 1 do
     begin
-      ExecuteQuery(AnsiString(FSQL.Strings[i]), nil);
+      ExecuteQuery(FSQL.Strings[i], nil);
     end else
       if FParseParams then
-        ExecuteQuery(AnsiString(FParsedSQL), FParameter) else
-        ExecuteQuery(AnsiString(FSQL.Text), FParameter);
+        ExecuteQuery(FParsedSQL, FParameter) else
+        ExecuteQuery(FSQL.Text, FParameter);
   FCurrentState := qsExecImme;
 end;
 
@@ -3574,7 +3588,7 @@ begin
 {$ENDIF}
 end;
 
-function TUIBTransaction.TPB: AnsiString;
+function TUIBTransaction.TPB: RawByteString;
 var
   tp: TTransParam;
   procedure ParseStrOption(const code: AnsiChar; const Value: AnsiString);
@@ -3763,8 +3777,13 @@ begin
 {$ENDIF}
     BeginTransaction;
     with FDataBase, FLibrary do
-    DSQLExecuteImmediate(FDataBase.FDbHandle,
-      FTrHandle, AnsiString(sql), GetSQLDialect);
+{$IFDEF UNICODE}
+      DSQLExecuteImmediate(FDataBase.FDbHandle,
+        FTrHandle, MBUEncode(sql, CharacterSetCP[CharacterSet]), GetSQLDialect);
+{$ELSE}
+      DSQLExecuteImmediate(FDataBase.FDbHandle,
+        FTrHandle, sql, GetSQLDialect);
+{$ENDIF}
 {$IFDEF UIBTHREADSAFE}
   finally
     UnLock;
@@ -3854,7 +3873,7 @@ begin
 end;
 
 function TUIBService.CreateParam(code: AnsiChar;
-  const Value: AnsiString): AnsiString;
+  const Value: RawByteString): RawByteString;
 var Len: Word;
 begin
   Len := Length(Value);
@@ -3863,7 +3882,7 @@ begin
     result := '';
 end;
 
-function TUIBService.CreateParam(code: AnsiChar; Value: Integer): ANsiString;
+function TUIBService.CreateParam(code: AnsiChar; Value: Integer): RawByteString;
 begin
   result := code + PAnsiChar(@Value)[0] + PAnsiChar(@Value)[1] + PAnsiChar(@Value)[2] + PAnsiChar(@Value)[3];
 end;
@@ -3920,7 +3939,7 @@ end;
 
 { TUIBBackup }
 
-function TUIBBackup.CreateStartSPB: AnsiString;
+function TUIBBackup.CreateStartSPB: RawByteString;
 var
   Len: Word;
   i: Integer;
@@ -3980,7 +3999,7 @@ begin
   FPageSize := 0;
 end;
 
-function TUIBRestore.CreateStartSPB: AnsiString;
+function TUIBRestore.CreateStartSPB: RawByteString;
 var
   Len: Word;
   i: Integer;
@@ -4333,8 +4352,13 @@ begin
               FQuery.FindDataBase.Lock;
               try
             {$ENDIF}
+{$IFDEF UNICODE}
                 FLibrary.DSQLExecuteImmediate(
-                  FDbHandle, TrHandle, AnsiString(Parser.Statement), SQLDialect);
+                  FDbHandle, TrHandle, MBUEncode(Parser.Statement, CharacterSetCP[CharacterSet]), SQLDialect);
+{$ELSE}
+                FLibrary.DSQLExecuteImmediate(
+                  FDbHandle, TrHandle, Parser.Statement, SQLDialect);
+{$ENDIF}
             {$IFDEF UIBTHREADSAFE}
               finally
                 FQuery.FindDataBase.UnLock;
@@ -4470,7 +4494,7 @@ end;
 
 { TUIBRepair }
 
-function TUIBRepair.CreateStartSPB: AnsiString;
+function TUIBRepair.CreateStartSPB: RawByteString;
 var
   Len: Word;
   Param: byte;
