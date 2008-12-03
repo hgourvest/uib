@@ -33,10 +33,10 @@ type
   THTTPMessage = class(TSuperObject)
   private
     FContent: TPooledMemoryStream;
-    function GetContentString: string;
+    function GetContentString: SOString;
   public
     property Content: TPooledMemoryStream read FContent;
-    property ContentString: string read GetContentString;
+    property ContentString: SOString read GetContentString;
 
     constructor Create(jt: TSuperType = stObject); override;
     destructor Destroy; override;
@@ -90,7 +90,7 @@ const
 (* default limit on number of request header fields *)
   DEFAULT_LIMIT_REQUEST_FIELDS = 100;
 
-function HTTPInterprete(src: PChar; named: boolean = false; sep: char = ';'; StrictSep: boolean = false; codepage: Integer = 0): ISuperObject;
+function HTTPInterprete(src: PSOChar; named: boolean = false; sep: SOChar = ';'; StrictSep: boolean = false; codepage: Integer = 0): ISuperObject;
 function HTTPDecode(const AStr: string; codepage: Integer = 0): string;
 function HttpResponseStrings(code: integer): RawByteString;
 
@@ -154,10 +154,10 @@ begin
 end;
 
 
-function HTTPInterprete(src: PChar; named: boolean; sep: Char; StrictSep: boolean; codepage: Integer): ISuperObject;
+function HTTPInterprete(src: PSOChar; named: boolean; sep: SOChar; StrictSep: boolean; codepage: Integer): ISuperObject;
 var
-  P1: PChar;
-  S: string;
+  P1: PSOChar;
+  S: SOString;
   i: integer;
   obj, obj2, value: ISuperObject;
 begin
@@ -183,7 +183,7 @@ begin
         begin
           S[i] := #0;
           obj := Result[S];
-          value := TSuperObject.Parse(PChar(@S[i+1]), false);
+          value := TSuperObject.Parse(PSOChar(@S[i+1]), false);
           if value = nil then
             value := TSuperObject.Create(PChar(@S[i+1]));
           if obj = nil then
@@ -204,7 +204,7 @@ begin
         end;
       end else
       begin
-        value := TSuperObject.Parse(PChar(S), false);
+        value := TSuperObject.Parse(PSOChar(S), false);
         if value = nil then
           value := TSuperObject.Create(s);
         Result.AsArray.Add(value);
@@ -311,9 +311,9 @@ begin
   FContent.Free;
 end;
 
-function THTTPMessage.GetContentString: string;
+function THTTPMessage.GetContentString: SOString;
 begin
-  Result := string(StreamToAnsiString(FContent));
+  Result := SOString(StreamToAnsiString(FContent));
 end;
 
 { THTTPStub }
@@ -634,10 +634,10 @@ end;
 
 procedure THTTPStub.doBeforeProcessRequest(ctx: ISuperObject);
 begin
-  FRequest['cookies'] := HTTPInterprete(PChar(Request.S['env.cookie']), true);
-  FRequest['content-type'] := HTTPInterprete(PChar(Request.S['env.content-type']));
+  FRequest['cookies'] := HTTPInterprete(PSOChar(Request.S['env.cookie']), true);
+  FRequest['content-type'] := HTTPInterprete(PSOChar(Request.S['env.content-type']));
   FRequest['authorization'] := HTTPGetAuthorization(Request.S['env.authorization']);
-  FRequest['accept'] := HTTPInterprete(PChar(Request.S['env.accept']), false, ',');
+  FRequest['accept'] := HTTPInterprete(PSOChar(Request.S['env.accept']), false, ',');
 
 
   FResponse.I['response'] :=  200;

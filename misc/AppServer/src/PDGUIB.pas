@@ -181,7 +181,7 @@ begin
   begin
     DSQLAllocateStatement(FDbHandle, FStHandle);
     FStatementType := DSQLPrepare(FDbHandle, Context.FTrHandle, FStHandle,
-      AnsiString(FSQLParams.Parse(PChar(self.S['sql']))), 3, FSQLResult);
+      AnsiString(FSQLParams.Parse(PSOChar(self.S['sql']))), 3, FSQLResult);
     if (FSQLParams.FieldCount > 0) then
       DSQLDescribeBind(FStHandle, 3, FSQLParams);
   end;

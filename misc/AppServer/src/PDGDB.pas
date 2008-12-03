@@ -21,17 +21,17 @@ type
   ['{843E105A-B8E0-42A9-AFA0-CF5AA843DB8B}']
     function newContext(Options: ISuperObject = nil): IPDGContext; overload;
     function newCommand(Options: ISuperObject = nil): IPDGCommand; overload;
-    function newContext(const Options: string): IPDGContext; overload;
-    function newCommand(const Options: string): IPDGCommand; overload;
+    function newContext(const Options: SOString): IPDGContext; overload;
+    function newCommand(const Options: SOString): IPDGCommand; overload;
   end;
 
   IPDGContext = interface
   ['{51992399-2D1A-47EF-9DB1-C5654325F41B}']
     function newCommand(Options: ISuperObject = nil): IPDGCommand; overload;
-    function newCommand(const Options: string): IPDGCommand; overload;
+    function newCommand(const Options: SOString): IPDGCommand; overload;
     function Execute(Command: IPDGCommand; params: ISuperObject = nil): ISuperObject; overload;
     function Execute(Command: IPDGCommand; params: array of const): ISuperObject; overload;
-    function Execute(Command: IPDGCommand; const params: string): ISuperObject; overload;
+    function Execute(Command: IPDGCommand; const params: SOString): ISuperObject; overload;
     function Execute(Command: IPDGCommand; const params: Variant): ISuperObject; overload;
   end;
 
@@ -39,7 +39,7 @@ type
   ['{A39B974A-96EA-4047-A57B-A2B3EBE7BABD}']
     function Execute(params: ISuperObject = nil; context: IPDGContext = nil): ISuperObject; overload;
     function Execute(params: array of const; context: IPDGContext = nil): ISuperObject; overload;
-    function Execute(const params: string; context: IPDGContext = nil): ISuperObject; overload;
+    function Execute(const params: SOString; context: IPDGContext = nil): ISuperObject; overload;
     function Execute(const params: Variant; context: IPDGContext = nil): ISuperObject; overload;
     function GetInputMeta: ISuperObject;
     function GetOutputMeta: ISuperObject;
@@ -55,18 +55,18 @@ type
   TPDGConnection = class(TSuperObject, IPDGConnection)
   protected
     function newContext(Options: ISuperObject = nil): IPDGContext; overload; virtual; abstract;
-    function newContext(const Options: string): IPDGContext; overload; virtual;
+    function newContext(const Options: SOString): IPDGContext; overload; virtual;
     function newCommand(Options: ISuperObject = nil): IPDGCommand; overload; virtual;
-    function newCommand(const Options: string): IPDGCommand; overload; virtual;
+    function newCommand(const Options: SOString): IPDGCommand; overload; virtual;
   end;
 
   TPDGContext = class(TSuperObject, IPDGContext)
   protected
     function newCommand(Options: ISuperObject = nil): IPDGCommand; overload; virtual; abstract;
-    function newCommand(const Options: string): IPDGCommand; overload; virtual;
+    function newCommand(const Options: SOString): IPDGCommand; overload; virtual;
     function Execute(Command: IPDGCommand; params: ISuperObject = nil): ISuperObject; overload; virtual;
     function Execute(Command: IPDGCommand; params: array of const): ISuperObject; overload; virtual;
-    function Execute(Command: IPDGCommand; const params: string): ISuperObject; overload; virtual;
+    function Execute(Command: IPDGCommand; const params: SOString): ISuperObject; overload; virtual;
     function Execute(Command: IPDGCommand; const params: Variant): ISuperObject; overload; virtual;
   end;
 
@@ -74,7 +74,7 @@ type
   protected
     function Execute(params: ISuperObject = nil; context: IPDGContext = nil): ISuperObject; overload; virtual; abstract;
     function Execute(params: array of const; context: IPDGContext = nil): ISuperObject; overload; virtual;
-    function Execute(const params: string; context: IPDGContext = nil): ISuperObject; overload; virtual;
+    function Execute(const params: SOString; context: IPDGContext = nil): ISuperObject; overload; virtual;
     function Execute(const params: Variant; context: IPDGContext = nil): ISuperObject; overload; virtual;
     function GetInputMeta: ISuperObject; virtual; abstract;
     function GetOutputMeta: ISuperObject; virtual; abstract;
@@ -124,14 +124,14 @@ begin
   Result := newContext.newCommand(Options);
 end;
 
-function TPDGConnection.newCommand(const Options: string): IPDGCommand;
+function TPDGConnection.newCommand(const Options: SOString): IPDGCommand;
 begin
   Result := newContext.newCommand(Options);
 end;
 
-function TPDGConnection.newContext(const Options: string): IPDGContext;
+function TPDGConnection.newContext(const Options: SOString): IPDGContext;
 begin
-  Result := newContext(TSuperObject.Parse(PChar(Options)));
+  Result := newContext(TSuperObject.Parse(PSOChar(Options)));
 end;
 
 { TPDGContext }
@@ -142,20 +142,20 @@ begin
   Result := Command.Execute(so(params), Self);
 end;
 
-function TPDGContext.newCommand(const Options: string): IPDGCommand;
+function TPDGContext.newCommand(const Options: SOString): IPDGCommand;
 var
   opt: ISuperObject;
 begin
-  opt := TSuperObject.Parse(PChar(Options), false);
+  opt := TSuperObject.Parse(PSOChar(Options), false);
   if opt <> nil then
     Result := newCommand(opt) else
     Result := newCommand(TSuperObject.Create(Options));
 end;
 
 function TPDGContext.Execute(Command: IPDGCommand;
-  const params: string): ISuperObject;
+  const params: SOString): ISuperObject;
 begin
-  Result := Command.Execute(TSuperObject.Parse(PChar(params)), Self);
+  Result := Command.Execute(TSuperObject.Parse(PSOChar(params)), Self);
 end;
 
 function TPDGContext.Execute(Command: IPDGCommand;
@@ -178,10 +178,10 @@ begin
   Result := Execute(SO(params), context);
 end;
 
-function TPDGCommand.Execute(const params: string;
+function TPDGCommand.Execute(const params: SOString;
   context: IPDGContext): ISuperObject;
 begin
-  Result := Execute(TSuperObject.Parse(PChar(params)), context);
+  Result := Execute(TSuperObject.Parse(PSOChar(params)), context);
 end;
 
 function TPDGCommand.Execute(params: array of const;
@@ -249,14 +249,17 @@ end;
 function TPDGBinary.Write(writer: TSuperWriter; format: boolean; escape: boolean;
   level: integer): Integer;
 const
-  Base64Code: PChar = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  Base64Code: PSOChar = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  QUOTE: SOChar = '"';
+  EQ2: PSOChar = '==';
+  EQ4: PSOChar = 'A===';
 var
   V: array[0..2] of byte;
-  C: array[0..3] of Char;
+  C: array[0..3] of SOChar;
 begin
   FStream.Seek(0, soFromBeginning);
   Result := 0;
-  inc(Result, writer.Append('"', 1));
+  inc(Result, writer.Append(@QUOTE, 1));
   while true do
     case FStream.Read(V, 3) of
     3: begin
@@ -271,23 +274,23 @@ begin
          C[1] := Base64Code[((V[0] shl 4) and $3F) or V[1] shr 4];
          C[2] := Base64Code[((V[1] shl 2) and $3F) or 0    shr 6];
          inc(Result, writer.Append(@C, 3));
-         inc(Result, writer.Append('=', 1));
+         inc(Result, writer.Append(@QUOTE, 1));
          Break;
        end;
     1: begin
          C[0] := Base64Code[(V[0] shr 2) and $3F];
          C[1] := Base64Code[((V[0] shl 4) and $3F) or 0 shr 4];
          inc(Result, writer.Append(@C, 2));
-         inc(Result, writer.Append('==', 2));
+         inc(Result, writer.Append(EQ2, 2));
          Break;
        end;
     0: begin
          if FStream.Position = 0 then
-           inc(Result, writer.Append('A===', 4));
+           inc(Result, writer.Append(EQ4, 4));
          Break;
        end;
     end;
-  inc(Result, writer.Append('"', 1));
+  inc(Result, writer.Append(@QUOTE, 1));
 end;
 
 end.

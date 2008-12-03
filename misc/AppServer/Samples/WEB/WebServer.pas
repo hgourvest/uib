@@ -119,7 +119,7 @@ begin
 end;
 
 procedure THTTPConnexion.doBeforeProcessRequest(ctx: ISuperObject);
-  function interprete(v: PChar; name: string): boolean;
+  function interprete(v: PSOChar; name: string): boolean;
   var
     p: PChar;
     str: string;
@@ -163,7 +163,7 @@ begin
     end else
     if(Request.S['content-type[0]'] = 'application/x-www-form-urlencoded') then
     begin
-      obj := HTTPInterprete(PChar(Request.ContentString), true, '&', false, DEFAULT_CP);
+      obj := HTTPInterprete(PSOChar(Request.ContentString), true, '&', false, DEFAULT_CP);
       try
         ctx['params'].Merge(obj, true);
         ctx.S['params.format'] := 'html';
@@ -172,11 +172,11 @@ begin
       end;
     end;
 
-   obj := HTTPInterprete(PChar(Request.S['uri']), false, '/', false, DEFAULT_CP);
+   obj := HTTPInterprete(PSOChar(Request.S['uri']), false, '/', false, DEFAULT_CP);
    begin
-     if interprete(PChar(obj.AsArray.S[1]), 'controller') then
-     if interprete(PChar(obj.AsArray.S[2]), 'action') then
-        interprete(PChar(obj.AsArray.S[3]), 'id');
+     if interprete(PSOChar(obj.AsArray.S[1]), 'controller') then
+     if interprete(PSOChar(obj.AsArray.S[2]), 'action') then
+        interprete(PSOChar(obj.AsArray.S[3]), 'id');
    end;
 
   // default action is index
