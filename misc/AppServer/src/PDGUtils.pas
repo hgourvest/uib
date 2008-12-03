@@ -47,6 +47,11 @@ type
   TThreadID = LongWord;
 {$ENDIF}
 
+{$IFNDEF UNICODE}
+  UnicodeString = WideString;
+  RawByteString = AnsiString;
+{$ENDIF}
+
   ERemoteError = class(Exception)
   end;
 
@@ -774,7 +779,7 @@ begin
   data := MBUEncode(str, cp);
 {$ELSE}
   if cp > 0 then
-    MBAEncode(str, cp) else
+    data := MBAEncode(str, cp) else
     data := str;
 {$ENDIF}
   s := Length(data);
