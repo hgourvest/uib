@@ -341,7 +341,9 @@ type
     procedure ConvertString(const Code: Smallint; Index: Word; out value: boolean); overload;
     procedure ConvertString(const Code: Smallint; Index: Word; out value: Cardinal); overload;
     procedure ConvertStringToDate(const Code: Smallint; Index: Word; out value: Integer);
+{$IFDEF UNICODE}
     procedure DecodeString(const Code: Smallint; Index: Word; out Str: RawByteString); overload;
+{$ENDIF}
     procedure DecodeString(const Code: Smallint; Index: Word; out Str: UnicodeString); overload;
     procedure DecodeString(const Code: Smallint; Index: Word; out Str: AnsiString); overload;
     function DecodeString(const Code: Smallint; Index: Word): UnicodeString; overload;
@@ -3647,6 +3649,7 @@ type
     FCharacterSet := aCharacterSet;
   end;
 
+{$IFDEF UNICODE}
   procedure TSQLDA.DecodeString(const Code: Smallint; Index: Word; out Str: RawByteString);
   begin
     with FXSQLDA.sqlvar[Index] do
@@ -3655,6 +3658,7 @@ type
       SQL_VARYING : SetString(Str, PVary(sqldata).vary_string, PVary(sqldata).vary_length);
     end;
   end;
+{$ENDIF}
 
   procedure TSQLDA.ConvertString(const Code: Smallint; Index: Word; out value: Cardinal);
   begin
