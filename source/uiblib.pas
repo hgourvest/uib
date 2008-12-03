@@ -1124,13 +1124,16 @@ end;
 
 function MBAEncode(const str: AnsiString; cp: Word): RawByteString;
 {$IFDEF MSWINDOWS}
+{$IFDEF UNICODE}
 var
   len: Integer;
   pbuffer: Pointer;
   buffer: array[0..(32767 div sizeof(WideChar)) - 1] of WideChar;
+{$ENDIF}  
 {$ENDIF}
 begin
 {$IFDEF MSWINDOWS}
+{$IFDEF UNICODE}
   if (Length(str) > 0) and (cp > 0) and (cp <> PWord(PtrInt(str) - 12)^) then
   begin
     len := MultiByteToWideChar(PWord(PtrInt(str) - 12)^, 0, PAnsiChar(str), Length(str), nil, 0);
@@ -1146,6 +1149,10 @@ begin
         FreeMem(pbuffer);
     end;
   end else
+{$ELSE}
+  if (Length(str) > 0) and (cp > 0) then
+    Result := MBUEncode (str, cp) else
+{$ENDIF}
 {$ENDIF}
     Result := str;
 end;
@@ -1153,8 +1160,12 @@ end;
 function MBADecode(const str: RawByteString; cp: Word): AnsiString;
 begin
 {$IFDEF MSWINDOWS}
+{$IFDEF UNICODE}
   Result := str;
   PWord(PtrInt(Result) - 12)^ := cp;
+{$ELSE}
+  Result := MBUDecode(str, cp);
+{$ENDIF}
 {$ENDIF}
 end;
 
