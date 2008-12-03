@@ -27,7 +27,6 @@ begin
     cmd := newCommand(so(['sql', 'select * from ' + Params.S['id'], 'array', true]));
     this['dataset'] := so(['meta', cmd.GetOutputMeta, 'data', Execute(cmd)]);
   end;
-  HTTPCompress(this);
 end;
 
 //**************************************************************
@@ -37,7 +36,6 @@ procedure country_index(This, Params: ISuperObject; var Result: ISuperObject);
 begin
   with pool.GetConnection.newContext do
     this['dataset'] := Execute(newCommand('select country, currency from country order by 1'));
-  HTTPCompress(this);
 end;
 
 procedure country_add(This, Params: ISuperObject; var Result: ISuperObject);
@@ -48,7 +46,6 @@ begin
     Execute(newCommand('INSERT INTO COUNTRY (country, currency) VALUES (?,?)'), Params['[country, currency]']);
     HTTPredirect(this,'/country/index');
   end;
-  HTTPCompress(this);
 end;
 
 procedure country_del(This, Params: ISuperObject; var Result: ISuperObject);
@@ -61,11 +58,10 @@ begin
     on E: Exception do
     begin
       Params.S['action'] := 'index';
-      This.S['error'] := AnsiString(E.Message);
+      This.S['error'] := E.Message;
       country_index(This, Params, Result);
     end;
   end;
-  HTTPCompress(this);
 end;
 
 procedure country_edit(This, Params: ISuperObject; var Result: ISuperObject);
@@ -92,11 +88,10 @@ begin
     on E: Exception do
     begin
       Params.S['action'] := 'index';
-      This.S['error'] := AnsiString(E.Message);
+      This.S['error'] := E.Message;
       country_index(This, Params, Result);
     end;
   end;
-  HTTPCompress(this);
 end;
 
 //**************************************************************

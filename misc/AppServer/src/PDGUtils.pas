@@ -63,7 +63,7 @@ type
     function Seek(Offset: Longint; Origin: Word): Longint; override;
     function Read(var Buffer; Count: Longint): Longint; override;
     function Write(const Buffer; Count: Longint): Longint; override;
-    procedure WriteString(const str: AnsiString; writesize: boolean);
+    procedure WriteString(const str: string; writesize: boolean; cp: Integer = 0);
     procedure WriteInteger(const V: Integer);
     function ReadString: string;
     procedure SaveToStream(Stream: TStream);
@@ -76,7 +76,7 @@ type
     destructor Destroy; override;
   end;
 
-function InterLockedRead(var Value: Integer): Integer;
+//function InterLockedRead(var Value: Integer): Integer;
 
 function CompressStream(inStream, outStream: TStream; level: Integer = Z_DEFAULT_COMPRESSION): boolean; overload;
 function DecompressStream(inStream, outStream: TStream): boolean; overload;
@@ -87,19 +87,19 @@ function DecompressStream(inSocket: longint; outStream: TStream): boolean; overl
 function receive(s: longint; var Buf; len, flags: Integer): Integer;
 
 // Base64 functions from <dirk.claessens.dc@belgium.agfa.com> (modified)
-function StrTobase64(Buf: AnsiString): AnsiString;
-function Base64ToStr(const B64: AnsiString): AnsiString;
+function StrTobase64(Buf: string): string;
+function Base64ToStr(const B64: string): string;
 
-function FileToString(const FileName: string): AnsiString;
-function StreamToString(stream: TStream): AnsiString;
+function FileToAnsiString(const FileName: string): RawbyteString;
+function StreamToAnsiString(stream: TStream): RawbyteString;
 
 implementation
-
+uses uiblib;
 
 const
-  Base64Code: AnsiString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  Base64Code: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
-function StrTobase64(Buf: AnsiString): AnsiString;
+function StrTobase64(Buf: string): string;
 var
   i: integer;
   x1, x2, x3, x4: byte;
@@ -163,8 +163,8 @@ begin
     end;
 end;
 
-function Base64ToStr(const B64: AnsiString): AnsiString;
-  function Char2IDx(c: AnsiChar): byte;
+function Base64ToStr(const B64: string): string;
+  function Char2IDx(c: Char): byte;
   begin
     case c of
       'A'..'Z': Result := byte(c) - byte('A');
@@ -201,11 +201,11 @@ begin
   begin
     // reverse process of above
     x1 := (Char2Idx(B64[i]) shl 2) or (Char2IDx(B64[i + 1]) shr 4);
-    Result := Result + AnsiChar(x1);
+    Result := Result + Char(x1);
     x2 := (Char2Idx(B64[i + 1]) shl 4) or (Char2IDx(B64[i + 2]) shr 2);
-    Result := Result + AnsiChar(x2);
+    Result := Result + Char(x2);
     x3 := (Char2Idx(B64[i + 2]) shl 6) or (Char2IDx(B64[i + 3]));
-    Result := Result + AnsiChar(x3);
+    Result := Result + Char(x3);
     inc(i, 4);
   end;
 
@@ -222,23 +222,6 @@ end;
 function InterlockedCompareExchange(var Destination: longint; Exchange: longint; Comperand: longint): longint stdcall; external 'kernel32' name 'InterlockedCompareExchange';
 {$ENDIF}
 {$ifend}
-
-function InterlockedRead(var Value: Integer): Integer;
-begin
-{$IF not declared(InterLockedCompareExchange)}
-  Result := Value;
-{$ELSE}
-{$IFDEF FPC}
-  Result := InterlockedCompareExchange(Value, 0, 0);
-{$ELSE}
-  {$if defined(VER160) or defined(VER170) or defined(VER180) or defined(VER200)}
-    Result := Integer(InterlockedCompareExchange(Value, 0, 0));
-  {$else}
-    Result := Integer(InterlockedCompareExchange(Pointer(Value), nil, nil));
-  {$ifend}
-{$ENDIF}
-{$IFEND}
-end;
 
 const
   bufferSize = 32768;
@@ -496,20 +479,20 @@ begin
   inflateEnd(zstream);
 end;
 
-function StreamToString(stream: TStream): AnsiString;
+function StreamToAnsiString(stream: TStream): RawbyteString;
 begin
   stream.Seek(0, soFromBeginning);
   SetLength(Result, stream.Size);
   stream.Read(PAnsiChar(Result)^, stream.Size);
 end;
 
-function FileToString(const FileName: string): AnsiString;
+function FileToAnsiString(const FileName: string): RawbyteString;
 var
   strm: TFileStream;
 begin
   strm := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
   try
-    Result := StreamToString(strm);
+    Result := StreamToAnsiString(strm);
   finally
     strm.Free;
   end;
@@ -782,15 +765,23 @@ begin
   Write(v, sizeof(v));
 end;
 
-procedure TPooledMemoryStream.WriteString(const str: AnsiString; writesize: boolean);
+procedure TPooledMemoryStream.WriteString(const str: string; writesize: boolean; cp: Integer);
 var
   s: Integer;
+  data: RawByteString;
 begin
-  s := Length(str);
+{$IFDEF UNICODE}
+  data := MBUEncode(str, cp);
+{$ELSE}
+  if cp > 0 then
+    MBAEncode(str, cp) else
+    data := str;
+{$ENDIF}
+  s := Length(data);
   if writesize then
     Write(s, sizeof(s));
   if s > 0 then
-    Write(str[1], s)
+    Write(data[1], s * SizeOf(AnsiChar))
 end;
 
 end.

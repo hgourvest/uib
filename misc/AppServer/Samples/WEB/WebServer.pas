@@ -3,8 +3,8 @@ unit WebServer;
   {$MODE OBJFPC}{$H+}
 {$ENDIF}
 interface
-uses 
-  PDGHTTPStub, PDGSocketStub, PDGUtils, 
+uses
+  PDGHTTPStub, PDGSocketStub, PDGUtils,
 {$IFDEF FPC}sockets,{$ELSE}Winsock, {$ENDIF}
 {$IFDEF MSWINDOWS}Windows,{$ENDIF}
   superobject, SyncObjs, classes, mypool, myapp_controller, myapp_view;
@@ -28,51 +28,51 @@ type
     destructor Destroy; override;
   end;
 
-procedure HTTPOutput(this, obj: ISuperObject; format: boolean); overload;
-procedure HTTPOutput(this: ISuperObject; const str: AnsiString); overload;
-procedure HTTPCompress(this: ISuperObject; level: integer = 5);
-function HTTPIsPost(this: ISuperObject): boolean;
-procedure HTTPRedirect(This: ISuperObject; const location: AnsiString);
+procedure HTTPOutput(const this, obj: ISuperObject; format: boolean); overload;
+procedure HTTPOutput(const this: ISuperObject; const str: string); overload;
+procedure HTTPCompress(const this: ISuperObject; level: integer = 5);
+function HTTPIsPost(const this: ISuperObject): boolean;
+procedure HTTPRedirect(const This: ISuperObject; const location: string);
+
+const
+  DEFAULT_CP = 65001;
+  DEFAULT_CHARSET = 'utf-8';
 
 implementation
-uses
-{$IFDEF UNICODE}
-AnsiStrings,
-{$ENDIF}
-SysUtils, PDGService{$ifdef madExcept}, madExcept {$endif};
+uses SysUtils, PDGService{$ifdef madExcept}, madExcept {$endif};
 
 const
   ReadTimeOut: Integer = 60000; // 1 minute
   COOKIE_NAME = 'PDGCookie';
 
-procedure HTTPOutput(this, obj: ISuperObject; format: boolean); overload;
+procedure HTTPOutput(const this, obj: ISuperObject; format: boolean); overload;
 begin
   obj.SaveTo(THTTPMessage(this['response'].DataPtr).Content, format);
 end;
 
-procedure HTTPOutput(this: ISuperObject; const str: AnsiString); overload;
+procedure HTTPOutput(const this: ISuperObject; const str: string); overload;
 begin
-  THTTPMessage(this['response'].DataPtr).Content.WriteString(str, false);
+  with this['response'] do
+    THTTPMessage(DataPtr).Content.WriteString(str, false, DEFAULT_CP);
 end;
 
-procedure HTTPCompress(this: ISuperObject; level: integer = 5);
+procedure HTTPCompress(const this: ISuperObject; level: integer = 5);
 begin
   this.B['response.compress'] := true;
   this.I['response.compresslevel'] := level;
   this.S['response.env.Content-Encoding'] := 'deflate';
 end;
 
-function HTTPIsPost(this: ISuperObject): boolean;
+function HTTPIsPost(const this: ISuperObject): boolean;
 begin
   Result := This.S['request.method'] = 'POST'
 end;
 
-procedure HTTPRedirect(This: ISuperObject; const location: AnsiString);
+procedure HTTPRedirect(const This: ISuperObject; const location: string);
 begin
   This.I['response.response'] := 302;
   This.S['response.env.Location'] := Location;
 end;
-
 
 { THTTPServer }
 
@@ -81,17 +81,20 @@ constructor THTTPConnexion.CreateStub(AOwner: TSocketServer; Socket: longint;
 begin
   inherited;
   FFormats := TSuperObject.Create;
+  FFormats.S['htm.content'] := 'text/html';
+  FFormats.S['htm.charset'] := DEFAULT_CHARSET;
 
-  FFormats.S['htm'] := 'text/html';
-  FFormats.S['html'] := 'text/html';
-  FFormats.S['xml'] := 'text/xml';
-  FFormats.S['json'] := 'text/json';
-  FFormats.S['png'] := 'image/png';
-  FFormats.S['jpeg'] := 'image/jpeg';
-  FFormats.S['jpg'] := 'image/jpeg';
-  FFormats.S['gif'] := 'image/gif';
-  FFormats.S['css'] := 'text/css';
-  FFormats.S['js'] := 'text/javascript';
+  FFormats.S['html.content'] := 'text/html';
+  FFormats.S['html.charset'] := DEFAULT_CHARSET;
+
+  FFormats.S['xml.content'] := 'text/xml';
+  FFormats.S['json.content'] := 'text/json';
+  FFormats.S['png.content'] := 'image/png';
+  FFormats.S['jpeg.content'] := 'image/jpeg';
+  FFormats.S['jpg.content'] := 'image/jpeg';
+  FFormats.S['gif.content'] := 'image/gif';
+  FFormats.S['css.content'] := 'text/css';
+  FFormats.S['js.content'] := 'text/javascript';
 
   // connexion timout
 {$IFDEF FPC}
@@ -111,25 +114,26 @@ procedure THTTPConnexion.doAfterProcessRequest(ctx: ISuperObject);
 begin
   Response.S['env.Set-Cookie'] := COOKIE_NAME + '=' + StrTobase64(ctx['session'].AsJSon) + '; path=/';
   Response.S['Cache-Control'] := 'no-cache';
+  HTTPCompress(ctx);
   inherited;
 end;
 
 procedure THTTPConnexion.doBeforeProcessRequest(ctx: ISuperObject);
-  function interprete(v: PAnsiChar; name: AnsiString): boolean;
+  function interprete(v: PChar; name: string): boolean;
   var
-    p: PAnsiChar;
-    str: AnsiString;
+    p: PChar;
+    str: string;
   begin
     str := trim(v);
     if str <> '' then
     begin
-      p := StrScan(PAnsiChar(str), '.');
+      p := StrScan(PChar(str), '.');
       if p <> nil then
       begin
         ctx.S['params.format'] := p + 1;
-        setlength(str, p - PAnsiChar(str));
+        setlength(str, p - PChar(str));
       end;
-      ctx['params'].S[name] := PAnsiChar(str);
+      ctx['params'].S[name] := PChar(str);
       Result := true;
     end else
       Result := false
@@ -159,7 +163,7 @@ begin
     end else
     if(Request.S['content-type[0]'] = 'application/x-www-form-urlencoded') then
     begin
-      obj := HTTPInterprete(PAnsiChar(Request.ContentString), true, '&');
+      obj := HTTPInterprete(PChar(Request.ContentString), true, '&', false, DEFAULT_CP);
       try
         ctx['params'].Merge(obj, true);
         ctx.S['params.format'] := 'html';
@@ -168,11 +172,11 @@ begin
       end;
     end;
 
-   obj := HTTPInterprete(PAnsiChar(Request.S['uri']), false, '/');
+   obj := HTTPInterprete(PChar(Request.S['uri']), false, '/', false, DEFAULT_CP);
    begin
-     if interprete(PAnsiChar(obj.AsArray.S[1]), 'controller') then
-     if interprete(PAnsiChar(obj.AsArray.S[2]), 'action') then
-        interprete(PAnsiChar(obj.AsArray.S[3]), 'id');
+     if interprete(PChar(obj.AsArray.S[1]), 'controller') then
+     if interprete(PChar(obj.AsArray.S[2]), 'action') then
+        interprete(PChar(obj.AsArray.S[3]), 'id');
    end;
 
   // default action is index
@@ -186,9 +190,9 @@ end;
 
 procedure THTTPConnexion.ProcessRequest(ctx: ISuperObject);
 var
-//  user, pass: AnsiString;
-  str: AnsiString;
-  path: AnsiString;
+//  user, pass: string;
+  str: string;
+  path: string;
   obj: ISuperObject;
   proc: TSuperMethod;
   valide: ISuperObject;
@@ -235,25 +239,27 @@ begin
       begin
         obj := nil;
         proc(ctx, ctx['params'], obj);
-        Response.S['env.Content-Type'] := FFormats.S[S['format']];
+        if FFormats[S['format'] + '.charset'] <> nil then
+          Response.S['env.Content-Type'] := FFormats.S[S['format'] + '.content'] + '; charset=' + FFormats.S[S['format'] + '.charset'] else
+          Response.S['env.Content-Type'] := FFormats.S[S['format'] + '.content'];
         exit;
       end;
     end;
 
   str := Request.S['uri'];
-  path := ExtractFilePath(AnsiString(ParamStr(0))) + 'HTTP';
+  path := ExtractFilePath(ParamStr(0)) + 'HTTP';
 
-  if str[Length(str)] in ['/','\'] then
+  if {$IFDEF UNICODE}(str[Length(str)] < #256) and {$ENDIF}(AnsiChar(str[Length(str)]) in ['/','\']) then
   begin
-    if FileExists(string(path + str + 'index.html')) then
+    if FileExists(path + str + 'index.html') then
       Request.S['uri'] := Request.S['uri'] + 'index.html' else
-    if FileExists(string(path + Request.S['uri'] + 'index.htm')) then
+    if FileExists(path + Request.S['uri'] + 'index.htm') then
       Request.S['uri'] := Request.S['uri'] + 'index.htm';
   end;
 
-  if FileExists(string(path + Request.S['uri'])) then
+  if FileExists(path + Request.S['uri']) then
   begin
-    Response.S['env.Content-Type'] := FFormats.S[ctx.S['params.format']];
+    Response.S['env.Content-Type'] := FFormats.S[ctx.S['params.format']+'.content'];
     Response.S['sendfile'] := path + Request.S['uri'];
     exit;
   end else
@@ -280,7 +286,7 @@ begin
   app_view_initialize(Result);
 
 end;
-    
+
 initialization
   Application.CreateServer(THTTPServer, 81);
 

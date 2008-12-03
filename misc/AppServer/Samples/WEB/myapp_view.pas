@@ -7,9 +7,6 @@ procedure app_view_initialize(mvc: ISuperObject);
 
 implementation
 uses
-{$IFDEF UNICODE}
-AnsiStrings,
-{$ENDIF}
 sysutils, webserver;
 
 //**************************************************************
@@ -48,18 +45,15 @@ var
 
   i: integer;
 begin
-  HTTPOutput(this, '<html><body><pre>');
   if This['error'] <> nil then
-  begin
-    HTTPOutput(This, format(AnsiString('<b>%s</b><br/>'), [This.S['error']]));
-  end;
+    HTTPOutput(This, format('<b>%s</b><br/>', [This.S['error']]));
 
   data := this['dataset'].AsArray;
   HTTPOutput(this, '<table><th><tr><td>Country</td><td>Currency</td><td>Suppr</td><td>Edit</td></tr></th>');
   for i :=  0 to data.Length - 1 do
   begin
     line := data.O[i];
-    HTTPOutput(this, Format(AnsiString('<tr><td>%s</td><td>%s</td><td><a href="/country/del/%0:s">suppr</a></td><td><a href="/country/edit/%0:s">edit</a></td></tr>'),
+    HTTPOutput(this, Format('<tr><td>%s</td><td>%s</td><td><a href="/country/del/%0:s">suppr</a></td><td><a href="/country/edit/%0:s">edit</a></td></tr>',
       [line.S['COUNTRY'] , line.S['CURRENCY']]));
   end;
   HTTPOutput(this, '</table>');
@@ -70,7 +64,7 @@ end;
 procedure country_edit_html(This, Params: ISuperObject; var Result: ISuperObject);
 begin
   HTTPOutput(this, '<html><body><pre>');
-  HTTPOutput(this, Format(AnsiString('<form action="/country/edit" method="POST"><input type="text" name="formulaire.country" value="%s"/><input type="text" name="formulaire.currency" value="%s"/><input type="submit"/></form>'),
+  HTTPOutput(this, Format('<form action="/country/edit" method="POST"><input type="text" name="formulaire.country" value="%s"/><input type="text" name="formulaire.currency" value="%s"/><input type="submit"/></form>',
    [This.S['country'],This.S['currency']]) );
   HTTPOutput(this, '</pre></body></html>');
 end;

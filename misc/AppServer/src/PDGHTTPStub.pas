@@ -19,7 +19,10 @@ unit PDGHTTPStub;
 {$ENDIF}
 {$I PDGAppServer.inc}
 interface
-uses PDGSocketStub, {$IFDEF FPC}sockets,{$ELSE}Winsock,{$ENDIF} PDGUtils, classes, superobject;
+uses
+  PDGSocketStub,
+  {$IFDEF FPC}sockets,{$ELSE}Winsock,{$ENDIF}
+  PDGUtils, classes, superobject, uiblib;
 
 type
 
@@ -30,10 +33,10 @@ type
   THTTPMessage = class(TSuperObject)
   private
     FContent: TPooledMemoryStream;
-    function GetContentString: AnsiString;
+    function GetContentString: string;
   public
     property Content: TPooledMemoryStream read FContent;
-    property ContentString: AnsiString read GetContentString;
+    property ContentString: string read GetContentString;
 
     constructor Create(jt: TSuperType = stObject); override;
     destructor Destroy; override;
@@ -46,8 +49,8 @@ type
     FRequest: THTTPMessage;
     FResponse: THTTPMessage;
     FMVC: ISuperObject;
-    function DecodeFields(str: PAnsiChar): boolean;
-    function DecodeCommand(str: PAnsiChar): boolean;
+    function DecodeFields(str: PChar): boolean;
+    function DecodeCommand(str: PChar): boolean;
   protected
     function CreateMVC: ISuperObject; virtual;
     function DecodeContent: boolean; virtual;
@@ -59,24 +62,24 @@ type
     property Response: THTTPMessage read FResponse;
     property MVC: ISuperObject read FMVC;
     function Run: Cardinal; override;
-    procedure WriteLine(str: AnsiString);
-    procedure WriteString(const str: AnsiString);
+    procedure WriteLine(str: RawByteString);
+    procedure WriteString(const str: RawByteString);
     procedure SendEmpty;
     procedure SendFile(const filename: string);
     procedure SendStream(Stream: TStream);
-    procedure SendString(const data: AnsiString);
+    procedure SendString(const data: RawByteString);
     constructor CreateStub(AOwner: TSocketServer; ASocket: longint; AAddress: TSockAddr); override;
     destructor Destroy; override;
   end;
 
 const
-  CR = AnsiChar(#13);
-  LF = AnsiChar(#10);
-  SP = AnsiChar(#32); // space
-  HT = AnsiChar(#9);  // backspace
-  NL = AnsiChar(#0);  // NULL
-  SL = AnsiChar('/');
-  PT = AnsiChar('.');
+  CR = #13;
+  LF = #10;
+  SP = #32; // space
+  HT = #9;  // backspace
+  NL = #0;  // NULL
+  SL = '/';
+  PT = '.';
   CRLF = CR+LF;
 
 const
@@ -87,21 +90,18 @@ const
 (* default limit on number of request header fields *)
   DEFAULT_LIMIT_REQUEST_FIELDS = 100;
 
-function HTTPInterprete(src: PAnsiChar; named: boolean = false; sep: AnsiChar = ';'; StrictSep: boolean = false): ISuperObject;
-function HTTPDecode(const AStr: AnsiString): AnsiString;
-function HttpResponseStrings(code: integer): AnsiString;
+function HTTPInterprete(src: PChar; named: boolean = false; sep: char = ';'; StrictSep: boolean = false; codepage: Integer = 0): ISuperObject;
+function HTTPDecode(const AStr: string; codepage: Integer = 0): string;
+function HttpResponseStrings(code: integer): RawByteString;
 
 implementation
-uses
-{$IFDEF UNICODE}
-AnsiStrings,
-{$ENDIF}
-SysUtils, StrUtils {$ifdef madExcept}, madexcept {$endif}
+uses SysUtils, StrUtils {$ifdef madExcept}, madexcept {$endif}
+{$IFDEF UNICODE}, AnsiStrings{$ENDIF}
 {$IFDEF UNIX}, baseunix{$ENDIF}
 ;
 
 
-function HttpResponseStrings(code: integer): AnsiString;
+function HttpResponseStrings(code: integer): RawByteString;
 begin
   case code of
     100: Result := '100 Continue';
@@ -149,15 +149,15 @@ begin
     504: Result := 'HTTP/1.1 504 Gateway Time-out';
     505: Result := 'HTTP/1.1 505 HTTP Version Not Supported';
   else
-    Result := 'HTTP/1.1 ' + AnsiString(IntToStr(code));
+    Result := 'HTTP/1.1 ' + RawByteString(inttostr(code));
   end;
 end;
 
 
-function HTTPInterprete(src: PAnsiChar; named: boolean; sep: AnsiChar; StrictSep: boolean): ISuperObject;
+function HTTPInterprete(src: PChar; named: boolean; sep: Char; StrictSep: boolean; codepage: Integer): ISuperObject;
 var
-  P1: PAnsiChar;
-  S: AnsiString;
+  P1: PChar;
+  S: string;
   i: integer;
   obj, obj2, value: ISuperObject;
 begin
@@ -165,7 +165,7 @@ begin
       Result := TSuperObject.create(stObject) else
       Result := TSuperObject.create(stArray);
     if not StrictSep then
-      while src^ in [#1..' '] do
+      while {$IFDEF UNICODE}(src^ < #256) and {$ENDIF} (AnsiChar(src^) in [#1..' ']) do
         Inc(src);
     while src^ <> #0 do
     begin
@@ -174,18 +174,18 @@ begin
             (StrictSep and (src^ <> #0))) and (src^ <> sep) do
         Inc(src);
       SetString(S, P1, src - P1);
-      S := HTTPDecode(S);
+      S := HTTPDecode(S, codepage);
       if named then
       begin
-        i := pos(AnsiString('='), S);
+        i := pos('=', S);
         // named
         if i > 1 then
         begin
           S[i] := #0;
           obj := Result[S];
-          value := TSuperObject.Parse(PAnsiChar(@S[i+1]), false);
+          value := TSuperObject.Parse(PChar(@S[i+1]), false);
           if value = nil then
-            value := TSuperObject.Create(PAnsiChar(@S[i+1]));
+            value := TSuperObject.Create(PChar(@S[i+1]));
           if obj = nil then
             Result[S] := value else
             begin
@@ -204,13 +204,13 @@ begin
         end;
       end else
       begin
-        value := TSuperObject.Parse(PAnsiChar(S), false);
+        value := TSuperObject.Parse(PChar(S), false);
         if value = nil then
           value := TSuperObject.Create(s);
         Result.AsArray.Add(value);
       end;
       if not StrictSep then
-        while src^ in [#1..' '] do
+        while {$IFDEF UNICODE}(src^ < #256) and {$ENDIF} (AnsiChar(src^) in [#1..' ']) do
           Inc(src);
       if src^ = sep then
       begin
@@ -220,19 +220,19 @@ begin
           Result.AsArray.Add(TSuperObject.Create(''));
         repeat
           Inc(src);
-        until not (not StrictSep and (src^ in [#1..' ']));
+        until not (not StrictSep and {$IFDEF UNICODE}(src^ < #256) and {$ENDIF} (AnsiChar(src^) in [#1..' ']));
       end;
     end;
 end;
 
-function HTTPDecode(const AStr: AnsiString): AnsiString;
+function HTTPDecode(const AStr: string; codepage: Integer): String;
 var
-  Sp, Rp, Cp: PAnsiChar;
-  S: AnsiString;
+  Sp, Rp, Cp: PChar;
+  S: String;
 begin
   SetLength(Result, Length(AStr));
-  Sp := PAnsiChar(AStr);
-  Rp := PAnsiChar(Result);
+  Sp := PChar(AStr);
+  Rp := PChar(Result);
   while Sp^ <> #0 do
   begin
     case Sp^ of
@@ -247,8 +247,8 @@ begin
                Inc(Sp);
                if (Cp^ <> #0) and (Sp^ <> #0) then
                begin
-                 S := AnsiChar('$') + Cp^ + Sp^;
-                 Rp^ := AnsiChar(StrToInt(string(S)));
+                 S := '$' + Cp^ + Sp^;
+                 Rp^ := chr(StrToInt(S));
                end
                else
                begin
@@ -263,21 +263,23 @@ begin
     Inc(Rp);
     Inc(Sp);
   end;
-  SetLength(Result, Rp - PAnsiChar(Result));
+  SetLength(Result, Rp - PChar(Result));
+  if (codepage > 0) then
+    Result := MBUDecode(RawByteString(Result), codepage)
 end;
 
-function HTTPGetAuthorization(str: AnsiString): ISuperObject;
+function HTTPGetAuthorization(str: string): ISuperObject;
 var
   i: integer;
 begin
   Result := nil;
   if str <> '' then
   begin
-    i := pos(AnsiString('Basic '), str);
+    i := pos('Basic ', str);
     if i = 1  then
     begin
-      str := Base64ToStr(copy(str, 7, Length(str) - 6));
-      i := pos(AnsiString(':'), str);
+      str := Base64ToStr(Copy(str, 7, Length(str) - 6));
+      i := pos(':', str);
       if i > 0 then
       begin
         Result := TSuperObject.Create;
@@ -309,26 +311,25 @@ begin
   FContent.Free;
 end;
 
-function THTTPMessage.GetContentString: AnsiString;
+function THTTPMessage.GetContentString: string;
 begin
-  Result := StreamToString(FContent);
+  Result := string(StreamToAnsiString(FContent));
 end;
 
 { THTTPStub }
 
-function THTTPStub.DecodeFields(str: PAnsiChar): boolean;
+function THTTPStub.DecodeFields(str: PChar): boolean;
 var
-  p: PAnsiChar;
-  prop: AnsiString;
+  p: PChar;
+  prop: string;
 begin
   p := StrScan(str, ':');
   if p = nil then
     Result := false else
-    with FRequest['@env'] do
+    with FRequest.ForcePath('env') do
     begin
-      prop := Copy(str, 1, p-str);
-      StrLower(PAnsiChar(prop));
-      AsObject.Put(PAnsiChar(prop), TSuperObject.Create(p+2));
+      prop := LowerCase(Copy(str, 1, p-str));
+      AsObject.Put(PChar(prop), TSuperObject.Create(p+2));
       Result := true;
     end;
 end;
@@ -346,8 +347,8 @@ begin
   result := true;
 end;
 
-function THTTPStub.DecodeCommand(str: PAnsiChar): boolean;
-  function DecodeURI(uri: PAnsiChar; len: integer; out data: AnsiString): boolean;
+function THTTPStub.DecodeCommand(str: PChar): boolean;
+  function DecodeURI(uri: PChar; len: integer; out data: string): boolean;
   const hexcodes = ['0'..'9', 'A'..'F', 'a'..'f'];
   var i: integer;
   begin
@@ -358,12 +359,12 @@ function THTTPStub.DecodeCommand(str: PAnsiChar): boolean;
       begin
         // PARANOIA !!
         if (len > 2) and
-          (uri[1] in hexcodes) and
-          (uri[2] in hexcodes) and
-          TryStrToInt('$' + Char(uri[1]) + Char(uri[2]), i) and
+          {$IFDEF UNICODE}(uri[1] < #256) and {$ENDIF}(AnsiChar(uri[1]) in hexcodes) and
+          {$IFDEF UNICODE}(uri[2] < #256) and {$ENDIF}(AnsiChar(uri[2]) in hexcodes) and
+          TryStrToInt('$' + uri[1] + uri[2], i) and
           (i in [32..255]) then
             begin
-              data := data + AnsiChar(i);
+              data := data + char(i);
               inc(uri, 3);
               dec(len, 3);
             end else
@@ -381,8 +382,8 @@ function THTTPStub.DecodeCommand(str: PAnsiChar): boolean;
     Result := true;
   end;
 var
-  marker: PAnsiChar;
-  param, value: AnsiString;
+  marker: PChar;
+  param, value: string;
   i: integer;
 begin
   result := false;
@@ -398,7 +399,7 @@ begin
   // URI
   inc(str);
   marker := Str;
-  while not (Str^ in [SP, NL, '?']) do
+  while not ({$IFDEF UNICODE}(str^ < #256) and {$ENDIF}(AnsiChar(Str^) in [SP, NL, '?'])) do
     inc(str);
   if (str > marker) and (str^ <> NL) then
   begin
@@ -423,7 +424,7 @@ begin
                  if not DecodeURI(marker, str - marker, value) then exit;
                  FRequest['@params'].S[HTTPDecode(param)] := HTTPDecode(value);
                end;
-               if (str^ in [SP, NL]) then
+               if {$IFDEF UNICODE}(str^ < #256) and {$ENDIF}(AnsiChar(str^) in [SP, NL]) then
                  Break;
                param := '';
                value := '';
@@ -456,10 +457,10 @@ begin
 
   // version major
   marker := str;
-  while (str^ in ['0'..'9']) do inc(str);
+  while {$IFDEF UNICODE}(str^ < #256) and{$ENDIF}(AnsiChar(str^) in ['0'..'9']) do inc(str);
   if (str > marker) and (str^ <> NL) then
   begin
-    if TryStrToInt(string(copy(marker, 0, str - marker)), i) then
+    if TryStrToInt(copy(marker, 0, str - marker), i) then
       FRequest.I['http-version.major'] := i else
       exit;
   end else
@@ -472,10 +473,10 @@ begin
 
   // version minor
   marker := str;
-  while (str^ in ['0'..'9']) do inc(str);
+  while {$IFDEF UNICODE}(str^ < #256) and{$ENDIF} (AnsiChar(str^) in ['0'..'9']) do inc(str);
   if (str > marker) then
   begin
-    if TryStrToInt(string(copy(marker, 0, str - marker)), i) then
+    if TryStrToInt(copy(marker, 0, str - marker), i) then
       FRequest.I['http-version.minor']  := i else
       exit;
   end else
@@ -488,9 +489,9 @@ end;
 
 function THTTPStub.Run: Cardinal;
 var
-  buffer: AnsiString;
+  buffer: string;
   cursor, line, len: integer;
-  c: AnsiChar;
+  c: char;
   ctx: ISuperObject;
 {$IFDEF UNIX}
   FDSet: TFDSet;
@@ -549,7 +550,7 @@ begin
                     on E: Exception do
                     begin
                       FResponse.I['response'] := 500;
-                      FResponse.Content.WriteString(AnsiString(E.Message), false);
+                      FResponse.Content.WriteString(E.Message, false);
                     {$ifdef madExcept}
                       HandleException(etNormal, E);
                     {$endif}
@@ -618,23 +619,25 @@ begin
 
    if ObjectFindFirst(Response['env'], ite) then
    repeat
-     WriteLine(ite.key + AnsiString(': ') + ite.val.AsString);
+     WriteLine(RawByteString(ite.key + ': ' + ite.val.AsString));
    until not ObjectFindNext(ite);
    ObjectFindClose(ite);
 
    if Response['sendfile'] <> nil then
-     SendFile(string(Response.S['sendfile'])) else
+     SendFile(Response.S['sendfile']) else
      SendStream(Response.Content);
 
+//   Response.Clear;
+//   Request.Clear;
    ctx.Clear(true);
 end;
 
 procedure THTTPStub.doBeforeProcessRequest(ctx: ISuperObject);
 begin
-  FRequest['cookies'] := HTTPInterprete(PAnsiChar(Request.S['env.cookie']), true);
-  FRequest['content-type'] := HTTPInterprete(PAnsiChar(Request.S['env.content-type']));
+  FRequest['cookies'] := HTTPInterprete(PChar(Request.S['env.cookie']), true);
+  FRequest['content-type'] := HTTPInterprete(PChar(Request.S['env.content-type']));
   FRequest['authorization'] := HTTPGetAuthorization(Request.S['env.authorization']);
-  FRequest['accept'] := HTTPInterprete(PAnsiChar(Request.S['env.accept']), false, ',');
+  FRequest['accept'] := HTTPInterprete(PChar(Request.S['env.accept']), false, ',');
 
 
   FResponse.I['response'] :=  200;
@@ -670,27 +673,27 @@ begin
     SendEmpty;
 end;
 
-procedure THTTPStub.SendString(const data: AnsiString);
+procedure THTTPStub.SendString(const data: RawByteString);
 begin
   WriteLine(format(AnsiString('Content-Length: %d'), [length(data)]));
   WriteLine('');
   WriteString(data);
 end;
 
-procedure THTTPStub.WriteLine(str: AnsiString);
+procedure THTTPStub.WriteLine(str: RawByteString);
 begin
   str := str + CRLF;
 {$IFDEF FPC}
-  fpsend(SocketHandle, PAnsiChar(str), length(str), 0);
+  fpsend(SocketHandle, PChar(str), length(str), 0);
 {$ELSE}
   send(SocketHandle, PAnsiChar(str)^, length(str), 0);
 {$ENDIF}
 end;
 
-procedure THTTPStub.WriteString(const str: AnsiString);
+procedure THTTPStub.WriteString(const str: RawByteString);
 begin
 {$IFDEF FPC}
-  fpsend(SocketHandle, PAnsiChar(str), length(str), 0);
+  fpsend(SocketHandle, PChar(str), length(str), 0);
 {$ELSE}
   send(SocketHandle, PAnsiChar(str)^, length(str), 0);
 {$ENDIF}

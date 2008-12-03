@@ -371,12 +371,12 @@ end;
 
 function TPDGThread.GetStopped: boolean;
 begin
-  Result := InterLockedRead(FStopped) <> 0;
+  Result := FStopped <> 0;
 end;
 
 class function TPDGThread.ThreadCount: integer;
 begin
-  Result := InterLockedRead(AThreadCount);
+  Result := AThreadCount;
 end;
 
 { TSocketServer }
