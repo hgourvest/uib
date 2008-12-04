@@ -1406,7 +1406,7 @@ end;
 
 procedure TUIBDataBase.SetCharacterSet(const Value: TCharacterSet);
 begin
-  WriteParamString('lc_ctype', string(CharacterSetStr[FCharacterSet]));
+  WriteParamString('lc_ctype', string(CharacterSetStr[Value]));
 end;
 
 procedure TUIBDataBase.SetConnected(const Value: boolean);
