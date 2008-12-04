@@ -17,7 +17,7 @@ uses SysUtils, webserver, mypool, PDGDB;
 // getdata
 //**************************************************************
 
-procedure application_getdata_controller(This, Params: ISuperObject;
+procedure application_getdata_controller(const This, Params: ISuperObject;
   var Result: ISuperObject);
 var
   cmd: IPDGCommand;
@@ -32,13 +32,13 @@ end;
 //**************************************************************
 // Country
 //**************************************************************
-procedure country_index(This, Params: ISuperObject; var Result: ISuperObject);
+procedure country_index(const This, Params: ISuperObject; var Result: ISuperObject);
 begin
   with pool.GetConnection.newContext do
     this['dataset'] := Execute(newCommand('select country, currency from country order by 1'));
 end;
 
-procedure country_add(This, Params: ISuperObject; var Result: ISuperObject);
+procedure country_add(const This, Params: ISuperObject; var Result: ISuperObject);
 begin
   if HTTPIsPost(this) then
   with pool.GetConnection.newContext do
@@ -48,7 +48,7 @@ begin
   end;
 end;
 
-procedure country_del(This, Params: ISuperObject; var Result: ISuperObject);
+procedure country_del(const This, Params: ISuperObject; var Result: ISuperObject);
 begin
   with pool.GetConnection.newContext do
   try
@@ -64,7 +64,7 @@ begin
   end;
 end;
 
-procedure country_edit(This, Params: ISuperObject; var Result: ISuperObject);
+procedure country_edit(const This, Params: ISuperObject; var Result: ISuperObject);
 var
   obj: ISuperObject;
 begin

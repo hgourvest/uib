@@ -185,7 +185,7 @@ begin
           obj := Result[S];
           value := TSuperObject.Parse(PSOChar(@S[i+1]), false);
           if value = nil then
-            value := TSuperObject.Create(PChar(@S[i+1]));
+            value := TSuperObject.Create(PSOChar(@S[i+1]));
           if obj = nil then
             Result[S] := value else
             begin
