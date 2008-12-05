@@ -2668,7 +2668,7 @@ begin
         FTransaction.FTrHandle, BlobHandle);
       try
 {$IFDEF UNICODE}
-        BlobWriteString(BlobHandle, MBAEncode(str, CharacterSetCP[Params.CharacterSet]));
+        BlobWriteString(BlobHandle, MBUEncode(UnicodeString(str), CharacterSetCP[Params.CharacterSet]));
 {$ELSE}
         BlobWriteString(BlobHandle, str);
 {$ENDIF}
@@ -2894,12 +2894,16 @@ end;
 
 procedure TUIBStatement.InternalReadBlob(sqlda: TSQLDA; const Index: Word;
   var str: AnsiString);
-begin
-  InternalReadBlobData(sqlda, Index, RawByteString(str));
 {$IFDEF UNICODE}
-  if BytesPerCharacter(sqlda.CharacterSet) = 1 then
-    PWord(PtrInt(str) - 12)^ := CharacterSetCP[sqlda.CharacterSet] else
-    str := AnsiString(MBUDecode(str, CharacterSetCP[sqlda.CharacterSet]))
+var
+  data: UnicodeString;
+{$ENDIF}
+begin
+{$IFDEF UNICODE}
+  InternalReadBlob(sqlda, Index, data);
+  str := AnsiString(data);
+{$ELSE}
+  InternalReadBlobData(sqlda, Index, str);
 {$ENDIF}
 end;
 
