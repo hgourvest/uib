@@ -768,6 +768,9 @@ begin
         begin
         {$IFDEF UNICODE}
           MBUDecode(sqldata, SqlLen, CharacterSetCP[CharacterSet], PWideChar(buffer));
+          if CharacterSet in UNICODE_CHARSETS then
+            PWideChar(buffer)[(SqlLen div BytesPerCharacter(CharacterSet))] := #0;
+
         {$ELSE}
           Move(sqldata^, Buffer^, SqlLen);
           PAnsiChar(Buffer)[SqlLen] := #0;
