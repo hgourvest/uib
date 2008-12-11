@@ -21,8 +21,8 @@ unit uiblib;
 {$I uib.inc}
 {$IFNDEF CPU64}
   {$ALIGN ON}
-  {$MINENUMSIZE 4}
 {$ENDIF}
+  {$MINENUMSIZE 4}
 
 interface
 uses
