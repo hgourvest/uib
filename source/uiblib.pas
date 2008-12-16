@@ -6462,11 +6462,8 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
   const
     Identifiers: set of AnsiChar = ['a'..'z', 'A'..'Z', '0'..'9', '_', '$'];
   var
-    Src: PAnsiChar;
+    Src: PChar;
     Dest, idlen: Word;
-  {$IFDEF UNICODE}
-    tmpSQL: AnsiString;
-  {$ENDIF}
 
     procedure next;
     begin
@@ -6475,7 +6472,7 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
       inc(Src);
     end;
 
-    procedure Skip(c: AnsiChar);
+    procedure Skip(c: Char);
     begin
       repeat
         next;
@@ -6496,12 +6493,7 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
     {$ENDIF}
   begin
     Clear;
-{$IFDEF UNICODE}
-    tmpSQL := AnsiString(SQL);
-    Src := PAnsiChar(tmpSQL);
-{$ELSE}
-    Src := PAnsiChar(SQL);
-{$ENDIF}
+    Src := PChar(SQL);
     Dest := 0;
     SetLength(Result, Length(SQL));
     while true do
@@ -6529,7 +6521,7 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
         '-' : if Src[1] = '-' then
               begin
                 inc(Src, 2);
-                while not(Src^ in [#0, #13, #10]) do
+                while not ({$IFDEF UNICODE}(Src^ < #256) and {$ENDIF}(AnsiChar(Src^) in [#0, #13, #10])) do
                   inc(Src);
               end else
                 next;
@@ -6555,12 +6547,12 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
                 begin
                   inc(Src);
                   while true do
-                    if (Src[idlen] in [#0, '"']) then
+                    if {$IFDEF UNICODE}(Src[idlen] < #256) and {$ENDIF}(AnsiChar(Src[idlen]) in [#0, '"']) then
                       Break else
                       inc(idlen);
                 end else
                 // unquoted identifiers
-                  while (Src[idlen] in Identifiers) do inc(idlen);
+                  while {$IFDEF UNICODE}(Src[idlen] < #256) and {$ENDIF}(AnsiChar(Src[idlen]) in Identifiers) do inc(idlen);
                 AddField(copy(Src, 1, idlen));
                 inc(Src, idlen);
                 if Src^ = '"' then inc(Src);
@@ -6569,18 +6561,18 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
         // in procedures
         'b','B':
           begin
-            if not ((dest > 0) and ({$IFDEF FPC}PrevChar(src){$ELSE}src[-1]{$ENDIF}
-              in Identifiers)) and (StrIComp(PAnsiChar(copy(Src, 0, 5)), 'begin') = 0) and
-                not (Src[5] in Identifiers) then
+            if not ((dest > 0) and {$IFDEF UNICODE}(src[-1] < #256) and {$ENDIF} ({$IFDEF FPC}PrevChar(src){$ELSE}AnsiChar(src[-1]){$ENDIF}
+              in Identifiers)) and (StrIComp(PChar(copy(Src, 0, 5)), 'begin') = 0) and
+                not ({$IFDEF UNICODE}(Src[5] < #256) and{$ENDIF}(AnsiChar(Src[5]) in Identifiers)) then
                   while (Src^ <> #0) do Next else next;
           end;
         // declare should also stop param parsing, as a declare cursor statement
         // may contain variables.
         'd','D':
           begin
-            if not ((dest > 0) and ({$IFDEF FPC}PrevChar(src){$ELSE}src[-1]{$ENDIF}
-              in Identifiers)) and (StrIComp(PAnsiChar(copy(Src, 0, 7)), 'declare') = 0) and
-                not (Src[7] in Identifiers) then
+            if not ((dest > 0) and {$IFDEF UNICODE}(src[-1] < #256) and {$ENDIF} ({$IFDEF FPC}PrevChar(src){$ELSE}AnsiChar(src[-1]){$ENDIF}
+              in Identifiers)) and (StrIComp(PChar(copy(Src, 0, 7)), 'declare') = 0) and
+                not ({$IFDEF UNICODE} (Src[7] < #256) and {$ENDIF}(AnsiChar(Src[7]) in Identifiers)) then
                   while (Src^ <> #0) do Next else next;
           end;
       else

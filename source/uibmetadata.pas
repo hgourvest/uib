@@ -165,7 +165,7 @@ type
     FSegmentLength: Smallint;
     FSubType: Smallint;
     FBytesPerCharacter: Smallint;
-    procedure LoadFromQuery(QField, QCharset, QArrayDim: TUIBStatement); virtual;
+    procedure LoadFromQuery(QField, QCharset, QArrayDim: TUIBStatement; DefaultCharset: TCharacterSet); virtual;
     procedure LoadFromStream(Stream: TStream); override;
     function GetShortFieldType: string; virtual;
   protected
@@ -187,7 +187,7 @@ type
 
   TMetaField = class(TMetaBaseField)
   private
-    procedure LoadFromQuery(Q, C, A: TUIBStatement); override;
+    procedure LoadFromQuery(Q, C, A: TUIBStatement; DefaultCharset: TCharacterSet); override;
   public
     class function NodeType: TMetaNodeType; override;
     procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); override;
@@ -221,7 +221,7 @@ type
     FValidationSource: string;
     FComputedSource: string;
     FArrayBounds: array of TArrayBound;
-    procedure LoadFromQuery(Q, C, A: TUIBStatement); override;
+    procedure LoadFromQuery(Q, C, A: TUIBStatement; DefaultCharset: TCharacterSet); override;
     procedure LoadFromStream(Stream: TStream); override;
     function GetDomain: TMetaDomain;
     function GetArrayBounds(const index: Integer): TArrayBound;
@@ -402,7 +402,7 @@ type
     function GetFieldsCount: Integer;
     procedure LoadFromDataBase(QNames, QFields, QCharset, QPrimary,
       QIndex, QCheck, QTrigger, QArrayDim, QGrants, QFieldGrants: TUIBStatement;
-      OIDs: TOIDTables);
+      OIDs: TOIDTables; DefaultCharset: TCharacterSet);
     function FindFieldIndex(const Name: string): Integer;
     function GetUniques(const Index: Integer): TMetaUnique;
     function GetUniquesCount: Integer;
@@ -456,7 +456,8 @@ type
     function GetTriggers(const Index: Integer): TMetaTrigger;
     function GetTriggersCount: Integer;
     procedure LoadFromDataBase(QName, QFields, QTriggers,
-      QCharset, QArrayDim, QGrants, QFieldGrants: TUIBStatement; OIDs: TOIDViews);
+      QCharset, QArrayDim, QGrants, QFieldGrants: TUIBStatement; OIDs: TOIDViews;
+      DefaultCharset: TCharacterSet);
     procedure LoadFromStream(Stream: TStream); override;
   public
     procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
@@ -475,7 +476,8 @@ type
   TMetaProcedure = class(TMetaNode)
   private
     FSource: string;
-    procedure LoadFromQuery(QNames, QFields, QCharset, QArrayDim, QGrants: TUIBStatement; OIDs: TOIDProcedures);
+    procedure LoadFromQuery(QNames, QFields, QCharset, QArrayDim, QGrants: TUIBStatement;
+      OIDs: TOIDProcedures; DefaultCharset: TCharacterSet);
     procedure LoadGrantsFromQuery(QGrants: TUIBStatement);
     function GetInputFields(const Index: Integer): TMetaProcInField;
     function GetInputFieldsCount: Integer;
@@ -531,7 +533,7 @@ type
   private
     FPosition: Smallint;
     FMechanism: Smallint;
-    procedure LoadFromQuery(QField, QCharset, QArrayDim: TUIBStatement); override;
+    procedure LoadFromQuery(QField, QCharset, QArrayDim: TUIBStatement; DefaultCharset: TCharacterSet); override;
     procedure LoadFromStream(Stream: TStream); override;
   public
     class function NodeType: TMetaNodeType; override;
@@ -547,7 +549,8 @@ type
     FEntry: string;
     FReturn: Smallint;
     procedure LoadFromStream(Stream: TStream); override;
-    procedure LoadFromQuery(QNames, QFields, QCharset, QArrayDim: TUIBStatement; OIDs: TOIDUDFs);
+    procedure LoadFromQuery(QNames, QFields, QCharset, QArrayDim: TUIBStatement;
+      OIDs: TOIDUDFs; DefaultCharset: TCharacterSet);
     function GetFields(const Index: Integer): TMetaUDFField;
     function GetFieldsCount: Integer;
   public
@@ -1011,7 +1014,7 @@ const
 
   QRYUDF =
     'SELECT RDB$FUNCTION_NAME, RDB$MODULE_NAME, RDB$ENTRYPOINT, RDB$RETURN_ARGUMENT ' +
-    'FROM RDB$FUNCTIONS WHERE (RDB$SYSTEM_FLAG IS NULL) ORDER BY RDB$FUNCTION_NAME';
+    'FROM RDB$FUNCTIONS WHERE (RDB$SYSTEM_FLAG IS NULL) OR (RDB$SYSTEM_FLAG = 0) ORDER BY RDB$FUNCTION_NAME';
 
   QRYUDFFields =
     'SELECT RDB$FIELD_TYPE, RDB$FIELD_SCALE, RDB$FIELD_LENGTH, RDB$FIELD_PRECISION, ' +
@@ -1681,7 +1684,7 @@ end;
 
 procedure TMetaTable.LoadFromDataBase(QNames, QFields, QCharset, QPrimary,
   QIndex, QCheck, QTrigger, QArrayDim, QGrants, QFieldGrants: TUIBStatement;
-      OIDs: TOIDTables);
+      OIDs: TOIDTables; DefaultCharset: TCharacterSet);
 var
   Unk: string;
 begin
@@ -1695,7 +1698,7 @@ begin
     while not QFields.Eof do
     begin
       with TMetaTableField.Create(Self, Ord(OIDTableField)) do
-        LoadFromQuery(QFields, QCharset, QArrayDim);
+        LoadFromQuery(QFields, QCharset, QArrayDim, DefaultCharset);
       QFields.Next;
     end;
 
@@ -1987,7 +1990,7 @@ begin
   end;
 end;
 
-procedure TMetaBaseField.LoadFromQuery(QField, QCharset, QArrayDim: TUIBStatement);
+procedure TMetaBaseField.LoadFromQuery(QField, QCharset, QArrayDim: TUIBStatement; DefaultCharset: TCharacterSet);
 
   procedure FindCharset(const Id: Single; var Charset: string; var Count: Smallint);
   var
@@ -2068,7 +2071,11 @@ begin
     end;
   if (FFieldType in [uftChar, uftVarchar, uftCstring]) and
     not QField.Fields.IsNull[4] then
-    FindCharset(QField.Fields.AsSmallint[4], FCharSet, FBytesPerCharacter)
+    begin
+      FindCharset(QField.Fields.AsSmallint[4], FCharSet, FBytesPerCharacter);
+      if (FCharSet = CharacterSetStr[DefaultCharset]) then
+        FCharSet := '';
+    end
   else
     FBytesPerCharacter := 1;
 
@@ -2086,7 +2093,7 @@ begin
       begin
         Stream.WriteString(Format('%s(%d)',
           [FieldTypes[FFieldType], FLength div FBytesPerCharacter]));
-        if FCharSet <> '' then
+        if (FCharSet <> '') then
           Stream.WriteString(' CHARACTER SET ' + FCharSet);
       end;
     uftBlob:
@@ -2211,7 +2218,7 @@ begin
       while not QNames.Eof do
       begin
         with TMetaDomain.Create(Self, Ord(OIDDomain)) do
-          LoadFromQuery(QNames, QCharset, QArrayDim);
+          LoadFromQuery(QNames, QCharset, QArrayDim, FDefaultCharset);
         QNames.Next;
       end;
     end;
@@ -2244,7 +2251,7 @@ begin
         with TMetaTable.Create(Self, Ord(OIDTable)) do
           LoadFromDataBase(QNames, QFields, QCharset, QPrimary,
             QIndex, QCheck, QTrigger, QArrayDim, QGrants, QFieldGrants,
-            FOIDTables);
+            FOIDTables, FDefaultCharset);
         QNames.Next;
       end;
 
@@ -2317,7 +2324,7 @@ begin
       begin
         with TMetaView.Create(Self, Ord(OIDView)) do
           LoadFromDataBase(QNames, QFields, QTrigger, QCharset, QArrayDim,
-            QGrants, QFieldGrants, FOIDViews);
+            QGrants, QFieldGrants, FOIDViews, FDefaultCharset);
         QNames.Next;
       end;
     end;
@@ -2332,7 +2339,7 @@ begin
       while not QNames.Eof do
       begin
         with TMetaProcedure.Create(Self, Ord(OIDProcedure)) do
-          LoadFromQuery(QNames, QFields, QCharset, QArrayDim, QGrants, FOIDProcedures);
+          LoadFromQuery(QNames, QFields, QCharset, QArrayDim, QGrants, FOIDProcedures, FDefaultCharset);
         QNames.Next;
       end;
     end;
@@ -2361,7 +2368,7 @@ begin
       while not QNames.Eof do
       begin
         with TMetaUDF.Create(Self, Ord(OIDUDF)) do
-          LoadFromQuery(QNames, QFields, QCharset, QArrayDim, FOIDUDFs);
+          LoadFromQuery(QNames, QFields, QCharset, QArrayDim, FOIDUDFs, FDefaultCharset);
         QNames.Next;
       end;
     end;
@@ -3372,7 +3379,7 @@ begin
 end;
 
 procedure TMetaView.LoadFromDataBase(QName, QFields, QTriggers,
-  QCharset, QArrayDim, QGrants, QFieldGrants: TUIBStatement; OIDs: TOIDViews);
+  QCharset, QArrayDim, QGrants, QFieldGrants: TUIBStatement; OIDs: TOIDViews; DefaultCharset: TCharacterSet);
 begin
   FName := MetaQuote(Trim(QName.Fields.AsString[0]));
   QName.ReadBlob(1, FSource);
@@ -3385,7 +3392,7 @@ begin
     QFields.Open;
     while not QFields.Eof do
     begin
-      TMetaField.Create(Self, Ord(OIDViewField)).LoadFromQuery(QFields, QCharset, QArrayDim);
+      TMetaField.Create(Self, Ord(OIDViewField)).LoadFromQuery(QFields, QCharset, QArrayDim, DefaultCharset);
       QFields.Next;
     end;
   end;
@@ -3565,7 +3572,7 @@ begin
 end;
 
 procedure TMetaProcedure.LoadFromQuery(QNames, QFields,
-  QCharset, QArrayDim, QGrants: TUIBStatement; OIDs: TOIDProcedures);
+  QCharset, QArrayDim, QGrants: TUIBStatement; OIDs: TOIDProcedures; DefaultCharset: TCharacterSet);
 begin
   FName := MetaQuote(Trim(QNames.Fields.AsString[0]));
   QNames.ReadBlob(1, FSource);
@@ -3577,7 +3584,7 @@ begin
     QFields.Open;
     while not QFields.Eof do
     begin
-      TMetaProcInField.Create(Self, Ord(OIDProcFieldIn)).LoadFromQuery(QFields, QCharset, QArrayDim);
+      TMetaProcInField.Create(Self, Ord(OIDProcFieldIn)).LoadFromQuery(QFields, QCharset, QArrayDim, DefaultCharset);
       QFields.Next;
     end;
   end;
@@ -3588,7 +3595,7 @@ begin
     QFields.Open;
     while not QFields.Eof do
     begin
-      TMetaProcOutField.Create(Self, Ord(OIDProcFieldOut)).LoadFromQuery(QFields, QCharset, QArrayDim);
+      TMetaProcOutField.Create(Self, Ord(OIDProcFieldOut)).LoadFromQuery(QFields, QCharset, QArrayDim, DefaultCharset);
       QFields.Next;
     end;
   end;
@@ -3863,7 +3870,7 @@ begin
   inherited SaveToStream(Stream);
 end;
 
-procedure TMetaUDF.LoadFromQuery(QNames, QFields, QCharset, QArrayDim: TUIBStatement; OIDs: TOIDUDFs);
+procedure TMetaUDF.LoadFromQuery(QNames, QFields, QCharset, QArrayDim: TUIBStatement; OIDs: TOIDUDFs; DefaultCharset: TCharacterSet);
 begin
   FName := Trim(QNames.Fields.AsString[0]);
   FModule := QNames.Fields.AsString[1];
@@ -3876,7 +3883,7 @@ begin
     QFields.Open;
     while not QFields.Eof do
     begin
-      TMetaUDFField.Create(Self, Ord(OIDUDFField)).LoadFromQuery(QFields, QCharset, QArrayDim);
+      TMetaUDFField.Create(Self, Ord(OIDUDFField)).LoadFromQuery(QFields, QCharset, QArrayDim, DefaultCharset);
       QFields.Next;
     end;
   end;
@@ -3930,10 +3937,10 @@ begin
   end;
 end;
 
-procedure TMetaTableField.LoadFromQuery(Q, C, A: TUIBStatement);
+procedure TMetaTableField.LoadFromQuery(Q, C, A: TUIBStatement; DefaultCharset: TCharacterSet);
 var i: Integer;
 begin
-  inherited LoadFromQuery(Q, C, A);
+  inherited LoadFromQuery(Q, C, A, DefaultCharset);
   FNotNull := (Q.Fields.AsSmallint[8] = 1);
   if not Q.Fields.IsNull[9] then
   begin
@@ -4085,9 +4092,9 @@ end;
 
 { TMetaField }
 
-procedure TMetaField.LoadFromQuery(Q, C, A: TUIBStatement);
+procedure TMetaField.LoadFromQuery(Q, C, A: TUIBStatement; DefaultCharset: TCharacterSet);
 begin
-  inherited LoadFromQuery(Q, C, A);
+  inherited LoadFromQuery(Q, C, A, DefaultCharset);
   FName := MetaQuote(Trim(Q.Fields.AsString[6]));
   FSegmentLength := Q.Fields.AsSmallint[7];
 end;
@@ -4105,9 +4112,9 @@ end;
 
 { TMetaUDFField }
 
-procedure TMetaUDFField.LoadFromQuery(QField, QCharset, QArrayDim: TUIBStatement);
+procedure TMetaUDFField.LoadFromQuery(QField, QCharset, QArrayDim: TUIBStatement; DefaultCharset: TCharacterSet);
 begin
-  inherited LoadFromQuery(QField, QCharset, QArrayDim);
+  inherited LoadFromQuery(QField, QCharset, QArrayDim, DefaultCharset);
   FPosition := QField.Fields.AsSmallint[6];
   FMechanism := QField.Fields.AsSmallint[7];
   FName := 'Field ' + IntToStr(FPosition);
