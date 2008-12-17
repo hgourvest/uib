@@ -55,8 +55,8 @@ type
     procedure AddLog(const FmtStr: String; const Args: array of const); overload;
     function GetDestPageSize: Integer;
     procedure ExecuteImmediate(const SQL: String);
-    procedure EmptyTables(dbhandle: IscDbHandle; mdb: TMetaDataBase);
-    procedure PumpData(dbhandle: IscDbHandle; mdb: TMetaDataBase; failsafe: Boolean; sorttables: Boolean);
+    procedure EmptyTables(dbhandle: IscDbHandle; mdb: TMetaDataBase; cs: TCharacterSet);
+    procedure PumpData(dbhandle: IscDbHandle; mdb: TMetaDataBase; failsafe: Boolean; sorttables: Boolean; cs: TCharacterSet);
   public
     { Déclarations publiques }
   end;
@@ -290,7 +290,7 @@ begin
     begin
       dbhandle := DstDatabase.DbHandle;
       DstTransaction.Commit;
-      PumpData(dbhandle, metadb, cbFailsafeDataPump.Checked, false);
+      PumpData(dbhandle, metadb, cbFailsafeDataPump.Checked, false, DstDatabase.CharacterSet);
     end;
 
     if not cbIgnoreConstraints.Checked then
@@ -446,7 +446,7 @@ begin
   AddLog('done :)');
 
   if cbCloseWhenDone.Checked then
-    Close;  
+    Close;
 end;
 
 procedure TMainForm.btStartPumpClick(Sender: TObject);
@@ -497,9 +497,9 @@ begin
     end;
 
     if cbEmptyTables.Checked then
-      EmptyTables(dbhandle, metadb);
+      EmptyTables(dbhandle, metadb, DstDatabase.CharacterSet);
 
-    PumpData(dbhandle, metadb, cbFailsafeDataPump.Checked, true);
+    PumpData(dbhandle, metadb, cbFailsafeDataPump.Checked, true, DstDatabase.CharacterSet);
 
     for i := 0 to metadb.TablesCount - 1 do
     for j := 0 to metadb.Tables[i].TriggersCount - 1 do
@@ -553,7 +553,7 @@ begin
     Result := SrcDatabase.InfoPageSize;
 end;
 
-procedure TMainForm.EmptyTables(dbhandle: IscDbHandle; mdb: TMetaDataBase);
+procedure TMainForm.EmptyTables(dbhandle: IscDbHandle; mdb: TMetaDataBase; cs: TCharacterSet);
 var
   sthandle: PPointer;
   sql: string;
@@ -570,7 +570,11 @@ begin
       begin
         sthandle := nil;
         DSQLAllocateStatement(dbhandle, sthandle);
+{$IFDEF UNICODE}
+        DSQLPrepare(dbhandle, trhandle, sthandle, MBUEncode(sql, CharacterSetCP[cs]), 3, nil);
+{$ELSE}
         DSQLPrepare(dbhandle, trhandle, sthandle, sql, 3, nil);
+{$ENDIF}
         DSQLExecute(trhandle, sthandle, 3, nil);
         DSQLFreeStatement(sthandle, DSQL_drop);
       end;
@@ -588,7 +592,7 @@ begin
 end;
 
 procedure TMainForm.PumpData(dbhandle: IscDbHandle; mdb: TMetaDataBase;
-  failsafe: Boolean; sorttables: Boolean);
+  failsafe: Boolean; sorttables: Boolean; cs: TCharacterSet);
 var
   T,F,c,l: Integer;
   done: Integer;
@@ -664,8 +668,11 @@ begin
       begin
         sthandle := nil;
         DSQLAllocateStatement(dbhandle, sthandle);
+{$IFDEF UNICODE}
+        DSQLPrepare(dbhandle, trhandle, sthandle, MBUEncode(sql, CharacterSetCP[cs]), 3, nil);
+{$ELSE}
         DSQLPrepare(dbhandle, trhandle, sthandle, sql, 3, nil);
-
+{$ENDIF}
         done := 0;
         while not SrcQuery.Eof do
         begin

@@ -13,7 +13,7 @@
     <DCC_IOChecking>False</DCC_IOChecking>
     <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
     <DCC_MapFile>3</DCC_MapFile>
-    <DCC_Define>USE_FASTMM4;RELEASE</DCC_Define>
+    <DCC_Define>RELEASE</DCC_Define>
     <DCC_AssertionsAtRuntime>False</DCC_AssertionsAtRuntime>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
