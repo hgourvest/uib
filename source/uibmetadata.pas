@@ -2073,7 +2073,7 @@ begin
     not QField.Fields.IsNull[4] then
     begin
       FindCharset(QField.Fields.AsSmallint[4], FCharSet, FBytesPerCharacter);
-      if (FCharSet = CharacterSetStr[DefaultCharset]) then
+      if (FCharSet = string(CharacterSetStr[DefaultCharset])) then
         FCharSet := '';
     end
   else
