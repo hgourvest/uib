@@ -30,9 +30,7 @@ requires
   vcl50,
   Vcldb50,
   Vclx50,
-{$IFDEF HAVE_SYNEDIT}
   SynEdit_R5,
-{$ENDIF}
   dcldb50;
 
 contains

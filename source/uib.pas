@@ -800,18 +800,22 @@ type
     procedure ParamsSetBlob(const Index: Word; const str: RawByteString); overload;
 {$ENDIF}
     { The the blob value of a parametter using a AnsiString. }
-    procedure ParamsSetBlob(const Index: Word; const str: AnsiString); overload;
+    procedure ParamsSetBlobA(const Index: Word; const str: AnsiString); overload;
     { The the blob value of a parametter using a string. }
-    procedure ParamsSetBlob(const Index: Word; const str: UnicodeString); overload;
+    procedure ParamsSetBlobW(const Index: Word; const str: UnicodeString); overload;
+    { The the blob value of a parametter using a string. }
+    procedure ParamsSetBlob(const Index: Word; const str: string); overload;
     { The the blob value of a parametter using a Buffer. }
     procedure ParamsSetBlob(const Index: Word; Buffer: Pointer; Size: Cardinal); overload;
 
     { The the blob value of a parametter using a Stream. }
     procedure ParamsSetBlob(const Name: string; Stream: TStream); overload;
     { The the blob value of a parametter using a string. }
-    procedure ParamsSetBlob(const Name: string; const str: AnsiString); overload;
+    procedure ParamsSetBlobA(const Name: string; const str: AnsiString); overload;
     { The the blob value of a parametter using a string. }
-    procedure ParamsSetBlob(const Name: string; const str: UnicodeString); overload;
+    procedure ParamsSetBlobW(const Name: string; const str: UnicodeString); overload;
+    { The the blob value of a parametter using a string. }
+    procedure ParamsSetBlob(const Name: string; const str: string); overload;
     { The the blob value of a parametter using a Buffer. }
     procedure ParamsSetBlob(const Name: string; Buffer: Pointer; Size: Cardinal); overload;
 
@@ -2651,7 +2655,7 @@ begin
 {$ENDIF}
 end;
 
-procedure TUIBStatement.ParamsSetBlob(const Index: Word; const str: AnsiString);
+procedure TUIBStatement.ParamsSetBlobA(const Index: Word; const str: AnsiString);
 var
   BlobHandle: IscBlobHandle;
 begin
@@ -2768,7 +2772,7 @@ begin
 {$ENDIF}
 end;
 
-procedure TUIBStatement.ParamsSetBlob(const Name: string; const str: AnsiString);
+procedure TUIBStatement.ParamsSetBlobA(const Name: string; const str: AnsiString);
 var
   BlobHandle: IscBlobHandle;
 begin
@@ -2796,12 +2800,21 @@ begin
 {$ENDIF}
 end;
 
-procedure TUIBStatement.ParamsSetBlob(const Name: string; const str: UnicodeString);
+procedure TUIBStatement.ParamsSetBlobW(const Name: string; const str: UnicodeString);
 var
   aStr: AnsiString;
 begin
   aStr := MBUEncode(str, CharacterSetCP[Params.CharacterSet]);
-  ParamsSetBlob(Name, aStr)
+  ParamsSetBlobA(Name, aStr)
+end;
+
+procedure TUIBStatement.ParamsSetBlob(const Name: string; const str: string);
+begin
+{$IFDEF UNICODE}
+  ParamsSetBlobW(Name, str);
+{$ELSE}
+  ParamsSetBlobA(Name, str);
+{$ENDIF}
 end;
 
 procedure TUIBStatement.ParamsSetBlob(const Name: string; Buffer: Pointer; Size: Cardinal);
@@ -2831,7 +2844,7 @@ begin
 {$ENDIF}
 end;
 
-procedure TUIBStatement.ParamsSetBlob(const Index: Word;
+procedure TUIBStatement.ParamsSetBlobW(const Index: Word;
   const str: UnicodeString);
 var
   BlobHandle: IscBlobHandle;
@@ -2857,6 +2870,15 @@ begin
   finally
     UnLock;
   end;
+{$ENDIF}
+end;
+
+procedure TUIBStatement.ParamsSetBlob(const Index: Word; const str: string);
+begin
+{$IFDEF UNICODE}
+   ParamsSetBlobW(Index, str);
+{$ELSE}
+   ParamsSetBlobA(Index, str);
 {$ENDIF}
 end;
 

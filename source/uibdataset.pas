@@ -740,8 +740,8 @@ begin
                 {$IFDEF COMPILER5_UP}
                 if (sqlscale = -4) then
                   PInt64(Buffer)^ := PInt64(sqldata)^ else
-                  if sqlscale > -4 then
-                    PInt64(Buffer)^ := PInt64(sqldata) * @CurrencyDivisor[sqlscale] else
+                  if (sqlscale > -4) then
+                    PInt64(Buffer)^ := PInt64(sqldata)^ * CurrencyDivisor[sqlscale] else
                     CurrToBcd(PInt64(sqldata)^/scaledivisor[sqlscale], TBCD(Buffer^));
                 {$ELSE}
                   {$IFDEF FPC}
@@ -942,7 +942,7 @@ end;
 procedure TUIBCustomDataSet.ParamsSetBlob(const Name: string;
   var str: AnsiString);
 begin
-  FStatement.ParamsSetBlob(Name, str);
+  FStatement.ParamsSetBlobA(Name, str);
 end;
 
 procedure TUIBCustomDataSet.ParamsSetBlob(const Name: string;

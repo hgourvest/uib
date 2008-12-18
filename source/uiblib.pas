@@ -351,15 +351,15 @@ type
     procedure ConvertString(const Code: Smallint; Index: Word; out value: boolean); overload;
     procedure ConvertString(const Code: Smallint; Index: Word; out value: Cardinal); overload;
     procedure ConvertStringToDate(const Code: Smallint; Index: Word; out value: Integer);
-{$IFDEF UNICODE}
-    procedure DecodeString(const Code: Smallint; Index: Word; out Str: RawByteString); overload;
-{$ENDIF}
-    procedure DecodeString(const Code: Smallint; Index: Word; out Str: UnicodeString); overload;
-    procedure DecodeString(const Code: Smallint; Index: Word; out Str: AnsiString); overload;
-    function DecodeString(const Code: Smallint; Index: Word): UnicodeString; overload;
-    procedure EncodeString(Code: Smallint; Index: Word; const str: AnsiString); overload;
-    procedure EncodeString(Code: Smallint; Index: Word; const str: UnicodeString); overload;
-    procedure EncodeRawByteString(Code: Smallint; Index: Word; const str: RawByteString);
+    procedure DecodeStringB(const Code: Smallint; Index: Word; out Str: RawByteString);
+    procedure DecodeStringW(const Code: Smallint; Index: Word; out Str: UnicodeString);
+    procedure DecodeStringA(const Code: Smallint; Index: Word; out Str: AnsiString);
+    procedure DecodeString(const Code: Smallint; Index: Word; out Str: string); overload;
+    function DecodeString(const Code: Smallint; Index: Word): string; overload;
+    procedure EncodeStringA(Code: Smallint; Index: Word; const str: AnsiString);
+    procedure EncodeStringW(Code: Smallint; Index: Word; const str: UnicodeString);
+    procedure EncodeStringB(Code: Smallint; Index: Word; const str: RawByteString);
+    procedure EncodeString(Code: Smallint; Index: Word; const str: string);
     function GetAsString(const Index: Word): string;
     procedure SetAsString(const Index: Word; const Value: string);
     function GetByNameAsString(const name: string): string;
@@ -720,8 +720,9 @@ type
     function GetFieldName(const Index: Word): string;
     procedure AllocateDataBuffer(AInit: boolean = true);
   protected
-    function AddField(const name: AnsiString): Word; overload;
-    function AddField(const name: UnicodeString): Word; overload;
+    function AddFieldA(const name: AnsiString): Word;
+    function AddFieldW(const name: UnicodeString): Word;
+    function AddField(const name: string): Word;
     procedure SetFieldType(const Index: Word; Size: Integer; Code: SmallInt; Scale: Smallint);
 
     procedure SetAsDouble(const Index: Word; const Value: Double); override;
@@ -3399,15 +3400,28 @@ type
       raise Exception.CreateFmt(EUIB_FIELDNUMNOTFOUND, [index]);
   end;
 
-  function TSQLDA.DecodeString(const Code: Smallint; Index: Word): UnicodeString;
-  begin
-    DecodeString(Code, Index, Result);
-  end;
-
-  procedure TSQLDA.DecodeString(const Code: Smallint; Index: Word; out Str: AnsiString);
+  function TSQLDA.DecodeString(const Code: Smallint; Index: Word): string;
   begin
 {$IFDEF UNICODE}
-     Str := AnsiString(DecodeString(Code, Index));
+    DecodeStringW(Code, Index, Result);
+{$ELSE}
+    DecodeStringA(Code, Index, Result);
+{$ENDIF}
+  end;
+
+  procedure TSQLDA.DecodeString(const Code: Smallint; Index: Word; out Str: string);
+  begin
+{$IFDEF UNICODE}
+    DecodeStringW(Code, Index, Str);
+{$ELSE}
+    DecodeStringA(Code, Index, Str);
+{$ENDIF}
+  end;
+
+  procedure TSQLDA.DecodeStringA(const Code: Smallint; Index: Word; out Str: AnsiString);
+  begin
+{$IFDEF UNICODE}
+    Str := AnsiString(DecodeString(Code, Index));
 {$ELSE}
     with FXSQLDA.sqlvar[Index] do
     case Code of
@@ -3417,7 +3431,7 @@ type
 {$ENDIF}
   end;
 
-  procedure TSQLDA.DecodeString(const Code: Smallint; Index: Word; out Str: UnicodeString);
+  procedure TSQLDA.DecodeStringW(const Code: Smallint; Index: Word; out Str: UnicodeString);
   begin
     with FXSQLDA.sqlvar[Index] do
     case Code of
@@ -3431,16 +3445,7 @@ type
     end;
   end;
 
-  procedure TSQLDA.EncodeString(Code: Smallint; Index: Word; const str: AnsiString);
-  begin
-  {$IFDEF UNICODE}
-    EncodeRawByteString(Code, Index, MBUEncode(UniCodeString(str), CharacterSetCP[FCharacterSet]));
-  {$ELSE}
-    EncodeRawByteString(Code, Index, str);
-  {$ENDIF}
-  end;
-
-  procedure TSQLDA.EncodeRawByteString(Code: Smallint; Index: Word; const str: RawByteString);
+  procedure TSQLDA.EncodeStringB(Code: Smallint; Index: Word; const str: RawByteString);
   var
     i: smallint;
     OldLen: SmallInt;
@@ -3502,9 +3507,27 @@ type
            end;
   end;
 
-  procedure TSQLDA.EncodeString(Code: Smallint; Index: Word; const str: UnicodeString);
+  procedure TSQLDA.EncodeStringA(Code: Smallint; Index: Word; const str: AnsiString);
   begin
-    EncodeRawByteString(Code, Index, MBUEncode(str, CharacterSetCP[FCharacterSet]));
+  {$IFDEF UNICODE}
+    EncodeStringB(Code, Index, MBUEncode(UniCodeString(str), CharacterSetCP[FCharacterSet]));
+  {$ELSE}
+    EncodeStringB(Code, Index, str);
+  {$ENDIF}
+  end;
+
+  procedure TSQLDA.EncodeStringW(Code: Smallint; Index: Word; const str: UnicodeString);
+  begin
+    EncodeStringB(Code, Index, MBUEncode(str, CharacterSetCP[FCharacterSet]));
+  end;
+
+  procedure TSQLDA.EncodeString(Code: Smallint; Index: Word; const str: string);
+  begin
+  {$IFDEF UNICODE}
+    EncodeStringW(Code, Index, str);
+  {$ELSE}
+    EncodeStringA(Code, Index, str);
+  {$ENDIF}
   end;
 
 {$IFDEF GUID_TYPE}
@@ -3627,8 +3650,7 @@ type
     FCharacterSet := aCharacterSet;
   end;
 
-{$IFDEF UNICODE}
-  procedure TSQLDA.DecodeString(const Code: Smallint; Index: Word; out Str: RawByteString);
+  procedure TSQLDA.DecodeStringB(const Code: Smallint; Index: Word; out Str: RawByteString);
   begin
     with FXSQLDA.sqlvar[Index] do
     case Code of
@@ -3636,7 +3658,6 @@ type
       SQL_VARYING : SetString(Str, PVary(sqldata).vary_string, PVary(sqldata).vary_length);
     end;
   end;
-{$ENDIF}
 
   procedure TSQLDA.ConvertString(const Code: Smallint; Index: Word; out value: Cardinal);
   begin
@@ -3964,8 +3985,8 @@ type
         end;
       end else
         case ASQLCode of
-          SQL_VARYING   : DecodeString(SQL_VARYING, Index, Result);
-          SQL_TEXT      : DecodeString(SQL_TEXT, Index, Result);
+          SQL_VARYING   : DecodeStringA(SQL_VARYING, Index, Result);
+          SQL_TEXT      : DecodeStringA(SQL_TEXT, Index, Result);
           SQL_TIMESTAMP : Result := AnsiString(DateTimeToStr(DecodeTimeStamp(PISCTimeStamp(sqldata))));
           SQL_TYPE_DATE : Result := AnsiString(DateToStr(PInteger(sqldata)^ - DateOffset));
           SQL_TYPE_TIME : Result := AnsiString(TimeToStr(PCardinal(sqldata)^ / TimeCoeff));
@@ -4024,8 +4045,8 @@ type
         end;
       end else
         case ASQLCode of
-          SQL_VARYING   : DecodeString(SQL_VARYING, Index, Result);
-          SQL_TEXT      : DecodeString(SQL_TEXT, Index, Result);
+          SQL_VARYING   : DecodeStringB(SQL_VARYING, Index, Result);
+          SQL_TEXT      : DecodeStringB(SQL_TEXT, Index, Result);
           SQL_TIMESTAMP : Result := RawByteString(DateTimeToStr(DecodeTimeStamp(PISCTimeStamp(sqldata))));
           SQL_TYPE_DATE : Result := RawByteString(DateToStr(PInteger(sqldata)^ - DateOffset));
           SQL_TYPE_TIME : Result := RawByteString(TimeToStr(PCardinal(sqldata)^ / TimeCoeff));
@@ -4282,8 +4303,8 @@ end;
         end;
       end else
         case ASQLCode of
-          SQL_TEXT      : DecodeString(SQL_TEXT, Index, Result);
-          SQL_VARYING   : DecodeString(SQL_VARYING, Index, Result);
+          SQL_TEXT      : DecodeStringW(SQL_TEXT, Index, Result);
+          SQL_VARYING   : DecodeStringW(SQL_VARYING, Index, Result);
           SQL_TIMESTAMP : Result := DateTimeToStr(DecodeTimeStamp(PISCTimeStamp(sqldata)));
           SQL_TYPE_DATE : Result := DateToStr(PInteger(sqldata)^ - DateOffset);
           SQL_TYPE_TIME : Result := TimeToStr(PCardinal(sqldata)^ / TimeCoeff);
@@ -4487,8 +4508,8 @@ end;
         end;
       end else
         case ASQLCode of
-          SQL_TEXT      : EncodeRawByteString(SQL_TEXT, Index, Value);
-          SQL_VARYING   : EncodeRawByteString(SQL_VARYING, Index, Value);
+          SQL_TEXT      : EncodeStringB(SQL_TEXT, Index, Value);
+          SQL_VARYING   : EncodeStringB(SQL_VARYING, Index, Value);
           SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := StrToFloat(string(Value));
           SQL_TIMESTAMP : EncodeTimeStamp(StrToDateTime(string(Value)), PISCTimeStamp(sqldata));
@@ -4832,8 +4853,8 @@ end;
         end;
       end else
         case ASQLCode of
-          SQL_TEXT      : EncodeString(SQL_TEXT, Index, Value);
-          SQL_VARYING   : EncodeString(SQL_VARYING, Index, Value);
+          SQL_TEXT      : EncodeStringA(SQL_TEXT, Index, Value);
+          SQL_VARYING   : EncodeStringA(SQL_VARYING, Index, Value);
           SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := StrToFloat(string(Value));
           SQL_TIMESTAMP : EncodeTimeStamp(StrToDateTime(string(Value)), PISCTimeStamp(sqldata));
@@ -4877,8 +4898,8 @@ end;
         end;
       end else
         case ASQLCode of
-          SQL_TEXT      : EncodeString(SQL_TEXT, Index, Value);
-          SQL_VARYING   : EncodeString(SQL_VARYING, Index, Value);
+          SQL_TEXT      : EncodeStringW(SQL_TEXT, Index, Value);
+          SQL_VARYING   : EncodeStringW(SQL_VARYING, Index, Value);
           SQL_D_FLOAT,
           SQL_DOUBLE    : PDouble(sqldata)^   := StrToFloat(Value);
           SQL_TIMESTAMP : EncodeTimeStamp(StrToDateTime(Value), PISCTimeStamp(sqldata));
@@ -5033,9 +5054,17 @@ end;
   procedure TSQLDA.SetAsVariant(const Index: Word; const Value: Variant);
   begin
     case TVarData(Value).VType of
-      varSmallInt, varShortInt, varByte: SetAsSmallint(Index, Value);
-      varWord, varInteger:               SetAsInteger(Index, Value);
+{$IFNDEF COMPILER5}
+      varShortInt,
+{$ENDIF}
+      varSmallInt, varByte: SetAsSmallint(Index, Value);
+{$IFNDEF COMPILER5}
+      varWord,
+{$ENDIF}
+      varInteger:               SetAsInteger(Index, Value);
+{$IFNDEF COMPILER5}
       varLongWord, varInt64:             SetAsInt64(Index, Value);
+{$ENDIF}      
       varSingle:                         SetAsSingle(Index, Value);
       varDouble:                         SetAsDouble(Index, Value);
       varCurrency:                       SetAsCurrency(Index, Value);
@@ -5908,8 +5937,8 @@ end;
 {$ENDIF}
           SQL_SHORT     : Result := AnsiString(IntToStr(PSmallint(sqldata)^));
           SQL_INT64     : Result := AnsiString(IntToStr(PInt64(sqldata)^));
-          SQL_TEXT      : DecodeString(SQL_TEXT, Index, Result);
-          SQL_VARYING   : DecodeString(SQL_VARYING, Index, Result);
+          SQL_TEXT      : DecodeStringA(SQL_TEXT, Index, Result);
+          SQL_VARYING   : DecodeStringA(SQL_VARYING, Index, Result);
           SQL_BLOB      : ReadBlob(Index, Result);
           SQL_ARRAY     : Result := '(Array)';
         else
@@ -5956,8 +5985,8 @@ end;
 {$ENDIF}
           SQL_SHORT     : Result := RawByteString(IntToStr(PSmallint(sqldata)^));
           SQL_INT64     : Result := RawByteString(IntToStr(PInt64(sqldata)^));
-          SQL_TEXT      : DecodeString(SQL_TEXT, Index, Result);
-          SQL_VARYING   : DecodeString(SQL_VARYING, Index, Result);
+          SQL_TEXT      : DecodeStringB(SQL_TEXT, Index, Result);
+          SQL_VARYING   : DecodeStringB(SQL_VARYING, Index, Result);
           SQL_BLOB      : ReadBlobData(Index, Result);
           SQL_ARRAY     : Result := '(Array)';
         else
@@ -6004,8 +6033,8 @@ end;
 {$ENDIF}
           SQL_SHORT     : Result := IntToStr(PSmallint(sqldata)^);
           SQL_INT64     : Result := IntToStr(PInt64(sqldata)^);
-          SQL_TEXT      : DecodeString(SQL_TEXT, Index, Result);
-          SQL_VARYING   : DecodeString(SQL_VARYING, Index, Result);
+          SQL_TEXT      : DecodeStringW(SQL_TEXT, Index, Result);
+          SQL_VARYING   : DecodeStringW(SQL_VARYING, Index, Result);
           SQL_BLOB      : ReadBlob(Index, Result);
           SQL_ARRAY     : Result := '(Array)';
         else
@@ -6609,7 +6638,7 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
     Result := False;
   end;
 
-  function TSQLParams.AddField(const Name: AnsiString): Word;
+  function TSQLParams.AddFieldA(const Name: AnsiString): Word;
   var
     num: Word;
     len: Cardinal;
@@ -6648,9 +6677,18 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
     end;
   end;
 
-  function TSQLParams.AddField(const name: UnicodeString): Word;
+  function TSQLParams.AddFieldW(const name: UnicodeString): Word;
   begin
-    Result := AddField(AnsiString(name));
+    Result := AddFieldA(AnsiString(name));
+  end;
+
+  function TSQLParams.AddField(const name: string): Word;
+  begin
+{$IFDEF UNICODE}
+    Result := AddFieldW(name);
+{$ELSE}
+    Result := AddFieldA(name);
+{$ENDIF}
   end;
 
   procedure TSQLParams.Clear;
