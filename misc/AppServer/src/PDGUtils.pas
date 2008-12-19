@@ -775,11 +775,7 @@ var
   s: Integer;
   data: RawByteString;
 begin
-{$IFDEF UNICODE}
   data := MBUEncode(str, cp);
-{$ELSE}
-  data := str;
-{$ENDIF}
   s := Length(data);
   if writesize then
     Write(s, sizeof(s));
