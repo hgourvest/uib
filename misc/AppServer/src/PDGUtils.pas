@@ -778,9 +778,7 @@ begin
 {$IFDEF UNICODE}
   data := MBUEncode(str, cp);
 {$ELSE}
-  if cp > 0 then
-    data := MBAEncode(str, cp) else
-    data := str;
+  data := str;
 {$ENDIF}
   s := Length(data);
   if writesize then
