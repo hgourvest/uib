@@ -183,7 +183,7 @@ begin
         begin
           S[i] := #0;
           obj := Result[S];
-          value := TSuperObject.Parse(PSOChar(@S[i+1]), false);
+          value := TSuperObject.ParseString(PSOChar(@S[i+1]), false);
           if value = nil then
             value := TSuperObject.Create(PSOChar(@S[i+1]));
           if obj = nil then
@@ -204,7 +204,7 @@ begin
         end;
       end else
       begin
-        value := TSuperObject.Parse(PSOChar(S), false);
+        value := TSuperObject.ParseString(PSOChar(S), false);
         if value = nil then
           value := TSuperObject.Create(s);
         Result.AsArray.Add(value);

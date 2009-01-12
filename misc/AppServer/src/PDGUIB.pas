@@ -26,7 +26,6 @@ type
   private
     FLibrary: TUIBLibrary;
     FDbHandle: IscDbHandle;
-    FCommandes: ISuperObject;
     FCharacterSet: TCharacterSet;
   protected
     function newContext(Options: ISuperObject = nil): IPDGContext; override;
@@ -78,7 +77,6 @@ begin
 
   DataPtr := Self;
   Merge(Options, true);
-  FCommandes := TSuperObject.Create(stObject);
 
   FLibrary := TUIBLibrary.Create;
 

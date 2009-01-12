@@ -131,7 +131,7 @@ end;
 
 function TPDGConnection.newContext(const Options: SOString): IPDGContext;
 begin
-  Result := newContext(TSuperObject.Parse(PSOChar(Options)));
+  Result := newContext(TSuperObject.ParseString(PSOChar(Options)));
 end;
 
 { TPDGContext }
@@ -146,7 +146,7 @@ function TPDGContext.newCommand(const Options: SOString): IPDGCommand;
 var
   opt: ISuperObject;
 begin
-  opt := TSuperObject.Parse(PSOChar(Options), false);
+  opt := TSuperObject.ParseString(PSOChar(Options), false);
   if opt <> nil then
     Result := newCommand(opt) else
     Result := newCommand(TSuperObject.Create(Options));
@@ -155,7 +155,7 @@ end;
 function TPDGContext.Execute(Command: IPDGCommand;
   const params: SOString): ISuperObject;
 begin
-  Result := Command.Execute(TSuperObject.Parse(PSOChar(params)), Self);
+  Result := Command.Execute(TSuperObject.ParseString(PSOChar(params)), Self);
 end;
 
 function TPDGContext.Execute(Command: IPDGCommand;
@@ -181,7 +181,7 @@ end;
 function TPDGCommand.Execute(const params: SOString;
   context: IPDGContext): ISuperObject;
 begin
-  Result := Execute(TSuperObject.Parse(PSOChar(params)), context);
+  Result := Execute(TSuperObject.ParseString(PSOChar(params)), context);
 end;
 
 function TPDGCommand.Execute(params: array of const;

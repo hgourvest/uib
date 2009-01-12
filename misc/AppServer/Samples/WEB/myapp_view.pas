@@ -41,21 +41,15 @@ end;
 procedure country_index_html(const This, Params: ISuperObject; var Result: ISuperObject);
 var
   data: TSuperArray;
-  line: ISuperObject;
-
   i: integer;
 begin
   if This['error'] <> nil then
-    HTTPOutput(This, format('<b>%s</b><br/>', [This.S['error']]));
+    HTTPOutput(This, This.format('<b>%error%</b><br/>'));
 
   data := this['dataset'].AsArray;
   HTTPOutput(this, '<table><th><tr><td>Country</td><td>Currency</td><td>Suppr</td><td>Edit</td></tr></th>');
   for i :=  0 to data.Length - 1 do
-  begin
-    line := data.O[i];
-    HTTPOutput(this, Format('<tr><td>%s</td><td>%s</td><td><a href="/country/del/%0:s">suppr</a></td><td><a href="/country/edit/%0:s">edit</a></td></tr>',
-      [line.S['COUNTRY'] , line.S['CURRENCY']]));
-  end;
+    HTTPOutput(this, data.O[i].Format('<tr><td>%COUNTRY%</td><td>%CURRENCY%</td><td><a href="/country/del/%COUNTRY%">suppr</a></td><td><a href="/country/edit/%COUNTRY%">edit</a></td></tr>'));
   HTTPOutput(this, '</table>');
   HTTPOutput(this, '<form action="/country/add" method="POST"><input type="text" name="country"/><input type="text" name="currency"/><input type="submit"/></form>');
   HTTPOutput(this, '</pre></body></html>');
