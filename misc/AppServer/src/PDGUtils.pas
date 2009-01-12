@@ -92,8 +92,14 @@ function DecompressStream(inSocket: longint; outStream: TStream): boolean; overl
 function receive(s: longint; var Buf; len, flags: Integer): Integer;
 
 // Base64 functions from <dirk.claessens.dc@belgium.agfa.com> (modified)
-function StrTobase64(Buf: string): string;
-function Base64ToStr(const B64: string): string;
+
+function StrTobase64(const Buf: string): RawByteString;
+function Base64ToStr(const B64: RawByteString): string;
+
+function StrTobase64W(const Buf: UnicodeString): RawByteString;
+function Base64ToStrW(const B64: RawByteString): UnicodeString;
+function StrTobase64A(Buf: AnsiString): RawByteString;
+function Base64ToStrA(const B64: RawByteString): AnsiString;
 
 function FileToAnsiString(const FileName: string): RawbyteString;
 function StreamToAnsiString(stream: TStream): RawbyteString;
@@ -102,9 +108,46 @@ implementation
 uses uiblib;
 
 const
-  Base64Code: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  Base64Code: RawByteString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
-function StrTobase64(Buf: string): string;
+
+function StrTobase64(const Buf: string): RawByteString;
+begin
+{$IFDEF UNICODE}
+  Result := StrTobase64W(Buf);
+{$ELSE}
+  Result := StrTobase64A(Buf);
+{$ENDIF}
+end;
+
+function Base64ToStr(const B64: RawByteString): string;
+begin
+{$IFDEF UNICODE}
+  Result := Base64ToStrW(B64);
+{$ELSE}
+  Result := Base64ToStrA(B64);
+{$ENDIF}
+end;
+
+function StrTobase64W(const Buf: UnicodeString): RawByteString;
+var
+  data: AnsiString;
+begin
+  SetLength(data, Length(Buf) * 2);
+  Move(PChar(Buf)^, PAnsiChar(data)^, Length(data));
+  Result := StrTobase64A(data);
+end;
+
+function Base64ToStrW(const B64: RawByteString): UnicodeString;
+var
+  data: AnsiString;
+begin
+  data := Base64ToStrA(B64);
+  SetLength(Result, Length(data) div 2);
+  Move(PAnsiChar(data)^, PChar(Result)^, Length(data));
+end;
+
+function StrTobase64A(Buf: AnsiString): RawByteString;
 var
   i: integer;
   x1, x2, x3, x4: byte;
@@ -168,8 +211,8 @@ begin
     end;
 end;
 
-function Base64ToStr(const B64: string): string;
-  function Char2IDx(c: Char): byte;
+function Base64ToStrA(const B64: RawByteString): AnsiString;
+  function Char2IDx(c: AnsiChar): byte;
   begin
     case c of
       'A'..'Z': Result := byte(c) - byte('A');
@@ -206,11 +249,11 @@ begin
   begin
     // reverse process of above
     x1 := (Char2Idx(B64[i]) shl 2) or (Char2IDx(B64[i + 1]) shr 4);
-    Result := Result + Char(x1);
+    Result := Result + AnsiChar(x1);
     x2 := (Char2Idx(B64[i + 1]) shl 4) or (Char2IDx(B64[i + 2]) shr 2);
-    Result := Result + Char(x2);
+    Result := Result + AnsiChar(x2);
     x3 := (Char2Idx(B64[i + 2]) shl 6) or (Char2IDx(B64[i + 3]));
-    Result := Result + Char(x3);
+    Result := Result + AnsiChar(x3);
     inc(i, 4);
   end;
 
@@ -221,6 +264,7 @@ begin
     dec(PadCount);
   end;
 end;
+
 
 {$IF not declared(InterLockedCompareExchange)}
 {$IFDEF MSWINDOWS}
