@@ -220,8 +220,6 @@ const
   function MBUDecode(const str: RawByteString; cp: Word): UnicodeString; overload;
   procedure MBUDecode(str: PAnsiChar; size: Integer; cp: Word; buffer: PWideChar); overload;
 
-  function BytesPerCharacter(cs: TCharacterSet): Byte;
-
   function StrToCharacterSet(const CharacterSet: RawByteString): TCharacterSet;
   function CreateDBParams(Params: AnsiString; Delimiter: AnsiChar = ';'): AnsiString;
   function GetClientLibrary: string;
@@ -1133,22 +1131,22 @@ begin
 {$ENDIF}
 end;
 
-function BytesPerCharacter(cs: TCharacterSet): Byte;
-begin
-  case cs of
-    csSJIS_0208, csEUCJ_0208, csKSC_5601, csBIG_5, csGB_2312
-{$IFDEF FB21_UP}
-    ,csGBK, csCP943C
-{$ENDIF}
-      : Result := 2;
-    csUNICODE_FSS: Result := 3;
-{$IFDEF FB20_UP}
-    csUTF8: Result := 4;
-{$ENDIF}
-  else
-    Result := 1;
-  end;
-end;
+//function BytesPerCharacter(cs: TCharacterSet): Byte;
+//begin
+//  case cs of
+//    csSJIS_0208, csEUCJ_0208, csKSC_5601, csBIG_5, csGB_2312
+//{$IFDEF FB21_UP}
+//    ,csGBK, csCP943C
+//{$ENDIF}
+//      : Result := 2;
+//    csUNICODE_FSS: Result := 3;
+//{$IFDEF FB20_UP}
+//    csUTF8: Result := 4;
+//{$ENDIF}
+//  else
+//    Result := 1;
+//  end;
+//end;
 
 (******************************************************************************)
 (* Errors handling                                                            *)
@@ -3439,7 +3437,7 @@ type
         begin
           Str := MBUDecode(Copy(sqldata, 0, sqllen), CharacterSetCP[FCharacterSet]);
           if (FCharacterSet in UNICODE_CHARSETS) then
-            SetLength(Str, sqllen div BytesPerCharacter(FCharacterSet));
+            SetLength(Str, sqllen div SqlSubType);
         end;
       SQL_VARYING : Str := MBUDecode(Copy(PAnsiChar(@PVary(sqldata).vary_string), 0, PVary(sqldata).vary_length), CharacterSetCP[FCharacterSet]);
     end;
