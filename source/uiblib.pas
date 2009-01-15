@@ -546,8 +546,8 @@ type
     constructor Create(ItemsInPage, ItemSize: Integer); virtual;
     destructor Destroy; override;
     procedure Clear;
-    function Seek(Offset: Longint; Origin: Word): Longint; overload; override;
-    function Seek(Item: Integer): Longint; overload;
+    function Seek(Offset: Longint; Origin: Word): Longint; override;
+    function SeekTo(Item: Integer): Longint;
     function Get(Item: Integer): Pointer;
     function Add: Pointer;
     function Read(var Buffer; Count: Longint): Longint; override;
@@ -639,15 +639,20 @@ type
     property ArrayInfos[const index: word]: PArrayInfo read GetArrayInfos;
     property ArrayCount: Word read GetArrayCount;
 
-    procedure ReadBlobData(const Index: Word; var data: RawByteString);
     procedure ReadBlob(const Index: Word; Stream: TStream); overload;
-    procedure ReadBlob(const Index: Word; var str: AnsiString); overload;
-    procedure ReadBlob(const Index: Word; var str: UnicodeString); overload;
+    procedure ReadBlobB(const Index: Word; var data: RawByteString); overload;
+    procedure ReadBlobA(const Index: Word; var str: AnsiString); overload;
+    procedure ReadBlobW(const Index: Word; var str: UnicodeString); overload;
+    procedure ReadBlob(const Index: Word; var str: string); overload;
+    function ReadBlob(const Index: Word): string; overload;
     procedure ReadBlob(const Index: Word; var Value: Variant); overload;
     procedure ReadBlob(const Index: Word; Data: Pointer); overload;
     procedure ReadBlob(const name: string; Stream: TStream); overload;
-    procedure ReadBlob(const name: string; var str: AnsiString); overload;
-    procedure ReadBlob(const name: string; var str: UnicodeString); overload;
+    procedure ReadBlobB(const name: string; var data: RawByteString); overload;
+    procedure ReadBlobA(const name: string; var str: AnsiString); overload;
+    procedure ReadBlobW(const name: string; var str: UnicodeString); overload;
+    procedure ReadBlob(const name: string; var str: string); overload;
+    function ReadBlob(const name: string): string; overload;
     procedure ReadBlob(const name: string; var Value: Variant); overload;
     procedure ReadBlob(const name: string; Data: Pointer); overload;
 
@@ -5776,17 +5781,17 @@ end;
     Result := (FCurrentRecord = 0) or (RecordCount = 0);
   end;
 
-  procedure TSQLResult.ReadBlob(const Index: Word; var str: AnsiString);
+  procedure TSQLResult.ReadBlobA(const Index: Word; var str: AnsiString);
 {$IFDEF UNICODE}
   var
     data: UnicodeString;
 {$ENDIF}
   begin
 {$IFDEF UNICODE}
-    ReadBlob(Index, data);
+    ReadBlobW(Index, data);
     str := AnsiString(data);
 {$ELSE}
-    ReadBlobData(Index, str);
+    ReadBlobB(Index, str);
 {$ENDIF}
   end;
 
@@ -5806,7 +5811,7 @@ end;
   var
     PData: Pointer;
     BlobData: PBlobData;
-    str: UnicodeString;
+    str: string;
   begin
     if IsBlobText[Index] then
     begin
@@ -5827,17 +5832,26 @@ end;
     end;
   end;
 
-  procedure TSQLResult.ReadBlob(const Index: Word; var str: UnicodeString);
+  procedure TSQLResult.ReadBlobW(const Index: Word; var str: UnicodeString);
   var
     aStr: RawByteString;
   begin
-    ReadBlobData(Index, aStr);
+    ReadBlobB(Index, aStr);
     if FXSQLDA.sqlvar[Index].SqlSubType = 1 then  // is text ?
       str := MBUDecode(aStr, CharacterSetCP[FCharacterSet]) else
       begin
         SetLength(str, Length(aStr) div 2);
         Move(PByte(aStr)^, PByte(str)^, Length(str) * 2);
       end;
+  end;
+
+  procedure TSQLResult.ReadBlob(const Index: Word; var str: string);
+  begin
+  {$IFDEF UNICODE}
+     ReadBlobW(Index, str);
+  {$ELSE}
+     ReadBlobA(Index, str);
+  {$ENDIF}
   end;
 
   procedure TSQLResult.ReadBlob(const Index: Word; Data: Pointer);
@@ -5855,7 +5869,17 @@ end;
     ReadBlob(GetFieldIndex(AnsiString(Name)), Data);
   end;
 
-  procedure TSQLResult.ReadBlobData(const Index: Word; var data: RawByteString);
+  function TSQLResult.ReadBlob(const Index: Word): string;
+  begin
+    ReadBlob(Index, Result);
+  end;
+
+  function TSQLResult.ReadBlob(const name: string): string;
+  begin
+    ReadBlob(name, Result);
+  end;
+
+  procedure TSQLResult.ReadBlobB(const Index: Word; var data: RawByteString);
   var
     BlobData: PBlobData;
   begin
@@ -5867,14 +5891,29 @@ end;
     Move(BlobData.Buffer^, PAnsiChar(data)^, BlobData.Size);
   end;
 
-  procedure TSQLResult.ReadBlob(const name: string; var str: UnicodeString);
+  procedure TSQLResult.ReadBlobW(const name: string; var str: UnicodeString);
   begin
-    ReadBlob(GetFieldIndex(AnsiString(Name)), str);
+    ReadBlobW(GetFieldIndex(AnsiString(Name)), str);
   end;
 
-  procedure TSQLResult.ReadBlob(const name: string; var str: AnsiString);
+  procedure TSQLResult.ReadBlob(const name: string; var str: string);
   begin
-    ReadBlob(GetFieldIndex(AnsiString(Name)), str);
+  {$IFDEF UNICODE}
+     ReadBlobW(name, str);
+  {$ELSE}
+     ReadBlobA(name, str);
+  {$ENDIF}
+  end;
+
+
+  procedure TSQLResult.ReadBlobA(const name: string; var str: AnsiString);
+  begin
+    ReadBlobA(GetFieldIndex(AnsiString(Name)), str);
+  end;
+
+  procedure TSQLResult.ReadBlobB(const name: string; var data: RawByteString);
+  begin
+    ReadBlobB(GetFieldIndex(AnsiString(Name)), data);
   end;
 
   procedure TSQLResult.ReadBlob(const name: string; Stream: TStream);
@@ -5937,7 +5976,7 @@ end;
           SQL_INT64     : Result := AnsiString(IntToStr(PInt64(sqldata)^));
           SQL_TEXT      : DecodeStringA(SQL_TEXT, Index, Result);
           SQL_VARYING   : DecodeStringA(SQL_VARYING, Index, Result);
-          SQL_BLOB      : ReadBlob(Index, Result);
+          SQL_BLOB      : ReadBlobA(Index, Result);
           SQL_ARRAY     : Result := '(Array)';
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -5985,7 +6024,7 @@ end;
           SQL_INT64     : Result := RawByteString(IntToStr(PInt64(sqldata)^));
           SQL_TEXT      : DecodeStringB(SQL_TEXT, Index, Result);
           SQL_VARYING   : DecodeStringB(SQL_VARYING, Index, Result);
-          SQL_BLOB      : ReadBlobData(Index, Result);
+          SQL_BLOB      : ReadBlobB(Index, Result);
           SQL_ARRAY     : Result := '(Array)';
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -6033,7 +6072,7 @@ end;
           SQL_INT64     : Result := IntToStr(PInt64(sqldata)^);
           SQL_TEXT      : DecodeStringW(SQL_TEXT, Index, Result);
           SQL_VARYING   : DecodeStringW(SQL_VARYING, Index, Result);
-          SQL_BLOB      : ReadBlob(Index, Result);
+          SQL_BLOB      : ReadBlobW(Index, Result);
           SQL_ARRAY     : Result := '(Array)';
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -6320,7 +6359,7 @@ begin
   Result := FPosition;
 end;
 
-function TPoolStream.Seek(Item: Integer): Longint;
+function TPoolStream.SeekTo(Item: Integer): Longint;
 begin
   Result := Seek(soFromBeginning, Item * FItemSize);
 end;

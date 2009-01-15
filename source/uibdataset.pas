@@ -159,19 +159,29 @@ type
     procedure BuildStoredProc(const StoredProc: string; forSelect: boolean);
 
     procedure ReadBlob(const Index: Word; Stream: TStream); overload;
-    procedure ReadBlob(const Index: Word; var str: AnsiString); overload;
+    procedure ReadBlobB(const Index: Word; var str: RawByteString); overload;
+    procedure ReadBlobA(const Index: Word; var str: AnsiString); overload;
+    procedure ReadBlobW(const Index: Word; var str: UnicodeString); overload;
+    procedure ReadBlob(const Index: Word; var str: string); overload;
     procedure ReadBlob(const Index: Word; var Value: Variant); overload;
     procedure ReadBlob(const name: string; Stream: TStream); overload;
-    procedure ReadBlob(const name: string; var str: AnsiString); overload;
+    procedure ReadBlobB(const name: string; var str: RawByteString); overload;
+    procedure ReadBlobA(const name: string; var str: AnsiString); overload;
+    procedure ReadBlobW(const name: string; var str: UnicodeString); overload;
+    procedure ReadBlob(const name: string; var str: string); overload;
     procedure ReadBlob(const name: string; var Value: Variant); overload;
 
     procedure ParamsSetBlob(const Index: Word; Stream: TStream); overload;
-    procedure ParamsSetBlob(const Index: Word; var str: AnsiString); overload;
-    procedure ParamsSetBlob(const Index: Word; var str: UnicodeString); overload;
+    procedure ParamsSetBlobB(const Index: Word; var str: RawByteString); overload;
+    procedure ParamsSetBlobA(const Index: Word; var str: AnsiString); overload;
+    procedure ParamsSetBlobW(const Index: Word; var str: UnicodeString); overload;
+    procedure ParamsSetBlob(const Index: Word; var str: string); overload;
     procedure ParamsSetBlob(const Index: Word; Buffer: Pointer; Size: Word); overload;
     procedure ParamsSetBlob(const Name: string; Stream: TStream); overload;
-    procedure ParamsSetBlob(const Name: string; var str: AnsiString); overload;
-    procedure ParamsSetBlob(const Name: string; var str: UnicodeString); overload;
+    procedure ParamsSetBlobB(const Name: string; var str: RawByteString); overload;
+    procedure ParamsSetBlobA(const Name: string; var str: AnsiString); overload;
+    procedure ParamsSetBlobW(const Name: string; var str: UnicodeString); overload;
+    procedure ParamsSetBlob(const Name: string; var str: string); overload;
     procedure ParamsSetBlob(const Name: string; Buffer: Pointer; Size: Word); overload;
 
     property InternalFields: TSQLResult read GetInternalFields;
@@ -939,10 +949,22 @@ begin
   FStatement.ParamsSetBlob(Name, Stream);
 end;
 
-procedure TUIBCustomDataSet.ParamsSetBlob(const Name: string;
+procedure TUIBCustomDataSet.ParamsSetBlobA(const Name: string;
   var str: AnsiString);
 begin
   FStatement.ParamsSetBlobA(Name, str);
+end;
+
+procedure TUIBCustomDataSet.ParamsSetBlobB(const Index: Word;
+  var str: RawByteString);
+begin
+  FStatement.ParamsSetBlobB(Index, str);
+end;
+
+procedure TUIBCustomDataSet.ParamsSetBlobB(const Name: string;
+  var str: RawByteString);
+begin
+  FStatement.ParamsSetBlobB(Name, str);
 end;
 
 procedure TUIBCustomDataSet.ParamsSetBlob(const Name: string;
@@ -951,16 +973,34 @@ begin
   FStatement.ParamsSetBlob(Name, Buffer, Size);
 end;
 
-procedure TUIBCustomDataSet.ParamsSetBlob(const Index: Word;
+procedure TUIBCustomDataSet.ParamsSetBlobW(const Index: Word;
   var str: UnicodeString);
 begin
-  FStatement.ParamsSetBlob(Index, str);
+  FStatement.ParamsSetBlobW(Index, str);
 end;
 
-procedure TUIBCustomDataSet.ParamsSetBlob(const Name: string;
+procedure TUIBCustomDataSet.ParamsSetBlob(const Index: Word; var str: string);
+begin
+{$IFDEF UNICODE}
+  ParamsSetBlobW(Index, str);
+{$ELSE}
+  ParamsSetBlobA(Index, str);
+{$ENDIF}
+end;
+
+procedure TUIBCustomDataSet.ParamsSetBlobW(const Name: string;
   var str: UnicodeString);
 begin
-  FStatement.ParamsSetBlob(Name, str);
+  FStatement.ParamsSetBlobW(Name, str);
+end;
+
+procedure TUIBCustomDataSet.ParamsSetBlob(const Name: string; var str: string);
+begin
+{$IFDEF UNICODE}
+  ParamsSetBlobW(Name, str);
+{$ELSE}
+  ParamsSetBlobA(Name, str);
+{$ENDIF}
 end;
 
 procedure TUIBCustomDataSet.ParamsSetBlob(const Index: Word;
@@ -969,10 +1009,10 @@ begin
   FStatement.ParamsSetBlob(Index, Stream);
 end;
 
-procedure TUIBCustomDataSet.ParamsSetBlob(const Index: Word;
+procedure TUIBCustomDataSet.ParamsSetBlobA(const Index: Word;
   var str: AnsiString);
 begin
-  FStatement.ParamsSetBlob(Index, str);
+  FStatement.ParamsSetBlobA(Index, str);
 end;
 
 procedure TUIBCustomDataSet.ParamsSetBlob(const Index: Word;
@@ -987,14 +1027,38 @@ begin
   FStatement.ReadBlob(name, Stream);
 end;
 
-procedure TUIBCustomDataSet.ReadBlob(const name: string;
-  var str: AnsiString);
+procedure TUIBCustomDataSet.ReadBlobA(const name: string; var str: AnsiString);
 begin
-  FStatement.ReadBlob(name, str);
+  FStatement.ReadBlobA(name, str);
 end;
 
-procedure TUIBCustomDataSet.ReadBlob(const name: string;
-  var Value: Variant);
+procedure TUIBCustomDataSet.ReadBlobB(const name: string;
+  var str: RawByteString);
+begin
+  FStatement.ReadBlobB(name, str);
+end;
+
+procedure TUIBCustomDataSet.ReadBlobB(const Index: Word;
+  var str: RawByteString);
+begin
+  FStatement.ReadBlobB(Index, str);
+end;
+
+procedure TUIBCustomDataSet.ReadBlobW(const name: string; var str: UnicodeString);
+begin
+  FStatement.ReadBlobW(name, str);
+end;
+
+procedure TUIBCustomDataSet.ReadBlob(const name: string; var str: string);
+begin
+{$IFDEF UNICODE}
+  ReadBlobW(name, str);
+{$ELSE}
+  ReadBlobA(name, str);
+{$ENDIF}
+end;
+
+procedure TUIBCustomDataSet.ReadBlob(const name: string; var Value: Variant);
 begin
   FStatement.ReadBlob(name, Value);
 end;
@@ -1004,9 +1068,23 @@ begin
   FStatement.ReadBlob(Index, Stream);
 end;
 
-procedure TUIBCustomDataSet.ReadBlob(const Index: Word; var str: AnsiString);
+procedure TUIBCustomDataSet.ReadBlobA(const Index: Word; var str: AnsiString);
 begin
-  FStatement.ReadBlob(Index, str);
+  FStatement.ReadBlobA(Index, str);
+end;
+
+procedure TUIBCustomDataSet.ReadBlobW(const Index: Word; var str: UnicodeString);
+begin
+  FStatement.ReadBlobW(Index, str);
+end;
+
+procedure TUIBCustomDataSet.ReadBlob(const Index: Word; var str: string);
+begin
+{$IFDEF UNICODE}
+  ReadBlobW(Index, str);
+{$ELSE}
+  ReadBlobA(Index, str);
+{$ENDIF}
 end;
 
 procedure TUIBCustomDataSet.ReadBlob(const Index: Word;
