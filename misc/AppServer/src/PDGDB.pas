@@ -19,28 +19,30 @@ type
 
   IPDGConnection = interface
   ['{843E105A-B8E0-42A9-AFA0-CF5AA843DB8B}']
-    function newContext(Options: ISuperObject = nil): IPDGContext; overload;
-    function newCommand(Options: ISuperObject = nil): IPDGCommand; overload;
+    function newContext(const Options: ISuperObject = nil): IPDGContext; overload;
+    function newCommand(const Options: ISuperObject = nil): IPDGCommand; overload;
     function newContext(const Options: SOString): IPDGContext; overload;
     function newCommand(const Options: SOString): IPDGCommand; overload;
+    procedure ExecuteImmediate(const Options: SOString); overload;
   end;
 
   IPDGContext = interface
   ['{51992399-2D1A-47EF-9DB1-C5654325F41B}']
-    function newCommand(Options: ISuperObject = nil): IPDGCommand; overload;
+    function newCommand(const Options: ISuperObject = nil): IPDGCommand; overload;
     function newCommand(const Options: SOString): IPDGCommand; overload;
-    function Execute(Command: IPDGCommand; params: ISuperObject = nil): ISuperObject; overload;
-    function Execute(Command: IPDGCommand; params: array of const): ISuperObject; overload;
-    function Execute(Command: IPDGCommand; const params: SOString): ISuperObject; overload;
-    function Execute(Command: IPDGCommand; const params: Variant): ISuperObject; overload;
+    procedure ExecuteImmediate(const Options: SOString); overload;
+    function Execute(const Command: IPDGCommand; const params: ISuperObject = nil): ISuperObject; overload;
+    function Execute(const Command: IPDGCommand; const params: array of const): ISuperObject; overload;
+    function Execute(const Command: IPDGCommand; const params: SOString): ISuperObject; overload;
+    function Execute(const Command: IPDGCommand; const params: Variant): ISuperObject; overload;
   end;
 
   IPDGCommand = interface
   ['{A39B974A-96EA-4047-A57B-A2B3EBE7BABD}']
-    function Execute(params: ISuperObject = nil; context: IPDGContext = nil): ISuperObject; overload;
-    function Execute(params: array of const; context: IPDGContext = nil): ISuperObject; overload;
-    function Execute(const params: SOString; context: IPDGContext = nil): ISuperObject; overload;
-    function Execute(const params: Variant; context: IPDGContext = nil): ISuperObject; overload;
+    function Execute(const params: ISuperObject = nil; const context: IPDGContext = nil): ISuperObject; overload;
+    function Execute(const params: array of const; const context: IPDGContext = nil): ISuperObject; overload;
+    function Execute(const params: SOString; const context: IPDGContext = nil): ISuperObject; overload;
+    function Execute(const params: Variant; const context: IPDGContext = nil): ISuperObject; overload;
     function GetInputMeta: ISuperObject;
     function GetOutputMeta: ISuperObject;
   end;
@@ -54,28 +56,30 @@ type
 
   TPDGConnection = class(TSuperObject, IPDGConnection)
   protected
-    function newContext(Options: ISuperObject = nil): IPDGContext; overload; virtual; abstract;
+    procedure ExecuteImmediate(const Options: SOString); virtual;
+    function newContext(const Options: ISuperObject = nil): IPDGContext; overload; virtual; abstract;
     function newContext(const Options: SOString): IPDGContext; overload; virtual;
-    function newCommand(Options: ISuperObject = nil): IPDGCommand; overload; virtual;
+    function newCommand(const Options: ISuperObject = nil): IPDGCommand; overload; virtual;
     function newCommand(const Options: SOString): IPDGCommand; overload; virtual;
   end;
 
   TPDGContext = class(TSuperObject, IPDGContext)
   protected
-    function newCommand(Options: ISuperObject = nil): IPDGCommand; overload; virtual; abstract;
+    procedure ExecuteImmediate(const Options: SOString); virtual; abstract;
+    function newCommand(const Options: ISuperObject = nil): IPDGCommand; overload; virtual; abstract;
     function newCommand(const Options: SOString): IPDGCommand; overload; virtual;
-    function Execute(Command: IPDGCommand; params: ISuperObject = nil): ISuperObject; overload; virtual;
-    function Execute(Command: IPDGCommand; params: array of const): ISuperObject; overload; virtual;
-    function Execute(Command: IPDGCommand; const params: SOString): ISuperObject; overload; virtual;
-    function Execute(Command: IPDGCommand; const params: Variant): ISuperObject; overload; virtual;
+    function Execute(const Command: IPDGCommand; const params: ISuperObject = nil): ISuperObject; overload; virtual;
+    function Execute(const Command: IPDGCommand; const params: array of const): ISuperObject; overload; virtual;
+    function Execute(const Command: IPDGCommand; const params: SOString): ISuperObject; overload; virtual;
+    function Execute(const Command: IPDGCommand; const params: Variant): ISuperObject; overload; virtual;
   end;
 
   TPDGCommand = class(TSuperObject, IPDGCommand)
   protected
-    function Execute(params: ISuperObject = nil; context: IPDGContext = nil): ISuperObject; overload; virtual; abstract;
-    function Execute(params: array of const; context: IPDGContext = nil): ISuperObject; overload; virtual;
-    function Execute(const params: SOString; context: IPDGContext = nil): ISuperObject; overload; virtual;
-    function Execute(const params: Variant; context: IPDGContext = nil): ISuperObject; overload; virtual;
+    function Execute(const params: ISuperObject = nil; const context: IPDGContext = nil): ISuperObject; overload; virtual; abstract;
+    function Execute(const params: array of const; const context: IPDGContext = nil): ISuperObject; overload; virtual;
+    function Execute(const params: SOString; const context: IPDGContext = nil): ISuperObject; overload; virtual;
+    function Execute(const params: Variant; const context: IPDGContext = nil): ISuperObject; overload; virtual;
     function GetInputMeta: ISuperObject; virtual; abstract;
     function GetOutputMeta: ISuperObject; virtual; abstract;
   end;
@@ -119,9 +123,14 @@ end;
 
 { TPDGConnection }
 
-function TPDGConnection.newCommand(Options: ISuperObject): IPDGCommand;
+function TPDGConnection.newCommand(const Options: ISuperObject): IPDGCommand;
 begin
   Result := newContext.newCommand(Options);
+end;
+
+procedure TPDGConnection.ExecuteImmediate(const Options: SOString);
+begin
+  newContext.ExecuteImmediate(Options);
 end;
 
 function TPDGConnection.newCommand(const Options: SOString): IPDGCommand;
@@ -136,7 +145,7 @@ end;
 
 { TPDGContext }
 
-function TPDGContext.Execute(Command: IPDGCommand;
+function TPDGContext.Execute(const Command: IPDGCommand;
   const params: Variant): ISuperObject;
 begin
   Result := Command.Execute(so(params), Self);
@@ -147,25 +156,24 @@ var
   opt: ISuperObject;
 begin
   opt := TSuperObject.ParseString(PSOChar(Options), false);
-  if opt <> nil then
-    Result := newCommand(opt) else
-    Result := newCommand(TSuperObject.Create(Options));
+  if opt = nil then opt := TSuperObject.Create(Options);
+  Result := newCommand(opt);
 end;
 
-function TPDGContext.Execute(Command: IPDGCommand;
+function TPDGContext.Execute(const Command: IPDGCommand;
   const params: SOString): ISuperObject;
 begin
   Result := Command.Execute(TSuperObject.ParseString(PSOChar(params)), Self);
 end;
 
-function TPDGContext.Execute(Command: IPDGCommand;
-  params: array of const): ISuperObject;
+function TPDGContext.Execute(const Command: IPDGCommand;
+  const params: array of const): ISuperObject;
 begin
   Result := Command.Execute(SA(params), Self);
 end;
 
-function TPDGContext.Execute(Command: IPDGCommand;
-  params: ISuperObject = nil): ISuperObject;
+function TPDGContext.Execute(const Command: IPDGCommand;
+  const params: ISuperObject = nil): ISuperObject;
 begin
   Result := Command.Execute(params, Self);
 end;
@@ -173,19 +181,19 @@ end;
 { TPDGCommand }
 
 function TPDGCommand.Execute(const params: Variant;
-  context: IPDGContext): ISuperObject;
+  const context: IPDGContext): ISuperObject;
 begin
   Result := Execute(SO(params), context);
 end;
 
 function TPDGCommand.Execute(const params: SOString;
-  context: IPDGContext): ISuperObject;
+  const context: IPDGContext): ISuperObject;
 begin
   Result := Execute(TSuperObject.ParseString(PSOChar(params)), context);
 end;
 
-function TPDGCommand.Execute(params: array of const;
-  context: IPDGContext): ISuperObject;
+function TPDGCommand.Execute(const params: array of const;
+  const context: IPDGContext): ISuperObject;
 begin
   Result := Execute(SA(params), context);
 end;

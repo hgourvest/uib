@@ -17,7 +17,7 @@ type
   protected
     function GetConnection: IPDGConnection;
   public
-    constructor Create(Options: ISuperObject); reintroduce; overload;
+    constructor Create(const Options: ISuperObject); reintroduce; overload;
     constructor Create(const Options: string); reintroduce; overload;
     destructor Destroy; override;
   end;
@@ -28,9 +28,9 @@ type
     FDbHandle: IscDbHandle;
     FCharacterSet: TCharacterSet;
   protected
-    function newContext(Options: ISuperObject = nil): IPDGContext; override;
+    function newContext(const Options: ISuperObject = nil): IPDGContext; override;
   public
-    constructor Create(Options: ISuperObject); reintroduce; overload;
+    constructor Create(const Options: ISuperObject); reintroduce; overload;
     constructor Create(const Options: string); reintroduce; overload;
     destructor Destroy; override;
   end;
@@ -40,9 +40,10 @@ type
     FTrHandle: IscTrHandle;
     FConnection: TPDGUIBConnection;
   protected
-    function newCommand(Options: ISuperObject = nil): IPDGCommand; override;
+    procedure ExecuteImmediate(const Options: SOString); override;
+    function newCommand(const Options: ISuperObject = nil): IPDGCommand; override;
   public
-    constructor Create(Connection: TPDGUIBConnection; Options: ISuperObject); reintroduce;
+    constructor Create(const Connection: TPDGUIBConnection; const Options: ISuperObject); reintroduce;
     destructor Destroy; override;
   end;
 
@@ -54,11 +55,11 @@ type
     FSQLParams: TSQLParams;
     FStatementType: TUIBStatementType;
   protected
-    function Execute(params: ISuperObject = nil; context: IPDGContext = nil): ISuperObject; override;
+    function Execute(const params: ISuperObject = nil; const context: IPDGContext = nil): ISuperObject; override;
     function GetInputMeta: ISuperObject; override;
     function GetOutputMeta: ISuperObject; override;
   public
-    constructor Create(Connection: TPDGUIBConnection; Context: TPDGUIBContext; Options: ISuperObject); reintroduce;
+    constructor Create(const Connection: TPDGUIBConnection; const Context: TPDGUIBContext; const Options: ISuperObject); reintroduce;
     destructor Destroy; override;
   end;
 
@@ -67,7 +68,7 @@ uses sysutils;
 
 { TPDGUIBConnection }
 
-constructor TPDGUIBConnection.Create(Options: ISuperObject);
+constructor TPDGUIBConnection.Create(const Options: ISuperObject);
 var
   param: ISuperObject;
   option: string;
@@ -123,14 +124,14 @@ begin
   inherited;
 end;
 
-function TPDGUIBConnection.newContext(Options: ISuperObject): IPDGContext;
+function TPDGUIBConnection.newContext(const Options: ISuperObject): IPDGContext;
 begin
   Result := TPDGUIBContext.Create(Self, Options);
 end;
 
 { TPDGUIBContext }
 
-constructor TPDGUIBContext.Create(Connection: TPDGUIBConnection; Options: ISuperObject);
+constructor TPDGUIBContext.Create(const Connection: TPDGUIBConnection; const Options: ISuperObject);
 begin
   inherited Create(stObject);
   DataPtr := Self;
@@ -153,15 +154,25 @@ begin
   inherited Destroy;
 end;
 
-function TPDGUIBContext.newCommand(Options: ISuperObject): IPDGCommand;
+procedure TPDGUIBContext.ExecuteImmediate(const Options: SOString);
+begin
+  with FConnection, FLibrary do
+  {$IFDEF UNICODE}
+    DSQLExecuteImmediate(FDbHandle, FTrHandle, MBUEncode(Options, CharacterSetCP[FCharacterSet]), 3);
+  {$ELSE}
+    DSQLExecuteImmediate(FDbHandle, FTrHandle, Options.AsString, 3);
+  {$ENDIF}
+end;
+
+function TPDGUIBContext.newCommand(const Options: ISuperObject): IPDGCommand;
 begin
   Result := TPDGUIBCommand.Create(FConnection, Self, Options);
 end;
 
 { TPDGUIBCommand }
 
-constructor TPDGUIBCommand.Create(Connection: TPDGUIBConnection;
-  Context: TPDGUIBContext; Options: ISuperObject);
+constructor TPDGUIBCommand.Create(const Connection: TPDGUIBConnection;
+  const Context: TPDGUIBContext; const Options: ISuperObject);
 begin
   inherited Create(stObject);
   DataPtr := Self;
@@ -193,10 +204,11 @@ begin
   inherited;
 end;
 
-function TPDGUIBCommand.Execute(params: ISuperObject; context: IPDGContext): ISuperObject;
+function TPDGUIBCommand.Execute(const params: ISuperObject; const context: IPDGContext): ISuperObject;
 var
   dfFunction, dfArray, dfFirstOne: boolean;
   str: string;
+  ctx: IPDGContext;
 
   function getone: ISuperObject;
   var
@@ -283,7 +295,7 @@ var
         uftDate, uftTime, uftTimestamp: FSQLParams.AsDateTime[index] := JavaToDelphiDateTime(value.AsInteger);
         uftInt64: FSQLParams.AsInt64[index] := value.AsInteger;
         uftBlob, uftBlobId:
-          with FConnection, FLibrary, TPDGUIBContext((context as ISuperObject).DataPtr) do
+          with FConnection, FLibrary, TPDGUIBContext((ctx as ISuperObject).DataPtr) do
           begin
             BlobHandle := nil;
             FSQLParams.AsQuad[Index] := BlobCreate(FDbHandle, FTrHandle, BlobHandle);
@@ -303,7 +315,7 @@ var
 
   procedure Process;
   begin
-    with FConnection, FLibrary, TPDGUIBContext((context as ISuperObject).DataPtr) do
+    with FConnection, FLibrary, TPDGUIBContext((ctx as ISuperObject).DataPtr) do
       if FSQLResult.FieldCount > 0 then
       begin
         if not dfFunction then
@@ -341,12 +353,13 @@ var
   j: integer;
   f: TSuperObjectIter;
 begin
+  ctx := context;
   dfFirstOne := B['firstone'];
   dfArray := B['array'];
   dfFunction := B['function'];
 
-  if context = nil then
-    context := FConnection.newContext;
+  if ctx = nil then
+    ctx := FConnection.newContext;
 
   for j := 0 to FSQLParams.FieldCount - 1 do
     FSQLParams.IsNull[j] := true;
@@ -367,11 +380,11 @@ begin
             begin
               Result := TSuperObject.Create(stArray);
               for j := 0 to Length - 1 do
-                Result.AsArray.Add(Execute(O[j], context));
+                Result.AsArray.Add(Execute(O[j], ctx));
             end else
             begin
               for j := 0 to Length - 1 do
-                Execute(O[j], context);
+                Execute(O[j], ctx);
             end;
         end;
       end else
@@ -391,7 +404,7 @@ begin
     end else
       Process;
   except
-    (context as ISuperObject).B['rollback'] := true;
+    (ctx as ISuperObject).B['rollback'] := true;
     raise;
   end;
 end;
@@ -494,7 +507,7 @@ end;
 
 { TPDGUIBConnectionPool }
 
-constructor TPDGUIBConnectionPool.Create(Options: ISuperObject);
+constructor TPDGUIBConnectionPool.Create(const Options: ISuperObject);
 begin
   inherited Create(stObject);
   DataPtr := Self;
