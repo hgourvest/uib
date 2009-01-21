@@ -242,13 +242,19 @@ end;
 
 constructor TPDGSQLiteContext.Create(Connection: TPDGSQLiteConnection;
   Options: ISuperObject);
+var
+  sql: string;
 begin
   inherited Create(stObject);
   DataPtr := Self;
   Merge(Options, true);
   FConnection := Connection;
   AsObject.Put('connection', Connection);
-  CheckError(sqlite3_exec(FConnection.FDbHandle, 'BEGIN TRANSACTION', nil, nil, nil), FConnection.FDbHandle);
+  if ObjectIsType(Options, stString) then
+    sql := SysUtils.format('BEGIN %s TRANSACTION', [Options.AsString]) else
+    sql := 'BEGIN TRANSACTION';
+
+  CheckError(sqlite3_exec(FConnection.FDbHandle, PAnsiChar(AnsiString(sql)), nil, nil, nil), FConnection.FDbHandle);
 end;
 
 destructor TPDGSQLiteContext.Destroy;

@@ -134,7 +134,7 @@ var
   data: AnsiString;
 begin
   SetLength(data, Length(Buf) * 2);
-  Move(PChar(Buf)^, PAnsiChar(data)^, Length(data));
+  Move(PWideChar(Buf)^, PAnsiChar(data)^, Length(data));
   Result := StrTobase64A(data);
 end;
 
@@ -144,7 +144,7 @@ var
 begin
   data := Base64ToStrA(B64);
   SetLength(Result, Length(data) div 2);
-  Move(PAnsiChar(data)^, PChar(Result)^, Length(data));
+  Move(PAnsiChar(data)^, PWideChar(Result)^, Length(data));
 end;
 
 function StrTobase64A(Buf: AnsiString): RawByteString;
