@@ -2567,11 +2567,6 @@ begin
   inherited;
   FUseCursor := True;
   FCurrentState := qsDataBase;
-{$IFNDEF UIB_NO_COMPONENT}
-  if (AOwner is TUIBTransaction) then
-    Transaction := TUIBTransaction(AOwner) else
-{$ENDIF}
-    FTransaction := nil;
   FSQL         := TStringList.Create;
   TStringList(FSQL).OnChange := DoSQLChange;
   FCachedFetch := True;
@@ -2582,6 +2577,11 @@ begin
   FCursorName  := '';
   FBufferChunks := 1000;
   FParseParams := True;
+{$IFNDEF UIB_NO_COMPONENT}
+  if (AOwner is TUIBTransaction) then
+    Transaction := TUIBTransaction(AOwner) else
+{$ENDIF}
+    FTransaction := nil;
 end;
 
 destructor TUIBStatement.Destroy;
