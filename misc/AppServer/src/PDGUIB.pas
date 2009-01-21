@@ -160,7 +160,7 @@ begin
   {$IFDEF UNICODE}
     DSQLExecuteImmediate(FDbHandle, FTrHandle, MBUEncode(Options, CharacterSetCP[FCharacterSet]), 3);
   {$ELSE}
-    DSQLExecuteImmediate(FDbHandle, FTrHandle, Options.AsString, 3);
+    DSQLExecuteImmediate(FDbHandle, FTrHandle, Options, 3);
   {$ENDIF}
 end;
 
