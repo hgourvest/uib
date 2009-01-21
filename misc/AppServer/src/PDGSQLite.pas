@@ -44,6 +44,9 @@ type
 implementation
 uses SysUtils;
 const
+
+{$DEFINE UNICODE}
+
 {$IFDEF MSWINDOWS}
   Sqlite3Lib = 'sqlite3.dll';
 {$else}
@@ -87,12 +90,12 @@ const
   SQLITE_BLOB    = 4;
   SQLITE_NULL    = 5;
 
-function sqlite3_open(filename: PChar; var dbHandle: Pointer): Integer; cdecl;
+function sqlite3_open(filename: PSOChar; var dbHandle: Pointer): Integer; cdecl;
   external Sqlite3Lib {$ifdef UNICODE} name 'sqlite3_open16' {$endif};
 function sqlite3_close(dbHandle: Pointer): Integer; cdecl;
   external Sqlite3Lib;
 
-function sqlite3_prepare_v2(db: Pointer; sql: PChar; len: Integer; var stmt: Pointer; tail: PPChar): Integer; cdecl;
+function sqlite3_prepare_v2(db: Pointer; sql: PSOChar; len: Integer; var stmt: Pointer; tail: Pointer): Integer; cdecl;
   external Sqlite3Lib {$IFDEF UNICODE}name 'sqlite3_prepare16_v2'{$endif};
 function sqlite3_finalize(stmt: Pointer): Integer; cdecl;
   external Sqlite3Lib;
@@ -101,7 +104,7 @@ function sqlite3_exec(db: Pointer; sql: PAnsiChar; callback: Pointer; callback_a
 function sqlite3_reset(stm: Pointer): Integer; cdecl;
   external Sqlite3Lib;
 
-function sqlite3_errmsg(db: Pointer): PChar; cdecl;
+function sqlite3_errmsg(db: Pointer): PSOChar; cdecl;
   external Sqlite3Lib {$ifdef UNICODE} name 'sqlite3_errmsg16' {$endif};
 
 function sqlite3_bind_parameter_count(stm: Pointer): Integer; cdecl;
@@ -115,11 +118,11 @@ function sqlite3_column_count(stm: Pointer): Integer; cdecl;
   external Sqlite3Lib;
 function sqlite3_column_type(stm: Pointer; col: Integer): Integer; cdecl;
   external Sqlite3Lib;
-function sqlite3_column_name(stm: Pointer; col: Integer): PChar; cdecl;
+function sqlite3_column_name(stm: Pointer; col: Integer): PSOChar; cdecl;
   external Sqlite3Lib {$IFDEF UNICODE} name 'sqlite3_column_name16'{$ENDIF};
-function sqlite3_column_decltype(stm: Pointer; col: Integer): PChar; cdecl;
+function sqlite3_column_decltype(stm: Pointer; col: Integer): PSOChar; cdecl;
   external Sqlite3Lib {$IFDEF UNICODE} name 'sqlite3_column_decltype16'{$ENDIF};
-function sqlite3_column_text(stm: Pointer; col:longint): PChar; cdecl;
+function sqlite3_column_text(stm: Pointer; col:longint): PSOChar; cdecl;
   external Sqlite3Lib {$IFDEF UNICODE} name 'sqlite3_column_text16'{$ENDIF};
 function sqlite3_column_int64(stm: Pointer; col: Integer): Int64; cdecl;
   external Sqlite3Lib;
@@ -146,7 +149,7 @@ function sqlite3_bind_int64(stm: Pointer; col: Integer; value: Int64): Integer; 
   external Sqlite3Lib;
 function sqlite3_bind_null(stm: Pointer; col: Integer): Integer; cdecl;
   external Sqlite3Lib;
-function sqlite3_bind_text(stm: Pointer; col: Integer; value: PChar; n: Integer; dest: TBindDestructorCallback): Integer; cdecl;
+function sqlite3_bind_text(stm: Pointer; col: Integer; value: PSOChar; n: Integer; dest: TBindDestructorCallback): Integer; cdecl;
   external Sqlite3Lib {$IFDEF UNICODE} name 'sqlite3_bind_text16'{$ENDIF};
 function sqlite3_bind_zeroblob(stm: Pointer; col, n: Integer): Integer; cdecl;
   external Sqlite3Lib;
@@ -212,7 +215,7 @@ begin
 
   param := O['databasename'];
   if param <> nil then
-    CheckError(sqlite3_open(PChar(param.AsString), FDbHandle), nil) else
+    CheckError(sqlite3_open(PSOChar(param.AsString), FDbHandle), nil) else
     FDbHandle := nil;
 end;
 
@@ -292,7 +295,7 @@ begin
     Merge(Options, true);
   FConnection := Connection;
   AsObject.Put('connection', Connection);
-  CheckError(sqlite3_prepare_v2(FConnection.FDbHandle, PChar(S['sql']), -1, FStHandle, nil), FConnection.FDbHandle);
+  CheckError(sqlite3_prepare_v2(FConnection.FDbHandle, PSOChar(S['sql']), -1, FStHandle, nil), FConnection.FDbHandle);
 end;
 
 destructor TPDGSQLiteCommand.Destroy;
@@ -373,7 +376,7 @@ var
         stBoolean: sqlite3_bind_int(FStHandle, index, ord(value.AsBoolean));
         stDouble: sqlite3_bind_double(FStHandle, index, value.AsDouble);
         stInt: sqlite3_bind_int64(FStHandle, index, value.AsInteger);
-        stObject, stArray, stString:
+        {stObject, stArray,} stString:
           begin
             str := value.AsString;
             len := (Length(str) + 1) * SizeOf(SOChar);
@@ -453,7 +456,7 @@ begin
       begin
         if ObjectFindFirst(params, f) then
         repeat
-          SetParam(sqlite3_bind_parameter_index(FStHandle, PAnsiChar(UTF8Encode(f.key))), f.val);
+          SetParam(sqlite3_bind_parameter_index(FStHandle, PAnsiChar(UTF8Encode(':' + f.key))), f.val);
         until not ObjectFindNext(f);
         ObjectFindClose(f);
         Process;
@@ -469,6 +472,7 @@ begin
     raise;
   end;
 end;
+
 
 function TPDGSQLiteCommand.GetInputMeta: ISuperObject;
 var
@@ -487,7 +491,11 @@ begin
         rec := TSuperObject.Create(stObject);
         name := sqlite3_bind_parameter_name(FStHandle, j);
         if name <> nil then
+{$if sizeof(char) = 1}
+          rec.S['name'] := UTF8Decode(name);
+{$else}
           rec.S['name'] := UTF8ToString(name);
+{$ifend}
         add(rec);
       end;
   end else
