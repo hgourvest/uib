@@ -644,6 +644,9 @@ type
     procedure ReadBlobA(const Index: Word; var str: AnsiString); overload;
     procedure ReadBlobW(const Index: Word; var str: UnicodeString); overload;
     procedure ReadBlob(const Index: Word; var str: string); overload;
+    function ReadBlobB(const Index: Word): RawByteString; overload;
+    function ReadBlobA(const Index: Word): AnsiString; overload;
+    function ReadBlobW(const Index: Word): UnicodeString; overload;
     function ReadBlob(const Index: Word): string; overload;
     procedure ReadBlob(const Index: Word; var Value: Variant); overload;
     procedure ReadBlob(const Index: Word; Data: Pointer); overload;
@@ -652,6 +655,9 @@ type
     procedure ReadBlobA(const name: string; var str: AnsiString); overload;
     procedure ReadBlobW(const name: string; var str: UnicodeString); overload;
     procedure ReadBlob(const name: string; var str: string); overload;
+    function ReadBlobB(const name: string): RawByteString; overload;
+    function ReadBlobA(const name: string): AnsiString; overload;
+    function ReadBlobW(const name: string): UnicodeString; overload;
     function ReadBlob(const name: string): string; overload;
     procedure ReadBlob(const name: string; var Value: Variant); overload;
     procedure ReadBlob(const name: string; Data: Pointer); overload;
@@ -6200,6 +6206,36 @@ end;
       FInMemoryEOF := True else
       CurrentRecord := CurrentRecord + 1;
   end;
+
+function TSQLResult.ReadBlobA(const name: string): AnsiString;
+begin
+  ReadBlobA(name, Result);
+end;
+
+function TSQLResult.ReadBlobA(const Index: Word): AnsiString;
+begin
+  ReadBlobA(Index, Result);
+end;
+
+function TSQLResult.ReadBlobB(const name: string): RawByteString;
+begin
+  ReadBlobB(name, result);
+end;
+
+function TSQLResult.ReadBlobB(const Index: Word): RawByteString;
+begin
+  ReadBlobB(Index, Result);
+end;
+
+function TSQLResult.ReadBlobW(const name: string): UnicodeString;
+begin
+  ReadBlobW(name, Result);
+end;
+
+function TSQLResult.ReadBlobW(const Index: Word): UnicodeString;
+begin
+  ReadBlobW(Index, Result);
+end;
 
 { TPoolStream }
 
