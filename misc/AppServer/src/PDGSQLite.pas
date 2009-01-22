@@ -200,6 +200,8 @@ begin
     RaiseError;
 end;
 
+const
+  MAX_BUSY_TIME = 5000;
 
 { TPDGSQLiteConnection }
 
@@ -390,23 +392,39 @@ var
   procedure Process;
   var
     count: Integer;
+    return: Integer;
+    busy: Cardinal;
   begin
       count := sqlite3_column_count(FStHandle);
-      if count > 0 then
-      begin
-        if not dfFirstOne then
-        begin
-          Result := TSuperObject.Create(stArray);
-          while sqlite3_step(FStHandle) = SQLITE_ROW do
-            Result.AsArray.Add(getone);
-        end else
-          if sqlite3_step(FStHandle) = SQLITE_ROW then
-            Result := getone else
-            Result := nil;
-      end else
-      begin
-        sqlite3_step(FStHandle);
+      if (not dfFirstOne) and (count > 0) then
+        Result := TSuperObject.Create(stArray) else
         Result := nil;
+      busy := 0;
+      while True do
+      begin
+        return := sqlite3_step(FStHandle);
+        case return of
+          SQLITE_BUSY:
+            begin
+              if (busy > MAX_BUSY_TIME) then
+                CheckError(return, FConnection.FDbHandle);
+              inc(busy, 10);
+              sleep(10);
+            end;
+          SQLITE_DONE: Break;
+          SQLITE_ROW:
+            begin
+              if (not dfFirstOne) then
+                Result.AsArray.Add(getone) else
+                begin
+                  Result := getone;
+                  Break;
+                end;
+              busy := 0;
+            end;
+        else
+          CheckError(return, FConnection.FDbHandle);
+        end;
       end;
   end;
 var
@@ -507,6 +525,8 @@ var
   j, count: Integer;
   rec: ISuperObject;
   dfArray: Boolean;
+  sType: SOString;
+  v: Integer;
 begin
   count := sqlite3_column_count(FStHandle);
   if count > 0 then
@@ -525,19 +545,21 @@ begin
           Result.asArray.add(rec);
         end else
           Result.AsObject.Put(sqlite3_column_name(FStHandle, j), rec);
-        // todo: parse
-        rec.S['type'] := sqlite3_column_decltype(FStHandle, j);
-//        case sqlite3_column_type(FStHandle, j) of
-//          SQLITE_TEXT:
-//          begin
-//            rec.S['type'] := 'str';
-//            //rec.I['length'] := FSQLResult.SQLLen[j];
-//          end;
-//          SQLITE_INTEGER: rec.S['type'] := 'int';
-//          SQLITE_FLOAT: rec.S['type'] := 'float';
-//          SQLITE_BLOB: rec.S['type'] := 'bin';
-//          SQLITE_NULL: rec.S['type'] := 'null';
-//        end;
+        sType := sqlite3_column_decltype(FStHandle, j);
+        v := pos('(', sType);
+        if v = 0 then
+          rec.S['type'] := trim(sType) else
+          begin
+            rec.S['type'] := trim(Copy(sType, 1, v - 1));
+            sType := Copy(sType, v+1, length(sType) - v);
+            v := pos(',', sType);
+            if v = 0 then
+            begin
+              v := pos(')', sType);
+              if v > 0 then
+                rec.I['length'] := StrToInt(copy(sType, 1, v-1));
+            end;
+          end;
       end;
   end else
     Result := nil;
