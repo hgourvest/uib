@@ -170,7 +170,7 @@ begin
     while src^ <> #0 do
     begin
       P1 := src;
-      while ((not StrictSep and (src^ > ' ')) or
+      while ((not StrictSep and (src^ >= ' ')) or
             (StrictSep and (src^ <> #0))) and (src^ <> sep) do
         Inc(src);
       SetString(S, P1, src - P1);
