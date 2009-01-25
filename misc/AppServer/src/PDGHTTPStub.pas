@@ -278,13 +278,13 @@ begin
     i := pos('Basic ', str);
     if i = 1  then
     begin
-      str := Base64ToStr(Copy(str, 7, Length(str) - 6));
+      str := Base64ToStr(RawByteString(Copy(str, 7, Length(str) - 6)));
       i := pos(':', str);
       if i > 0 then
       begin
         Result := TSuperObject.Create;
-        Result.AsObject.Put('user', TSuperObject.Create(copy(str, 1, i-1)));
-        Result.AsObject.Put('pass', TSuperObject.Create(copy(str, i+1, Length(str)-i)));
+        Result.AsObject.S['user'] := copy(str, 1, i-1);
+        Result.AsObject.S['pass'] := copy(str, i+1, Length(str)-i);
       end;
     end;
   end;
@@ -329,7 +329,7 @@ begin
     with FRequest.ForcePath('env') do
     begin
       prop := LowerCase(Copy(str, 1, p-str));
-      AsObject.Put(PChar(prop), TSuperObject.Create(p+2));
+      AsObject.S[prop] := p+2;
       Result := true;
     end;
 end;

@@ -112,7 +112,7 @@ end;
 
 procedure THTTPConnexion.doAfterProcessRequest(ctx: ISuperObject);
 begin
-  Response.S['env.Set-Cookie'] := COOKIE_NAME + '=' + StrTobase64(ctx['session'].AsJSon) + '; path=/';
+  Response.S['env.Set-Cookie'] := COOKIE_NAME + '=' + SOString(StrTobase64(ctx['session'].AsJSon)) + '; path=/';
   Response.S['Cache-Control'] := 'no-cache';
   HTTPCompress(ctx);
   inherited;
@@ -148,8 +148,8 @@ begin
   obj := Request['cookies.' + COOKIE_NAME];
   if obj <> nil then
   case obj.DataType of
-    stString: ctx['session'].Merge(Base64ToStr(obj.AsString));
-    stArray: ctx['session'].Merge(Base64ToStr(obj.AsArray.S[0]));
+    stString: ctx['session'].Merge(Base64ToStr(RawByteString(obj.AsString)));
+    stArray: ctx['session'].Merge(Base64ToStr(RawByteString(obj.AsArray.S[0])));
   end;
 
   // get parametters

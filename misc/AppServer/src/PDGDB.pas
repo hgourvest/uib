@@ -152,12 +152,8 @@ begin
 end;
 
 function TPDGContext.newCommand(const Options: SOString): IPDGCommand;
-var
-  opt: ISuperObject;
 begin
-  opt := TSuperObject.ParseString(PSOChar(Options), false);
-  if opt = nil then opt := TSuperObject.Create(Options);
-  Result := newCommand(opt);
+  Result := newCommand(SO(Options));
 end;
 
 function TPDGContext.Execute(const Command: IPDGCommand;

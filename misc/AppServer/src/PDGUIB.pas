@@ -137,7 +137,7 @@ begin
   DataPtr := Self;
   Merge(Options, true);
   FConnection := Connection;
-  AsObject.Put('connection', Connection);
+  AsObject['connection'] := Connection;
   FTrHandle := nil;
   with FConnection, FLibrary do
     TransactionStart(FTrHandle, FDbHandle);
@@ -147,7 +147,7 @@ destructor TPDGUIBContext.Destroy;
 var
   obj: ISuperObject;
 begin
-  obj := AsObject.Get('rollback');
+  obj := AsObject['rollback'];
   if ObjectIsType(obj, stBoolean) and obj.AsBoolean then
     FConnection.FLibrary.TransactionRollback(FTrHandle) else
     FConnection.FLibrary.TransactionCommit(FTrHandle);
@@ -180,7 +180,7 @@ begin
     O['sql'] := Options else
     Merge(Options, true);
   FConnection := Connection;
-  AsObject.Put('connection', Connection);
+  AsObject['connection'] := Connection;
 
   FSQLResult := TSQLResult.Create(Connection.FCharacterSet, 0, false, true);
   FSQLParams := TSQLParams.Create(Connection.FCharacterSet);
@@ -475,7 +475,7 @@ begin
           rec.S['name'] := FSQLResult.AliasName[j];
           Result.asArray.add(rec);
         end else
-          Result.AsObject.Put(FSQLResult.AliasName[j], rec);
+          Result.AsObject[FSQLResult.AliasName[j]] := rec;
 
         case FSQLResult.FieldType[j] of
           uftChar, uftVarchar, uftCstring:
