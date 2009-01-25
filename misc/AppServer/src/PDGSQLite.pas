@@ -254,7 +254,7 @@ begin
   DataPtr := Self;
   Merge(Options, true);
   FConnection := Connection;
-  AsObject.Put('connection', Connection);
+  AsObject['connection'] := Connection;
   if ObjectIsType(Options, stString) then
     sql := SysUtils.format('BEGIN %s TRANSACTION', [Options.AsString]) else
     sql := 'BEGIN TRANSACTION';
@@ -266,7 +266,7 @@ destructor TPDGSQLiteContext.Destroy;
 var
   obj: ISuperObject;
 begin
-  obj := AsObject.Get('rollback');
+  obj := AsObject['rollback'];
   if ObjectIsType(obj, stBoolean) and obj.AsBoolean then
     CheckError(sqlite3_exec(FConnection.FDbHandle, 'ROLLBACK', nil, nil, nil), FConnection.FDbHandle) else
     CheckError(sqlite3_exec(FConnection.FDbHandle, 'COMMIT', nil, nil, nil), FConnection.FDbHandle);
@@ -296,7 +296,7 @@ begin
     O['sql'] := Options else
     Merge(Options, true);
   FConnection := Connection;
-  AsObject.Put('connection', Connection);
+  AsObject['connection'] := Connection;
   CheckError(sqlite3_prepare_v2(FConnection.FDbHandle, PSOChar(S['sql']), -1, FStHandle, nil), FConnection.FDbHandle);
 end;
 
@@ -544,7 +544,7 @@ begin
           rec.S['name'] := sqlite3_column_name(FStHandle, j);
           Result.asArray.add(rec);
         end else
-          Result.AsObject.Put(sqlite3_column_name(FStHandle, j), rec);
+          Result.AsObject[sqlite3_column_name(FStHandle, j)] := rec;
         sType := sqlite3_column_decltype(FStHandle, j);
         v := pos('(', sType);
         if v = 0 then
