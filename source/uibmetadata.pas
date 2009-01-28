@@ -4306,20 +4306,22 @@ procedure TMetaGrant.SaveGranteesToDDLNode(Stream: TStringStream;
   OptionKeyWord: String; options: TDDLOptions);
 var
   I, C: Integer;
+  Grantees: Integer;
 begin
+  Grantees := 0;
   for I := 0 to FNodeItemsCount - 1 do
   begin
     for C := 0 to FNodeItems[I].Childs.Count - 1 do
     begin
+      if Grantees > 0 then
+        Stream.WriteString(', ');
       with TMetaGrantee(FNodeItems[I].Childs.Items[C]) do
         SaveToDDLNode(Stream, options);
-
-      if C < FNodeItems[I].Childs.Count - 1 then
-        Stream.WriteString(', ')
+      Inc(Grantees);
     end;
   end;
 
-  if (FNodeItemsCount > 0) and FOption then
+  if (Grantees > 0) and FOption then
     Stream.WriteString(' WITH ' + OptionKeyWord + ' OPTION');
   Stream.WriteString(';');
 end;
