@@ -174,7 +174,7 @@ begin
   begin
     DataBase.Connected := false;
     TreeView.Items.Clear;
-    DataBase.DatabaseName := OpenDialog.FileName;
+    DataBase.DatabaseName := ':' + OpenDialog.FileName;
     MetaData.Free;
     MetaData := TMetaDataBase.Create(nil, 0);
     MetaData.LoadFromDatabase(Transaction);
