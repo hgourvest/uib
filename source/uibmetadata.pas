@@ -3453,7 +3453,7 @@ begin
       Stream.WriteString(',');
   end;
   Stream.WriteString(NewLine + ')' + NewLine + 'AS' + NewLine);
-  Stream.WriteString(Source);
+  Stream.WriteString(Source + NewLine);
   Stream.WriteString(';');
 end;
 

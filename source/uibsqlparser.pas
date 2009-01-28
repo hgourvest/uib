@@ -199,7 +199,7 @@ begin
         Result := copy(str, FMarkerPos + 1, Length(Str) - FMarkerPos) else
         if i <> FLine then
           Result := Result + #13#10 + str else
-          Result := Result + #13#10 + copy(str, 0, FCursor - PChar(FStr) - FMarkerPos)
+          Result := Result + #13#10 + inttostr(FCursor - PChar(FStr)) + '-' + copy(str, 0, FCursor - PChar(FStr))
   end;
 end;
 

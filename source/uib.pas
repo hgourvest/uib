@@ -255,8 +255,8 @@ type
     procedure UnRegisterException(Number: Integer);
     { Remove the Registered Exception class. }
     procedure UnRegisterExceptions(Excpt: EUIBExceptionClass);
-    { Create a database with a default page size of 2048. }
-    procedure CreateDatabase(PageSize: Integer = 2048);
+    { Create a database with a default page size of 4096. }
+    procedure CreateDatabase(PageSize: Integer = 4096);
     { Drop the database. }
     procedure DropDatabase;
     { Return a TMetaDatabase class corresponding to the current connection. }
@@ -922,12 +922,15 @@ type
     procedure SetScript(const Value: TStrings);
     procedure SetOnError(const Value: TEndTransMode);
     function GetOnError: TEndTransMode;
+    function GetDatabase: TUIBDataBase;
+    procedure SetDatabase(const Value: TUIBDataBase);
   public
     constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
     destructor Destroy; override;
     procedure ExecuteScript;
   published
     property Transaction: TUIBTransaction read GetTransaction write SetTransaction;
+    property Database: TUIBDataBase read GetDatabase write SetDatabase;
     property Script: TStrings read FScript write SetScript;
     property AutoDDL: boolean read FAutoDDL write FAutoDDL default True;
     property OnParse: TOnParse read FOnParse write FOnParse;
@@ -1340,7 +1343,7 @@ begin
 {$ENDIF}
 end;
 
-procedure TUIBDataBase.CreateDatabase(PageSize: Integer = 2048);
+procedure TUIBDataBase.CreateDatabase(PageSize: Integer);
 var TrHandle: IscTrHandle;
 const
   CreateDb = 'CREATE DATABASE ''%s'' USER ''%s'' PASSWORD ''%s'' '+
@@ -4487,6 +4490,11 @@ begin
   end;
 end;
 
+function TUIBScript.GetDatabase: TUIBDataBase;
+begin
+  Result := FQuery.DataBase;
+end;
+
 function TUIBScript.GetOnError: TEndTransMode;
 begin
   Result := FQuery.OnError;
@@ -4495,6 +4503,11 @@ end;
 function TUIBScript.GetTransaction: TUIBTransaction;
 begin
   Result := FQuery.Transaction;
+end;
+
+procedure TUIBScript.SetDatabase(const Value: TUIBDataBase);
+begin
+  FQuery.DataBase := Value;
 end;
 
 procedure TUIBScript.SetOnError(const Value: TEndTransMode);
