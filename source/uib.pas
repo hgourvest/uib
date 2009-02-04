@@ -1097,13 +1097,18 @@ type
   private
     FOptions: TRepairOptions;
     FDatabase: string;
+    FOnVerbose: TVerboseEvent;
+    FVerbose: boolean;
   protected
     function CreateStartSPB: RawByteString; virtual;
   public
     procedure Run;
+    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
   published
     property Options: TRepairOptions read FOptions write FOptions;
     property Database: string read FDatabase write FDatabase;
+    property OnVerbose: TVerboseEvent read FOnVerbose write FOnVerbose;
+    property Verbose: boolean read FVerbose write FVerbose default false;
   end;
 
   TOnEvent = procedure(Sender: TObject; const EventName: string; Count: Integer;
@@ -3946,7 +3951,7 @@ end;
 
 procedure TUIBBackupRestore.Run;
 var
-  Buffer: AnsiString;
+  Buffer: RawByteString;
   Len: Word;
 begin
   BeginService;
@@ -4172,7 +4177,7 @@ const
     isc_spb_sec_firstname, isc_spb_sec_middlename, isc_spb_sec_lastname,
     isc_spb_sec_userid, isc_spb_sec_groupid);
 var
-  StartParams, Buffer: AnsiString;
+  StartParams, Buffer: RawByteString;
   Position: Integer;
 
   procedure AddStringParam(P: TSecurityParam);
@@ -4541,6 +4546,12 @@ end;
 
 { TUIBRepair }
 
+constructor TUIBRepair.Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF};
+begin
+  inherited;
+  FVerbose := false;
+end;
+
 function TUIBRepair.CreateStartSPB: RawByteString;
 var
   Len: Word;
@@ -4585,10 +4596,30 @@ begin
 end;
 
 procedure TUIBRepair.Run;
+var
+  Buffer: RawByteString;
+  Len: Word;
 begin
   BeginService;
   try
     FLibrary.ServiceStart(FHandle, CreateStartSPB);
+    if FVerbose then
+    begin
+      SetLength(Buffer, 1024);
+      while true do
+      begin
+        FLibrary.ServiceQuery(FHandle, '', isc_info_svc_line, Buffer);
+        if (Buffer[1] <> isc_info_svc_line) then
+          raise Exception.Create(EUIB_UNEXPECTEDERROR);
+        Len := PWord(@Buffer[2])^;
+        if (len > 0)  then
+        begin
+          if Assigned(FOnVerbose) then
+            FOnVerbose(self, string(copy(Buffer, 4, len)));
+        end else
+          Break;
+      end;
+    end;
   finally
     EndService;
   end;
@@ -5071,7 +5102,7 @@ end;
 
 procedure TUIBServerInfo.GetServerInfo;
 var
-  Buffer: AnsiString;
+  Buffer: RawByteString;
   Code: Byte;
   Position: Integer;
   Value: Integer;

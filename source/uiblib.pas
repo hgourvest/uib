@@ -867,16 +867,16 @@ type
     procedure ArraySetDesc(const RelationName, FieldName: AnsiString; var SqlDtype,
       SqlLength, Dimensions: Smallint; var desc: TISCArrayDesc);
 
-    procedure ServiceAttach(const ServiceName: AnsiString;
-      var SvcHandle: IscSvcHandle; const Spb: AnsiString);
+    procedure ServiceAttach(const ServiceName: RawByteString;
+      var SvcHandle: IscSvcHandle; const Spb: RawByteString);
     procedure ServiceDetach(var SvcHandle: IscSvcHandle);
     procedure ServiceQuery(var SvcHandle: IscSvcHandle;
-      const SendSpb, RequestSpb: AnsiString; var Buffer: AnsiString);
-    procedure ServiceStart(var SvcHandle: IscSvcHandle; const Spb: AnsiString);
+      const SendSpb, RequestSpb: RawByteString; var Buffer: RawByteString);
+    procedure ServiceStart(var SvcHandle: IscSvcHandle; const Spb: RawByteString);
 
     function ErrSqlcode: ISCLong;
     function ErrInterprete: AnsiString;
-    function ErrSQLInterprete(SQLCODE: Smallint): AnsiString;
+    function ErrSQLInterprete(SQLCODE: Smallint): RawByteString;
 
     procedure BlobOpen(var DBHandle: IscDbHandle; var TraHandle: IscTrHandle;
       var BlobHandle: IscBlobHandle; BlobId: TISCQuad; BPB: AnsiString = '');
@@ -2402,7 +2402,7 @@ const
   {$ENDIF}
   end;
 
-  function TUIBLibrary.ErrSQLInterprete(SQLCODE: Smallint): AnsiString;
+  function TUIBLibrary.ErrSQLInterprete(SQLCODE: Smallint): RawByteString;
   var
     i : Integer;
   begin
@@ -2425,7 +2425,7 @@ const
 // Services
 //******************************************************************************
 
-  procedure TUIBLibrary.ServiceAttach(const ServiceName: AnsiString; var SvcHandle: IscSvcHandle; const Spb: AnsiString);
+  procedure TUIBLibrary.ServiceAttach(const ServiceName: RawByteString; var SvcHandle: IscSvcHandle; const Spb: RawByteString);
   begin
   {$IFDEF UIBTHREADSAFE}
     FLIBCritSec.Enter;
@@ -2454,7 +2454,7 @@ const
   {$ENDIF}
   end;
 
-  procedure TUIBLibrary.ServiceQuery(var SvcHandle: IscSvcHandle; const SendSpb, RequestSpb: AnsiString; var Buffer: AnsiString);
+  procedure TUIBLibrary.ServiceQuery(var SvcHandle: IscSvcHandle; const SendSpb, RequestSpb: RawByteString; var Buffer: RawByteString);
   begin
   {$IFDEF UIBTHREADSAFE}
     FLIBCritSec.Enter;
@@ -2470,7 +2470,7 @@ const
   {$ENDIF}
   end;
 
-  procedure TUIBLibrary.ServiceStart(var SvcHandle: IscSvcHandle; const Spb: AnsiString);
+  procedure TUIBLibrary.ServiceStart(var SvcHandle: IscSvcHandle; const Spb: RawByteString);
   begin
   {$IFDEF UIBTHREADSAFE}
     FLIBCritSec.Enter;
