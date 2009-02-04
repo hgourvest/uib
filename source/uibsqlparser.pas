@@ -147,7 +147,7 @@ const
 function getCM(c: Char): Char;
 begin
 {$IFDEF UNICODE}
-    if c > #255 then
+    if c >= #256 then
       Result := ' ' else
       Result := CM[AnsiChar(c)];
 {$ELSE}
