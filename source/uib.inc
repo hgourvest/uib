@@ -16,7 +16,7 @@
 (* $Id: uib.inc,v 1.13 2005/07/11 22:34:53 progdigy Exp $ *)
 (********************************************************************************)
 
-{$I jedi.inc}
+{$I uibcommon.inc}
 
 {$IFDEF FREEBSD}
   {$DEFINE UNIX}
