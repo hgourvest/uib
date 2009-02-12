@@ -4118,7 +4118,11 @@ type
 {$IFDEF COMPILER6_UP}
           SQL_INT64     : Result := PInt64(sqldata)^;
 {$ELSE}
+  {$IFDEF FPC}
+          SQL_INT64     : Result := PInt64(sqldata)^;
+  {$ELSE}
           SQL_INT64     : Result := Integer(PInt64(sqldata)^);
+  {$ENDIF}
 {$ENDIF}
           SQL_TEXT      : Result := DecodeString(SQL_TEXT, Index);
           SQL_VARYING   : Result := DecodeString(SQL_VARYING, Index);
@@ -6130,7 +6134,11 @@ end;
 {$IFDEF COMPILER6_UP}
           SQL_INT64     : Result := PInt64(sqldata)^;
 {$ELSE}
+  {$IFDEF FPC}
+          SQL_INT64     : Result := PInt64(sqldata)^;
+  {$ELSE}
           SQL_INT64     : Result := Integer(PInt64(sqldata)^);
+  {$ENDIF}
 {$ENDIF}
           SQL_TEXT      : Result := DecodeString(SQL_TEXT, Index);
           SQL_VARYING   : Result := DecodeString(SQL_VARYING, Index);
