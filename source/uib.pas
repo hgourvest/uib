@@ -171,6 +171,7 @@ type
     FEventNotifiers: TList;
     FCharacterSet: TCharacterSet;
     FSQLDialect: Word;
+    FStoreInDFM: Boolean;
 
     FMetaDataOptions: TMetaDataOptions;
     FOnInfoReadSeqCount: TOnInfoTableOpCount;
@@ -428,7 +429,9 @@ type
     { Set the Password. Default = masterkey. }
     property PassWord: string read GetPassWord write SetPassWord;
     { Define wich library the connection use.}
-    property LibraryName: TFileName read FLiBraryName write SetLibraryName;
+    property LibraryName: TFileName read FLiBraryName write SetLibraryName stored FStoreInDFM;
+    { Define if the LibraryName property must be saved into the DFM }
+    property StoreInDFM: Boolean read FStoreInDFM write FStoreInDFM default True;
     { This event occur after the component is connected to database. }
     property AfterConnect: TNotifyEvent read FAfterConnect write FAfterConnect;
     { This event occur before the component is connected to database. }
@@ -1272,6 +1275,7 @@ begin
   FEventNotifiers := TList.Create;
   FMetadata := nil;
   FMetaDataOptions := TMetaDataOptions.Create;
+  FStoreInDFM := True;
 end;
 
 destructor TUIBDataBase.Destroy;
