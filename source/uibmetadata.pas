@@ -116,7 +116,7 @@ type
   public
     procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); virtual;
     procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); virtual;
-   function GetNodes(const Index: Integer): TNodeItem;
+    function GetNodes(const Index: Integer): TNodeItem;
     class function NodeClass: string; virtual;
     class function NodeType: TMetaNodeType; virtual;
     constructor Create(AOwner: TMetaNode; ClassIndex: Integer); virtual;
@@ -3689,7 +3689,7 @@ end;
 
 procedure TMetaProcedure.SaveToCreateEmptyDDL(Stream: TStringStream; options: TDDLOptions);
 begin
-  InternalSaveToDDL(Stream, 'CREATE', options);
+  InternalSaveToDDL(Stream, {$IFDEF FB15_UP}'CREATE OR ALTER'{$ELSE}'CREATE'{$ENDIF}, options);
   if OutputFieldsCount > 0 then
     Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  suspend;' + NewLine + 'end;') else
     Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  exit;' + NewLine + 'end;');
