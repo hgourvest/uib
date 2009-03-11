@@ -3447,7 +3447,7 @@ type
       SQL_TEXT    :
         begin
           Str := MBUDecode(Copy(sqldata, 0, sqllen), CharacterSetCP[FCharacterSet]);
-          if (FCharacterSet in UNICODE_CHARSETS) then
+          if (SqlSubType > 1) then
             SetLength(Str, sqllen div SqlSubType);
         end;
       SQL_VARYING : Str := MBUDecode(Copy(PAnsiChar(@PVary(sqldata).vary_string), 0, PVary(sqldata).vary_length), CharacterSetCP[FCharacterSet]);
