@@ -3445,7 +3445,7 @@ procedure TMetaView.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 var
   I: Integer;
 begin
-  Stream.WriteString(Format('CREATE VIEW %s (', [Name]));
+  Stream.WriteString(Format({$IFDEF FB15_UP}'RECREATE'{$ELSE}'CREATE'{$ENDIF} + ' VIEW %s (', [Name]));
   for I := 0 to FieldsCount - 1 do
   begin
     Stream.WriteString(NewLine + '   ' + Fields[I].Name);
