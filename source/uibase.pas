@@ -1373,14 +1373,15 @@ const
   (*************************************
    * Transaction parameter block stuff *
    *************************************)
-
   isc_tpb_version1 = #1;
   isc_tpb_version3 = #3;
   isc_tpb_consistency = #1;
   isc_tpb_concurrency = #2;
+{$IFNDEF FB_21UP}
   isc_tpb_shared = #3;
   isc_tpb_protected = #4;
   isc_tpb_exclusive = #5;
+{$ENDIF}
   isc_tpb_wait = #6;
   isc_tpb_nowait = #7;
   isc_tpb_read = #8;

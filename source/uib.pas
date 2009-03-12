@@ -499,16 +499,18 @@ type
     { allows concurrent transactions to read and write shared data. }
     tpConcurrency,
     { Concurrent, shared access of a specified table among all transactions. }
+  {$IFNDEF FB_21UP}
     tpShared,
     { Concurrent, restricted access of a specified table. }
     tpProtected,
     tpExclusive,
+  {$ENDIF}
     { Specifies that the transaction is to wait until the conflicting resource
       is released before retrying an operation [Default]. }
     tpWait,
     { Specifies that the transaction is not to wait for the resource to be
       released, but instead, should return an update conflict error immediately. }
-    tpNowait,          
+    tpNowait,
     { Read-only access mode that allows a transaction only to select data from tables. }
     tpRead,
     { Read-write access mode of that allows a transaction to select, insert,
@@ -3279,16 +3281,16 @@ end;
 constructor TUIBTransaction.Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF};
 begin
   inherited;
-  FOptions     := [tpConcurrency,tpWait,tpWrite];
-  FTrHandle := nil;
-  FStatements  := 0;
-  FDataBases   := TList.Create;
-  FAutoRetain  := False;
-  FAutoStart   := True;
-  FAutoStop    := True;
+  FOptions       := [tpConcurrency,tpWait,tpWrite];
+  FTrHandle      := nil;
+  FStatements    := 0;
+  FDataBases     := TList.Create;
+  FAutoRetain    := False;
+  FAutoStart     := True;
+  FAutoStop      := True;
   FDefaultAction := etmCommit;
 {$IFDEF FB20_UP}
-  FLockTimeout := 0;
+  FLockTimeout   := 0;
 {$ENDIF}
 end;
 
@@ -3656,6 +3658,35 @@ var
         if P^ =';' then inc(P);
       end;
   end;
+const
+  tpc: array[TTransParam] of AnsiChar = (
+    isc_tpb_consistency,
+    isc_tpb_concurrency,
+  {$IFNDEF FB_21UP}
+    isc_tpb_shared,
+    isc_tpb_protected,
+    isc_tpb_exclusive,
+  {$ENDIF}
+    isc_tpb_wait,
+    isc_tpb_nowait,
+    isc_tpb_read,
+    isc_tpb_write,
+    isc_tpb_lock_read,
+    isc_tpb_lock_write,
+    isc_tpb_verb_time,
+    isc_tpb_commit_time,
+    isc_tpb_ignore_limbo,
+    isc_tpb_read_committed,
+    isc_tpb_autocommit,
+    isc_tpb_rec_version,
+    isc_tpb_no_rec_version,
+    isc_tpb_restart_requests,
+    isc_tpb_no_auto_undo
+  {$IFDEF FB20_UP}
+    ,isc_tpb_lock_timeout
+  {$ENDIF}
+    );
+
 begin
   if FOptions = [tpConcurrency,tpWait,tpWrite] then
     result := ''
@@ -3666,13 +3697,13 @@ begin
         if (tp in FOptions) then
         begin
           case tp of
-            tpLockRead    : ParseStrOption(AnsiChar(Ord(tp)+1), AnsiString(FLockRead));
-            tpLockWrite   : ParseStrOption(AnsiChar(Ord(tp)+1), AnsiString(FLockWrite));
+            tpLockRead    : ParseStrOption(tpc[tp], AnsiString(FLockRead));
+            tpLockWrite   : ParseStrOption(tpc[tp], AnsiString(FLockWrite));
           {$IFDEF FB20_UP}
-            tpLockTimeout : Result := Result + AnsiChar(Ord(tp)+1) + PAnsiChar(@FLockTimeout)[0] + PAnsiChar(@FLockTimeout)[1];
+            tpLockTimeout : Result := Result + tpc[tp] + PAnsiChar(@FLockTimeout)[0] + PAnsiChar(@FLockTimeout)[1];
           {$ENDIF}
           else
-            Result := Result + AnsiChar(Ord(tp)+1);
+            Result := Result + tpc[tp];
           end;
         end;
     end;
@@ -3896,7 +3927,7 @@ constructor TUIBService.Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$EN
 begin
   inherited;
   FLibrary := TUIBLibrary.Create;
-  FLiBraryName := GDS32DLL;
+  FLibraryName := GetClientLibrary;
   FProtocol := proLocalHost;
   FHandle := nil;
 end;
