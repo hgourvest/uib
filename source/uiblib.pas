@@ -216,6 +216,8 @@ const
   FBINSTANCES = 'SOFTWARE\Firebird Project\Firebird Server\Instances';
 {$ENDIF}
 
+  function GetDefaultCharacterset: TCharacterSet;
+
   function MBUEncode(const str: UnicodeString; cp: Word): RawByteString;
   function MBUDecode(const str: RawByteString; cp: Word): UnicodeString; overload;
   procedure MBUDecode(str: PAnsiChar; size: Integer; cp: Word; buffer: PWideChar); overload;
@@ -1140,6 +1142,83 @@ begin
   inc(buffer, len);
   buffer^ := #0;
 {$ENDIF}
+end;
+
+function GetDefaultCharacterset: TCharacterSet;
+begin
+{$IFDEF UNICODE}
+  {$IFDEF FB20_UP}
+     Result := csUTF8;
+  {$ELSE}
+     Result := csUNICODE_FSS;
+  {$ENDIF}
+{$ELSE}
+  {$IFDEF MSWINDOWS}
+    case GetACP of
+      20127: Result := csASCII;
+      950: Result := csBIG_5;
+      437: Result := csDOS437;
+      850: Result := csDOS850;
+      852: Result := csDOS852;
+      857: Result := csDOS857;
+      860: Result := csDOS860;
+      861: Result := csDOS861;
+      863: Result := csDOS863;
+      865: Result := csDOS865;
+      20932: Result := csEUCJ_0208;
+      28591: Result := csISO8859_1;
+      28592: Result := csISO8859_2;
+      949: Result := csKSC_5601;
+      1250: Result := csWIN1250;
+      1251: Result := csWIN1251;
+      1252: Result := csWIN1252;
+      1253: Result := csWIN1253;
+      1254: Result := csWIN1254;
+    {$IFDEF FB15_UP}
+      737: Result := csDOS737;
+      775: Result :=  csDOS775;
+      858: Result := csDOS858;
+      862: Result :=  csDOS862;
+      864: Result := csDOS864;
+      866: Result :=  csDOS866;
+      869: Result := csDOS869;
+      1255: Result := csWIN1255;
+      1256: Result := csWIN1256;
+      1257: Result :=  csWIN1257;
+      28593: Result := csISO8859_3;
+      28594: Result := csISO8859_4;
+      28595: Result := csISO8859_5;
+      28596: Result := csISO8859_6;
+      28597: Result := csISO8859_7;
+      28598: Result := csISO8859_8;
+      28599: Result := csISO8859_9;
+      28603: Result := csISO8859_13;
+    {$ENDIF}
+    {$IFDEF IB71_UP}
+      28605: Result := csISO8859_15;
+      20866: Result := csKOI8R;
+    {$ENDIF}
+    {$IFDEF FB20_UP}
+      20866: Result := csKOI8R;
+      21866: Result := csKOI8U;
+    {$ENDIF}
+    {$IFDEF FB21_UP}
+      1258: Result := csWIN1258;
+      874: Result := csTIS620;
+      936: Result := csGBK;
+      932: Result := csCP943C;
+    {$ELSE}
+      936: Result := csGB_2312;
+      932: Result := csSJIS_0208;
+    {$ENDIF}
+    else
+      Result := csNONE;
+    end;
+  {$ELSE}
+    Result := csNONE;
+  {$ENDIF}
+{$ENDIF}
+
 end;
 
 //function BytesPerCharacter(cs: TCharacterSet): Byte;

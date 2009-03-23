@@ -423,7 +423,7 @@ type
       Dialect 3 gives access to features introduced in InterBase 6. }
     property SQLDialect: Integer read GetSQLDialect write SetSQLDialect default 3;
     { Character set to be utilized. }
-    property CharacterSet: TCharacterSet read GetCharacterSet write SetCharacterSet default csNONE;
+    property CharacterSet: TCharacterSet read GetCharacterSet write SetCharacterSet;
     { Set the user name. Default = SYSDBA. }
     property UserName: string read GetUserName write SetUserName;
     { Set the Password. Default = masterkey. }
@@ -1272,7 +1272,7 @@ begin
   FParams := TStringList.Create;
   TStringList(FParams).OnChange := doOnParamChange;
   SQLDialect := 3;
-  CharacterSet := csNONE;
+  CharacterSet := GetDefaultCharacterset;
   FExceptions := TList.Create;
   FEventNotifiers := TList.Create;
   FMetadata := nil;
@@ -2587,7 +2587,7 @@ begin
   FetchBlobs   := False;
   FQuickScript := False;
   FOnError     := etmRollback;
-  FParameter   := ParamsClass.Create(csNONE);
+  FParameter   := ParamsClass.Create(GetDefaultCharacterset);
   FCursorName  := '';
   FBufferChunks := 1000;
   FParseParams := True;
