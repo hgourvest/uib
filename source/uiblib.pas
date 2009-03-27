@@ -212,6 +212,71 @@ const
 {$ENDIF}
   );
 
+  BytesPerCharacter: array[TCharacterSet] of Byte =
+  (
+    1, // NONE
+    1, // ASCII
+    2, // BIG_5
+    1, // CYRL
+    1, // DOS437
+    1, // DOS850
+    1, // DOS852
+    1, // DOS857
+    1, // DOS860
+    1, // DOS861
+    1, // DOS863
+    1, // DOS865
+    2, // EUCJ_0208
+    2, // GB_2312
+    1, // ISO8859_1
+    1, // ISO8859_2
+    2, // KSC_5601
+    1, // NEXT
+    1, // OCTETS
+    2, // SJIS_0208
+    3, // UNICODE_FSS
+    1, // WIN1250
+    1, // WIN1251
+    1, // WIN1252
+    1, // WIN1253
+    1  // WIN1254
+{$IFDEF FB15_UP}
+   ,1  // DOS737'
+   ,1  // DOS775
+   ,1  // DOS858
+   ,1  // DOS862
+   ,1  // DOS864
+   ,1  // DOS866
+   ,1  // DOS869
+   ,1  // WIN1255
+   ,1  // WIN1256
+   ,1  // WIN1257
+   ,1  // ISO8859_3
+   ,1  // ISO8859_4
+   ,1  // ISO8859_5
+   ,1  // ISO8859_6
+   ,1  // ISO8859_7
+   ,1  // ISO8859_8
+   ,1  // ISO8859_9
+   ,1  // ISO8859_13
+{$ENDIF}
+{$IFDEF IB71_UP}
+   ,1  // ISO8859_15
+   ,1  // KOI8R
+{$ENDIF}
+{$IFDEF FB20_UP}
+   ,1  // KOI8R
+   ,1  // KOI8U
+   ,4  // UTF8
+{$ENDIF}
+{$IFDEF FB21_UP}
+   ,1  // WIN1258
+   ,1  // TIS620
+   ,2  // GBK
+   ,2  // CP943C
+{$ENDIF}
+  );
+
 {$IFDEF DLLREGISTRY}
   FBINSTANCES = 'SOFTWARE\Firebird Project\Firebird Server\Instances';
 {$ENDIF}
@@ -2865,38 +2930,6 @@ type
     end;
   end;
 
-//  procedure TUIBLibrary.BlobReadString(var BlobHandle: IscBlobHandle; var Str: UnicodeString);
-//  var
-//    BlobInfos: array[0..2] of TBlobInfo;
-//    CurrentLength: Word;
-//    Buffer: Pointer;
-//    TotalLen, Len: Integer;
-//  begin
-//  {$IFDEF UIBTHREADSAFE}
-//    FLIBCritSec.Enter;
-//    try
-//  {$ENDIF}
-//      CheckUIBApiCall(isc_blob_info(@FStatusVector, @BlobHandle, 2,
-//        isc_info_blob_max_segment + isc_info_blob_total_length,
-//        SizeOf(BlobInfos), @BlobInfos));
-//  {$IFDEF UIBTHREADSAFE}
-//    finally
-//      FLIBCritSec.Leave;
-//    end;
-//  {$ENDIF}
-//    TotalLen := (BlobInfos[1].CardType div 2) * 2;
-//    SetLength(Str, TotalLen div 2);
-//    Buffer := PWideChar(Str);
-//    len := 0;
-//    while BlobGetSegment(BlobHandle, CurrentLength, TotalLen - len, Buffer) do
-//    begin
-//      inc(PtrInt(Buffer), CurrentLength);
-//      inc(len, CurrentLength);
-//      if len = TotalLen then
-//        Break;
-//    end;
-//  end;
-
   procedure TUIBLibrary.BlobReadBuffer(var BlobHandle: IscBlobHandle; var Size: Integer;
     var Buffer: Pointer; realloc: boolean);
   var
@@ -3526,10 +3559,12 @@ type
       SQL_TEXT    :
         begin
           Str := MBUDecode(Copy(sqldata, 0, sqllen), CharacterSetCP[FCharacterSet]);
-          if (SqlSubType > 1) then
-            SetLength(Str, sqllen div SqlSubType);
+          SetLength(Str, sqllen div BytesPerCharacter[FCharacterSet]);
         end;
-      SQL_VARYING : Str := MBUDecode(Copy(PAnsiChar(@PVary(sqldata).vary_string), 0, PVary(sqldata).vary_length), CharacterSetCP[FCharacterSet]);
+      SQL_VARYING :
+        Str := MBUDecode(
+          Copy(PAnsiChar(@PVary(sqldata).vary_string), 0, PVary(sqldata).vary_length),
+          CharacterSetCP[FCharacterSet]);
     end;
   end;
 

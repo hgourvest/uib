@@ -589,25 +589,12 @@ begin
             end;
           end;
         uftChar,
-        uftCstring:
-          begin
-          {$IFDEF UNICODE}
-            DataType := ftWideString;
-            if (data.sqlvar[i].SqlSubType > 1) then
-              Size := SQLLen[i] div data.sqlvar[i].SqlSubType else
-              Size := SQLLen[i];
-          {$ELSE}
-            DataType := ftString;
-            Size := SQLLen[i];
-          {$ENDIF}
-          end;
+        uftCstring,
         uftVarchar:
           begin
           {$IFDEF UNICODE}
             DataType := ftWideString;
-            if (data.sqlvar[i].SqlSubType > 1) then
-              Size := SQLLen[i] div data.sqlvar[i].SqlSubType else
-              Size := SQLLen[i];
+            Size := SQLLen[i] div BytesPerCharacter[CharacterSet];
           {$ELSE}
             DataType := ftString;
             Size := SQLLen[i];
@@ -782,9 +769,7 @@ begin
         begin
         {$IFDEF UNICODE}
           MBUDecode(sqldata, SqlLen, CharacterSetCP[CharacterSet], PWideChar(buffer));
-          if (SqlSubType > 1) then
-            PWideChar(buffer)[(SqlLen div SqlSubType)] := #0 else
-            PWideChar(buffer)[SqlLen] := #0;
+          PWideChar(buffer)[(SqlLen div BytesPerCharacter[CharacterSet])] := #0;
         {$ELSE}
           Move(sqldata^, Buffer^, SqlLen);
           PAnsiChar(Buffer)[SqlLen] := #0;
