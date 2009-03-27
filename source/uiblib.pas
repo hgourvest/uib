@@ -281,7 +281,7 @@ const
   FBINSTANCES = 'SOFTWARE\Firebird Project\Firebird Server\Instances';
 {$ENDIF}
 
-  function GetDefaultCharacterset: TCharacterSet;
+  function GetSystemCharacterset: TCharacterSet;
 
   function MBUEncode(const str: UnicodeString; cp: Word): RawByteString;
   function MBUDecode(const str: RawByteString; cp: Word): UnicodeString; overload;
@@ -1209,16 +1209,9 @@ begin
 {$ENDIF}
 end;
 
-function GetDefaultCharacterset: TCharacterSet;
-begin
-{$IFDEF UNICODE}
-  {$IFDEF FB20_UP}
-     Result := csUTF8;
-  {$ELSE}
-     Result := csUNICODE_FSS;
-  {$ENDIF}
-{$ELSE}
-  {$IFDEF MSWINDOWS}
+function GetSystemCharacterset: TCharacterSet;
+  function GetAnsiCS: TCharacterSet;
+  begin
     case GetACP of
       20127: Result := csASCII;
       950: Result := csBIG_5;
@@ -1279,6 +1272,17 @@ begin
     else
       Result := csNONE;
     end;
+  end;
+begin
+{$IFDEF UNICODE}
+  {$IFDEF FB20_UP}
+     Result := csUTF8;
+  {$ELSE}
+     Result := GetAnsiCS;
+  {$ENDIF}
+{$ELSE}
+  {$IFDEF MSWINDOWS}
+    Result := GetAnsiCS;
   {$ELSE}
     Result := csNONE;
   {$ENDIF}

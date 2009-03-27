@@ -1272,7 +1272,7 @@ begin
   FParams := TStringList.Create;
   TStringList(FParams).OnChange := doOnParamChange;
   SQLDialect := 3;
-  CharacterSet := GetDefaultCharacterset;
+  CharacterSet := GetSystemCharacterset;
   FExceptions := TList.Create;
   FEventNotifiers := TList.Create;
   FMetadata := nil;
@@ -2587,7 +2587,7 @@ begin
   FetchBlobs   := False;
   FQuickScript := False;
   FOnError     := etmRollback;
-  FParameter   := ParamsClass.Create(GetDefaultCharacterset);
+  FParameter   := ParamsClass.Create(GetSystemCharacterset);
   FCursorName  := '';
   FBufferChunks := 1000;
   FParseParams := True;
