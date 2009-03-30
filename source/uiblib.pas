@@ -2256,6 +2256,10 @@ const
             src^.SqlType := dst.sqltype;
             src^.SqlLen  := dst.sqllen;
             src^.SqlSubType := dst.sqlsubtype;
+            src^.SqlScale := dst.SqlScale;
+{$IFDEF IB7_UP}
+            src^.SqlPrecision := dst.SqlPrecision;
+{$ENDIF}
           end;
          Sqlda.AllocateDataBuffer(false); 
       finally
