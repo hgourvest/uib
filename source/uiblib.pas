@@ -1210,6 +1210,7 @@ begin
 end;
 
 function GetSystemCharacterset: TCharacterSet;
+{$IFDEF MSWINDOWS}
   function GetAnsiCS: TCharacterSet;
   begin
     case GetACP of
@@ -1273,6 +1274,7 @@ function GetSystemCharacterset: TCharacterSet;
       Result := csNONE;
     end;
   end;
+{$ENDIF}
 begin
 {$IFDEF UNICODE}
   {$IFDEF FB20_UP}
@@ -1287,7 +1289,6 @@ begin
     Result := csNONE;
   {$ENDIF}
 {$ENDIF}
-
 end;
 
 //function BytesPerCharacter(cs: TCharacterSet): Byte;
