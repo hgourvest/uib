@@ -98,11 +98,9 @@ begin
 
   param := O['characterset'];
   if param <> nil then
-  begin
-    FCharacterSet := StrToCharacterSet(AnsiString(param.AsString));
-    option := option + ';lc_ctype=' + string(CharacterSetStr[FCharacterSet]);
-  end else
+    FCharacterSet := StrToCharacterSet(AnsiString(param.AsString)) else
     FCharacterSet := GetSystemCharacterset;
+  option := option + ';lc_ctype=' + string(CharacterSetStr[FCharacterSet]);
 
   param := O['databasename'];
   if param <> nil then
@@ -363,11 +361,11 @@ var
       end else
       begin
         DSQLExecute(FTrHandle, FStHandle, 3, FSQLParams);
-        Result := nil;
+        Result := TSuperObject.Create( DSQLInfoRowsAffected(FStHandle, FStatementType));
       end;
   end;
 var
-  j: integer;
+  j, affected: integer;
   f: TSuperObjectIter;
 begin
   ctx := context;
@@ -400,8 +398,10 @@ begin
                 Result.AsArray.Add(Execute(O[j], ctx));
             end else
             begin
+              affected := 0;
               for j := 0 to Length - 1 do
-                Execute(O[j], ctx);
+                inc(affected, Execute(O[j], ctx).AsInteger);
+              Result := TSuperObject.Create(affected);
             end;
         end;
       end else
