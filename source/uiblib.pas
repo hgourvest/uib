@@ -1492,20 +1492,25 @@ const
   {$ENDIF}
   begin
   {$IFDEF DLLREGISTRY}
-    HR := RegOpenKeyEx(HKEY_LOCAL_MACHINE, FBINSTANCES, 0, KEY_READ, Key);
-    if (HR = ERROR_SUCCESS) then
+    if FileExists(ExtractFilePath(ParamStr(0)) + GDS32DLL) then
+      Result := GDS32DLL else
     begin
-      HR := RegQueryValueEx(Key, 'DefaultInstance', nil, nil, nil, @Size);
+      HR := RegOpenKeyEx(HKEY_LOCAL_MACHINE, FBINSTANCES, 0, KEY_READ, Key);
       if (HR = ERROR_SUCCESS) then
       begin
-        SetLength(Result, Size div sizeof(Char));
-        HR := RegQueryValueEx(Key, 'DefaultInstance', nil, nil, Pointer(Result), @Size);
+        HR := RegQueryValueEx(Key, 'DefaultInstance', nil, nil, nil, @Size);
         if (HR = ERROR_SUCCESS) then
-          Result := Trim(Result)+ 'bin\' + GDS32DLL;
+        begin
+          SetLength(Result, Size div sizeof(Char));
+          HR := RegQueryValueEx(Key, 'DefaultInstance', nil, nil, Pointer(Result), @Size);
+          if (HR = ERROR_SUCCESS) then
+            Result := Trim(Result)+ 'bin\' + GDS32DLL;
+        end;
+        RegCloseKey(Key);
       end;
-      RegCloseKey(Key);
+      if (HR <> ERROR_SUCCESS) then
+        Result := GDS32DLL;
     end;
-    if (HR <> ERROR_SUCCESS) then
   {$ENDIF}
     Result := GDS32DLL;
   end;
