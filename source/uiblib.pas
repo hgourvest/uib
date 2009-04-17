@@ -1511,8 +1511,9 @@ const
       if (HR <> ERROR_SUCCESS) then
         Result := GDS32DLL;
     end;
-  {$ENDIF}
+  {$ELSE}
     Result := GDS32DLL;
+  {$ENDIF}
   end;
 
   function CreateDBParams(Params: AnsiString; Delimiter: AnsiChar = ';'): AnsiString;
