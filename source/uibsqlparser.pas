@@ -111,8 +111,10 @@ type
     function NextLine: boolean;
     procedure Error(const msg: string = '');
     function GetStatement: string;
+    procedure Reset;
   public
-    constructor Create(AStrings: TStrings); virtual;
+    constructor Create(AStrings: TStrings); overload; virtual;
+    constructor Create(const AString: String); overload; virtual;
     destructor Destroy; override;
     function NextToken: TSQLToken;
     function NextStatement: TSQLStatement;
@@ -161,17 +163,32 @@ constructor TUIBSQLParser.Create(AStrings: TStrings);
 begin
   Assert(AStrings <> nil);
   FParams := TStringList.Create;
-  FStrings := AStrings;
-  FLine := -1;
-  FCursor := nil;
-  FStr := '';
+  FStrings := TStringList.Create;
+  FStrings.Assign(AStrings);
+  Reset;
 end;
 
+constructor TUIBSQLParser.Create(const AString: String);
+begin
+  Assert(AString <> '');
+  FParams := TStringList.Create;
+  FStrings := TStringList.Create;
+  FStrings.Text := AString;
+  Reset;
+end;
 
 destructor TUIBSQLParser.Destroy;
 begin
+  FStrings.Free;
   FParams.Free;
   inherited;
+end;
+
+procedure TUIBSQLParser.Reset;
+begin
+  FLine := -1;
+  FCursor := nil;
+  FStr := '';
 end;
 
 procedure TUIBSQLParser.Error(const msg: string = '');
