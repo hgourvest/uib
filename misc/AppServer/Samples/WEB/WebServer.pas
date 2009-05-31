@@ -33,13 +33,14 @@ procedure HTTPOutput(const this: ISuperObject; const str: string); overload;
 procedure HTTPCompress(const this: ISuperObject; level: integer = 5);
 function HTTPIsPost(const this: ISuperObject): boolean;
 procedure HTTPRedirect(const This: ISuperObject; const location: string);
+procedure lua_render(const This, Params: ISuperObject; const script: string);
 
 const
   DEFAULT_CP = 65001;
   DEFAULT_CHARSET = 'utf-8';
 
 implementation
-uses SysUtils, PDGService{$ifdef madExcept}, madExcept {$endif};
+uses SysUtils, PDGLua, PDGService{$ifdef madExcept}, madExcept {$endif};
 
 const
   ReadTimeOut: Integer = 60000; // 1 minute
@@ -285,6 +286,45 @@ begin
   app_controller_initialize(Result);
   app_view_initialize(Result);
 
+end;
+
+function lua_print(state: Plua_State): Integer; cdecl;
+var
+  p: Pointer;
+  i: Integer;
+  o: ISuperObject;
+begin
+  lua_getglobal(state, '_this');
+  p := lua_touserdata(state, -1);
+  if p <> nil then
+    for i := 1 to lua_gettop(state) do
+    begin
+      o := lua_tosuperobject(state, i);
+      if o <> nil then
+        HTTPOutput(ISuperObject(p), o.AsString);
+    end;
+  Result := 0;
+end;
+
+procedure lua_render(const This, Params: ISuperObject; const script: string);
+var
+  state: Plua_State;
+begin
+  state := lua_newstate(@lua_app_alloc, nil);
+  This._AddRef;
+  try
+    luaL_openlibs(state);
+    lua_pushlightuserdata(state, Pointer(This));
+    lua_setglobal(state, '_this');
+    lua_pushcfunction(state, @lua_print);
+    lua_setglobal(state, 'print');
+    lua_pushsuperobject(state, Params);
+    lua_setglobal(state, 'data');
+    lua_processsor_dofile(state, script);
+  finally
+    This._Release;
+    lua_close(state);
+  end;
 end;
 
 initialization
