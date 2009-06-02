@@ -845,7 +845,7 @@ begin
             lua_createtable(L, len, 0);
             for i := 0 to len-1 do
             begin
-              lua_pushnumber(L, i);
+              lua_pushnumber(L, i+1);
               lua_pushsuperobject(L, ar[i]);
               lua_settable(L, -3);
             end;
