@@ -763,11 +763,11 @@ begin
                 if Result = nil then
                 begin
                   Result := TSuperObject.Create(stArray);
-                  Result.AsArray[lua_tointeger(L, -2)] := lua_tosuperobject(L, -1);
+                  Result.AsArray[lua_tointeger(L, -2)-1] := lua_tosuperobject(L, -1);
                 end else
                   if ObjectIsType(Result, stArray) then
-                    Result.AsArray[lua_tointeger(L, -2)] := lua_tosuperobject(L, -1) else
-                    Result.AsObject[inttostr(lua_tointeger(L, -2))] := lua_tosuperobject(L, -1);
+                    Result.AsArray[lua_tointeger(L, -2)-1] := lua_tosuperobject(L, -1) else
+                    Result.AsObject[IntToStr(lua_tointeger(L, -2)-1)] := lua_tosuperobject(L, -1);
               end;
             LUA_TSTRING:
             begin
