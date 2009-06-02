@@ -52,6 +52,11 @@ type
     function getData: TStream;
   end;
 
+  IPDGDateTime = interface
+  ['{11B92F12-7E04-4442-A84E-9252FDAE2C37}']
+    function AsDateTime: Double;
+  end;
+
   // Abstact classes
 
   TPDGConnection = class(TSuperObject, IPDGConnection)
@@ -98,6 +103,11 @@ type
 
     function AsBoolean: Boolean; override; // true if length > 0
     function AsInteger: SuperInt; override; // stream length
+  end;
+
+  TPDGDateTime = class(TSuperObject, IPDGDateTime)
+  protected
+    function AsDateTime: Double;
   end;
 
   function blob(stream: TStream = nil): ISuperObject; overload;
@@ -295,6 +305,13 @@ begin
        end;
     end;
   inc(Result, writer.Append(@QUOTE, 1));
+end;
+
+{ TPDGDateTime }
+
+function TPDGDateTime.AsDateTime: Double;
+begin
+  Result := JavaToDelphiDateTime(AsInteger);
 end;
 
 end.

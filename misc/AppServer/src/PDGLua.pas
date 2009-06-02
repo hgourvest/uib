@@ -572,7 +572,7 @@ function lua_processsor_dostream(L: Plua_State; stream: TStream): Boolean; {$IFD
 
 implementation
 uses
-  sysutils;
+  sysutils, PDGDB;
 
 procedure lua_pop(L: Plua_State; n: Integer);  {$IFDEF HAVEINLINE}inline;{$ENDIF}
 begin
@@ -801,6 +801,7 @@ var
   i, len: Integer;
   ar: TSuperArray;
   ite: TSuperObjectIter;
+  dt: IPDGDateTime;
 begin
   if (obj <> nil) and obj.Processing then
     lua_pushnil(L) else
@@ -812,7 +813,15 @@ begin
         stNull: lua_pushnil(L);
         stBoolean: lua_pushboolean(L, obj.AsInteger);
         stDouble, stCurrency: lua_pushnumber(L, obj.AsDouble);
-        stInt: lua_pushinteger(L, obj.AsInteger);
+        stInt:
+          begin
+            if  obj.QueryInterface(IPDGDateTime, dt) <> 0 then
+              lua_pushinteger(L, obj.AsInteger) else
+              begin
+                lua_pushinteger(L, Round(obj.AsInteger / 1000));
+                dt := nil;
+              end;
+          end;
         stString: lua_pushstring(L, PAnsiChar(UTF8Encode(obj.AsString)));
         stObject:
           begin

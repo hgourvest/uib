@@ -242,7 +242,7 @@ var
                 Result.AsArray.Add(blob as ISuperObject);
               end;
             end;
-          uftTimestamp, uftDate, uftTime: Result.AsArray.Add(TSuperObject.Create(DelphiToJavaDateTime(FSQLResult.AsDateTime[i])));
+          uftTimestamp, uftDate, uftTime: Result.AsArray.Add(TPDGDateTime.Create(DelphiToJavaDateTime(FSQLResult.AsDateTime[i])));
         {$IFDEF IB7_UP}
           uftBoolean: Result.AsArray.Add(TSuperObject.Create(PChar(FSQLResult.AsBoolean[i])));
         {$ENDIF}
@@ -278,7 +278,7 @@ var
                 Result[FSQLResult.AliasName[i]] := blob as ISuperObject;
               end;
             end;
-          uftTimestamp, uftDate, uftTime: Result[FSQLResult.AliasName[i]] := TSuperObject.Create(DelphiToJavaDateTime(FSQLResult.AsDateTime[i]));
+          uftTimestamp, uftDate, uftTime: Result[FSQLResult.AliasName[i]] := TPDGDateTime.Create(DelphiToJavaDateTime(FSQLResult.AsDateTime[i]));
         {$IFDEF IB7_UP}
           uftBoolean: Result[FSQLResult.AliasName[i]] := TSuperObject.Create(PChar(FSQLResult.AsBoolean[i]));
         {$ENDIF}
