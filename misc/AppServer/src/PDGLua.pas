@@ -802,40 +802,51 @@ var
   ar: TSuperArray;
   ite: TSuperObjectIter;
 begin
-  case ObjectGetType(obj) of
-    stNull: lua_pushnil(L);
-    stBoolean: lua_pushboolean(L, obj.AsInteger);
-    stDouble, stCurrency: lua_pushnumber(L, obj.AsDouble);
-    stInt: lua_pushinteger(L, obj.AsInteger);
-    stString: lua_pushstring(L, PAnsiChar(UTF8Encode(obj.AsString)));
-    stObject:
-      begin
-        len := obj.AsObject.count;
-        lua_createtable(L, 0, len);
-        if ObjectFindFirst(obj, ite) then
-        repeat
-          if not ObjectIsType(ite.val, stMethod) then
+  if (obj <> nil) and obj.Processing then
+    lua_pushnil(L) else
+  begin
+    if obj <> nil then
+      obj.Processing := true;
+    try
+      case ObjectGetType(obj) of
+        stNull: lua_pushnil(L);
+        stBoolean: lua_pushboolean(L, obj.AsInteger);
+        stDouble, stCurrency: lua_pushnumber(L, obj.AsDouble);
+        stInt: lua_pushinteger(L, obj.AsInteger);
+        stString: lua_pushstring(L, PAnsiChar(UTF8Encode(obj.AsString)));
+        stObject:
           begin
-            lua_pushstring(L, PAnsiChar(UTF8Encode(ite.key)));
-            lua_pushsuperobject(L, ite.val);
-            lua_settable(L, -3);
+            len := obj.AsObject.count;
+            lua_createtable(L, 0, len);
+            if ObjectFindFirst(obj, ite) then
+            repeat
+              if not ObjectIsType(ite.val, stMethod) then
+              begin
+                lua_pushstring(L, PAnsiChar(UTF8Encode(ite.key)));
+                lua_pushsuperobject(L, ite.val);
+                lua_settable(L, -3);
+              end;
+            until not ObjectFindNext(ite);
+            ObjectFindClose(ite);
           end;
-        until not ObjectFindNext(ite);
-        ObjectFindClose(ite);
+        stArray:
+          begin
+            ar := obj.AsArray;
+            len := ar.Length;
+            lua_createtable(L, len, 0);
+            for i := 0 to len-1 do
+            begin
+              lua_pushnumber(L, i);
+              lua_pushsuperobject(L, ar[i]);
+              lua_settable(L, -3);
+            end;
+          end;
+        stMethod: lua_pushnil(L);
       end;
-    stArray:
-      begin
-        ar := obj.AsArray;
-        len := ar.Length;
-        lua_createtable(L, len, 0);
-        for i := 0 to len-1 do
-        begin
-          lua_pushnumber(L, i);
-          lua_pushsuperobject(L, ar[i]);
-          lua_settable(L, -3);
-        end;
-      end;
-    stMethod: lua_pushnil(L);
+    finally
+      if obj <> nil then
+        obj.Processing := false;
+    end;
   end;
 end;
 

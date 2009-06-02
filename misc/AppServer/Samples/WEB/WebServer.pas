@@ -33,7 +33,7 @@ procedure HTTPOutput(const this: ISuperObject; const str: string); overload;
 procedure HTTPCompress(const this: ISuperObject; level: integer = 5);
 function HTTPIsPost(const this: ISuperObject): boolean;
 procedure HTTPRedirect(const This: ISuperObject; const location: string);
-procedure lua_render(const This, Params: ISuperObject; const script: string);
+procedure lua_render(const This: ISuperObject; const script: string);
 
 const
   DEFAULT_CP = 65001;
@@ -214,6 +214,7 @@ begin
 //      ctx.B['session.authenticate'] := false;
 //  end;
 
+  path := ExtractFilePath(ParamStr(0)) + 'HTTP';
   if ctx['params.controller'] <> nil then
     with ctx['params'] do
     begin
@@ -244,11 +245,18 @@ begin
           Response.S['env.Content-Type'] := FFormats.S[S['format'] + '.content'] + '; charset=' + FFormats.S[S['format'] + '.charset'] else
           Response.S['env.Content-Type'] := FFormats.S[S['format'] + '.content'];
         exit;
+      end else
+      begin
+        str := path + '/' + S['controller'] + '/' + S['action'] + '.' + S['format'] + '.lua';
+        if FileExists(str) then
+        begin
+          lua_render(ctx, str);
+          exit;
+        end;
       end;
     end;
 
   str := Request.S['uri'];
-  path := ExtractFilePath(ParamStr(0)) + 'HTTP';
 
   if {$IFDEF UNICODE}(str[Length(str)] < #256) and {$ENDIF}(AnsiChar(str[Length(str)]) in ['/','\']) then
   begin
@@ -294,7 +302,7 @@ var
   i: Integer;
   o: ISuperObject;
 begin
-  lua_getglobal(state, '_this');
+  lua_getglobal(state, '@this');
   p := lua_touserdata(state, -1);
   if p <> nil then
     for i := 1 to lua_gettop(state) do
@@ -306,20 +314,25 @@ begin
   Result := 0;
 end;
 
-procedure lua_render(const This, Params: ISuperObject; const script: string);
+procedure lua_render(const This: ISuperObject; const script: string);
 var
   state: Plua_State;
+  ite: TSuperObjectIter;
 begin
   state := lua_newstate(@lua_app_alloc, nil);
   This._AddRef;
   try
     luaL_openlibs(state);
     lua_pushlightuserdata(state, Pointer(This));
-    lua_setglobal(state, '_this');
+    lua_setglobal(state, '@this');
     lua_pushcfunction(state, @lua_print);
     lua_setglobal(state, 'print');
-    lua_pushsuperobject(state, Params);
-    lua_setglobal(state, 'data');
+    if ObjectFindFirst(This, ite) then
+    repeat
+      lua_pushsuperobject(state, ite.val);
+      lua_setglobal(state, PAnsiChar(UTF8Encode(ite.key)));
+    until not ObjectFindNext(ite);
+    ObjectFindClose(ite);
     lua_processsor_dofile(state, script);
   finally
     This._Release;

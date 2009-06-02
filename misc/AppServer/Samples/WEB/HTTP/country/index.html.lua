@@ -6,7 +6,7 @@
       <td>Currency</td>
       <td>Suppr</td>
       <td>Edit</td></tr></th>
-  <% for k, v in ipairs(data) do %>
+  <% for k, v in ipairs(dataset) do %>
   <tr>
       <td><%=v.COUNTRY%></td>
       <td><%=v.CURRENCY%></td>
