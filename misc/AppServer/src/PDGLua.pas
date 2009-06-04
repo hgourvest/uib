@@ -818,7 +818,7 @@ begin
             if  obj.QueryInterface(IPDGDateTime, dt) <> 0 then
               lua_pushinteger(L, obj.AsInteger) else
               begin
-                lua_pushinteger(L, Round(obj.AsInteger / 1000));
+                lua_pushinteger(L, obj.AsInteger div 1000);
                 dt := nil;
               end;
           end;
@@ -1075,7 +1075,7 @@ function lua_processsor_loadfile(L: Plua_State; const FileName: string): Integer
 var
   stream: TFileStream;
 begin
-  stream := TFileStream.Create(FileName, fmOpenRead);
+  stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyNone);
   try
     Result := lua_processsor_loadstream(L, stream);
   finally
