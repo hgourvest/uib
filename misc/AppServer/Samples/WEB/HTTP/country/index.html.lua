@@ -18,6 +18,6 @@
  <% end %>
  </table>
 <form action="/country/add" method="POST"><input type="text" name="country"/><input type="text" name="currency"/><input type="submit"/></form>
-<center><%= "généré en " .. (gettickcount() - request.tickcount) .. "ms" %> </center>
+<center><%= "generated in " .. (gettickcount() - request.tickcount) .. "ms" %> </center>
 </body>
 </html>
