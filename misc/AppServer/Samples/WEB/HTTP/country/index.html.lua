@@ -1,4 +1,7 @@
-<html>
+﻿<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+</head>
 <body>
   <table>
     <th>
@@ -15,5 +18,6 @@
  <% end %>
  </table>
 <form action="/country/add" method="POST"><input type="text" name="country"/><input type="text" name="currency"/><input type="submit"/></form>
+<center><%= "généré en " .. (gettickcount() - request.tickcount) .. "ms" %> </center>
 </body>
 </html>

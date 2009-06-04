@@ -314,6 +314,12 @@ begin
   Result := 0;
 end;
 
+function lua_gettickcount(state: Plua_State): Integer; cdecl;
+begin
+  lua_pushinteger(state, Integer(GetTickCount));
+  Result := 1;
+end;
+
 procedure lua_render(const This: ISuperObject; const script: string);
 var
   state: Plua_State;
@@ -327,6 +333,8 @@ begin
     lua_setglobal(state, '@this');
     lua_pushcfunction(state, @lua_print);
     lua_setglobal(state, 'print');
+    lua_pushcfunction(state, lua_gettickcount);
+    lua_setglobal(state, 'gettickcount');
     if ObjectFindFirst(This, ite) then
     repeat
       lua_pushsuperobject(state, ite.val);

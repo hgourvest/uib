@@ -104,12 +104,25 @@ function Base64ToStrA(const B64: RawByteString): AnsiString;
 function FileToAnsiString(const FileName: string): RawbyteString;
 function StreamToAnsiString(stream: TStream): RawbyteString;
 
+{$IFDEF UNIX}
+function GetTickCount: Cardinal;
+{$ENDIF}
+
 implementation
 uses uiblib;
 
 const
   Base64Code: RawByteString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
+{$IFDEF UNIX}
+function GetTickCount: Cardinal;
+var
+  h, m, s, s1000: word;
+begin
+  decodetime(time, h, m, s, s1000);
+  Result := Cardinal(h * 3600000 + m * 60000 + s * 1000 + s1000);
+end;
+{$ENDIF}
 
 function StrTobase64(const Buf: string): RawByteString;
 begin

@@ -95,7 +95,11 @@ function HTTPDecode(const AStr: string; codepage: Integer = 0): string;
 function HttpResponseStrings(code: integer): RawByteString;
 
 implementation
-uses SysUtils, StrUtils {$ifdef madExcept}, madexcept {$endif}
+uses
+{$IFDEF MSWINDOWS}
+ windows,
+{$ENDIF}
+SysUtils, StrUtils {$ifdef madExcept}, madexcept {$endif}
 {$IFDEF UNICODE}, AnsiStrings{$ENDIF}
 {$IFDEF UNIX}, baseunix{$ENDIF}
 ;
@@ -634,6 +638,7 @@ end;
 
 procedure THTTPStub.doBeforeProcessRequest(ctx: ISuperObject);
 begin
+  FRequest.I['tickcount'] := GetTickCount;
   FRequest['cookies'] := HTTPInterprete(PSOChar(Request.S['env.cookie']), true);
   FRequest['content-type'] := HTTPInterprete(PSOChar(Request.S['env.content-type']));
   FRequest['authorization'] := HTTPGetAuthorization(Request.S['env.authorization']);
