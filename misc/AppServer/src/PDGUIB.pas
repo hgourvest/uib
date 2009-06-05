@@ -17,6 +17,7 @@ type
     FMax: Integer;
   protected
     function GetConnection: IPDGConnection;
+    function GetSize: Integer;
   public
     constructor Create(const Options: ISuperObject; max: Integer); reintroduce; overload;
     constructor Create(const Options: string; max: Integer); reintroduce; overload;
@@ -529,8 +530,8 @@ constructor TPDGUIBConnectionPool.Create(const Options: ISuperObject; max: Integ
 begin
   inherited Create(stObject);
   DataPtr := Self;
-  O['options'] := Options;
-  O['pool'] := TSuperObject.Create(stArray);
+  AsObject['options'] := Options;
+  AsObject['pool'] := TSuperObject.Create(stArray);
   FCriticalSection := TCriticalSection.Create;
   FMax := max;
 end;
@@ -556,7 +557,7 @@ begin
 
   FCriticalSection.Enter;
   try
-    ar := O['pool'].AsArray;
+    ar := AsObject['pool'].AsArray;
     while Result = nil do
     begin
       for j := 0 to ar.Length - 1 do
@@ -576,11 +577,21 @@ begin
       end;
       if (Result = nil) and ((FMax < 1) or (ar.Length < FMax)) then
       begin
-        Result := TPDGUIBConnection.Create(O['options']);
+        Result := TPDGUIBConnection.Create(AsObject['options']);
         ar.Add(Result as ISuperObject);
         Exit;
       end;
     end;
+  finally
+    FCriticalSection.Leave;
+  end;
+end;
+
+function TPDGUIBConnectionPool.GetSize: Integer;
+begin
+  FCriticalSection.Enter;
+  try
+    Result := AsObject['pool'].AsArray.Length;
   finally
     FCriticalSection.Leave;
   end;

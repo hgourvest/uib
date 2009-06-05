@@ -15,6 +15,7 @@ type
   IPDGConnectionPool = interface
     ['{27621D9A-AAE9-4E24-82F5-A18D84E415F3}']
     function GetConnection: IPDGConnection;
+    function GetSize: Integer;
   end;
 
   IPDGConnection = interface
