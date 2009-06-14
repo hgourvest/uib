@@ -289,7 +289,7 @@ begin
          C[1] := Base64Code[((V[0] shl 4) and $3F) or V[1] shr 4];
          C[2] := Base64Code[((V[1] shl 2) and $3F) or 0    shr 6];
          inc(Result, writer.Append(@C, 3));
-         inc(Result, writer.Append(@QUOTE, 1));
+         inc(Result, writer.Append(EQ2, 1));
          Break;
        end;
     1: begin

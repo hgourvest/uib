@@ -40,11 +40,72 @@ const
   DEFAULT_CHARSET = 'utf-8';
 
 implementation
-uses SysUtils, PDGLua, PDGService{$ifdef madExcept}, madExcept {$endif};
+uses SysUtils, PDGLua, PDGOpenSSL, PDGZlib, PDGDB, PDGService{$ifdef madExcept}, madExcept {$endif};
 
 const
   ReadTimeOut: Integer = 60000; // 1 minute
   COOKIE_NAME = 'PDGCookie';
+  PASS_PHRASE: PAnsiChar = 'dc62rtd6fc14ss6df464c2s3s3rt324h14vh27d3fc321h2vfghv312';
+
+function EncodeObject(const obj: ISuperObject): SOString;
+var
+  StreamA, streamB: TPooledMemoryStream;
+begin
+  StreamB := TPooledMemoryStream.Create;
+  StreamA := TPooledMemoryStream.Create;
+  try
+    // ansi
+    obj.SaveTo(StreamA);
+
+    // zlib
+    CompressStream(StreamA, StreamB, 4);
+
+    // aes
+    StreamA.Seek(0, soFromBeginning);
+    AesEncryptStream(StreamB, StreamA, PASS_PHRASE, 128);
+    StreamA.Size := StreamA.Position;
+    StreamA.SaveToFile('c:\test.aes');
+
+    // base64
+    StreamB.Seek(0, soFromBeginning);
+    StreamToBase64(StreamA, StreamB);
+    StreamB.Size := StreamB.Position;
+
+    // string
+    Result := StreamToStr(StreamB);
+  finally
+    StreamA.Free;
+    StreamB.Free;
+  end;
+end;
+
+function DecodeObject(const str: SOString): ISuperObject;
+var
+  StreamA, StreamB: TPooledMemoryStream;
+begin
+  StreamA := TPooledMemoryStream.Create;
+  StreamB := TPooledMemoryStream.Create;
+  try
+    // base64
+    Base64ToStream(str, streamA);
+    streamA.Size := streamA.Position;
+
+    // aes
+    AesDecryptStream(StreamA, StreamB, PASS_PHRASE, 128);
+
+    // zlib
+    StreamA.Seek(0, soFromBeginning);
+    DecompressStream(StreamB, StreamA);
+    StreamA.Size := StreamA.Position;
+
+    // superobject
+    StreamA.Seek(0, soFromBeginning);
+    Result := TSuperObject.ParseStream(StreamA);
+  finally
+    StreamA.Free;
+    StreamB.Free;
+  end;
+end;
 
 procedure HTTPOutput(const this, obj: ISuperObject; format: boolean); overload;
 begin
@@ -113,7 +174,7 @@ end;
 
 procedure THTTPConnexion.doAfterProcessRequest(ctx: ISuperObject);
 begin
-  Response.S['env.Set-Cookie'] := COOKIE_NAME + '=' + SOString(StrTobase64(ctx['session'].AsJSon)) + '; path=/';
+  Response.S['env.Set-Cookie'] := COOKIE_NAME + '=' + EncodeObject(ctx['session']) + '; path=/';
   Response.S['Cache-Control'] := 'no-cache';
   HTTPCompress(ctx);
   inherited;
@@ -149,8 +210,8 @@ begin
   obj := Request['cookies.' + COOKIE_NAME];
   if obj <> nil then
   case obj.DataType of
-    stString: ctx['session'].Merge(Base64ToStr(RawByteString(obj.AsString)));
-    stArray: ctx['session'].Merge(Base64ToStr(RawByteString(obj.AsArray.S[0])));
+    stString: ctx['session'].Merge(DecodeObject(obj.AsString));
+    stArray: ctx['session'].Merge(DecodeObject(obj.AsArray.S[0]));
   end;
 
   // get parametters

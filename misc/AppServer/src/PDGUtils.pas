@@ -81,8 +81,6 @@ type
     destructor Destroy; override;
   end;
 
-//function InterLockedRead(var Value: Integer): Integer;
-
 function CompressStream(inStream, outStream: TStream; level: Integer = Z_DEFAULT_COMPRESSION): boolean; overload;
 function DecompressStream(inStream, outStream: TStream): boolean; overload;
 
@@ -92,27 +90,33 @@ function DecompressStream(inSocket: longint; outStream: TStream): boolean; overl
 function receive(s: longint; var Buf; len, flags: Integer): Integer;
 
 // Base64 functions from <dirk.claessens.dc@belgium.agfa.com> (modified)
+function StrTobase64(Buf: string): string;
+function Base64ToStr(const B64: string): string;
+procedure StreamToBase64(const StreamIn, StreamOut: TStream);
+procedure Base64ToStream(const data: string; stream: TStream);
 
-function StrTobase64(const Buf: string): RawByteString;
-function Base64ToStr(const B64: RawByteString): string;
-
-function StrTobase64W(const Buf: UnicodeString): RawByteString;
-function Base64ToStrW(const B64: RawByteString): UnicodeString;
-function StrTobase64A(Buf: AnsiString): RawByteString;
-function Base64ToStrA(const B64: RawByteString): AnsiString;
-
-function FileToAnsiString(const FileName: string): RawbyteString;
-function StreamToAnsiString(stream: TStream): RawbyteString;
+function FileToString(const FileName: string): string;
+function StreamToStr(stream: TStream): string;
 
 {$IFDEF UNIX}
 function GetTickCount: Cardinal;
 {$ENDIF}
 
 implementation
-uses uiblib;
+uses uiblib, PDGOpenSSL;
 
 const
-  Base64Code: RawByteString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  Base64Code: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+  Base64Map: array[#0..#127] of Integer = (
+    Byte('='), 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+           64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+           64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 62, 64, 64, 64, 63,
+           52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 64, 64, 64, 64, 64, 64,
+           64,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+           15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 64, 64, 64, 64, 64,
+           64, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+           41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 64, 64, 64, 64, 64);
 
 {$IFDEF UNIX}
 function GetTickCount: Cardinal;
@@ -124,43 +128,7 @@ begin
 end;
 {$ENDIF}
 
-function StrTobase64(const Buf: string): RawByteString;
-begin
-{$IFDEF UNICODE}
-  Result := StrTobase64W(Buf);
-{$ELSE}
-  Result := StrTobase64A(Buf);
-{$ENDIF}
-end;
-
-function Base64ToStr(const B64: RawByteString): string;
-begin
-{$IFDEF UNICODE}
-  Result := Base64ToStrW(B64);
-{$ELSE}
-  Result := Base64ToStrA(B64);
-{$ENDIF}
-end;
-
-function StrTobase64W(const Buf: UnicodeString): RawByteString;
-var
-  data: AnsiString;
-begin
-  SetLength(data, Length(Buf) * 2);
-  Move(PWideChar(Buf)^, PAnsiChar(data)^, Length(data));
-  Result := StrTobase64A(data);
-end;
-
-function Base64ToStrW(const B64: RawByteString): UnicodeString;
-var
-  data: AnsiString;
-begin
-  data := Base64ToStrA(B64);
-  SetLength(Result, Length(data) div 2);
-  Move(PAnsiChar(data)^, PWideChar(Result)^, Length(data));
-end;
-
-function StrTobase64A(Buf: AnsiString): RawByteString;
+function StrTobase64(Buf: string): string;
 var
   i: integer;
   x1, x2, x3, x4: byte;
@@ -220,23 +188,11 @@ begin
     begin
       Result[i] := '=';
       dec(PadCount);
-      if PadCount = 0 then BREAK;
+      if PadCount = 0 then Break;
     end;
 end;
 
-function Base64ToStrA(const B64: RawByteString): AnsiString;
-  function Char2IDx(c: AnsiChar): byte;
-  begin
-    case c of
-      'A'..'Z': Result := byte(c) - byte('A');
-      'a'..'z': Result := byte(c) - byte('a') + 26;
-      '0'..'9': Result := byte(c) - byte('0') + (2*26);
-      '+': Result := 63;
-      '/': Result := 64;
-    else
-      result := ord(c);
-    end;
-end;
+function Base64ToStr(const B64: string): string;
 var
   i, PadCount: integer;
   x1, x2, x3: byte;
@@ -261,12 +217,12 @@ begin
   while i <= Length(B64) - 3 do
   begin
     // reverse process of above
-    x1 := (Char2Idx(B64[i]) shl 2) or (Char2IDx(B64[i + 1]) shr 4);
-    Result := Result + AnsiChar(x1);
-    x2 := (Char2Idx(B64[i + 1]) shl 4) or (Char2IDx(B64[i + 2]) shr 2);
-    Result := Result + AnsiChar(x2);
-    x3 := (Char2Idx(B64[i + 2]) shl 6) or (Char2IDx(B64[i + 3]));
-    Result := Result + AnsiChar(x3);
+    x1 := (Base64Map[B64[i]] shl 2) or (Base64Map[B64[i + 1]] shr 4);
+    Result := Result + Char(x1);
+    x2 := (Base64Map[B64[i + 1]] shl 4) or (Base64Map[B64[i + 2]] shr 2);
+    Result := Result + Char(x2);
+    x3 := (Base64Map[B64[i + 2]] shl 6) or (Base64Map[B64[i + 3]]);
+    Result := Result + Char(x3);
     inc(i, 4);
   end;
 
@@ -278,6 +234,79 @@ begin
   end;
 end;
 
+procedure StreamToBase64(const StreamIn, StreamOut: TStream);
+const
+  Base64Code: PChar = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  EQ2: PChar = '==';
+  EQ4: PChar = 'A===';
+var
+  V: array[0..2] of byte;
+  C: array[0..3] of Char;
+begin
+  StreamIn.Seek(0, soFromBeginning);
+  while true do
+    case StreamIn.Read(V, 3) of
+    3: begin
+         C[0] := Base64Code[(V[0] shr 2) and $3F];
+         C[1] := Base64Code[((V[0] shl 4) and $3F) or V[1] shr 4];
+         C[2] := Base64Code[((V[1] shl 2) and $3F) or V[2] shr 6];
+         C[3] := Base64Code[V[2] and $3F];
+         StreamOut.Write(C, 4*SizeOf(Char));
+       end;
+    2: begin
+         C[0] := Base64Code[(V[0] shr 2) and $3F];
+         C[1] := Base64Code[((V[0] shl 4) and $3F) or V[1] shr 4];
+         C[2] := Base64Code[((V[1] shl 2) and $3F) or 0    shr 6];
+         StreamOut.Write(C, 3*SizeOf(Char));
+         StreamOut.Write(EQ2^, 1*SizeOf(Char));
+         Break;
+       end;
+    1: begin
+         C[0] := Base64Code[(V[0] shr 2) and $3F];
+         C[1] := Base64Code[((V[0] shl 4) and $3F) or 0 shr 4];
+         StreamOut.Write(C, 2*SizeOf(Char));
+         StreamOut.Write(EQ2^, 2*SizeOf(Char));
+         Break;
+       end;
+    0: begin
+         if StreamIn.Position = 0 then
+           StreamOut.Write(EQ4^, 4*SizeOf(Char));
+         Break;
+       end;
+    end;
+end;
+
+
+procedure Base64ToStream(const data: string; stream: TStream);
+var
+  i, PadCount: integer;
+  buf: array[0..2] of  byte;
+begin
+  if (Length(data) < 4) or (Length(data) mod 4 <> 0) then Exit;
+  PadCount := 0;
+  i := Length(data);
+  while (data[i] = '=')
+  and (i > 0) do
+  begin
+    inc(PadCount);
+    dec(i);
+  end;
+
+  i := 1;
+  while i <= Length(data) - 3 do
+  begin
+    // reverse process of above
+    buf[0] := (Base64Map[data[i]] shl byte(2)) or (Base64Map[data[i + 1]] shr byte(4));
+    buf[1] := (Base64Map[data[i + 1]] shl 4) or (Base64Map[data[i + 2]] shr 2);
+    buf[2] := (Base64Map[data[i + 2]] shl 6) or (Base64Map[data[i + 3]]);
+    stream.Write(buf, sizeof(buf));
+    inc(i, 4);
+  end;
+
+  // delete padding, if any
+  if PadCount > 0 then
+    stream.Position := stream.Position - PadCount;
+end;
 
 {$IF not declared(InterLockedCompareExchange)}
 {$IFDEF MSWINDOWS}
@@ -326,6 +355,7 @@ var
 label
   error;
 begin
+  inStream.Seek(0, soFromBeginning);
   Result := False;
   FillChar(zstream, SizeOf(zstream), 0);
   if DeflateInit(zstream, level) < Z_OK then
@@ -372,6 +402,7 @@ label
   error;
 begin
   Result := False;
+  inStream.Seek(0, soFromBeginning);
   FillChar(zstream, SizeOf(zstream), 0);
   if InflateInit(zstream) < Z_OK then
     exit;
@@ -416,6 +447,7 @@ var
 label
   error;
 begin
+  inStream.Seek(0, soFromBeginning);
   Result := False;
   FillChar(zstream, SizeOf(zstream), 0);
   if DeflateInit(zstream, level) < Z_OK then
@@ -541,20 +573,20 @@ begin
   inflateEnd(zstream);
 end;
 
-function StreamToAnsiString(stream: TStream): RawbyteString;
+function StreamToStr(stream: TStream): string;
 begin
   stream.Seek(0, soFromBeginning);
-  SetLength(Result, stream.Size);
-  stream.Read(PAnsiChar(Result)^, stream.Size);
+  SetLength(Result, stream.Size div SizeOf(Char));
+  stream.Read(PWideChar(Result)^, stream.Size);
 end;
 
-function FileToAnsiString(const FileName: string): RawbyteString;
+function FileToString(const FileName: string): string;
 var
   strm: TFileStream;
 begin
   strm := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
   try
-    Result := StreamToAnsiString(strm);
+    Result := StreamToStr(strm);
   finally
     strm.Free;
   end;
