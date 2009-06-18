@@ -3574,7 +3574,8 @@ type
       SQL_TEXT    :
         begin
           Str := MBUDecode(Copy(sqldata, 0, sqllen), CharacterSetCP[FCharacterSet]);
-          SetLength(Str, sqllen div BytesPerCharacter[FCharacterSet]);
+          if SqlSubType > 0 then
+            SetLength(Str, sqllen div BytesPerCharacter[FCharacterSet]);
         end;
       SQL_VARYING :
         Str := MBUDecode(
