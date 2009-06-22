@@ -102,7 +102,7 @@ type
   TCharacterSet = (csNONE, csASCII, csBIG_5, csCYRL, csDOS437, csDOS850,
   csDOS852, csDOS857, csDOS860, csDOS861, csDOS863, csDOS865, csEUCJ_0208,
   csGB_2312, csISO8859_1, csISO8859_2, csKSC_5601, csNEXT, csOCTETS, csSJIS_0208,
-  csUNICODE_FSS, csWIN1250, csWIN1251, csWIN1252, csWIN1253, csWIN1254
+  csUNICODE_FSS, csUTF8, csWIN1250, csWIN1251, csWIN1252, csWIN1253, csWIN1254
 {$IFDEF FB15_UP}
   ,csDOS737, csDOS775, csDOS858, csDOS862, csDOS864, csDOS866, csDOS869, csWIN1255,
   csWIN1256, csWIN1257, csISO8859_3, csISO8859_4, csISO8859_5, csISO8859_6, csISO8859_7,
@@ -112,7 +112,7 @@ type
   ,csISO8859_15 ,csKOI8R
 {$ENDIF}
 {$IFDEF FB20_UP}
-  ,csKOI8R, csKOI8U, csUTF8
+  ,csKOI8R, csKOI8U
 {$ENDIF}
 {$IFDEF FB21_UP}
   ,csWIN1258
@@ -126,7 +126,7 @@ const
   CharacterSetStr : array[TCharacterSet] of AnsiString = (
     'NONE', 'ASCII', 'BIG_5', 'CYRL', 'DOS437', 'DOS850', 'DOS852', 'DOS857',
     'DOS860', 'DOS861', 'DOS863', 'DOS865', 'EUCJ_0208', 'GB_2312', 'ISO8859_1',
-    'ISO8859_2', 'KSC_5601', 'NEXT', 'OCTETS', 'SJIS_0208', 'UNICODE_FSS',
+    'ISO8859_2', 'KSC_5601', 'NEXT', 'OCTETS', 'SJIS_0208', 'UNICODE_FSS', 'UTF8',
     'WIN1250', 'WIN1251', 'WIN1252', 'WIN1253', 'WIN1254'
 {$IFDEF FB15_UP}
     ,'DOS737', 'DOS775', 'DOS858', 'DOS862', 'DOS864', 'DOS866', 'DOS869',
@@ -137,7 +137,7 @@ const
     ,'ISO8859_15', 'KOI8R'
 {$ENDIF}
 {$IFDEF FB20_UP}
-    ,'KOI8R', 'KOI8U', 'UTF8'
+    ,'KOI8R', 'KOI8U'
 {$ENDIF}
 {$IFDEF FB21_UP}
     ,'WIN1258'
@@ -170,6 +170,7 @@ const
   0, //csOCTETS,
   932, //csSJIS_0208, shift_jis	ANSI/OEM Japanese; Japanese (Shift-JIS)
   65001, //csUNICODE_FSS utf-8	Unicode (UTF-8)
+  65001, // csUTF8 utf-8	Unicode (UTF-8)
   1250, //csWIN1250, windows-1250	ANSI Central European; Central European (Windows)
   1251, //csWIN1251,windows-1251	ANSI Cyrillic; Cyrillic (Windows)
   1252, //csWIN1252, windows-1252	ANSI Latin 1; Western European (Windows)
@@ -202,7 +203,6 @@ const
 {$IFDEF FB20_UP}
   ,20866 // csKOI8R koi8-r	Russian (KOI8-R); Cyrillic (KOI8-R)
   ,21866 //csKOI8U koi8-u	Ukrainian (KOI8-U); Cyrillic (KOI8-U)
-  ,65001 // csUTF8 utf-8	Unicode (UTF-8)
 {$ENDIF}
 {$IFDEF FB21_UP}
   ,1258 //csWIN1258 ANSI/OEM Vietnamese; Vietnamese (Windows)
@@ -235,6 +235,11 @@ const
     1, // OCTETS
     2, // SJIS_0208
     3, // UNICODE_FSS
+{$IFDEF FB20_UP}
+    4,  // UTF8
+{$ELSE}
+    3,  // UTF8 ALIAS UNICODE_FSS
+{$ENDIF}
     1, // WIN1250
     1, // WIN1251
     1, // WIN1252
@@ -267,7 +272,6 @@ const
 {$IFDEF FB20_UP}
    ,1  // KOI8R
    ,1  // KOI8U
-   ,4  // UTF8
 {$ENDIF}
 {$IFDEF FB21_UP}
    ,1  // WIN1258
@@ -291,18 +295,6 @@ const
   function CreateDBParams(Params: AnsiString; Delimiter: AnsiChar = ';'): AnsiString;
   function GetClientLibrary: string;
   function CreateBlobParams(Params: AnsiString; Delimiter: AnsiChar = ';'): AnsiString;
-
-const
-  UNICODE_CHARSETS: set of TCharacterSet = [
-    csSJIS_0208, csEUCJ_0208, csKSC_5601, csBIG_5, csGB_2312
-{$IFDEF FB21_UP}
-    ,csGBK, csCP943C
-{$ENDIF}
-    ,csUNICODE_FSS
-{$IFDEF FB20_UP}
-    ,csUTF8
-{$ENDIF}
-  ];
 
 //******************************************************************************
 // Transaction
@@ -1290,23 +1282,6 @@ begin
   {$ENDIF}
 {$ENDIF}
 end;
-
-//function BytesPerCharacter(cs: TCharacterSet): Byte;
-//begin
-//  case cs of
-//    csSJIS_0208, csEUCJ_0208, csKSC_5601, csBIG_5, csGB_2312
-//{$IFDEF FB21_UP}
-//    ,csGBK, csCP943C
-//{$ENDIF}
-//      : Result := 2;
-//    csUNICODE_FSS: Result := 3;
-//{$IFDEF FB20_UP}
-//    csUTF8: Result := 4;
-//{$ENDIF}
-//  else
-//    Result := 1;
-//  end;
-//end;
 
 (******************************************************************************)
 (* Errors handling                                                            *)
