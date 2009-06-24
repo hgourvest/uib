@@ -49,12 +49,12 @@ type
       MetaProcedure,
       MetaRole,
       MetaTable,
-      MetaBaseField,
+      MetaBaseField,         { Characteristics, Charset, Collation, Default ... }
         MetaUDFField,
         MetaField,
           MetaProcInField,
           MetaProcOutField,
-          MetaTableField,
+          MetaTableField,    { Nullable, Domain, Check, Computed By ...}
             MetaDomain,
       MetaConstraint,
         MetaForeign,
@@ -162,14 +162,17 @@ type
     FPrecision: Smallint;
     FFieldType: TUIBFieldType;
     FCharSet: string;
+    FCollation: string;
     FSegmentLength: Smallint;
     FSubType: Smallint;
     FBytesPerCharacter: Smallint;
+    FDefaultValue: string;
     procedure LoadFromQuery(QField, QCharset, QArrayDim: TUIBStatement; DefaultCharset: TCharacterSet); virtual;
     procedure LoadFromStream(Stream: TStream); override;
     function GetShortFieldType: string; virtual;
   protected
     property SegmentLength: Smallint read FSegmentLength;
+    property DefaultValue: string read FDefaultValue;
   public
     procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
@@ -192,6 +195,7 @@ type
     class function NodeType: TMetaNodeType; override;
     procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); override;
     property SegmentLength;
+    property DefaultValue;
   end;
 
   TMetaProcInField = class(TMetaField)
@@ -214,7 +218,6 @@ type
 
   TMetaTableField = class(TMetaField)
   private
-    FDefaultValue: string;
     FNotNull: Boolean;
     FDomain: Integer;
     FInfos: TTableFieldInfos;
@@ -231,7 +234,6 @@ type
     class function NodeType: TMetaNodeType; override;
     procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     procedure SaveToStream(Stream: TStream); override;
-    property DefaultValue: string read FDefaultValue;
     property NotNull: Boolean read FNotNull;
     property Domain: TMetaDomain read GetDomain;
     property FieldInfos: TTableFieldInfos read FInfos;
@@ -321,6 +323,9 @@ type
   private
     FUnique: Boolean;
     FActive: Boolean;
+  {$IFDEF FB21_UP}
+    FComputedSource: string;
+  {$ENDIF}
     procedure LoadFromStream(Stream: TStream); override;
   public
     class function NodeClass: string; override;
@@ -822,8 +827,10 @@ type
   end;
 
 implementation
+
 {$IFDEF UNICODE}
-  uses AnsiStrings;
+uses
+  AnsiStrings;
 {$ENDIF}
 
 //   Database Tree
@@ -864,188 +871,369 @@ const
     'BIGINT' , 'ARRAY'{$IFDEF IB7_UP}, 'BOOLEAN' {$ENDIF});
 
   QRYDefaultCharset =
-    'SELECT RDB$CHARACTER_SET_NAME FROM RDB$DATABASE';
+    'select ' +
+    '  RDB$CHARACTER_SET_NAME ' +
+    'from ' +
+    '  RDB$DATABASE';
 
   QRYGenerators =
-    'SELECT RDB$GENERATOR_NAME FROM RDB$GENERATORS GEN WHERE ' +
-    '(NOT GEN.RDB$GENERATOR_NAME STARTING WITH ''RDB$'') AND ' +
-    '(NOT GEN.RDB$GENERATOR_NAME STARTING WITH ''SQL$'') AND ' +
-    '((GEN.RDB$SYSTEM_FLAG IS NULL) OR (GEN.RDB$SYSTEM_FLAG <> 1)) ' +
-    'ORDER BY GEN.RDB$GENERATOR_NAME';
+    'select ' +
+    '  RDB$GENERATOR_NAME ' +
+    'from ' +
+    '  RDB$GENERATORS GEN ' +
+    'where ' +
+    '  (not GEN.RDB$GENERATOR_NAME starting with ''RDB$'') and ' +
+    '  (not GEN.RDB$GENERATOR_NAME starting with ''SQL$'') and ' +
+    '  ((GEN.RDB$SYSTEM_FLAG is null) or (GEN.RDB$SYSTEM_FLAG <> 1)) ' +
+    'order by ' +
+    '  GEN.RDB$GENERATOR_NAME';
 
   QRYTables =
-    'SELECT REL.RDB$RELATION_NAME FROM RDB$RELATIONS REL WHERE ' +
-    '(REL.RDB$SYSTEM_FLAG <> 1 OR REL.RDB$SYSTEM_FLAG IS NULL) AND ' +
-    '(NOT REL.RDB$FLAGS IS NULL) AND ' +
-    '(REL.RDB$VIEW_BLR IS NULL) AND ' +
-    '(REL.RDB$SECURITY_CLASS STARTING WITH ''SQL$'') ' +
-    'ORDER BY REL.RDB$RELATION_NAME';
+    'select ' +
+    '  REL.RDB$RELATION_NAME ' +
+    'from ' +
+    '  RDB$RELATIONS REL ' +
+    'where ' +
+    '  (REL.RDB$SYSTEM_FLAG <> 1 or REL.RDB$SYSTEM_FLAG is null) and ' +
+    '  (NOT REL.RDB$FLAGS is null) and ' +
+    '  (REL.RDB$VIEW_BLR is null) and ' +
+    '  (REL.RDB$SECURITY_CLASS starting with ''SQL$'') ' +
+    'order by ' +
+    '  REL.RDB$RELATION_NAME';
 
   QRYSysTables =
-    'SELECT REL.RDB$RELATION_NAME FROM RDB$RELATIONS REL ' +
-    'WHERE REL.RDB$VIEW_BLR IS NULL ORDER BY REL.RDB$RELATION_NAME';
+    'select ' +
+    '  REL.RDB$RELATION_NAME ' +
+    'from ' +
+    '  RDB$RELATIONS REL ' +
+    'where ' +
+    '  REL.RDB$VIEW_BLR IS NULL ' +
+    'order by ' +
+    '  REL.RDB$RELATION_NAME';
 
   QRYTableFields =
-    'SELECT FLD.RDB$FIELD_TYPE, FLD.RDB$FIELD_SCALE, ' +
-    'FLD.RDB$FIELD_LENGTH, FLD.RDB$FIELD_PRECISION, ' +
-    'FLD.RDB$CHARACTER_SET_ID, FLD.RDB$FIELD_SUB_TYPE, RFR.RDB$FIELD_NAME, ' +
-    'FLD.RDB$SEGMENT_LENGTH, RFR.RDB$NULL_FLAG, RFR.RDB$DEFAULT_SOURCE, ' +
-    'FLD.RDB$VALIDATION_SOURCE, FLD.RDB$DIMENSIONS, '+
-    'RFR.RDB$FIELD_SOURCE, FLD.RDB$COMPUTED_SOURCE, RDB$VALIDATION_SOURCE ' +
-    'FROM RDB$RELATIONS REL, RDB$RELATION_FIELDS RFR, RDB$FIELDS FLD ' +
-    'WHERE (RFR.RDB$FIELD_SOURCE = FLD.RDB$FIELD_NAME) AND ' +
-    '(RFR.RDB$RELATION_NAME = REL.RDB$RELATION_NAME) AND ' +
-    '(REL.RDB$RELATION_NAME = ?) ' +
-    'ORDER BY RFR.RDB$FIELD_POSITION, RFR.RDB$FIELD_NAME';
+    'select ' +
+    '  FLD.RDB$FIELD_TYPE' +
+    ', FLD.RDB$FIELD_SCALE' +
+    ', FLD.RDB$FIELD_LENGTH' +
+    ', FLD.RDB$FIELD_PRECISION' +
+    ', FLD.RDB$CHARACTER_SET_ID' +   // CHARACTER SET
+    ', RFR.RDB$COLLATION_ID' +
+    ', COL.RDB$COLLATION_NAME' +     // COLLATE
+    ', FLD.RDB$FIELD_SUB_TYPE' +
+    ', RFR.RDB$DEFAULT_SOURCE' +     // DEFAULT
+    ', RFR.RDB$FIELD_NAME' +
+    ', FLD.RDB$SEGMENT_LENGTH' +
+    ', RFR.RDB$NULL_FLAG' +          // NULLABLE
+    ', FLD.RDB$VALIDATION_SOURCE' +  // CHECK
+    ', FLD.RDB$DIMENSIONS'+
+    ', RFR.RDB$FIELD_SOURCE' +
+    ', FLD.RDB$COMPUTED_SOURCE' +    // COMPUTED BY
+    ', RDB$VALIDATION_SOURCE ' +
+    'from ' +
+    '  RDB$RELATIONS REL ' +
+    'join RDB$RELATION_FIELDS RFR on (RFR.RDB$RELATION_NAME = REL.RDB$RELATION_NAME) ' +
+    'join RDB$FIELDS FLD on (RFR.RDB$FIELD_SOURCE = FLD.RDB$FIELD_NAME) ' +
+    'left outer join RDB$COLLATIONS COL on (COL.RDB$COLLATION_ID = RFR.RDB$COLLATION_ID and COL.RDB$CHARACTER_SET_ID = FLD.RDB$CHARACTER_SET_ID) ' +
+    'where ' +
+    '  (REL.RDB$RELATION_NAME = ?) ' +
+    'order by ' +
+    '  RFR.RDB$FIELD_POSITION, RFR.RDB$FIELD_NAME';
 
   QRYCharset =
-    'SELECT RDB$CHARACTER_SET_ID, RDB$CHARACTER_SET_NAME, RDB$BYTES_PER_CHARACTER FROM RDB$CHARACTER_SETS';
+    'select ' +
+    '  RDB$CHARACTER_SET_ID' +
+    ', RDB$CHARACTER_SET_NAME' +
+    ', RDB$BYTES_PER_CHARACTER ' +
+    'from ' +
+    '  RDB$CHARACTER_SETS';
 
   QRYUnique =
-    'SELECT RC.RDB$CONSTRAINT_NAME, IDX.RDB$FIELD_NAME ' +
-{.$IFDEF FB15_UP}
-    ',RC.RDB$INDEX_NAME AS PK_INDEX, I.RDB$INDEX_TYPE AS PK_INDEX_TYPE '+
-{.$ENDIF}
-    'FROM RDB$RELATION_CONSTRAINTS RC, RDB$INDEX_SEGMENTS IDX ' +
-{.$IFDEF FB15_UP}
-    ',RDB$INDICES I ' +
-{.$ENDIF}
-    'WHERE (IDX.RDB$INDEX_NAME = RC.RDB$INDEX_NAME) AND ' +
-    '(RC.RDB$CONSTRAINT_TYPE = ?) ' +
-{.$IFDEF FB15_UP}
-    'AND (I.RDB$INDEX_NAME = RC.RDB$INDEX_NAME) ' +
-{.$ENDIF}
-    'AND (RC.RDB$RELATION_NAME = ?) ' +
-    'ORDER BY RC.RDB$RELATION_NAME, IDX.RDB$FIELD_POSITION';
+    'select ' +
+    '  RC.RDB$CONSTRAINT_NAME' +
+    ', IDX.RDB$FIELD_NAME' +
+    ', RC.RDB$INDEX_NAME as PK_INDEX' +
+    ', I.RDB$INDEX_TYPE as PK_INDEX_TYPE ' +
+    'from ' +
+    '  RDB$RELATION_CONSTRAINTS RC ' +
+    'join RDB$INDEX_SEGMENTS IDX on (IDX.RDB$INDEX_NAME = RC.RDB$INDEX_NAME) ' +
+    'join RDB$INDICES I on (I.RDB$INDEX_NAME = RC.RDB$INDEX_NAME) ' +
+    'where ' +
+    '  (RC.RDB$CONSTRAINT_TYPE = ?) and (RC.RDB$RELATION_NAME = ?) ' +
+    'order by ' +
+    '  RC.RDB$RELATION_NAME, IDX.RDB$FIELD_POSITION';
 
   QRYIndex =
-    'SELECT IDX.RDB$INDEX_NAME, ISG.RDB$FIELD_NAME, IDX.RDB$UNIQUE_FLAG, ' +
-    'IDX.RDB$INDEX_INACTIVE, IDX.RDB$INDEX_TYPE FROM RDB$INDICES IDX ' +
-    'LEFT JOIN RDB$INDEX_SEGMENTS ISG ON ISG.RDB$INDEX_NAME = IDX.RDB$INDEX_NAME ' +
-    'LEFT JOIN RDB$RELATION_CONSTRAINTS C ON IDX.RDB$INDEX_NAME = C.RDB$INDEX_NAME ' +
-    'WHERE (C.RDB$CONSTRAINT_NAME IS NULL) AND (IDX.RDB$RELATION_NAME = ?) ' +
-    'ORDER BY IDX.RDB$RELATION_NAME, IDX.RDB$INDEX_NAME, ISG.RDB$FIELD_POSITION';
+    'select ' +
+    '  IDX.RDB$INDEX_NAME' +
+    ', ISG.RDB$FIELD_NAME' +
+    ', IDX.RDB$UNIQUE_FLAG' +
+    ', IDX.RDB$INDEX_INACTIVE' +
+    ', IDX.RDB$INDEX_TYPE' +
+{$IFDEF FB21_UP}
+    ', IDX.RDB$EXPRESSION_SOURCE ' +
+{$ENDIF}
+    'from ' +
+    '  RDB$INDICES IDX ' +
+    'left join RDB$INDEX_SEGMENTS ISG on (ISG.RDB$INDEX_NAME = IDX.RDB$INDEX_NAME) ' +
+    'left join RDB$RELATION_CONSTRAINTS C on (IDX.RDB$INDEX_NAME = C.RDB$INDEX_NAME) ' +
+    'where ' +
+    '  (C.RDB$CONSTRAINT_NAME is null) and (IDX.RDB$RELATION_NAME = ?) ' +
+    'order by ' +
+    '  IDX.RDB$RELATION_NAME, IDX.RDB$INDEX_NAME, ISG.RDB$FIELD_POSITION';
 
   QRYForeign =
-    'SELECT A.RDB$CONSTRAINT_NAME, B.RDB$UPDATE_RULE, B.RDB$DELETE_RULE, ' +
-    '  C.RDB$RELATION_NAME AS FK_TABLE, D.RDB$FIELD_NAME AS FK_FIELD, ' +
-    '  E.RDB$FIELD_NAME AS ONFIELD ' +
-{.$IFDEF FB15_UP}
-    '  ,A.RDB$INDEX_NAME AS FK_INDEX, I.RDB$INDEX_TYPE AS FK_INDEX_TYPE ' +
-{.$ENDIF}
-    'FROM RDB$REF_CONSTRAINTS B, RDB$RELATION_CONSTRAINTS A, RDB$RELATION_CONSTRAINTS C, ' +
-    'RDB$INDEX_SEGMENTS D, RDB$INDEX_SEGMENTS E ' +
-{.$IFDEF FB15_UP}
-    '  ,RDB$INDICES I ' +
-{.$ENDIF}
-    'WHERE (A.RDB$CONSTRAINT_TYPE = ''FOREIGN KEY'') AND ' +
-    '  (A.RDB$CONSTRAINT_NAME = B.RDB$CONSTRAINT_NAME) AND ' +
-    '  (B.RDB$CONST_NAME_UQ=C.RDB$CONSTRAINT_NAME) AND (C.RDB$INDEX_NAME=D.RDB$INDEX_NAME) AND ' +
-    '  (A.RDB$INDEX_NAME=E.RDB$INDEX_NAME) AND ' +
-    '  (D.RDB$FIELD_POSITION = E.RDB$FIELD_POSITION) AND ' +
-{.$IFDEF FB15_UP}
-    '  (I.RDB$INDEX_NAME = A.RDB$INDEX_NAME) AND ' +
-{.$ENDIF}
-    '  (A.RDB$RELATION_NAME = ?) ' +
-    'ORDER BY  A.RDB$CONSTRAINT_NAME, A.RDB$RELATION_NAME, D.RDB$FIELD_POSITION, ' +
-    '  E.RDB$FIELD_POSITION ';
+    'select ' +
+    '  A.RDB$CONSTRAINT_NAME' +
+    ', B.RDB$UPDATE_RULE' +
+    ', B.RDB$DELETE_RULE' +
+    ', C.RDB$RELATION_NAME AS FK_TABLE' +
+    ', D.RDB$FIELD_NAME AS FK_FIELD' +
+    ', E.RDB$FIELD_NAME AS ONFIELD' +
+    ', A.RDB$INDEX_NAME AS FK_INDEX' +
+    ', I.RDB$INDEX_TYPE AS FK_INDEX_TYPE ' +
+    'from ' +
+    '  RDB$REF_CONSTRAINTS B ' +
+    'join RDB$RELATION_CONSTRAINTS A on (A.RDB$CONSTRAINT_NAME=B.RDB$CONSTRAINT_NAME) ' +
+    'join RDB$RELATION_CONSTRAINTS C on (B.RDB$CONST_NAME_UQ=C.RDB$CONSTRAINT_NAME) ' +
+    'join RDB$INDEX_SEGMENTS D on (C.RDB$INDEX_NAME=D.RDB$INDEX_NAME) ' +
+    'join RDB$INDEX_SEGMENTS E on (A.RDB$INDEX_NAME=E.RDB$INDEX_NAME and D.RDB$FIELD_POSITION=E.RDB$FIELD_POSITION) ' +
+    'join RDB$INDICES I ON (I.RDB$INDEX_NAME = A.RDB$INDEX_NAME) ' +
+    'where ' +
+    '  (A.RDB$CONSTRAINT_TYPE = ''FOREIGN KEY'') and (A.RDB$RELATION_NAME = ?) ' +
+    'order by ' +
+    '  A.RDB$CONSTRAINT_NAME, A.RDB$RELATION_NAME, D.RDB$FIELD_POSITION, E.RDB$FIELD_POSITION';
 
   QRYCheck =
-    'SELECT A.RDB$CONSTRAINT_NAME, C.RDB$TRIGGER_SOURCE ' +
-    'FROM RDB$RELATION_CONSTRAINTS A, RDB$CHECK_CONSTRAINTS B, RDB$TRIGGERS C ' +
-    'WHERE (A.RDB$CONSTRAINT_TYPE = ''CHECK'') AND ' +
-    '(A.RDB$CONSTRAINT_NAME = B.RDB$CONSTRAINT_NAME) AND ' +
-    '(B.RDB$TRIGGER_NAME = C.RDB$TRIGGER_NAME) AND ' +
-    '(C.RDB$TRIGGER_TYPE = 1) ' +
-    'AND (A.RDB$RELATION_NAME = ?)';
+    'select ' +
+    '  A.RDB$CONSTRAINT_NAME' +
+    ', C.RDB$TRIGGER_SOURCE ' +
+    'from ' +
+    '  RDB$RELATION_CONSTRAINTS A ' +
+    'join RDB$CHECK_CONSTRAINTS B on (A.RDB$CONSTRAINT_NAME = B.RDB$CONSTRAINT_NAME) ' +
+    'join RDB$TRIGGERS C on (B.RDB$TRIGGER_NAME = C.RDB$TRIGGER_NAME)' +
+    'where ' +
+    '  (A.RDB$CONSTRAINT_TYPE = ''CHECK'') and (C.RDB$TRIGGER_TYPE = 1) and ' +
+    '  (A.RDB$RELATION_NAME = ?)';
 
   QRYTrigger =
-    'SELECT T.RDB$TRIGGER_NAME, T.RDB$TRIGGER_SOURCE, T.RDB$TRIGGER_SEQUENCE, ' +
-    'T.RDB$TRIGGER_TYPE, T.RDB$TRIGGER_INACTIVE, T.RDB$SYSTEM_FLAG ' +
-    'from RDB$TRIGGERS T left join RDB$CHECK_CONSTRAINTS C ON C.RDB$TRIGGER_NAME = ' +
-    'T.RDB$TRIGGER_NAME where ((T.RDB$SYSTEM_FLAG = 0) or (T.RDB$SYSTEM_FLAG is null)) ' +
-    'and (c.rdb$trigger_name is null) and (T.RDB$RELATION_NAME = ?) ' +
-    'order by T.RDB$TRIGGER_NAME';
+    'select ' +
+    '  T.RDB$TRIGGER_NAME' +
+    ', T.RDB$TRIGGER_SOURCE' +
+    ', T.RDB$TRIGGER_SEQUENCE' +
+    ', T.RDB$TRIGGER_TYPE' +
+    ', T.RDB$TRIGGER_INACTIVE' +
+    ', T.RDB$SYSTEM_FLAG ' +
+    'from ' +
+    '  RDB$TRIGGERS T ' +
+    'left join RDB$CHECK_CONSTRAINTS C ON (C.RDB$TRIGGER_NAME = T.RDB$TRIGGER_NAME) ' +
+    'where ' +
+    '  ((T.RDB$SYSTEM_FLAG = 0) or (T.RDB$SYSTEM_FLAG is null)) and ' +
+    '  (C.RDB$TRIGGER_NAME is null) and (T.RDB$RELATION_NAME = ?) ' +
+    'order by ' +
+    '  T.RDB$TRIGGER_NAME';
 
   QRYSysTrigger =
-    'SELECT T.RDB$TRIGGER_NAME, T.RDB$TRIGGER_SOURCE, T.RDB$TRIGGER_SEQUENCE, ' +
-    'T.RDB$TRIGGER_TYPE, T.RDB$TRIGGER_INACTIVE, T.RDB$SYSTEM_FLAG ' +
-    'FROM RDB$TRIGGERS T LEFT JOIN RDB$CHECK_CONSTRAINTS C ON C.RDB$TRIGGER_NAME = ' +
-    'T.RDB$TRIGGER_NAME WHERE (T.RDB$RELATION_NAME = ?) ORDER BY T.RDB$TRIGGER_NAME';
+    'select ' +
+    '  T.RDB$TRIGGER_NAME' +
+    ', T.RDB$TRIGGER_SOURCE' +
+    ', T.RDB$TRIGGER_SEQUENCE' +
+    ', T.RDB$TRIGGER_TYPE' +
+    ', T.RDB$TRIGGER_INACTIVE' +
+    ', T.RDB$SYSTEM_FLAG ' +
+    'from ' +
+    '  RDB$TRIGGERS T ' +
+    'left join RDB$CHECK_CONSTRAINTS C on (C.RDB$TRIGGER_NAME = T.RDB$TRIGGER_NAME) ' +
+    'where ' +
+    '  (T.RDB$RELATION_NAME = ?) ' +
+    'order by ' +
+    '  T.RDB$TRIGGER_NAME';
 
   QRYView =
-    'SELECT REL.RDB$RELATION_NAME, REL.RDB$VIEW_SOURCE FROM RDB$RELATIONS REL WHERE ' +
-    '(REL.RDB$SYSTEM_FLAG <> 1 OR REL.RDB$SYSTEM_FLAG IS NULL) AND ' +
-    '(NOT REL.RDB$FLAGS IS NULL) AND ' +
-    '(NOT REL.RDB$VIEW_BLR IS NULL) AND ' +
-    '(REL.RDB$SECURITY_CLASS STARTING WITH ''SQL$'') ' +
-    'ORDER BY REL.RDB$RELATION_NAME';
+    'select ' +
+    '  REL.RDB$RELATION_NAME' +
+    ', REL.RDB$VIEW_SOURCE ' +
+    'from ' +
+    '  RDB$RELATIONS REL ' +
+    'where ' +
+    '  (REL.RDB$SYSTEM_FLAG <> 1 or REL.RDB$SYSTEM_FLAG is null) and ' +
+    '  (not REL.RDB$FLAGS is null) and ' +
+    '  (not REL.RDB$VIEW_BLR is null) and ' +
+    '  (REL.RDB$SECURITY_CLASS starting with ''SQL$'') ' +
+    'order by ' +
+    '  REL.RDB$RELATION_NAME';
 
   QRYDomains =
-    'select RDB$FIELD_TYPE, RDB$FIELD_SCALE, RDB$FIELD_LENGTH, ' +
-    'RDB$FIELD_PRECISION, RDB$CHARACTER_SET_ID, RDB$FIELD_SUB_TYPE, ' +
-    'RDB$FIELD_NAME, RDB$SEGMENT_LENGTH, RDB$NULL_FLAG, RDB$DEFAULT_SOURCE, ' +
-    'RDB$VALIDATION_SOURCE, RDB$DIMENSIONS '+
-    'FROM RDB$FIELDS WHERE NOT (RDB$FIELD_NAME STARTING WITH ''RDB$'')';
+    'select ' +
+    '  FLD.RDB$FIELD_TYPE' +
+    ', FLD.RDB$FIELD_SCALE' +
+    ', FLD.RDB$FIELD_LENGTH' +
+    ', FLD.RDB$FIELD_PRECISION' +
+    ', FLD.RDB$CHARACTER_SET_ID' +  // CHARACTER SET
+    ', FLD.RDB$COLLATION_ID' +
+    ', COL.RDB$COLLATION_NAME' +    // COLLATE
+    ', FLD.RDB$FIELD_SUB_TYPE' +
+    ', FLD.RDB$DEFAULT_SOURCE' +    // DEFAULT
+    ', FLD.RDB$FIELD_NAME' +
+    ', FLD.RDB$SEGMENT_LENGTH' +
+    ', FLD.RDB$NULL_FLAG' +         // NULLABLE
+    ', FLD.RDB$VALIDATION_SOURCE' + // CHECK
+    ', FLD.RDB$DIMENSIONS ' +
+    'from ' +
+    '  RDB$FIELDS FLD ' +
+    'left outer join RDB$COLLATIONS COL on (COL.RDB$CHARACTER_SET_ID = FLD.RDB$CHARACTER_SET_ID and COL.RDB$COLLATION_ID = FLD.RDB$COLLATION_ID) ' +
+    'where ' +
+    '  not (FLD.RDB$FIELD_NAME starting with ''RDB$'')';
 
   QRYSysDomains =
-    'select RDB$FIELD_TYPE, RDB$FIELD_SCALE, RDB$FIELD_LENGTH, ' +
-    'RDB$FIELD_PRECISION, RDB$CHARACTER_SET_ID, RDB$FIELD_SUB_TYPE, ' +
-    'RDB$FIELD_NAME, RDB$SEGMENT_LENGTH, RDB$NULL_FLAG, RDB$DEFAULT_SOURCE, ' +
-    'RDB$VALIDATION_SOURCE, RDB$DIMENSIONS '+
-    'from RDB$FIELDS';
+    'select ' +
+    '  RDB$FIELD_TYPE' +
+    ', RDB$FIELD_SCALE' +
+    ', RDB$FIELD_LENGTH' +
+    ', RDB$FIELD_PRECISION' +
+    ', RDB$CHARACTER_SET_ID' +      // CHARACTER SET
+    ', FLD.RDB$COLLATION_ID' +
+    ', COL.RDB$COLLATION_NAME' +    // COLLATE
+    ', RDB$FIELD_SUB_TYPE' +
+    ', RDB$DEFAULT_SOURCE' +        // DEFAULT
+    ', RDB$FIELD_NAME' +
+    ', RDB$SEGMENT_LENGTH' +
+    ', RDB$NULL_FLAG' +             // NULLABLE
+    ', RDB$VALIDATION_SOURCE' +     // CHECK
+    ', RDB$DIMENSIONS ' +
+    'from ' +
+    '  RDB$FIELDS FLD ' +
+    'left outer join RDB$COLLATIONS COL on (COL.RDB$CHARACTER_SET_ID = FLD.RDB$CHARACTER_SET_ID and COL.RDB$COLLATION_ID = FLD.RDB$COLLATION_ID) ';
 
   QRYProcedures =
-    'SELECT RDB$PROCEDURE_NAME, RDB$PROCEDURE_SOURCE FROM  RDB$PROCEDURES ORDER BY RDB$PROCEDURE_NAME';
+    'select ' +
+    '  RDB$PROCEDURE_NAME' +
+    ', RDB$PROCEDURE_SOURCE ' +
+    'from ' +
+    '  RDB$PROCEDURES ' +
+    'order by ' +
+    '  RDB$PROCEDURE_NAME';
 
   QRYProcFields =
-    'SELECT FS.RDB$FIELD_TYPE, FS.RDB$FIELD_SCALE, FS.RDB$FIELD_LENGTH, FS.RDB$FIELD_PRECISION, ' +
-    'FS.RDB$CHARACTER_SET_ID, FS.RDB$FIELD_SUB_TYPE, PP.RDB$PARAMETER_NAME, FS.RDB$SEGMENT_LENGTH ' +
-    'FROM RDB$PROCEDURES PR LEFT JOIN RDB$PROCEDURE_PARAMETERS PP ' +
-    'ON PP.RDB$PROCEDURE_NAME = PR.RDB$PROCEDURE_NAME LEFT JOIN RDB$FIELDS FS ON ' +
-    'FS.RDB$FIELD_NAME = PP.RDB$FIELD_SOURCE LEFT JOIN RDB$CHARACTER_SETS CR ON ' +
-    'FS.RDB$CHARACTER_SET_ID = CR.RDB$CHARACTER_SET_ID LEFT JOIN RDB$COLLATIONS CO ' +
-    'ON ((FS.RDB$COLLATION_ID = CO.RDB$COLLATION_ID) AND (FS.RDB$CHARACTER_SET_ID = ' +
-    'CO.RDB$CHARACTER_SET_ID)) WHERE (PR.RDB$PROCEDURE_NAME = ?) AND ' +
-    '(PP.RDB$PARAMETER_TYPE = ?) ORDER BY PP.RDB$PARAMETER_TYPE, PP.RDB$PARAMETER_NUMBER';
+    'select ' +
+    '  FLD.RDB$FIELD_TYPE ' +
+    ', FLD.RDB$FIELD_SCALE ' +
+    ', FLD.RDB$FIELD_LENGTH ' +
+    ', FLD.RDB$FIELD_PRECISION ' +
+    ', FLD.RDB$CHARACTER_SET_ID ' +  // CHARACTER SET
+    ', FLD.RDB$COLLATION_ID ' +
+    ', COL.RDB$COLLATION_NAME ' +    // COLLATE
+    ', FLD.RDB$FIELD_SUB_TYPE ' +
+    ', FLD.RDB$DEFAULT_SOURCE ' +    // DEFAULT
+    ', PPA.RDB$PARAMETER_NAME ' +
+    ', FLD.RDB$SEGMENT_LENGTH  ' +
+    'from  ' +
+    '  RDB$PROCEDURES PRO ' +
+    'join RDB$PROCEDURE_PARAMETERS PPA on (PPA.RDB$PROCEDURE_NAME = PRO.RDB$PROCEDURE_NAME) ' +
+    'join RDB$FIELDS FLD on (FLD.RDB$FIELD_NAME = PPA.RDB$FIELD_SOURCE) ' +
+    'left outer join RDB$COLLATIONS COL on (FLD.RDB$COLLATION_ID = COL.RDB$COLLATION_ID and FLD.RDB$CHARACTER_SET_ID = COL.RDB$CHARACTER_SET_ID) ' +
+    'where ' +
+    '  (PRO.RDB$PROCEDURE_NAME = ?) and (PPA.RDB$PARAMETER_TYPE = ?) ' +
+    'order by ' +
+    '  PRO.RDB$PROCEDURE_NAME, PPA.RDB$PARAMETER_TYPE, PPA.RDB$PARAMETER_NUMBER';
 
   QRYExceptions =
-    'SELECT RDB$EXCEPTION_NAME, RDB$MESSAGE, RDB$EXCEPTION_NUMBER FROM RDB$EXCEPTIONS ORDER BY RDB$EXCEPTION_NAME';
+    'select ' +
+    '  RDB$EXCEPTION_NAME' +
+    ', RDB$MESSAGE' +
+    ', RDB$EXCEPTION_NUMBER ' +
+    'from ' +
+    '  RDB$EXCEPTIONS ' +
+    'order by ' +
+    '  RDB$EXCEPTION_NAME';
 
   QRYUDF =
-    'SELECT RDB$FUNCTION_NAME, RDB$MODULE_NAME, RDB$ENTRYPOINT, RDB$RETURN_ARGUMENT ' +
-    'FROM RDB$FUNCTIONS WHERE (RDB$SYSTEM_FLAG IS NULL) OR (RDB$SYSTEM_FLAG = 0) ORDER BY RDB$FUNCTION_NAME';
+    'select ' +
+    '  RDB$FUNCTION_NAME' +
+    ', RDB$MODULE_NAME' +
+    ', RDB$ENTRYPOINT' +
+    ', RDB$RETURN_ARGUMENT ' +
+    'from ' +
+    '  RDB$FUNCTIONS ' +
+    'where ' +
+    '  (RDB$SYSTEM_FLAG is null) or (RDB$SYSTEM_FLAG = 0) ' +
+    'order by ' +
+    '  RDB$FUNCTION_NAME';
 
   QRYUDFFields =
-    'SELECT RDB$FIELD_TYPE, RDB$FIELD_SCALE, RDB$FIELD_LENGTH, RDB$FIELD_PRECISION, ' +
-    'RDB$CHARACTER_SET_ID, RDB$FIELD_SUB_TYPE, RDB$ARGUMENT_POSITION, RDB$MECHANISM ' +
-    'FROM RDB$FUNCTION_ARGUMENTS WHERE RDB$FUNCTION_NAME = ? ' +
-    'ORDER BY RDB$ARGUMENT_POSITION';
+    'select ' +
+    '  RDB$FIELD_TYPE' +
+    ', RDB$FIELD_SCALE' +
+    ', RDB$FIELD_LENGTH' +
+    ', RDB$FIELD_PRECISION' +
+    ', RDB$CHARACTER_SET_ID' +
+    ', NULL' +
+    ', NULL' +
+    ', RDB$FIELD_SUB_TYPE' +
+    ', RDB$ARGUMENT_POSITION' +
+    ', RDB$MECHANISM ' +
+    'from ' +
+    '  RDB$FUNCTION_ARGUMENTS ' +
+    'where ' +
+    '  RDB$FUNCTION_NAME = ? ' +
+    'order by ' +
+    '  RDB$ARGUMENT_POSITION';
 
   QRYRoles =
-    'SELECT RDB$ROLE_NAME, RDB$OWNER_NAME FROM RDB$ROLES';
+    'select ' +
+    '  RDB$ROLE_NAME' +
+    ', RDB$OWNER_NAME ' +
+    'from ' +
+    '  RDB$ROLES';
 
   QRYArrayDim =
-    'SELECT RDB$LOWER_BOUND, RDB$UPPER_BOUND FROM RDB$FIELD_DIMENSIONS DIM '+
-    'WHERE DIM.RDB$FIELD_NAME = ? ORDER BY DIM.RDB$DIMENSION';
+    'select ' +
+    '  RDB$LOWER_BOUND' +
+    ', RDB$UPPER_BOUND ' +
+    'from ' +
+    '  RDB$FIELD_DIMENSIONS DIM '+
+    'where ' +
+    '  DIM.RDB$FIELD_NAME = ? ' +
+    'order by ' +
+    '  DIM.RDB$DIMENSION';
 
-  { Some grants can be ignored, sometimes, by adding
+  {
+    Some grants can be ignored, sometimes, by adding
     "RDB$GRANT_OPTION is not NULL" to where clause...
     Perhaps GRANTS could be filtered using RDB$USER_NAME <> RDB$GRANTOR since
     there is no reason for a GRANTOR to GRANTS rights to himself...
   }
 
   QRYRelationGrants =
-    'SELECT RDB$USER, RDB$GRANTOR, RDB$PRIVILEGE, RDB$GRANT_OPTION, RDB$USER_TYPE ' +
-    'FROM RDB$USER_PRIVILEGES ' +
-    'WHERE (RDB$USER <> RDB$GRANTOR) AND (RDB$OBJECT_TYPE = ?) AND (RDB$RELATION_NAME = ?) AND (RDB$FIELD_NAME IS NULL) ' +
-    'ORDER BY RDB$GRANT_OPTION, RDB$USER_TYPE, RDB$USER, RDB$GRANTOR';
+    'select ' +
+    '  RDB$USER' +
+    ', RDB$GRANTOR' +
+    ', RDB$PRIVILEGE' +
+    ', RDB$GRANT_OPTION' +
+    ', RDB$USER_TYPE ' +
+    'from ' +
+    '  RDB$USER_PRIVILEGES ' +
+    'where ' +
+    '  (RDB$USER <> RDB$GRANTOR) and (RDB$OBJECT_TYPE = ?) and ' +
+    '  (RDB$RELATION_NAME = ?) and (RDB$FIELD_NAME is null) ' +
+    'order by ' +
+    '  RDB$GRANT_OPTION, RDB$USER_TYPE, RDB$USER, RDB$GRANTOR';
 
   QRYFieldGrants =
-    'SELECT RDB$USER, RDB$GRANTOR, RDB$PRIVILEGE, RDB$GRANT_OPTION, RDB$USER_TYPE, RDB$FIELD_NAME ' +
-    'FROM RDB$USER_PRIVILEGES ' +
-    'WHERE (RDB$USER <> RDB$GRANTOR) AND (RDB$OBJECT_TYPE = ?) AND (RDB$RELATION_NAME = ?) AND (RDB$FIELD_NAME IS NOT NULL) ' +
-    'ORDER BY RDB$PRIVILEGE, RDB$GRANT_OPTION, RDB$USER_TYPE, RDB$USER, RDB$GRANTOR, RDB$FIELD_NAME';
+    'select ' +
+    '  RDB$USER' +
+    ', RDB$GRANTOR' +
+    ', RDB$PRIVILEGE' +
+    ', RDB$GRANT_OPTION' +
+    ', RDB$USER_TYPE' +
+    ', RDB$FIELD_NAME ' +
+    'from ' +
+    '  RDB$USER_PRIVILEGES ' +
+    'where ' +
+    '  (RDB$USER <> RDB$GRANTOR) and (RDB$OBJECT_TYPE = ?) and ' +
+    '  (RDB$RELATION_NAME = ?) and (RDB$FIELD_NAME is not null) ' +
+    'order by ' +
+    '  RDB$PRIVILEGE, RDB$GRANT_OPTION, RDB$USER_TYPE, RDB$USER, RDB$GRANTOR, RDB$FIELD_NAME';
 
 procedure WriteString(Stream: TStream; const Str: string);
 var
@@ -1717,6 +1905,9 @@ begin
     begin
       Unk := '';
       QIndex.Params.AsString[0] := SQLUnQuote(FName);
+    {$IFDEF FB21_UP}
+      QIndex.FetchBlobs := true;
+    {$ENDIF}
       QIndex.Open;
       while not QIndex.Eof do
       begin
@@ -1725,7 +1916,11 @@ begin
           begin
             SetLength(FFields, 1);
             FName := MetaQuote(Trim(QIndex.Fields.AsString[0]));
-            FFields[0] := FindFieldIndex(Trim(QIndex.Fields.AsString[1]));
+          {$IFDEF FB21_UP}
+            FComputedSource := QIndex.Fields.AsString[5];
+          {$ENDIF}
+            if Trim(QIndex.Fields.AsString[1]) <> '' then
+              FFields[0] := FindFieldIndex(Trim(QIndex.Fields.AsString[1]));
             FUnique := QIndex.Fields.AsSingle[2] = 1;
             FActive := QIndex.Fields.AsSingle[3] = 0;
             if QIndex.Fields.AsSingle[4] = 0 then
@@ -1946,6 +2141,7 @@ begin
     Stream.Read(FLength, SizeOf(FLength));
     ReadString(Stream, FCharSet);
     Stream.Read(FBytesPerCharacter, SizeOf(FBytesPerCharacter));
+    ReadString(Stream, FCollation);
   end
   else
   begin
@@ -1963,6 +2159,8 @@ begin
     FSegmentLength := 0;
     FSubType := 0;
   end;
+
+  ReadString(Stream, FDefaultValue);
 end;
 
 procedure TMetaBaseField.SaveToStream(Stream: TStream);
@@ -1981,6 +2179,7 @@ begin
     Stream.Write(FLength, SizeOf(FLength));
     WriteString(Stream, FCharSet);
     Stream.Write(FBytesPerCharacter, SizeOf(FBytesPerCharacter));
+    WriteString(Stream, FCollation);
   end;
 
   if FFieldType = uftBlob then
@@ -1988,6 +2187,8 @@ begin
     Stream.Write(FSegmentLength, SizeOf(FSegmentLength));
     Stream.Write(FSubType, SizeOf(FSubType));
   end;
+
+  WriteString(Stream, FDefaultValue);
 end;
 
 procedure TMetaBaseField.LoadFromQuery(QField, QCharset, QArrayDim: TUIBStatement; DefaultCharset: TCharacterSet);
@@ -2075,11 +2276,25 @@ begin
       FindCharset(QField.Fields.AsSmallint[4], FCharSet, FBytesPerCharacter);
       if (FCharSet = string(CharacterSetStr[DefaultCharset])) then
         FCharSet := '';
+      if QField.Fields.IsNull[5] or (QField.Fields.AsInteger[5] = 0) then
+        FCollation := ''
+      else
+        FCollation := Trim(QField.Fields.AsString[6])
     end
   else
     FBytesPerCharacter := 1;
 
-  FSubType := QField.Fields.AsSmallint[5];
+  FSubType := QField.Fields.AsSmallint[7];
+
+  if not QField.Fields.IsNull[8] then
+  begin
+    QField.ReadBlob(8, FDefaultValue);
+    FDefaultValue := Trim(FDefaultValue);
+    if FDefaultValue <> '' then
+      FDefaultValue := Copy(FDefaultValue, 9, System.Length(FDefaultValue) - 8);
+  end
+  else
+    FDefaultValue := '';
 end;
 
 procedure TMetaBaseField.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
@@ -2093,8 +2308,12 @@ begin
       begin
         Stream.WriteString(Format('%s(%d)',
           [FieldTypes[FFieldType], FLength div FBytesPerCharacter]));
+        if FDefaultValue <> '' then
+          Stream.WriteString(' DEFAULT ' + FDefaultValue);
         if (FCharSet <> '') then
           Stream.WriteString(' CHARACTER SET ' + FCharSet);
+        if (FCollation <> '') then
+          Stream.WriteString(' COLLATE ' + FCollation);
       end;
     uftBlob:
       Stream.WriteString(Format('%s SUB_TYPE %d SEGMENT SIZE %d',
@@ -2102,6 +2321,9 @@ begin
   else
     Stream.WriteString(Format('%s', [FieldTypes[FFieldType]]));
   end;
+
+  if (not (FFieldType in [uftChar..uftCstring])) and (FDefaultValue <> '') then
+    Stream.WriteString(' DEFAULT ' + FDefaultValue);
 end;
 
 class function TMetaBaseField.NodeClass: string;
@@ -2456,7 +2678,7 @@ begin
   SaveMainNodes('FUNCTIONS',          Ord(OIDUDF),       NewLine);
   SaveMainNodes('DOMAINS',            Ord(OIDDomain));
   SaveMainNodes('GENERATORS',         Ord(OIDGenerator), NewLine);
-  SaveMainNodes('EXEPTIONS',          Ord(OIDException));
+  SaveMainNodes('EXCEPTIONS',         Ord(OIDException));
   SaveMainNodes('PROCEDURES (Empty)', Ord(OIDProcedure), NewLine);
   SaveMainNodes('TABLES',             Ord(OIDTable),     NewLine);
   SaveMainNodes('VIEWS',              Ord(OIDView),      NewLine);
@@ -3024,6 +3246,9 @@ begin
   inherited LoadFromStream(Stream);
   Stream.Read(FUnique, SizeOf(FUnique));
   Stream.Read(FActive, SizeOf(FActive));
+{$IFDEF FB21_UP}
+  ReadString(Stream, FComputedSource);
+{$ENDIF}
 end;
 
 procedure TMetaIndex.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
@@ -3036,16 +3261,26 @@ begin
   if FOrder = IoDescending then
     ORDER := ' DESCENDING';
 
-  Stream.WriteString(Format('CREATE%s%s INDEX %s ON %s (',
+  Stream.WriteString(Format('CREATE%s%s INDEX %s ON %s ',
     [ORDER, UNIQUE, Name, TMetaTable(FOwner).Name]));
 
-  for I := 0 to FieldsCount - 1 do
+{$IFDEF FB21_UP}
+  if FComputedSource <> '' then
+    Stream.WriteString(Format('COMPUTED BY %s;', [FComputedSource]))
+  else
   begin
-    Stream.WriteString(Fields[I].Name);
-    if I <> FieldsCount - 1 then
-      Stream.WriteString(', ');
+{$ENDIF}
+    Stream.WriteString('(');
+    for I := 0 to FieldsCount - 1 do
+    begin
+      Stream.WriteString(Fields[I].Name);
+      if I <> FieldsCount - 1 then
+        Stream.WriteString(', ');
+    end;
+    Stream.WriteString(');');
+{$IFDEF FB21_UP}
   end;
-  Stream.WriteString(');');
+{$ENDIF}
   if not FActive then
     Stream.WriteString(Format('%sALTER INDEX %s INACTIVE;', [NewLine, Name]));
 end;
@@ -3055,6 +3290,9 @@ begin
   inherited SaveToStream(Stream);
   Stream.Write(FUnique, SizeOf(FUnique));
   Stream.Write(FActive, SizeOf(FActive));
+{$IFDEF FB21_UP}
+  WriteString(Stream, FComputedSource);
+{$ENDIF}
 end;
 
 class function TMetaIndex.NodeType: TMetaNodeType;
@@ -3941,39 +4179,28 @@ procedure TMetaTableField.LoadFromQuery(Q, C, A: TUIBStatement; DefaultCharset: 
 var i: Integer;
 begin
   inherited LoadFromQuery(Q, C, A, DefaultCharset);
-  FNotNull := (Q.Fields.AsSmallint[8] = 1);
-  if not Q.Fields.IsNull[9] then
-  begin
-    Q.ReadBlob(9, FDefaultValue);
-
-    FDefaultValue := Trim(FDefaultValue);
-    if FDefaultValue <> '' then
-      FDefaultValue := Copy(FDefaultValue, 9,
-        System.Length(FDefaultValue) - 8);
-  end
-  else
-    FDefaultValue := '';
+  FNotNull := (Q.Fields.AsSmallint[11] = 1);
 
   FDomain := -1;
   if not (Self is TMetaDomain) then
   begin
     if OIDDomain in TMetaDataBase(FOwner.FOwner).FOIDDatabases then
-      if not (Q.Fields.IsNull[12] or (Copy(Q.Fields.AsString[12], 1, 4) = 'RDB$')) then
+      if not (Q.Fields.IsNull[14] or (Copy(Q.Fields.AsString[14], 1, 4) = 'RDB$')) then
         FDomain :=
-          TMetaDataBase(FOwner.FOwner).FindDomainIndex(MetaQuote(Trim(Q.Fields.AsString[12])));
-    Q.ReadBlob(13, FComputedSource);
+          TMetaDataBase(FOwner.FOwner).FindDomainIndex(MetaQuote(Trim(Q.Fields.AsString[14])));
+    Q.ReadBlob(15, FComputedSource);
   end;
 
   if (FDomain < 0) or (Domain.ValidationSource = '') then
-    Q.ReadBlob(10, FValidationSource);
+    Q.ReadBlob(12, FValidationSource);
 
   // Array
-  if Q.Fields.AsSmallint[11] > 0 then
+  if Q.Fields.AsSmallint[13] > 0 then
   begin
-    SetLength(FArrayBounds, Q.Fields.AsSmallint[11]);
+    SetLength(FArrayBounds, Q.Fields.AsSmallint[13]);
     if (Self is TMetaDomain) then
       A.Params.AsString[0] := FName else
-      A.Params.AsString[0] := Q.Fields.AsString[12];
+      A.Params.AsString[0] := Q.Fields.AsString[14];
     A.Open;
     i := 0;
     while not A.Eof do
@@ -3990,7 +4217,6 @@ procedure TMetaTableField.LoadFromStream(Stream: TStream);
 var i: Integer;
 begin
   inherited LoadFromStream(Stream);
-  ReadString(Stream, FDefaultValue);
   Stream.Read(FNotNull, SizeOf(FNotNull));
   Stream.Read(FDomain, SizeOf(FDomain));
   ReadString(Stream, FValidationSource);
@@ -4039,7 +4265,7 @@ begin
           Stream.WriteString(']');
         end;
 
-        if (FFieldType in [uftChar..uftCstring]) and  (FCharSet <> '') then
+        if (FFieldType in [uftChar..uftCstring]) and (FCharSet <> '') then
           Stream.WriteString(' CHARACTER SET ' + FCharSet);
       end;
 
@@ -4047,6 +4273,9 @@ begin
     Stream.WriteString(' DEFAULT ' + FDefaultValue);
   if FNotNull then
     Stream.WriteString(' NOT NULL');
+  if (FDomain < 0) and (FComputedSource = '') and
+     (FFieldType in [uftChar..uftCstring]) and (FCollation <> '') then
+    Stream.WriteString(' COLLATE ' + FCollation);
   if (FValidationSource <> '') then
     Stream.WriteString(' ' + FValidationSource);
 end;
@@ -4055,7 +4284,6 @@ procedure TMetaTableField.SaveToStream(Stream: TStream);
 var i: integer;
 begin
   inherited SaveToStream(Stream);
-  WriteString(Stream, FDefaultValue);
   Stream.Write(FNotNull, SizeOf(FNotNull));
   Stream.Write(FDomain, SizeOf(FDomain));
   WriteString(Stream, FValidationSource);
@@ -4095,8 +4323,8 @@ end;
 procedure TMetaField.LoadFromQuery(Q, C, A: TUIBStatement; DefaultCharset: TCharacterSet);
 begin
   inherited LoadFromQuery(Q, C, A, DefaultCharset);
-  FName := MetaQuote(Trim(Q.Fields.AsString[6]));
-  FSegmentLength := Q.Fields.AsSmallint[7];
+  FName := MetaQuote(Trim(Q.Fields.AsString[9]));
+  FSegmentLength := Q.Fields.AsSmallint[10];
 end;
 
 class function TMetaField.NodeType: TMetaNodeType;
