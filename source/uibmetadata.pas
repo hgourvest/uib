@@ -969,7 +969,7 @@ const
     ', ISG.RDB$FIELD_NAME' +
     ', IDX.RDB$UNIQUE_FLAG' +
     ', IDX.RDB$INDEX_INACTIVE' +
-    ', IDX.RDB$INDEX_TYPE' +
+    ', IDX.RDB$INDEX_TYPE ' +
 {$IFDEF FB21_UP}
     ', IDX.RDB$EXPRESSION_SOURCE ' +
 {$ENDIF}
@@ -1170,6 +1170,7 @@ const
     ', NULL' +
     ', NULL' +
     ', RDB$FIELD_SUB_TYPE' +
+    ', NULL' +
     ', RDB$ARGUMENT_POSITION' +
     ', RDB$MECHANISM ' +
     'from ' +
@@ -4343,8 +4344,8 @@ end;
 procedure TMetaUDFField.LoadFromQuery(QField, QCharset, QArrayDim: TUIBStatement; DefaultCharset: TCharacterSet);
 begin
   inherited LoadFromQuery(QField, QCharset, QArrayDim, DefaultCharset);
-  FPosition := QField.Fields.AsSmallint[6];
-  FMechanism := QField.Fields.AsSmallint[7];
+  FPosition := QField.Fields.AsSmallint[9];
+  FMechanism := QField.Fields.AsSmallint[10];
   FName := 'Field ' + IntToStr(FPosition);
 end;
 
