@@ -887,6 +887,8 @@ type
     procedure TransactionCommitRetaining(var TraHandle: IscTrHandle);
     procedure TransactionPrepare(var TraHandle: IscTrHandle);
     procedure TransactionRollbackRetaining(var TraHandle: IscTrHandle);
+    function TransactionGetId(var TraHandle: IscTrHandle): Cardinal;
+
     procedure DSQLExecuteImmediate(var DBHandle: IscDbHandle; var TraHandle: IscTrHandle;
       const Statement: RawbyteString; Dialect: Word; Sqlda: TSQLDA = nil); overload;
     procedure DSQLExecuteImmediate(const Statement: RawbyteString; Dialect: Word; Sqlda: TSQLDA = nil); overload;
@@ -1882,6 +1884,27 @@ const
     end;
   {$ENDIF}
   end;
+
+  function TUIBLibrary.TransactionGetId(var TraHandle: IscTrHandle): Cardinal;
+  var
+    tra_items: AnsiChar;
+    tra_info: array [0..31] of AnsiChar;
+  begin
+  {$IFDEF UIBTHREADSAFE}
+    FLIBCritSec.Enter;
+    try
+  {$ENDIF}
+      tra_items := AnsiChar(isc_info_tra_id);
+      CheckUIBApiCall(isc_transaction_info(@FStatusVector, @TraHandle,
+        sizeof(tra_items), @tra_items, sizeof(tra_info), tra_info));
+      Result := PCardinal(tra_info + 3)^;
+  {$IFDEF UIBTHREADSAFE}
+    finally
+      FLIBCritSec.Leave;
+    end;
+  {$ENDIF}
+  end;
+
 
 //******************************************************************************
 // DSQL

@@ -623,7 +623,10 @@ type
     procedure RollBack;
     {Rollback transaction but keep transaction handle.}
     procedure RollBackRetaining;
+    { Execute SQL immediately without allocating statement. }
     procedure ExecuteImmediate(const sql: string);
+    { Retrieve transaction ID. }
+    function GetTransactionID: Cardinal;
 {$IFDEF IB71_UP}
     { Interbase 7.1 spceficic, Release a savepoint.
       On Firebird 1.5 this must be call by SQL.}
@@ -3624,16 +3627,7 @@ end;
 
 function TUIBTransaction.GetInTransaction: boolean;
 begin
-{$IFDEF UIBTHREADSAFE}
-  Lock;
-  try
-{$ENDIF}
-    Result := (FTrHandle <> nil);
-{$IFDEF UIBTHREADSAFE}
-  finally
-    UnLock;
-  end;
-{$ENDIF}
+  Result := (FTrHandle <> nil);
 end;
 
 function TUIBTransaction.TPB: RawByteString;
@@ -3866,6 +3860,13 @@ begin
     UnLock;
   end;
 {$ENDIF}
+end;
+
+function TUIBTransaction.GetTransactionID: Cardinal;
+begin
+  if InTransaction then
+    Result := GetDataBase.FLibrary.TransactionGetId(FTrHandle) else
+    Result := 0;
 end;
 
 { TUIBComponent }
