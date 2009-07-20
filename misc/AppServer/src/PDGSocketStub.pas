@@ -91,13 +91,14 @@ type
     FAddress: TSockAddr;
     FSocketHandle: longint;
     FPort: Word;
+    FBind: Longint;
   protected
     function Run: Cardinal; override;
     procedure Stop; override;
     function doOnCreateStub(Socket: longint; Address: TSockAddr): TSocketStub; virtual; abstract;
   public
     property Address: TSockAddr read FAddress;
-    constructor CreateServer(AOwner: TPDGThread; Port: Word); virtual;
+    constructor CreateServer(AOwner: TPDGThread; Port: Word; const Bind: LongInt = INADDR_ANY); virtual;
   end;
 
   TSocketStub = class(TPDGThread)
@@ -396,7 +397,7 @@ begin
 {$ELSE}
   FSocketHandle := socket(AF_INET, SOCK_STREAM, 0);
 {$ENDIF}
-  FAddress.sin_addr.s_addr := INADDR_ANY;
+  FAddress.sin_addr.s_addr := FBind;
   FAddress.sin_family := AF_INET;
   FAddress.sin_port := htons(FPort);
 
@@ -447,11 +448,12 @@ begin
   end;
 end;
 
-constructor TSocketServer.CreateServer(AOwner: TPDGThread; Port: Word);
+constructor TSocketServer.CreateServer(AOwner: TPDGThread; Port: Word; const Bind: LongInt);
 begin
   inherited Create(AOwner);
   FSocketHandle := INVALID_SOCKET;
   FPort := Port;
+  FBind := Bind;
 end;
 
 procedure TSocketServer.Stop;

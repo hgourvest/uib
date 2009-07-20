@@ -25,6 +25,7 @@ unit PDGService;
 {$I PDGAppServer.inc}
 interface
 uses
+{$IFDEF FPC}sockets{$ELSE}WinSock{$ENDIF},
 {$if Defined(MadExcept) and Defined(CONSOLEAPP)}
   MadExcept,
 {$ifend}
@@ -55,7 +56,7 @@ type
 {$ENDIF}
   public
     procedure Run;
-    function CreateServer(clazz: TSocketServerClass; Port: Word): TSocketServer;
+    function CreateServer(clazz: TSocketServerClass; Port: Word; const Bind: Longint = INADDR_ANY): TSocketServer;
     function CreateThread(clazz: TPDGThreadClass): TPDGThread;
     constructor Create; virtual;
     destructor Destroy; override;
@@ -81,7 +82,6 @@ const
 {$ENDIF}
 
 implementation
-uses {$IFDEF FPC}sockets{$ELSE}WinSock{$ENDIF};
 
 {$IFNDEF CONSOLEAPP}
 type
@@ -506,9 +506,9 @@ begin
   FThreads.Resume;
 end;
 
-function TPDGService.CreateServer(clazz: TSocketServerClass; Port: Word): TSocketServer;
+function TPDGService.CreateServer(clazz: TSocketServerClass; Port: Word; const Bind: Longint): TSocketServer;
 begin
-  Result := clazz.CreateServer(FThreads, Port);
+  Result := clazz.CreateServer(FThreads, Port, Bind);
 end;
 
 function TPDGService.CreateThread(clazz: TPDGThreadClass): TPDGThread;
