@@ -432,7 +432,7 @@ begin
                if (param <> '') and (str > marker) then
                begin
                  if not DecodeURI(marker, str - marker, value) then exit;
-                 FRequest['@params'].S[HTTPDecode(param)] := HTTPDecode(value);
+                 FRequest.S['params.'+HTTPDecode(param)] := HTTPDecode(value);
                end;
                if {$IFDEF UNICODE}(str^ < #256) and {$ENDIF}(AnsiChar(str^) in [SP, NL]) then
                  Break;
