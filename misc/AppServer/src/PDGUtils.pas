@@ -577,7 +577,7 @@ function StreamToStr(stream: TStream): string;
 begin
   stream.Seek(0, soFromBeginning);
   SetLength(Result, stream.Size div SizeOf(Char));
-  stream.Read(PWideChar(Result)^, stream.Size);
+  stream.Read(PChar(Result)^, stream.Size);
 end;
 
 function FileToString(const FileName: string): string;

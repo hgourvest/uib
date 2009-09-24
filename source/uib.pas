@@ -4929,7 +4929,11 @@ begin
   FSignal := TSimpleEvent.Create;
   FBlock := Block;
   OnTerminate := SyncTerminate;
+{$IFDEF DELPHI2010_UP}
+  Start;
+{$ELSE}
   Resume;
+{$ENDIF}
 end;
 
 destructor TUIBEventThread.Destroy;
