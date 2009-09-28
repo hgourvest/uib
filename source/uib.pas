@@ -4918,7 +4918,7 @@ end;
 constructor TUIBEventThread.Create(Owner: TUIBEvents;
   Block: Integer; SyncMainThread: boolean);
 begin
-  inherited Create(True);
+  inherited Create(false);
   FSyncMainThread := SyncMainThread;
   FCurrentEvent := 0;
   FEventID := 0;
@@ -4929,11 +4929,6 @@ begin
   FSignal := TSimpleEvent.Create;
   FBlock := Block;
   OnTerminate := SyncTerminate;
-{$IFDEF DELPHI2010_UP}
-  Start;
-{$ELSE}
-  Resume;
-{$ENDIF}
 end;
 
 destructor TUIBEventThread.Destroy;
