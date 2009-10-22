@@ -5211,6 +5211,9 @@ end;
       varCurrency:                       SetAsCurrency(Index, Value);
       varDate:                           SetAsDateTime(Index, Value);
       varOleStr, varString:              SetAsString(Index, Value);
+{$IFDEF UNICODE}
+      varUString:                        SetAsString(Index, Value);
+{$ENDIF}
 {$IFDEF IB7_UP}
       varBoolean:                        SetAsBoolean(Index, Value);
 {$ENDIF}
