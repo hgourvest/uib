@@ -16,7 +16,7 @@ procedure init;
 var
   obj: ISuperObject;
 begin
-  obj := TSuperObject.ParseFile(ExtractFilePath(ParamStr(0)) + 'appserver.json');
+  obj := TSuperObject.ParseFile(ExtractFilePath(ParamStr(0)) + 'appserver.json', false);
   pool := TPDGUIBConnectionPool.Create(obj['database'], 0);
 end;
 

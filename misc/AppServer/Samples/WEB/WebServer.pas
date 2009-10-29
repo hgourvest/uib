@@ -100,7 +100,7 @@ begin
 
     // superobject
     StreamA.Seek(0, soFromBeginning);
-    Result := TSuperObject.ParseStream(StreamA);
+    Result := TSuperObject.ParseStream(StreamA, false);
   finally
     StreamA.Free;
     StreamB.Free;
