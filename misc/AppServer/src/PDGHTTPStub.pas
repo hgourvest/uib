@@ -178,7 +178,8 @@ begin
             (StrictSep and (src^ <> #0))) and (src^ <> sep) do
         Inc(src);
       SetString(S, P1, src - P1);
-      S := HTTPDecode(S, codepage);
+      if codepage > 0 then
+        S := HTTPDecode(S, codepage);
       if named then
       begin
         i := pos('=', S);
