@@ -79,6 +79,12 @@ const
   SERVICE_INTERACTIVE_PROCESS   = $00000100;
   SERVICE_WIN32                 = (SERVICE_WIN32_OWN_PROCESS or
                                    SERVICE_WIN32_SHARE_PROCESS);
+
+  SERVICE_BOOT_START            = $00000000;
+  SERVICE_SYSTEM_START          = $00000001;
+  SERVICE_AUTO_START            = $00000002;
+  SERVICE_DEMAND_START          = $00000003;
+  SERVICE_DISABLED              = $00000004;
 {$ENDIF}
 
 implementation
@@ -147,12 +153,6 @@ const
   SERVICE_ERROR_NORMAL          = $00000001;
   SERVICE_ERROR_SEVERE          = $00000002;
   SERVICE_ERROR_CRITICAL        = $00000003;
-
-  SERVICE_BOOT_START            = $00000000;
-  SERVICE_SYSTEM_START          = $00000001;
-  SERVICE_AUTO_START            = $00000002;
-  SERVICE_DEMAND_START          = $00000003;
-  SERVICE_DISABLED              = $00000004;
 
   _DELETE                  = $00010000;
 
