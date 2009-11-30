@@ -257,7 +257,7 @@ type
     { Remove the Registered Exception class. }
     procedure UnRegisterExceptions(Excpt: EUIBExceptionClass);
     { Create a database with a default page size of 4096. }
-    procedure CreateDatabase(PageSize: Integer = 4096);
+    procedure CreateDatabase(PageSize: Integer = 4096; DefaultCharacterSet: TCharacterSet = csUTF8);
     { Drop the database. }
     procedure DropDatabase;
     { Return a TMetaDatabase class corresponding to the current connection. }
@@ -1357,7 +1357,7 @@ begin
 {$ENDIF}
 end;
 
-procedure TUIBDataBase.CreateDatabase(PageSize: Integer);
+procedure TUIBDataBase.CreateDatabase(PageSize: Integer; DefaultCharacterSet: TCharacterSet);
 var TrHandle: IscTrHandle;
 const
   CreateDb = 'CREATE DATABASE ''%s'' USER ''%s'' PASSWORD ''%s'' ' +
@@ -1370,14 +1370,14 @@ begin
   FLibrary.DSQLExecuteImmediate(FDbHandle, TrHandle,
     MBUEncode(Format(CreateDb, [DatabaseName, UserName, PassWord,
                      CharacterSetStr[CharacterSet],
-                     PageSize, CharacterSetStr[CharacterSet]]),
+                     PageSize, CharacterSetStr[DefaultCharacterSet]]),
               CharacterSetCP[CharacterSet]),
     SQLDialect);
 {$ELSE}
   FLibrary.DSQLExecuteImmediate(FDbHandle, TrHandle,
     Format(CreateDb, [DatabaseName, UserName, PassWord,
            CharacterSetStr[CharacterSet],
-           PageSize, CharacterSetStr[CharacterSet]]),
+           PageSize, CharacterSetStr[DefaultCharacterSet]]),
     SQLDialect);
 {$ENDIF}
 end;
