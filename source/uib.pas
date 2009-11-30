@@ -1360,20 +1360,25 @@ end;
 procedure TUIBDataBase.CreateDatabase(PageSize: Integer);
 var TrHandle: IscTrHandle;
 const
-  CreateDb = 'CREATE DATABASE ''%s'' USER ''%s'' PASSWORD ''%s'' '+
-    'PAGE_SIZE %d DEFAULT CHARACTER SET %s';
+  CreateDb = 'CREATE DATABASE ''%s'' USER ''%s'' PASSWORD ''%s'' ' +
+    'SET NAMES ''%s'' PAGE_SIZE %d DEFAULT CHARACTER SET %s';
 begin
   TrHandle := nil;
   Connected := False;
   FLibrary.Load(FLiBraryName);
 {$IFDEF UNICODE}
   FLibrary.DSQLExecuteImmediate(FDbHandle, TrHandle,
-    MBUEncode(Format(CreateDb, [DatabaseName, UserName, PassWord, PageSize,
-    CharacterSetStr[CharacterSet]]), CharacterSetCP[CharacterSet]), SQLDialect);
+    MBUEncode(Format(CreateDb, [DatabaseName, UserName, PassWord,
+                     CharacterSetStr[CharacterSet],
+                     PageSize, CharacterSetStr[CharacterSet]]),
+              CharacterSetCP[CharacterSet]),
+    SQLDialect);
 {$ELSE}
   FLibrary.DSQLExecuteImmediate(FDbHandle, TrHandle,
-    Format(CreateDb, [DatabaseName, UserName, PassWord, PageSize,
-    CharacterSetStr[CharacterSet]]), SQLDialect);
+    Format(CreateDb, [DatabaseName, UserName, PassWord,
+           CharacterSetStr[CharacterSet],
+           PageSize, CharacterSetStr[CharacterSet]]),
+    SQLDialect);
 {$ENDIF}
 end;
 
