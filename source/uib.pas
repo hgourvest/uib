@@ -257,7 +257,7 @@ type
     { Remove the Registered Exception class. }
     procedure UnRegisterExceptions(Excpt: EUIBExceptionClass);
     { Create a database with a default page size of 4096. }
-    procedure CreateDatabase(PageSize: Integer = 4096; DefaultCharacterSet: TCharacterSet = csUTF8);
+    procedure CreateDatabase(PageSize: Integer = 4096; DefaultCharacterSet: TCharacterSet);
     { Drop the database. }
     procedure DropDatabase;
     { Return a TMetaDatabase class corresponding to the current connection. }
