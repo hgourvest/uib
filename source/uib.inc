@@ -53,10 +53,6 @@
 //----------
 {.$DEFINE YF867}
 
-// Enable Multithreading,
-// Disabling Multithrading will made UIB faster.
-{$DEFINE UIBTHREADSAFE}
-
 //----------
 // Languages
 //----------
