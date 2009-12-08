@@ -528,10 +528,6 @@ begin
   with CL.AddClassN(CL.FindClass('TComponent'),'TUIBComponent') do
 {$ENDIF}
   begin
-{$IFDEF UIBTHREADSAFE}
-    RegisterMethod('Procedure Lock');
-    RegisterMethod('Procedure UnLock');
-{$ENDIF}
 {$IFDEF UIB_NO_COMPONENT}
     RegisterMethod('Constructor Create');
 {$ENDIF}
@@ -2106,10 +2102,6 @@ procedure RIRegister_TUIBComponent(CL: TPSRuntimeClassImporter);
 begin
   with CL.Add(TUIBComponent) do
   begin
-{$IFDEF UIBTHREADSAFE}
-    RegisterVirtualMethod(@TUIBComponent.Lock, 'Lock');
-    RegisterVirtualMethod(@TUIBComponent.UnLock, 'UnLock');
-{$ENDIF}
 {$IFDEF UIB_NO_COMPONENT}
     RegisterVirtualConstructor(@TUIBComponent.Create, 'Create');
 {$ENDIF}
