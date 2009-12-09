@@ -4616,7 +4616,7 @@ end;
 
   function TSQLDA.TryGetFieldIndex(const name: AnsiString; out index: Word): Boolean;
   var
-    i: Word;
+    i: Integer;
   begin
     for i := 0 to GetAllocatedFields - 1 do
       if FXSQLDA.sqlvar[i].AliasNameLength = Length(name) then
@@ -6210,7 +6210,7 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
 
   function TSQLParams.TryGetFieldIndex(const name: AnsiString; out Index: Word): Boolean;
   var
-    Field: Word;
+    Field: Integer;
   begin
     for Field := 0 to FXSQLDA.sqln - 1 do
       if FXSQLDA.sqlvar[Field].ParamNameLength = Length(name) then
