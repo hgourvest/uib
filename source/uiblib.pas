@@ -526,6 +526,7 @@ type
     constructor Create(aCharacterSet: TCharacterSet); virtual;
     procedure CheckRange(const Index: Word);
     function GetFieldIndex(const name: AnsiString): Word; virtual;
+    function TryGetFieldIndex(const name: AnsiString; out index: Word): Boolean; virtual;
     property Data: PUIBSQLDa read FXSQLDA;
     property IsBlob[const Index: Word]: boolean read GetIsBlob;
     property IsBlobText[const Index: Word]: boolean read GetIsBlobText;
@@ -784,7 +785,6 @@ type
   TSQLParams = class(TSQLDA)
   private
     FParamCount: Word;
-    function FindParam(const name: AnsiString; out Index: Word): boolean; overload;
     function GetFieldName(const Index: Word): string;
     procedure AllocateDataBuffer(AInit: boolean = true);
   protected
@@ -817,6 +817,7 @@ type
     destructor Destroy; override;
     procedure Clear;
     function Parse(const SQL: string): string;
+    function TryGetFieldIndex(const name: AnsiString; out Index: Word): Boolean; override;
     function GetFieldIndex(const name: AnsiString): Word; override;
     // don't use this method
     procedure AddFieldType(const Name: string; FieldType: TUIBFieldType;
@@ -4609,11 +4610,24 @@ end;
 
   function TSQLDA.GetFieldIndex(const name: AnsiString): Word;
   begin
-    for Result := 0 to GetAllocatedFields - 1 do
-      if FXSQLDA.sqlvar[Result].AliasNameLength = Length(name) then
-        if StrLIComp(PansiChar(@FXSQLDA.sqlvar[Result].aliasname), PAnsiChar(Name),
-          FXSQLDA.sqlvar[Result].AliasNameLength) = 0 then Exit;
-    raise Exception.CreateFmt(EUIB_FIELDSTRNOTFOUND, [name]);
+    if not TryGetFieldIndex(name, Result) then
+      raise Exception.CreateFmt(EUIB_FIELDSTRNOTFOUND, [name]);
+  end;
+
+  function TSQLDA.TryGetFieldIndex(const name: AnsiString; out index: Word): Boolean;
+  var
+    i: Word;
+  begin
+    for i := 0 to GetAllocatedFields - 1 do
+      if FXSQLDA.sqlvar[i].AliasNameLength = Length(name) then
+        if StrLIComp(PansiChar(@FXSQLDA.sqlvar[i].aliasname), PAnsiChar(Name),
+          FXSQLDA.sqlvar[i].AliasNameLength) = 0 then
+          begin
+            index := i;
+            Result := True;
+            Exit;
+          end;
+    Result := False;
   end;
 
   function TSQLDA.GetByNameAsDouble(const Name: string): Double;
@@ -6190,13 +6204,13 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
 
   function TSQLParams.GetFieldIndex(const name: AnsiString): Word;
   begin
-    if not FindParam(name, Result) then
+    if not TryGetFieldIndex(name, Result) then
       raise Exception.CreateFmt(EUIB_PARAMSTRNOTFOUND, [name]);
   end;
 
-  function TSQLParams.FindParam(const name: AnsiString; out Index: Word): boolean;
+  function TSQLParams.TryGetFieldIndex(const name: AnsiString; out Index: Word): Boolean;
   var
-    Field: Smallint;
+    Field: Word;
   begin
     for Field := 0 to FXSQLDA.sqln - 1 do
       if FXSQLDA.sqlvar[Field].ParamNameLength = Length(name) then
@@ -6221,7 +6235,7 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
       raise Exception.CreateFmt(EUIB_SIZENAME, [Name]);
 
     Result := FXSQLDA.sqln;
-    if (len > 0) and FindParam(Name, num) then
+    if (len > 0) and TryGetFieldIndex(Name, num) then
     begin
       inc(FXSQLDA.sqln);
       inc(FXSQLDA.sqld);
