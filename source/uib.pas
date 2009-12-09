@@ -149,6 +149,7 @@ type
     FBeforeConnect: TNotifyEvent;
     FBeforeDisconnect: TNotifyEvent;
     FTransactions: TList;
+    FStatements: TList;
     FOnConnectionLost: TNotifyEvent;
     FExceptions: TList;
     FMetadata: TObject;
@@ -190,6 +191,10 @@ type
     procedure RemoveTransaction(Transaction: TUIBTransaction);
     procedure ClearTransactions;
     procedure CloseTransactions;
+    procedure AddStatement(Statement: TUIBStatement);
+    procedure RemoveStatement(Statement: TUIBStatement);
+    procedure ClearStatements;
+    procedure CloseStatements;
     procedure SetDbHandle(const Value: IscDbHandle);
     procedure SetLibraryName(const Lib: TFileName);
     function GetTransactions(const Index: Cardinal): TUIBTransaction;
@@ -468,7 +473,7 @@ type
     qsExecImme,    // Query executed immediately without the need of statement handle
     qsStatement,   // have a statement handle
     qsPrepare,     // Query prepared
-    qsExecute      // Query executed 
+    qsExecute      // Query executed
   );
 
   {Oo.......................................................................oO
@@ -536,14 +541,11 @@ type
     FDataBases: TList;
     FTrHandle: IscTrHandle;
     FSQLComponent: TList;
-    FStatements: Integer;
     FOptions   : TTransParams;
     FLockRead  : string;
     FLockWrite : string;
-   // FSQLDialect: Integer;
     FOnStartTransaction: TNotifyEvent;
     FOnEndTransaction: TOnEndTransaction;
-    FAutoRetain: boolean;
     FAutoStart: boolean;
     FAutoStop: boolean;
     FDefaultAction: TEndTransMode;
@@ -572,8 +574,6 @@ type
     procedure ClearDataBases;
     function GetDatabases(const Index: Integer): TUIBDataBase;
     function GetDatabasesCount: Integer;
-    function GetAutoRetain: boolean;
-    procedure SetAutoRetain(const Value: boolean);
     procedure SetDefaultAction(const Value: TEndTransMode);
   protected
   {$IFNDEF UIB_NO_COMPONENT}
@@ -641,9 +641,6 @@ type
     property OnStartTransaction: TNotifyEvent read FOnStartTransaction write FOnStartTransaction;
     {This evenet occur before to end the transaction, you can change the ETM parametter.}
     property OnEndTransaction: TOnEndTransaction read FOnEndTransaction write FOnEndTransaction;
-    {If false, commit and rollback close all connected statements and finally close transaction.
-     If True, commit and rollback are modified to commitretaining or rollbackretaining if at least one statement is open.}
-    property AutoRetain: boolean read GetAutoRetain write SetAutoRetain default False;
     {If True, transaction automatically started when needed.
      if False you must explicitely call "starttransaction".}
     property AutoStart: boolean read FAutoStart write FAutoStart default True;
@@ -707,6 +704,7 @@ type
 
     procedure InternalNext; virtual;
     procedure InternalPrior; virtual;
+    procedure InternalTryCache(const Mode: TEndTransMode; Auto: boolean); virtual;
     procedure InternalClose(const Mode: TEndTransMode; Auto: boolean); virtual;
 
     function  ParamsClass: TSQLParamsClass; virtual;
@@ -1227,8 +1225,18 @@ begin
     TUIBTransaction(FTransactions.Last).RemoveDatabase(Self);
 end;
 
+procedure TUIBDataBase.CloseStatements;
+var
+  i: Integer;
+begin
+  if (FStatements <> nil) then
+    for i := 0 to FStatements.Count - 1 do
+      TUIBStatement(FStatements.Items[i]).Close(etmStayIn);
+end;
+
 procedure TUIBDataBase.CloseTransactions;
-var i: Integer;
+var
+  i: Integer;
 begin
   if (FTransactions <> nil) then
     for i := 0 to FTransactions.Count - 1 do
@@ -1238,6 +1246,8 @@ end;
 constructor TUIBDataBase.Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF};
 begin
   inherited;
+  FStatements := nil;
+  FTransactions := nil;
   FLibrary := TUIBLibrary.Create;
   FLibraryName := GetClientLibrary;
   FLibrary.OnConnectionLost := DoOnConnectionLost;
@@ -1258,6 +1268,7 @@ end;
 destructor TUIBDataBase.Destroy;
 begin
   Connected := False;
+  ClearStatements;
   ClearTransactions;
   ClearEvents;
   TStringList(FParams).Free;
@@ -1408,6 +1419,7 @@ begin
     False :
       begin
         if Assigned(BeforeDisconnect) then BeforeDisconnect(Self);
+        CloseStatements;
         CloseTransactions;
         UnRegisterEvents;
         if FMetadata <> nil then
@@ -1508,6 +1520,12 @@ begin
   for i := 0 to FExceptions.Count - 1 do
     FreeMem(FExceptions[i]);
   FExceptions.Clear;
+end;
+
+procedure TUIBDataBase.ClearStatements;
+begin
+  while (FStatements <> nil) do
+    TUIBStatement(FStatements.Last).DataBase := nil;
 end;
 
 procedure TUIBDataBase.RegisterException(Excpt: EUIBExceptionClass;
@@ -1834,9 +1852,29 @@ begin
     FEventNotifiers.Delete(i);
 end;
 
+procedure TUIBDataBase.RemoveStatement(Statement: TUIBStatement);
+begin
+  if (FStatements <> nil) then
+  begin
+    FStatements.Remove(Statement);
+    if FStatements.Count = 0 then
+    begin
+      FStatements.free;
+      FStatements := nil;
+    end;
+  end;
+end;
+
 procedure TUIBDataBase.AddEventNotifier(Event: TUIBEvents);
 begin
   FEventNotifiers.Add(Event);
+end;
+
+procedure TUIBDataBase.AddStatement(Statement: TUIBStatement);
+begin
+  if (FStatements = nil) then
+    FStatements := TList.Create;
+  FStatements.Add(Statement);
 end;
 
 procedure TUIBDataBase.ActiveAllTriggers;
@@ -1999,9 +2037,7 @@ begin
   begin
     if (FTransaction <> nil) then
     begin
-      if FTransaction.AutoRetain then
-        InternalClose(etmDefault, True) else
-        InternalClose(etmStayIn, True);
+      InternalTryCache(etmStayIn, True);
       FTransaction.RemoveSQLComponent(Self);
     end;
     FTransaction := Transaction;
@@ -2009,9 +2045,12 @@ begin
     begin
       Transaction.AddSQLComponent(Self);
       if Transaction.DataBase <> nil then
+      begin
         FParameter.CharacterSet := Transaction.DataBase.CharacterSet;
+        if DataBase = nil then
+          Database := Transaction.DataBase;
+      end;
     end;
-    FCurrentState := qsDataBase;
   end;
 end;
 
@@ -2020,14 +2059,15 @@ begin
   if (FDataBase <> ADataBase) then
   begin
     if (FTransaction <> nil) then
-    begin
-      if FTransaction.AutoRetain then
-        InternalClose(etmDefault, True) else
-        InternalClose(etmStayIn, True);
-    end;
+      InternalClose(etmStayIn, True);
+    if FDataBase <> nil then
+      FDataBase.RemoveStatement(Self);
     FDataBase := ADataBase;
     if FDataBase <> nil then
+    begin
+      FDataBase.AddStatement(Self);
       FParameter.CharacterSet := FDataBase.CharacterSet;
+    end;
   end;
 end;
 
@@ -2041,7 +2081,7 @@ end;
 
 procedure TUIBStatement.Close(const Mode: TEndTransMode);
 begin
-  InternalClose(Mode, False);
+  InternalTryCache(Mode, False);
 end;
 
 procedure TUIBStatement.Open(FetchFirst: boolean = True);
@@ -2146,6 +2186,17 @@ begin
   str := MBUDecode(aStr, CharacterSetCP[sqlda.CharacterSet]);
 end;
 
+procedure TUIBStatement.InternalTryCache(const Mode: TEndTransMode; Auto: boolean);
+begin
+  if FDatabase <> nil then
+  begin
+    CloseCursor;
+    if FTransaction <> nil then
+      FTransaction.EndTransaction(Mode, Self, Auto);
+  end else
+    InternalClose(Mode, Auto);
+end;
+
 procedure TUIBStatement.EndTransaction(const ETM: TEndTransMode; Auto: boolean);
 begin
   if FTransaction <> nil then
@@ -2167,7 +2218,6 @@ begin
     EndTransaction(FOnError, False);
     raise;
   end;
-  inc(FTransaction.FStatements);
   FCurrentState := qsStatement;
 end;
 
@@ -2177,7 +2227,6 @@ begin
     DSQLFreeStatement(FStHandle, DSQL_drop);
 
   FStHandle := nil;
-  Dec(FTransaction.FStatements);
   FCurrentState := qsTransaction;
   if (ETM <> etmStayIn) then
     EndTransaction(ETM, Auto);
@@ -2232,6 +2281,7 @@ begin
   if (FSQLResult = nil) then BeginPrepare;
   with FindDataBase, FLibrary do
   try
+    FTransaction.BeginTransaction(true);
     if (FStatementType = stExecProcedure) then
       DSQLExecute2(FTransaction.FTrHandle, FStHandle,
         GetSQLDialect, FParameter, FSQLResult) else
@@ -2372,6 +2422,7 @@ end;
 constructor TUIBStatement.Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF};
 begin
   inherited;
+  FSQLResult := nil;
   FUseCursor := True;
   FCurrentState := qsDataBase;
   FSQL         := TStringList.Create;
@@ -2396,6 +2447,8 @@ begin
   FSQL.Free;
   FParameter.free;
   FParameter := nil;
+  InternalClose(etmStayIn, False);
+  SetDataBase(nil);
   SetTransaction(nil);
   inherited;
 end;
@@ -2958,9 +3011,7 @@ begin
   inherited;
   FOptions       := [tpConcurrency,tpWait,tpWrite];
   FTrHandle      := nil;
-  FStatements    := 0;
   FDataBases     := TList.Create;
-  FAutoRetain    := False;
   FAutoStart     := True;
   FAutoStop      := True;
   FDefaultAction := etmCommit;
@@ -2998,9 +3049,9 @@ procedure TUIBTransaction.Close(const Mode: TEndTransMode; Auto: boolean);
 var
   i: Integer;
 begin
-  if (FStatements > 0) and (FSQLComponent <> nil) then
+  if FSQLComponent <> nil then
     for i := 0 to FSQLComponent.Count -1 do
-      TUIBQuery(FSQLComponent.Items[i]).InternalClose(etmStayIn, Auto);
+      TUIBQuery(FSQLComponent.Items[i]).InternalTryCache(etmStayIn, Auto);
   EndTransaction(Mode, nil, Auto);
 end;
 
@@ -3100,19 +3151,13 @@ begin
     try
       if Assigned(FOnEndTransaction) then
         FOnEndTransaction(Self, ETM);
-     { If there is Statements alive I must keep handle only if FAutoRetain = True.}
-      if (FStatements > 0) and FAutoRetain then
-        case ETM of
-          etmCommit   : ETM := etmCommitRetaining;
-          etmRollback : ETM := etmRollbackRetaining;
-        end else
-          if (ETM in [etmCommit, etmRollback]) then
-          begin
-            if (FStatements > 0) and (FSQLComponent <> nil) then
-              for i := 0 to FSQLComponent.Count -1 do
-                if (From <> FSQLComponent.Items[i]) then
-                  TUIBQuery(FSQLComponent.Items[i]).InternalClose(etmStayIn, Auto);
-          end;
+      if (ETM in [etmCommit, etmRollback]) then
+      begin
+        if FSQLComponent <> nil then
+          for i := 0 to FSQLComponent.Count -1 do
+            if (From <> FSQLComponent.Items[i]) then
+              TUIBQuery(FSQLComponent.Items[i]).InternalTryCache(etmStayIn, Auto);
+      end;
 
       Assert( FAutoStop or (not Auto), EUIB_NOAUTOSTOP);
 
@@ -3187,8 +3232,6 @@ var
 begin
   if (ADataBase <> nil) then
   begin
-    if ADataBase = FDataBase then
-      FDataBase := nil;
     for i := 0 to FDataBases.Count - 1 do
       if FDataBases[i] = ADataBase then
       begin
@@ -3197,6 +3240,8 @@ begin
         FDataBases.Delete(i);
         Exit;
       end;
+    if ADataBase = FDataBase then
+      FDataBase := nil;
   end;
 end;
 
@@ -3361,16 +3406,6 @@ end;
 function TUIBTransaction.GetDataBase: TUIBDataBase;
 begin
   Result := FDataBase;
-end;
-
-function TUIBTransaction.GetAutoRetain: boolean;
-begin
-  Result := FAutoRetain;
-end;
-
-procedure TUIBTransaction.SetAutoRetain(const Value: boolean);
-begin
-  FAutoRetain := Value;
 end;
 
 procedure TUIBTransaction.StartTransaction;
@@ -4005,7 +4040,6 @@ begin
                 raise Exception.Create(EUIB_UNEXPECTEDERROR);
               end;
             end;
-            //FQuery.Params.FieldType[i]
 
             FQuery.Execute;
           end
