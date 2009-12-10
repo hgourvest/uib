@@ -1231,7 +1231,7 @@ var
 begin
   if (FStatements <> nil) then
     for i := 0 to FStatements.Count - 1 do
-      TUIBStatement(FStatements.Items[i]).Close(etmStayIn);
+      TUIBStatement(FStatements.Items[i]).InternalClose(etmStayIn, true);
 end;
 
 procedure TUIBDataBase.CloseTransactions;
