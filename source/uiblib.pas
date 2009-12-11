@@ -325,7 +325,7 @@ const
 
 type
   PUIBSQLVar = ^TUIBSQLVar;
-  TUIBSQLVar = record
+  TUIBSQLVar = record // size must be 152
     SqlType      : Smallint;
     SqlScale     : Smallint;
 {$IFDEF IB7_UP}
@@ -349,6 +349,7 @@ type
     // TSQLParam
     1 : ( Init            : Boolean;
           ID              : Word;
+          MaxSqlLen       : Smallint;
           ParamNameLength : Smallint;
           ParamName       : array[0..MaxParamLength-1] of AnsiChar;
           );
@@ -787,6 +788,7 @@ type
     FParamCount: Word;
     function GetFieldName(const Index: Word): string;
     procedure AllocateDataBuffer(AInit: boolean = true);
+    function GetMaxSqlLen(const Index: Word): SmallInt;
   protected
     function AddFieldA(const name: AnsiString): Word;
     function AddFieldW(const name: UnicodeString): Word;
@@ -810,7 +812,6 @@ type
   {$IFDEF GUID_TYPE}
     procedure SetAsGUID(const Index: Word; const Value: TGUID); override;
   {$ENDIF}
-
     function GetFieldType(const Index: Word): TUIBFieldType; override;
   public
     constructor Create(Charset: TCharacterSet); override;
@@ -826,7 +827,7 @@ type
     property Values[const name: string]: Variant read GetByNameAsVariant; default;
     property FieldName[const Index: Word]: string read GetFieldName;
     property ParamCount : Word read FParamCount;
-
+    property MaxSqlLen[const Index: Word]: Smallint read GetMaxSqlLen;
   end;
 
   TSQLParamsClass = class of TSQLParams;
@@ -2040,6 +2041,7 @@ const
           dst := @da^.sqlvar[i];
           src^.SqlType := dst.sqltype;
           src^.SqlLen  := dst.sqllen;
+          src^.MaxSqlLen := dst.sqllen;
           src^.SqlSubType := dst.sqlsubtype;
           src^.SqlScale := dst.SqlScale;
 {$IFDEF IB7_UP}
@@ -2966,7 +2968,9 @@ type
             if sqldata = nil then
               getmem(sqldata, NewLen) else
               ReallocMem(sqldata, NewLen);
-            sqllen := NewLen;
+            if MaxSqlLen <= 0 then
+              sqllen := NewLen else
+              sqllen := Min(NewLen, MaxSqlLen);
             Move(PAnsiChar(str)^, sqldata^, sqllen);
           end;
         end;
@@ -2987,6 +2991,9 @@ type
             if sqldata = nil then
               getmem(sqldata, NewLen+2) else
               ReallocMem(sqldata, NewLen+2);
+            if True then
+            if MaxSqlLen > 0 then
+              NewLen := Min(NewLen, MaxSqlLen);
             sqllen := NewLen + 2;
             PVary(sqldata).vary_length := NewLen;
             Move(PAnsiChar(str)^, PVary(sqldata).vary_string,PVary(sqldata).vary_length);
@@ -6200,6 +6207,12 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
     if IsNull[Index] and FXSQLDA.sqlvar[Index].Init then
       Result := uftUnKnown else
       Result := inherited GetFieldType(Index);
+  end;
+
+  function TSQLParams.GetMaxSqlLen(const Index: Word): SmallInt;
+  begin
+    CheckRange(Index);
+    Result := FXSQLDA.sqlvar[Index].MaxSqlLen
   end;
 
   function TSQLParams.GetFieldIndex(const name: AnsiString): Word;
