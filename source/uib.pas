@@ -2255,7 +2255,7 @@ begin
         FParsedSQL, GetSQLDialect, FSQLResult);
 {$ENDIF}
       FCursorName := 'C' + inttostr(PtrInt(FStHandle));
-      if FUseCursor and (FStatementType = stSelect) then
+      if FUseCursor and (FStatementType in [stSelect, stSelectForUpdate]) then
         DSQLSetCursorName(FStHandle, AnsiString(FCursorName));
       if describeParams and (FParameter.ParamCount > 0) then
         DSQLDescribeBind(FStHandle, GetSQLDialect, FParameter);
@@ -2887,7 +2887,7 @@ begin
   begin
     try
       FSQLResult.ClearRecords;
-      if FUseCursor and (FStatementType = stSelect) then
+      if FUseCursor and (FStatementType in [stSelect, stSelectForUpdate]) then
         with FindDataBase.FLibrary do
           DSQLFreeStatement(FStHandle, DSQL_close);
     except
