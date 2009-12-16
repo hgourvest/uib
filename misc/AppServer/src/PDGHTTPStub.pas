@@ -514,7 +514,7 @@ begin
   cursor := 0;
   len := 0;
   line := 0;
-
+  c := #0;
 
   while not Stopped do
   begin
