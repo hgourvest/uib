@@ -2504,8 +2504,7 @@ end;
 procedure TUIBStatement.ParamsSetBlob(const Index: Word; Stream: TStream);
 var BlobHandle: IscBlobHandle;
 begin
-  if (FCurrentState < qsTransaction) then
-    BeginTransaction;
+  BeginTransaction;
   BlobHandle := nil;
   with FindDataBase.FLibrary do
   begin
@@ -2532,8 +2531,7 @@ procedure TUIBStatement.ParamsSetBlobB(const Index: Word; const str: RawByteStri
 var
   BlobHandle: IscBlobHandle;
 begin
-  if (FCurrentState < qsTransaction) then
-    BeginTransaction;
+  BeginTransaction;
   BlobHandle := nil;
   with FindDataBase.FLibrary do
   begin
@@ -2551,8 +2549,7 @@ procedure TUIBStatement.ParamsSetBlob(const Index: Word; Buffer: Pointer;
   Size: Cardinal);
 var BlobHandle: IscBlobHandle;
 begin
-  if (FCurrentState < qsTransaction) then
-    BeginTransaction;
+  BeginTransaction;
   BlobHandle := nil;
   with FindDataBase.FLibrary do
   begin
@@ -2569,8 +2566,7 @@ end;
 procedure TUIBStatement.ParamsSetBlob(const Name: string; Stream: TStream);
 var BlobHandle: IscBlobHandle;
 begin
-  if (FCurrentState < qsTransaction) then
-    BeginTransaction;
+  BeginTransaction;
   BlobHandle := nil;
   with FindDataBase.FLibrary do
   begin
@@ -2597,8 +2593,7 @@ procedure TUIBStatement.ParamsSetBlobB(const Name: string; const str: RawByteStr
 var
   BlobHandle: IscBlobHandle;
 begin
-  if (FCurrentState < qsTransaction) then
-    BeginTransaction;
+  BeginTransaction;
   BlobHandle := nil;
   with FindDataBase.FLibrary do
   begin
@@ -2629,8 +2624,7 @@ end;
 procedure TUIBStatement.ParamsSetBlob(const Name: string; Buffer: Pointer; Size: Cardinal);
 var BlobHandle: IscBlobHandle;
 begin
-  if (FCurrentState < qsTransaction) then
-    BeginTransaction;
+  BeginTransaction;
   BlobHandle := nil;
   with FindDataBase.FLibrary do
   begin
