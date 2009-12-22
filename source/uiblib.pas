@@ -6263,6 +6263,7 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
       p := @FXSQLDA.sqlvar[Result];
       p^.Init := True;
       p^.ID := FParamCount;
+      p^.MaxSqlLen := 0;
       p^.ParamNameLength := len;
       if p^.ParamNameLength > 0 then
         Move(PAnsiChar(Name)^, p^.ParamName[0], p^.ParamNameLength);
