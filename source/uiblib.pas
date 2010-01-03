@@ -847,7 +847,7 @@ type
 
   TUIBLibrary = class;
 
-  TStatusVector = array[0..19] of ISCStatus;
+  TStatusVector = array[0..ISC_STATUS_LENGTH - 1] of ISCStatus;
   PStatusVector = ^TStatusVector;
 
   TOnConnectionLost = procedure(Lib: TUIBLibrary) of object;
@@ -873,7 +873,7 @@ type
 
     {Attaches to an existing database.
      Ex: AttachDatabase('c:\DataBase.gdb', DBHandle, 'user_name=SYSDBA; password=masterkey'); }
-    procedure AttachDatabase(FileName: AnsiString; var DbHandle: IscDbHandle; Params: AnsiString; Sep: AnsiChar = ';');
+    procedure AttachDatabase(const FileName: AnsiString; var DbHandle: IscDbHandle; Params: AnsiString; Sep: AnsiChar = ';');
     {Detaches from a database previously connected with AttachDatabase.}
     procedure DetachDatabase(var DBHandle: IscDbHandle);
     procedure DatabaseInfo(var DBHandle: IscDbHandle; const Items: AnsiString; var Buffer: AnsiString); overload;
@@ -975,7 +975,7 @@ type
     function EventBlock(var EventBuffer, ResultBuffer: PAnsiChar; Count: Smallint;
       v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15: PAnsiChar): Integer;
     procedure EventQueue(var handle: IscDbHandle; var id: Integer; length: Word;
-      events: PAnsiChar; ast: IscCallback; arg: Pointer);
+      events: PAnsiChar; ast: ISC_EVENT_CALLBACK; arg: Pointer);
     procedure EventCounts(var ResultVector: TStatusVector;
       BufferLength: Smallint; EventBuffer, ResultBuffer: PAnsiChar);
     procedure EventCancel(var DbHandle: IscDbHandle; var id: integer);
@@ -1129,6 +1129,12 @@ const
   ,(Name: 'no_db_triggers';         ParamType: prByte)
   ,(Name: 'trusted_auth';           ParamType: prStrg)
   ,(Name: 'process_name';           ParamType: prStrg)
+{$ENDIF}
+{$IFDEF FB25_UP}
+  ,(Name: 'trusted_role';           ParamType: prNone)
+  ,(Name: 'org_filename';           ParamType: prStrg)
+  ,(Name: 'utf8_filename';          ParamType: prNone)
+  ,(Name: 'ext_call_depth';         ParamType: prCard)
 {$ENDIF}
    );
 
@@ -1618,7 +1624,7 @@ const
     SetLength(Result, FinalSize);
   end;
 
-  procedure TUIBLibrary.AttachDatabase(FileName: AnsiString; var DbHandle: IscDbHandle;
+  procedure TUIBLibrary.AttachDatabase(const FileName: AnsiString; var DbHandle: IscDbHandle;
     Params: AnsiString; Sep: AnsiChar = ';');
   begin
     Params := CreateDBParams(Params, Sep);
@@ -2661,7 +2667,7 @@ type
   end;
 
   procedure TUIBLibrary.EventQueue(var handle: IscDbHandle; var id: Integer; length: Word;
-      events: PAnsiChar; ast: IscCallback; arg: Pointer);
+      events: PAnsiChar; ast: ISC_EVENT_CALLBACK; arg: Pointer);
   begin
     CheckUIBApiCall(isc_que_events(@FStatusVector, @handle, @id, length,
       events, ast, arg));
