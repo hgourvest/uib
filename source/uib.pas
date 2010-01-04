@@ -1004,7 +1004,7 @@ type
   end;
 
   TSecurityAction = (saAddUser, saDeleteUser, saModifyUser, saDisplayUser, saDisplayUsers);
-  TSecurityParam = (spRole, spUser, spPass, spFirstName, spMiddleName, spLastName, spUserID, spGroupID);
+  TSecurityParam = (spRole, spUser, spPass, spFirstName, spMiddleName, spLastName, spUserID, spGroupID{$IFDEF FB25_UP}, spAdmin{$ENDIF});
   TSecurityParams = set of TSecurityParam;
 
   TUserInfo = class(TObject)
@@ -1019,15 +1019,21 @@ type
 
   TUIBSecurity = class(TUIBService)
   private
-    FIntegerParams: array[ord(spUserID)..ord(spGroupID)] of Integer;
+    FIntegerParams: array[ord(spUserID)..ord(high(TSecurityParam))] of Integer;
     FStringParams: array[ord(spRole)..ord(spLastName)] of string;
     FModifiedParams: TSecurityParams;
     FUserInfos: TObjectList;
     procedure ClearParams;
+{$IFDEF FB25_UP}
+    function GetBooleanParam(aParam: Integer): Boolean;
+{$ENDIF}
     function GetIntegerParam(aParam: Integer): Integer;
     function GetStringParam(aParam: Integer): string;
     function GetUserInfo(aIndex: Integer): TUserInfo;
     function GetUserInfoCount: Integer;
+{$IFDEF FB25_UP}
+    procedure SetBooleanParam(aParam: Integer; const aValue: Boolean);
+{$ENDIF}
     procedure SetIntegerParam(aParam: Integer; const aValue: Integer);
     procedure SetStringParam(aParam: Integer; const aValue: string);
     procedure RunAction(aAction: TSecurityAction);
@@ -1061,10 +1067,14 @@ type
     property MiddleName: string index ord(spMiddleName) read GetStringParam write SetStringParam;
     { The last name of the user being added/modified }
     property LastName: string index ord(spLastName) read GetStringParam write SetStringParam;
-    { an integer that specifies a user ID of the user being added/modified }
+    { An integer that specifies a user ID of the user being added/modified }
     property UserID: Integer index ord(spUserID) read GetIntegerParam write SetIntegerParam;
-    { an integer that specifies a group ID of the user being added/modified }
+    { An integer that specifies a group ID of the user being added/modified }
     property GroupID: Integer index ord(spGroupID) read GetIntegerParam write SetIntegerParam;
+{$IFDEF FB25_UP}
+    { A Boolean that specifies if user is admin }
+    property Admin: Boolean index ord(spAdmin) read GetBooleanParam write SetBooleanParam;
+{$ENDIF}
   end;
 
   TRepairOption = (roValidateDB, roValidateFull, roSweepDB, roMendDB,
@@ -3726,6 +3736,11 @@ begin
   Result := TUserInfo(FUserInfos[aIndex]);
 end;
 
+function TUIBSecurity.GetBooleanParam(aParam: Integer): Boolean;
+begin
+  Result := FIntegerParams[aParam] <> 0;
+end;
+
 function TUIBSecurity.GetIntegerParam(aParam: Integer): Integer;
 begin
   Result := FIntegerParams[aParam];
@@ -3734,6 +3749,12 @@ end;
 function TUIBSecurity.GetStringParam(aParam: Integer): string;
 begin
   Result := FStringParams[aParam];
+end;
+
+procedure TUIBSecurity.SetBooleanParam(aParam: Integer; const aValue: Boolean);
+begin
+  FIntegerParams[aParam] := ord(aValue);
+  Include(FModifiedParams, TSecurityParam(aParam));
 end;
 
 procedure TUIBSecurity.SetIntegerParam(aParam: Integer; const aValue: Integer);
@@ -3756,7 +3777,7 @@ const
   IscParams : array[TSecurityParam] of AnsiChar = (
     isc_spb_sql_role_name, isc_spb_sec_username, isc_spb_sec_password,
     isc_spb_sec_firstname, isc_spb_sec_middlename, isc_spb_sec_lastname,
-    isc_spb_sec_userid, isc_spb_sec_groupid);
+    isc_spb_sec_userid, isc_spb_sec_groupid {$IFDEF FB25_UP},isc_spb_sec_admin{$ENDIF});
 var
   StartParams, Buffer: RawByteString;
   Position: Integer;
