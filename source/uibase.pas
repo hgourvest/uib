@@ -3431,8 +3431,8 @@ type
     isc_start_transaction: function(user_status: PISCStatus; tra_handle: PIscTrHandle; count: Smallint;
       db_handle: PIscDbHandle; tpb_length: ISCUShort; tpb_ad: PAnsiChar): ISCStatus; cdecl;
 {$IFDEF FB25_UP}
-    fb_disconnect_transaction: function(user_status: PISCStatus; tra_handle: PIscTrHandle): ISC_STATUS;
-      {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
+//    fb_disconnect_transaction: function(user_status: PISCStatus; tra_handle: PIscTrHandle): ISC_STATUS;
+//      {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
 {$ENDIF}
     isc_transact_request: function(user_status: PISCStatus; db_handle: PIscDbHandle;
       tra_handle: PIscTrHandle; blr_length: Word; blr: PAnsiChar; in_msg_length: Word; in_msg: PAnsiChar;
@@ -4024,6 +4024,16 @@ begin
       fb_interpret := GetProcAddress(FGDS32Lib, 'fb_interpret');
     {$ENDIF}
 
+    {$IFDEF FB25_UP}
+      fb_print_blr := GetProcAddress(FGDS32Lib, 'fb_print_blr');
+      fb_shutdown := GetProcAddress(FGDS32Lib, 'fb_shutdown');
+      fb_shutdown_callback := GetProcAddress(FGDS32Lib, 'fb_shutdown_callback');
+      fb_cancel_operation := GetProcAddress(FGDS32Lib, 'fb_cancel_operation');
+      fb_sqlstate := GetProcAddress(FGDS32Lib, 'fb_sqlstate');
+     // fb_disconnect_transaction := GetProcAddress(FGDS32Lib, 'fb_disconnect_transaction');
+    {$ENDIF}
+
+
       Result := Assigned(BLOB_close) and Assigned(BLOB_dump) and
         Assigned(BLOB_edit) and Assigned(BLOB_get) and Assigned(BLOB_load) and
         Assigned(BLOB_open) and Assigned(BLOB_put) and Assigned(BLOB_text_dump) and
@@ -4114,6 +4124,15 @@ begin
       {$IFDEF FB20_UP}
         and assigned(fb_interpret)
       {$ENDIF}
+      {$IFDEF FB25_UP}
+        and assigned(fb_print_blr)
+        and assigned(fb_shutdown)
+        and assigned(fb_shutdown_callback)
+        and assigned(fb_cancel_operation)
+        and assigned(fb_sqlstate)
+//        and assigned(fb_disconnect_transaction)
+      {$ENDIF}
+
       ;
       if not Result then
       begin

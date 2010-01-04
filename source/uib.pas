@@ -697,15 +697,15 @@ type
     procedure BeginExecImme; virtual;
 
     procedure EndTransaction(const ETM: TEndTransMode; Auto: boolean); virtual;
-    procedure EndStatement(const ETM: TEndTransMode; Auto: boolean); virtual;
-    procedure EndPrepare(const ETM: TEndTransMode; Auto: boolean); virtual;
-    procedure EndExecute(const ETM: TEndTransMode; Auto: boolean); virtual;
+    procedure EndStatement(const ETM: TEndTransMode; Auto, Drop: boolean); virtual;
+    procedure EndPrepare(const ETM: TEndTransMode; Auto, Drop: boolean); virtual;
+    procedure EndExecute(const ETM: TEndTransMode; Auto, Drop: boolean); virtual;
     procedure EndExecImme(const ETM: TEndTransMode; Auto: boolean); virtual;
 
     procedure InternalNext; virtual;
     procedure InternalPrior; virtual;
     procedure InternalTryCache(const Mode: TEndTransMode; Auto: boolean); virtual;
-    procedure InternalClose(const Mode: TEndTransMode; Auto: boolean); virtual;
+    procedure InternalClose(const Mode: TEndTransMode; Auto, Drop: boolean); virtual;
 
     function  ParamsClass: TSQLParamsClass; virtual;
     function  ResultClass: TSQLResultClass; virtual;
@@ -1231,7 +1231,7 @@ var
 begin
   if (FStatements <> nil) then
     for i := 0 to FStatements.Count - 1 do
-      TUIBStatement(FStatements.Items[i]).InternalClose(etmStayIn, true);
+      TUIBStatement(FStatements.Items[i]).InternalClose(etmStayIn, true, true);
 end;
 
 procedure TUIBDataBase.CloseTransactions;
@@ -2058,8 +2058,7 @@ procedure TUIBStatement.SetDataBase(ADataBase: TUIBDataBase);
 begin
   if (FDataBase <> ADataBase) then
   begin
-    if (FTransaction <> nil) then
-      InternalClose(etmStayIn, True);
+    InternalClose(etmStayIn, True, True);
     if FDataBase <> nil then
       FDataBase.RemoveStatement(Self);
     FDataBase := ADataBase;
@@ -2161,7 +2160,7 @@ begin
         DSQLFetch(FDbHandle, FTransaction.FTrHandle, FStHandle, GetSQLDialect, FSQLResult);
     except
       if FOnError <> etmStayIn then
-        EndExecute(FOnError, False);
+        EndExecute(FOnError, False, True);
       raise;
     end;
   end;
@@ -2194,7 +2193,7 @@ begin
     if FTransaction <> nil then
       FTransaction.EndTransaction(Mode, Self, Auto);
   end else
-    InternalClose(Mode, Auto);
+    InternalClose(Mode, Auto, True);
 end;
 
 procedure TUIBStatement.EndTransaction(const ETM: TEndTransMode; Auto: boolean);
@@ -2212,8 +2211,12 @@ begin
   BeginTransaction;
   with FindDataBase.FLibrary do
   try
+{$IFDEF FB25_UP}
+    if FStHandle = nil then
+{$ELSE}
     FStHandle := nil;
-    DSQLAllocateStatement(FindDataBase.FDbHandle, FStHandle);
+{$ENDIF}
+      DSQLAllocateStatement(FindDataBase.FDbHandle, FStHandle);
   except
     EndTransaction(FOnError, False);
     raise;
@@ -2221,12 +2224,20 @@ begin
   FCurrentState := qsStatement;
 end;
 
-procedure TUIBStatement.EndStatement(const ETM: TEndTransMode; Auto: boolean);
+procedure TUIBStatement.EndStatement(const ETM: TEndTransMode; Auto, Drop: boolean);
 begin
   with FindDataBase.FLibrary do
-    DSQLFreeStatement(FStHandle, DSQL_drop);
+{$IFDEF FB25_UP}
+    if Drop then
+    begin
+{$ENDIF}
+      DSQLFreeStatement(FStHandle, DSQL_drop);
+      FStHandle := nil;
+{$IFDEF FB25_UP}
+    end else
+      DSQLFreeStatement(FStHandle, DSQL_unprepare);
+{$ENDIF}
 
-  FStHandle := nil;
   FCurrentState := qsTransaction;
   if (ETM <> etmStayIn) then
     EndTransaction(ETM, Auto);
@@ -2262,18 +2273,18 @@ begin
   except
     FSQLResult.free;
     FSQLResult := nil;
-    EndStatement(FOnError, False);
+    EndStatement(FOnError, False, True);
     raise;
   end;
   FCurrentState := qsPrepare;
 end;
 
-procedure TUIBStatement.EndPrepare(const ETM: TEndTransMode; Auto: boolean);
+procedure TUIBStatement.EndPrepare(const ETM: TEndTransMode; Auto, Drop: boolean);
 begin
   FSQLResult.free;
   FSQLResult := nil;
   FCurrentState := qsStatement;
-  EndStatement(ETM, Auto);
+  EndStatement(ETM, Auto, Drop);
 end;
 
 procedure TUIBStatement.BeginExecute;
@@ -2289,16 +2300,16 @@ begin
         GetSQLDialect, FParameter);
   except
     if (FOnError <> etmStayIn) then
-      EndPrepare(FOnError, False);
+      EndPrepare(FOnError, False, True);
     raise;
   end;
   FCurrentState := qsExecute;
 end;
 
-procedure TUIBStatement.EndExecute(const ETM: TEndTransMode; Auto: boolean);
+procedure TUIBStatement.EndExecute(const ETM: TEndTransMode; Auto, Drop: boolean);
 begin
   FCurrentState := qsPrepare;
-  EndPrepare(ETM, Auto);
+  EndPrepare(ETM, Auto, Drop);
 end;
 
 procedure TUIBStatement.BeginExecImme;
@@ -2373,7 +2384,7 @@ end;
 
 procedure TUIBStatement.DoSQLChange(Sender: TObject);
 begin
-  InternalClose(etmStayIn, True);
+  InternalClose(etmStayIn, True, False);
   if (not FQuickScript or FParseParams) then
     FParsedSQL := FParameter.Parse(FSQL.Text);
 end;
@@ -2440,6 +2451,7 @@ begin
     Transaction := TUIBTransaction(AOwner) else
 {$ENDIF}
     FTransaction := nil;
+  FStHandle := nil;
 end;
 
 destructor TUIBStatement.Destroy;
@@ -2447,7 +2459,7 @@ begin
   FSQL.Free;
   FParameter.free;
   FParameter := nil;
-  InternalClose(etmStayIn, False);
+  InternalClose(etmStayIn, False, True);
   SetDataBase(nil);
   SetTransaction(nil);
   inherited;
@@ -2724,13 +2736,13 @@ begin
 end;
 
 procedure TUIBStatement.InternalClose(const Mode: TEndTransMode;
-  Auto: boolean);
+  Auto, Drop: boolean);
 begin
   case FCurrentState of
-    qsStatement : EndStatement(Mode, Auto);
+    qsStatement : EndStatement(Mode, Auto, Drop);
     qsExecImme  : EndExecImme(Mode, Auto);
-    qsPrepare   : EndPrepare(Mode, Auto);
-    qsExecute   : EndExecute(Mode, Auto);
+    qsPrepare   : EndPrepare(Mode, Auto, Drop);
+    qsExecute   : EndExecute(Mode, Auto, Drop);
   end;
 end;
 
@@ -2885,7 +2897,7 @@ begin
         with FindDataBase.FLibrary do
           DSQLFreeStatement(FStHandle, DSQL_close);
     except
-      InternalClose(FOnError, False);
+      InternalClose(FOnError, False, True);
       raise;
     end;
     FCurrentState := qsPrepare;
@@ -2899,7 +2911,7 @@ var
   i, r: Integer;
   Str: string;
 begin
-  InternalClose(etmStayIn, True);
+  InternalClose(etmStayIn, True, False);
   r := 0;
   TStringList(FSQL).OnChange := nil;
   try
@@ -2990,11 +3002,11 @@ begin
     except
       FParsedSQL := '';
       Params.Clear;
-      InternalClose(FOnError, False);
+      InternalClose(FOnError, False, True);
       raise;
     end;
   finally
-    InternalClose(etmStayIn, True);
+    InternalClose(etmStayIn, True, True);
     TStringList(FSQL).OnChange := DoSQLChange;
   end;
 end;
