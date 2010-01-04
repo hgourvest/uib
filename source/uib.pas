@@ -3736,10 +3736,12 @@ begin
   Result := TUserInfo(FUserInfos[aIndex]);
 end;
 
+{$IFDEF FB25_UP}
 function TUIBSecurity.GetBooleanParam(aParam: Integer): Boolean;
 begin
   Result := FIntegerParams[aParam] <> 0;
 end;
+{$ENDIF}
 
 function TUIBSecurity.GetIntegerParam(aParam: Integer): Integer;
 begin
@@ -3751,11 +3753,13 @@ begin
   Result := FStringParams[aParam];
 end;
 
+{$IFDEF FB25_UP}
 procedure TUIBSecurity.SetBooleanParam(aParam: Integer; const aValue: Boolean);
 begin
   FIntegerParams[aParam] := ord(aValue);
   Include(FModifiedParams, TSecurityParam(aParam));
 end;
+{$ENDIF}
 
 procedure TUIBSecurity.SetIntegerParam(aParam: Integer; const aValue: Integer);
 begin
