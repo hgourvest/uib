@@ -1133,7 +1133,7 @@ const
 {$IFDEF FB25_UP}
   ,(Name: 'trusted_role';           ParamType: prNone)
   ,(Name: 'org_filename';           ParamType: prStrg)
-  ,(Name: 'utf8_filename';          ParamType: prNone)
+  ,(Name: 'utf8_filename';          ParamType: prCard)
   ,(Name: 'ext_call_depth';         ParamType: prCard)
 {$ENDIF}
    );
