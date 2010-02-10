@@ -1045,7 +1045,7 @@ const
     (Name: 'dbkey_scope';            ParamType: prCard), // ok
     (Name: 'number_of_users';        ParamType: prIgno), // not implemented
     (Name: 'trace';                  ParamType: prNone), // ok
-    (Name: 'no_garbage_collect';     ParamType: prIgno), // not implemented
+    (Name: 'no_garbage_collect';     ParamType: prNone), // not implemented
     (Name: 'damaged';                ParamType: prNone), // ok
     (Name: 'license';                ParamType: prStrg),
     (Name: 'sys_user_name';          ParamType: prStrg), // ok
@@ -1597,7 +1597,11 @@ const
             if (Name = CurStr) then
             begin
               case ParamType of
-                prNone : AddByte(Code);
+                prNone :
+                  begin
+                    AddByte(Code);
+                    AddByte(0);
+                  end;
                 prByte :
                   if TryStrToInt(string(CurValue), AValue) and (AValue >= 0) and (AValue <= 255) then
                   begin
