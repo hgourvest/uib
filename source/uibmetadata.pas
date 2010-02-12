@@ -327,6 +327,9 @@ type
     FComputedSource: string;
   {$ENDIF}
     procedure LoadFromStream(Stream: TStream); override;
+    function GetAsAlterDDL: string;
+    function GetAsAlterToActiveDDL: string;
+    function GetAsAlterToInactiveDDL: string;
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
@@ -334,6 +337,9 @@ type
     procedure SaveToStream(Stream: TStream); override;
     property Unique: Boolean read FUnique;
     property Active: Boolean read FActive;
+    property AsAlterDDL: string read GetAsAlterDDL;
+    property AsAlterToActiveDDL: string read GetAsAlterToActiveDDL;
+    property AsAlterToInactiveDDL: string read GetAsAlterToInactiveDDL;
   end;
 
   TMetaCheck = class(TMetaNode)
@@ -3221,7 +3227,6 @@ begin
     Stream.WriteString(' INDEX ' + FIndexName);
   end;
   Stream.WriteString(';');
-
 end;
 
 procedure TMetaPrimary.SaveToStream(Stream: TStream);
@@ -3240,6 +3245,24 @@ end;
 class function TMetaIndex.NodeClass: string;
 begin
   Result := 'Indice';
+end;
+
+function TMetaIndex.GetAsAlterDDL: string;
+begin
+  if FActive then
+    Result := GetAsAlterToActiveDDL
+  else
+    Result := GetAsAlterToInactiveDDL;
+end;
+
+function TMetaIndex.GetAsAlterToActiveDDL: string;
+begin
+  Result := Format('ALTER INDEX %s ACTIVE;', [Name]);
+end;
+
+function TMetaIndex.GetAsAlterToInactiveDDL: string;
+begin
+  Result := Format('ALTER INDEX %s INACTIVE;', [Name]);
 end;
 
 procedure TMetaIndex.LoadFromStream(Stream: TStream);
@@ -3263,7 +3286,7 @@ begin
     ORDER := ' DESCENDING';
 
   Stream.WriteString(Format('CREATE%s%s INDEX %s ON %s ',
-    [ORDER, UNIQUE, Name, TMetaTable(FOwner).Name]));
+    [UNIQUE, ORDER, Name, TMetaTable(FOwner).Name]));
 
 {$IFDEF FB21_UP}
   if FComputedSource <> '' then
@@ -3282,7 +3305,7 @@ begin
 {$IFDEF FB21_UP}
   end;
 {$ENDIF}
-  if not FActive then
+  if (ddlFull in Options) and (not FActive) then
     Stream.WriteString(Format('%sALTER INDEX %s INACTIVE;', [NewLine, Name]));
 end;
 
