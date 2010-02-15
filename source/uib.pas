@@ -3079,7 +3079,7 @@ begin
 
     if FDataBases.Count = 1 then
     begin
-      TransactionStart(FTrHandle, FDataBase.FDbHandle, CreateTRParams(FOptions, FLockRead, FLockWrite, FLockTimeout));
+      TransactionStart(FTrHandle, FDataBase.FDbHandle, CreateTRParams(FOptions, FLockRead, FLockWrite{$IFDEF FB20_UP}, FLockTimeout{$ENDIF}));
     end else
     begin
       GetMem(Buffer,  SizeOf(TISCTEB) * FDataBases.Count);
