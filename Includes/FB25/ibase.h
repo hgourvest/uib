@@ -1850,7 +1850,8 @@ int  ISC_EXPORT isc_get_client_minor_version ();
 #define isc_action_svc_trace_list     26        
 #define isc_action_svc_set_mapping    27        
 #define isc_action_svc_drop_mapping   28        
-#define isc_action_svc_last                       29    
+#define isc_action_svc_display_user_adm 29      
+#define isc_action_svc_last                       30    
 
 #define isc_info_svc_svr_db_info      50        
 #define isc_info_svc_get_license      51        
@@ -1989,6 +1990,7 @@ int  ISC_EXPORT isc_get_client_minor_version ();
 
 #define isc_spb_nbk_level                       5
 #define isc_spb_nbk_file                        6
+#define isc_spb_nbk_direct                      7
 #define isc_spb_nbk_no_triggers         0x01
 
 #define isc_spb_trc_id                          1

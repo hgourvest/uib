@@ -735,6 +735,7 @@ const
   isc_out_of_temp_space                = 335544985;
   isc_eds_expl_tran_ctrl               = 335544986;
   isc_no_trusted_spb                   = 335544987;
+  isc_async_active                     = 335545017;
 {$ENDIF}
 
 {$IFDEF IB71_UP}
@@ -976,6 +977,11 @@ const
   isc_gbak_data_only                    = 336331034;
 {$ENDIF FB102ORYF867}
 
+{$IFDEF FB25_UP}
+  isc_gbak_invalid_metadata            = 336331093;
+  isc_gbak_invalid_data                = 336331094;
+{$ENDIF}
+
 {$IFDEF FB20_UP}
   isc_dsql_too_old_ods                 = 336397205;
   isc_dsql_table_not_found             = 336397206;
@@ -1131,6 +1137,7 @@ const
   isc_fbsvcmgr_fp_open                 = 336986160;
   isc_fbsvcmgr_fp_read                 = 336986161;
   isc_fbsvcmgr_fp_empty                = 336986162;
+  isc_fbsvcmgr_bad_arg                 = 336986164;
   isc_utl_trusted_switch               = 337051649;
 {$ENDIF}
 
@@ -1155,7 +1162,7 @@ const
 {$ENDIF FB20}
 
 {$IFDEF FB25}
-  isc_err_max                           = 960;
+  isc_err_max                           = 964;
 {$ENDIF}
 
 {$IFDEF YF867}

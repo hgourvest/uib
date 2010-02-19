@@ -2005,7 +2005,8 @@ begin
       if Transaction.DataBase <> nil then
       begin
         FParameter.CharacterSet := Transaction.DataBase.CharacterSet;
-        if DataBase = nil then
+        // if not a multibase transaction affect database
+        if Transaction.DatabasesCount <= 1 then
           Database := Transaction.DataBase;
       end;
     end;

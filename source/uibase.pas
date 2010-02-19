@@ -1947,16 +1947,17 @@ const
   isc_action_svc_get_fb_log = #12;	// Retrieves the Firebird log file from the server
 {$ENDIF}
 {$IFDEF FB25_UP}
-  isc_action_svc_nbak           = #20;
-  isc_action_svc_nrest          = #21;
-  isc_action_svc_trace_start    = #22;
-  isc_action_svc_trace_stop     = #23;
-  isc_action_svc_trace_suspend  = #24;
-  isc_action_svc_trace_resume   = #25;
-  isc_action_svc_trace_list     = #26;
-  isc_action_svc_set_mapping    = #27;
-  isc_action_svc_drop_mapping   = #28;
-  isc_action_svc_last           = #29;
+  isc_action_svc_nbak             = #20;
+  isc_action_svc_nrest            = #21;
+  isc_action_svc_trace_start      = #22;
+  isc_action_svc_trace_stop       = #23;
+  isc_action_svc_trace_suspend    = #24;
+  isc_action_svc_trace_resume     = #25;
+  isc_action_svc_trace_list       = #26;
+  isc_action_svc_set_mapping      = #27;
+  isc_action_svc_drop_mapping     = #28;
+  isc_action_svc_display_user_adm = #29;
+  isc_action_svc_last             = #30;
 {$ENDIF}
 
   (*****************************
@@ -2200,6 +2201,7 @@ const
 {$IFDEF FB25_UP}
   isc_spb_nbk_level       = 5;
   isc_spb_nbk_file        = 6;
+  isc_spb_nbk_direct      = 7;
   isc_spb_nbk_no_triggers = $01;
 
   isc_spb_trc_id          = 1;
@@ -3431,8 +3433,8 @@ type
     isc_start_transaction: function(user_status: PISCStatus; tra_handle: PIscTrHandle; count: Smallint;
       db_handle: PIscDbHandle; tpb_length: ISCUShort; tpb_ad: PAnsiChar): ISCStatus; cdecl;
 {$IFDEF FB25_UP}
-//    fb_disconnect_transaction: function(user_status: PISCStatus; tra_handle: PIscTrHandle): ISC_STATUS;
-//      {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
+    fb_disconnect_transaction: function(user_status: PISCStatus; tra_handle: PIscTrHandle): ISC_STATUS;
+      {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
 {$ENDIF}
     isc_transact_request: function(user_status: PISCStatus; db_handle: PIscDbHandle;
       tra_handle: PIscTrHandle; blr_length: Word; blr: PAnsiChar; in_msg_length: Word; in_msg: PAnsiChar;
@@ -4030,7 +4032,7 @@ begin
       fb_shutdown_callback := GetProcAddress(FGDS32Lib, 'fb_shutdown_callback');
       fb_cancel_operation := GetProcAddress(FGDS32Lib, 'fb_cancel_operation');
       fb_sqlstate := GetProcAddress(FGDS32Lib, 'fb_sqlstate');
-     // fb_disconnect_transaction := GetProcAddress(FGDS32Lib, 'fb_disconnect_transaction');
+      fb_disconnect_transaction := GetProcAddress(FGDS32Lib, 'fb_disconnect_transaction');
     {$ENDIF}
 
 
