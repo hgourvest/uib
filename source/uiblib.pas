@@ -62,11 +62,17 @@ type
   private
     FGDSCode: Integer;
     FErrorCode: Integer;
-    FSQLCode  : Integer;
+    FSQLCode: Integer;
+{$IFDEF FB25_UP}
+    FSQLState: RawByteString;
+{$ENDIF}
   public
     property ErrorCode: Integer read FErrorCode;
     property SQLCode: Integer read FSQLCode;
     property GDSCode: Integer read FGDSCode;
+{$IFDEF FB25_UP}
+    property SQLState: RawByteString read FSQLState;
+{$ENDIF}
   end;
 
   EUIBException = class(EUIBError)
@@ -1008,8 +1014,11 @@ type
     procedure ServiceStart(var SvcHandle: IscSvcHandle; const Spb: RawByteString);
 
     function ErrSqlcode: ISCLong;
-    function ErrInterprete: AnsiString;
+    function ErrInterprete: RawByteString;
     function ErrSQLInterprete(SQLCODE: Smallint): RawByteString;
+{$IFDEF FB25_UP}
+    function ErrSqlState: FB_SQLSTATE_STRING;
+{$ENDIF}
 
     procedure BlobOpen(var DBHandle: IscDbHandle; var TraHandle: IscTrHandle;
       var BlobHandle: IscBlobHandle; BlobId: TISCQuad; BPB: AnsiString = '');
@@ -1493,6 +1502,9 @@ const
         Exception.Message := Exception.Message + string(ErrSQLInterprete(Exception.FSQLCode)) + NewLine;
       Exception.FGDSCode := Status;
       Exception.FErrorCode := GETCode(Status);
+{$IFDEF FB25_UP}
+      Exception.FSQLState := ErrSqlState;
+{$ENDIF}
       Exception.Message := Exception.Message + 'Error Code: ' + IntToStr(Exception.FErrorCode);
       raise Exception;
     end;
@@ -2353,7 +2365,7 @@ const
     Result := isc_sqlcode(@FStatusVector);
   end;
 
-  function TUIBLibrary.ErrInterprete: AnsiString;
+  function TUIBLibrary.ErrInterprete: RawByteString;
   var
     StatusVector: PStatusVector;
     len: Integer;
@@ -2382,6 +2394,13 @@ const
     for i := 1 to 255 do if Result[i] = #0 then Break; // Quick trim
     SetLength(Result, i-1);
   end;
+
+{$IFDEF FB25_UP}
+  function TUIBLibrary.ErrSqlState: FB_SQLSTATE_STRING;
+  begin
+    fb_sqlstate(@Result, @FStatusVector);
+  end;
+{$ENDIF}
 
 //******************************************************************************
 // Services
