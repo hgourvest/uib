@@ -2207,7 +2207,9 @@ end;
 
 procedure TUIBStatement.BeginPrepare(describeParams: boolean = false);
 begin
-  if (FStHandle = nil) then BeginStatement;
+  if (FStHandle = nil) then
+    BeginStatement else ;
+    BeginTransaction;
 
   FSQLResult := ResultClass.Create(FindDataBase.CharacterSet, 0, FCachedFetch, FFetchBlobs, FBufferChunks);
   with FindDataBase, FLibrary do
