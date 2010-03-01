@@ -47,7 +47,7 @@ PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=
 Packages=
-Conditionals=
+Conditionals=HAVE_SYNEDIT
 DebugSourceDirs=
 UsePackages=0
 [Parameters]
@@ -85,8 +85,9 @@ OriginalFilename=
 ProductName=
 ProductVersion=1.0.0.0
 Comments=
-[Excluded Packages]
-c:\program files\borland\delphi7\Projects\Bpl\GxComponents7.bpl=GExperts source components
+[HistoryLists\hlConditionals]
+Count=1
+Item0=HAVE_SYNEDIT
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;

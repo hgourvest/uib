@@ -25,6 +25,7 @@ package uibD6D;
 {$DESCRIPTION 'UIB - Unified Interbase Components'}
 {$DESIGNONLY}
 {$IMPLICITBUILD OFF}
+{$DEFINE HAVE_SYNEDIT}
 
 requires
   rtl,
@@ -44,7 +45,7 @@ contains
 {$IFDEF HAVE_SYNEDIT}
   uibsqledit in '..\source\uibsqledit.pas' {UIBSQLEditForm},
   uibsynedit in '..\source\uibsynedit.pas',
-{$ENDIF}
+{$ENDIF}  
   uibreg in '..\source\uibreg.pas',
   uibdatabaseedit in '..\source\uibdatabaseedit.pas' {UIBDatabaseEditForm},
   uibtransactionedit in '..\source\uibtransactionedit.pas' {UIBTransactionEditForm};
