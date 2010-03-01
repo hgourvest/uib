@@ -22,10 +22,10 @@ interface
 uses
 {$IFDEF MSWINDOWS}
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  uib, StdCtrls, ExtCtrls;
+  uib, uiblib, StdCtrls, ExtCtrls;
 {$ELSE}
   libc, SysUtils, Classes, QGraphics, QControls, QForms, QDialogs,
-  uib, QStdCtrls, QExtCtrls;
+  uib, uiblib, QStdCtrls, QExtCtrls;
 {$ENDIF}
 
 type
