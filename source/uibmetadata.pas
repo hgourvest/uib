@@ -22,7 +22,7 @@ interface
 
 uses
 {$IFDEF MSWINDOWS}
-  Windows, 
+  Windows,
 {$ENDIF}
   Classes, SysUtils, uibase, uiblib, uib, uibconst, uibkeywords, uibavl;
 
@@ -102,6 +102,8 @@ type
     FNodeItems: array of TNodeItem;
     FNodeItemsCount: Integer;
     FData: Pointer;
+    FDependents: array of TMetaNode;
+    FDependedOn: array of TMetaNode;
     function GetItems(const ClassIndex, Index: Integer): TMetaNode;
     procedure AddClass(ClassID: TMetaNodeClass);
     procedure CheckTransaction(Transaction: TUIBTransaction);
@@ -111,18 +113,24 @@ type
     function GetAsDDLNode: string;
     function GetAsFullDDL: string;
     function GetAsFullDDLNode: string;
+    function GetDependedOn(const Index: Integer): TMetaNode;
+    function GetDependedOnCount: Integer;
+    function GetDependent(const Index: Integer): TMetaNode;
+    function GetDependentCount: Integer;
   protected
     function GetName: String; virtual;
   public
-    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); virtual;
-    procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); virtual;
-    function GetNodes(const Index: Integer): TNodeItem;
-    class function NodeClass: string; virtual;
-    class function NodeType: TMetaNodeType; virtual;
     constructor Create(AOwner: TMetaNode; ClassIndex: Integer); virtual;
     constructor CreateFromStream(AOwner: TMetaNode; ClassIndex: Integer; Stream: TStream); virtual;
     destructor Destroy; override;
+    class function NodeClass: string; virtual;
+    class function NodeType: TMetaNodeType; virtual;
     procedure SaveToStream(Stream: TStream); virtual;
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); virtual;
+    procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); virtual;
+    procedure RegisterDependent(OtherNode: TMetaNode);
+    procedure RegisterDependedOn(OtherNode: TMetaNode);
+    function GetNodes(const Index: Integer): TNodeItem;
     function GetDatabase: TMetaDatabase;
     function MetaQuote(const str: string): string;    
     property Name: string read GetName;
@@ -134,6 +142,10 @@ type
     property Nodes[const Index: Integer]: TNodeItem read GetNodes;
     property Parent: TMetaNode read FOwner;
     property Data: Pointer read FData write FData;
+    property DependentCount: Integer read GetDependentCount;
+    property Dependent[const Index: Integer]: TMetaNode read GetDependent;
+    property DependedOnCount: Integer read GetDependedOnCount;
+    property DependedOn[const Index: Integer]: TMetaNode read GetDependedOn;
   end;
 
   TMetaGenerator = class(TMetaNode)
@@ -261,6 +273,7 @@ type
     function GetFields(const Index: Word): TMetaTableField;
     function GetFieldsCount: Word;
     procedure LoadFromStream(Stream: TStream); override;
+    function GetAsDropDDL: string;
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
@@ -268,13 +281,14 @@ type
     property Fields[const Index: Word]: TMetaTableField read GetFields;
     property FieldsCount: Word read GetFieldsCount;
     property Order: TIndexOrder read FOrder;
+    property AsDropDDL: string read GetAsDropDDL;
   end;
 
   TMetaPrimary = class(TMetaConstraint)
   private
-   FIndexName: string;
-   procedure LoadFromQuery(Q: TUIBStatement);
-   procedure LoadFromStream(Stream: TStream); override;
+    FIndexName: string;
+    procedure LoadFromQuery(Q: TUIBStatement);
+    procedure LoadFromStream(Stream: TStream); override;
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
@@ -287,12 +301,16 @@ type
   private
     FIndexName: string;
     procedure LoadFromStream(Stream: TStream); override;
+    function GetAsAlterToActiveDDL: string;
+    function GetAsAlterToInactiveDDL: string;
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
     procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); override;
     procedure SaveToStream(Stream: TStream); override;
     property IndexName: string read FIndexName;
+    property AsAlterToActiveDDL: string read GetAsAlterToActiveDDL;
+    property AsAlterToInactiveDDL: string read GetAsAlterToInactiveDDL;
   end;
 
   TMetaForeign = class(TMetaConstraint)
@@ -470,6 +488,7 @@ type
       QCharset, QArrayDim, QGrants, QFieldGrants: TUIBStatement; OIDs: TOIDViews;
       DefaultCharset: TCharacterSet);
     procedure LoadFromStream(Stream: TStream); override;
+    function GetAsDropDDL: string;
   public
     procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     class function NodeClass: string; override;
@@ -482,6 +501,7 @@ type
     property FieldsCount: Integer read GetFieldsCount;
     property Triggers[const Index: Integer]: TMetaTrigger read GetTriggers;
     property TriggersCount: Integer read GetTriggersCount;
+    property AsDropDDL: string read GetAsDropDDL;
   end;
 
   TMetaProcedure = class(TMetaNode)
@@ -501,6 +521,7 @@ type
     function GetAsCreateEmptyDDL: string;
     function GetProcedureGrants(const Index: Integer): TMetaProcedureGrant;
     function GetProcedureGrantsCount: Integer;
+    function GetAsAlterToEmptyDDL: string;
   protected
     function FindGrant(Option: Boolean): TMetaProcedureGrant;
   public
@@ -514,6 +535,7 @@ type
     property Source: string read FSource;
     property AsCreateEmptyDDL: string read GetAsCreateEmptyDDL;
     property AsAlterDDL: string read GetAsAlterDDL;
+    property AsAlterToEmptyDLL: string read GetAsAlterToEmptyDDL;
 
     property InputFields[const Index: Integer]: TMetaProcInField read GetInputFields;
     property InputFieldsCount: Integer read GetInputFieldsCount;
@@ -611,9 +633,11 @@ type
     FDefaultCharset: TCharacterSet;
 
     FSortedTables: TList;
+    FSortedViews: TList;
     FIdentifiers: TAvlTree;
 
     procedure SortTablesByForeignKeys;
+    procedure SortViewsByDependencies;
 
     function GetGenerators(const Index: Integer): TMetaGenerator;
     function GetGeneratorsCount: Integer;
@@ -629,6 +653,8 @@ type
     function GetDomainsCount: Integer;
 
     procedure LoadFromStream(Stream: TStream); override;
+    procedure LoadDependencies(QDeps: TUIBStatement);
+
     function GetProcedures(const Index: Integer): TMetaProcedure;
     function GetProceduresCount: Integer;
     function GetExceptions(const Index: Integer): TMetaException;
@@ -639,6 +665,8 @@ type
     function GetRolesCount: Integer;
     function GetSortedTables(const Index: Integer): TMetaTable;
     function GetSortedTablesCount: Integer;
+    function GetSortedViews(const Index: Integer): TMetaView;
+    function GetSortedViewsCount: Integer;
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
@@ -673,6 +701,9 @@ type
     property Views[const Index: Integer]: TMetaView read GetViews;
     property ViewsCount: Integer read GetViewsCount;
     property OIDViews: TOIDViews read FOIDViews write FOIDViews;
+
+    property SortedViews[const Index: Integer]: TMetaView read GetSortedViews;
+    property SortedViewsCount: Integer read GetSortedViewsCount;
 
     property Domains[const Index: Integer]: TMetaDomain read GetDomains;
     property DomainsCount: Integer read GetDomainsCount;
@@ -1191,7 +1222,9 @@ const
     '  RDB$ROLE_NAME' +
     ', RDB$OWNER_NAME ' +
     'from ' +
-    '  RDB$ROLES';
+    '  RDB$ROLES ' +
+    'where ' +
+    '  not RDB$ROLE_NAME starting with ''RDB$''';
 
   QRYArrayDim =
     'select ' +
@@ -1241,6 +1274,17 @@ const
     '  (RDB$RELATION_NAME = ?) and (RDB$FIELD_NAME is not null) ' +
     'order by ' +
     '  RDB$PRIVILEGE, RDB$GRANT_OPTION, RDB$USER_TYPE, RDB$USER, RDB$GRANTOR, RDB$FIELD_NAME';
+
+  QRYDependendies =
+    'select distinct ' +
+    '  d.RDB$DEPENDENT_NAME, ' +
+    '  d.RDB$DEPENDENT_TYPE, ' +
+    '  d.RDB$DEPENDED_ON_NAME, ' +
+    '  d.RDB$DEPENDED_ON_TYPE ' +
+    'from ' +
+    '  RDB$DEPENDENCIES d ' +
+    'join RDB$TYPES t on (d.RDB$DEPENDENT_TYPE=t.RDB$TYPE and t.RDB$FIELD_NAME = ''RDB$OBJECT_TYPE'')' +
+    'join RDB$TYPES ot on (d.RDB$DEPENDED_ON_TYPE=ot.RDB$TYPE and ot.RDB$FIELD_NAME = ''RDB$OBJECT_TYPE'')';
 
 procedure WriteString(Stream: TStream; const Str: string);
 var
@@ -1325,6 +1369,8 @@ destructor TMetaNode.Destroy;
 var
   I, J: Integer;
 begin
+  SetLength(FDependents, 0);
+  SetLength(FDependedOn, 0);
   for I := 0 to FNodeItemsCount - 1 do
   begin
     for J := 0 to FNodeItems[I].Childs.Count - 1 do
@@ -1483,9 +1529,41 @@ begin
   end;
 end;
 
+function TMetaNode.GetDependedOn(const Index: Integer): TMetaNode;
+begin
+  Result := FDependedOn[Index];
+end;
+
+function TMetaNode.GetDependedOnCount: Integer;
+begin
+  Result := Length(FDependedOn);
+end;
+
+function TMetaNode.GetDependent(const Index: Integer): TMetaNode;
+begin
+  Result := FDependents[Index];
+end;
+
+function TMetaNode.GetDependentCount: Integer;
+begin
+  Result := Length(FDependents);
+end;
+
 class function TMetaNode.NodeType: TMetaNodeType;
 begin
   Result := MetaNode;
+end;
+
+procedure TMetaNode.RegisterDependedOn(OtherNode: TMetaNode);
+begin
+  SetLength(FDependedOn, Length(FDependedOn) + 1);
+  FDependedOn[Length(FDependedOn) -1] := OtherNode;
+end;
+
+procedure TMetaNode.RegisterDependent(OtherNode: TMetaNode);
+begin
+  SetLength(FDependents, Length(FDependents) + 1);
+  FDependents[Length(FDependents) -1] := OtherNode;
 end;
 
 { TMetaGenerator }
@@ -2385,9 +2463,71 @@ begin
   FDefaultCharset := csNONE;
 
   FSortedTables := TList.Create;
+  FSortedViews := TList.Create;
+
   FIdentifiers := TAvlStringTree.Create;
   for i := low(SQLToKens) to high(SQLToKens) do
     FIdentifiers.Insert(TAvlString.Create(SQLToKens[i]))
+end;
+
+procedure TMetaDataBase.LoadDependencies(QDeps: TUIBStatement);
+type
+  (* This list was built from the output of the following query
+
+     select
+       RDB$TYPE, RDB$TYPE_NAME
+     from
+       RDB$TYPES
+     where
+       RDB$FIELD_NAME='RDB$OBJECT_TYPE'
+     order by
+       RDB$TYPE
+  *)
+  TObjectType = (otRelation, otView, otTrigger, otComputedField, otValidation,
+    otProcedure, otExpressionIndex, otException, otUser, otField, otIndex,
+    otDependentCount, otUserGroup, otRole, otGenerator, otUDF, otBlobFilter);
+var
+  DepName, DepOnName: String;
+  DepType, DepOnType: TObjectType;
+  DepNode, DepOnNode: TMetaNode;
+
+  function FindNode(const Name: String; ObjectType: TObjectType): TMetaNode;
+  begin
+    case ObjectType of
+      otRelation:
+        begin
+          Result := FindTableName(Name);
+          { Views that depend on views are stored as depending on relations in
+            RDB$DEPENDENCIES }
+          if Result = nil then
+            Result := FindViewName(Name);
+        end;
+      otView:      Result := FindViewName(Name);
+      otTrigger:   Result := FindTriggerName(Name);
+      otProcedure: Result := FindProcName(Name);
+      otException: Result := FindExceptionName(Name);
+      otField:     Result := FindDomainName(Name);
+      otGenerator: Result := FindGeneratorName(Name);
+      otUDF:       Result := FindUDFName(Name);
+    else
+      Result := nil;
+    end;
+  end;
+
+begin
+  DepName := Trim(QDeps.Fields.AsString[0]);
+  DepType := TObjectType(QDeps.Fields.AsInteger[1]);
+  DepOnName := Trim(QDeps.Fields.AsString[2]);
+  DepOnType := TObjectType(QDeps.Fields.AsInteger[3]);
+
+  DepNode := FindNode(DepName, DepType);
+  DepOnNode := FindNode(DepOnName, DepOnType);
+
+  if (DepNode <> nil) and (DepOnNode <> nil) then
+  begin
+    DepNode.RegisterDependedOn(DepOnNode);
+    DepOnNode.RegisterDependent(DepNode);
+  end;
 end;
 
 procedure TMetaDataBase.LoadFromDatabase(Transaction: TUIBTransaction);
@@ -2396,6 +2536,7 @@ var
   ConStr, Str: string;
   QNames, QFields, QCharset, QPrimary: TUIBStatement;
   QIndex, QForeign, QCheck, QTrigger, QArrayDim: TUIBStatement;
+  QDependencies: TUIBStatement;
   QDefaultCharset, QGrants, QFieldGrants: TUIBStatement;
   procedure Configure(var Q: TUIBStatement; const Qry: string;
     CachedFetch: Boolean = False);
@@ -2426,6 +2567,7 @@ begin
   Configure(QDefaultCharset, QRYDefaultCharset);
   Configure(QGrants, QRYRelationGrants);
   Configure(QFieldGrants, QRYFieldGrants);
+  Configure(QDependencies, QRYDependendies);
 
   try
     if OIDDBCharset in FOIDDatabases then
@@ -2615,7 +2757,19 @@ begin
         QNames.Next;
       end;
     end;
+
+    // DEPENDENCIES
+    if OIDDependencies in FOIDDatabases then
+    begin
+      QDependencies.Open;
+      while not QDependencies.Eof do
+      begin
+        LoadDependencies(QDependencies);
+        QDependencies.Next;
+      end;
+    end;
   finally
+    QDependencies.Free;
     QFieldGrants.Free;
     QGrants.Free;
     QNames.Free;
@@ -2761,6 +2915,7 @@ end;
 destructor TMetaDataBase.Destroy;
 begin
   FSortedTables.Free;
+  FSortedViews.Free;
   FIdentifiers.Free;
   inherited;
 end;
@@ -2906,6 +3061,82 @@ begin
   end;
 end;
 
+procedure TMetaDataBase.SortViewsByDependencies;
+var
+  I, F, O: Integer;
+  CanAdd: Boolean;
+  ToAdd: TList;
+  Current: TMetaView;
+
+  function CountViewsDependencies(V: TMetaView): Integer;
+  var
+    i: Integer;
+  begin
+    Result := 0;
+    for i := 0 to V.DependedOnCount - 1 do
+      if V.DependedOn[i].NodeType = MetaView then
+        Inc(Result);
+  end;
+
+begin
+  FSortedViews.Clear;
+
+  { Commence par ajouter les tables qui n'ont pas de dépendences }
+  ToAdd := TList.Create;
+  try
+    for I := 0 to GetViewsCount - 1 do
+    begin
+      if CountViewsDependencies(GetViews(i)) = 0 then
+        FSortedViews.Add(GetViews(i))
+      else
+        ToAdd.Add(GetViews(i));
+    end;
+
+    { Ajoute ensuite les tables qui ont uniquement des dépendences sur les tables
+      qui sont déjà dans la liste }
+    I := 0; O := 0;
+    while ToAdd.Count > 0 do
+    begin
+      { Boucle sur la liste ToAdd }
+      if I >= ToAdd.Count then
+      begin
+        if (O > 0) and (ToAdd.Count = O) then
+          raise EUIBError.Create('Cycle detected, I can''t do anything for bad databases designers :-)')
+        else
+          O := ToAdd.Count;
+
+        I := 0;
+      end;
+
+      Current := TMetaView(ToAdd[I]);
+
+      CanAdd := true;
+      for F := 0 to Current.DependedOnCount - 1 do
+      begin
+        { Il faut que toutes les dépendances de Current soient dans
+          FSortedTables. Ne tient pas compte des jointures auto-réflexives }
+        if (Current.DependedOn[F].NodeType = MetaView) and (Current.DependedOn[F] <> Current)
+          and (FSortedViews.IndexOf(Current.DependedOn[F]) < 0) then
+        begin
+          CanAdd := false;
+          Break;
+        end;
+      end;
+      if CanAdd then
+      begin
+        FSortedViews.Add(Current);
+        ToAdd.Remove(Current);
+        { Ne change pas I, comme on a supprimé un item, la même valeur de I
+          permettra d'avoir le suivant dans la liste }
+      end
+      else
+        Inc(I);
+    end;
+  finally
+    ToAdd.Free;
+  end;
+end;
+
 function TMetaDataBase.GetRoles(const Index: Integer): TMetaRole;
 begin
   Result := TMetaRole(GetItems(Ord(OIDRole), Index));
@@ -2928,6 +3159,20 @@ begin
   if FSortedTables.Count <> GetTablesCount then
     SortTablesByForeignKeys;
   Result := FSortedTables.Count;
+end;
+
+function TMetaDataBase.GetSortedViews(const Index: Integer): TMetaView;
+begin
+  if FSortedViews.Count <> GetViewsCount then
+    SortViewsByDependencies;
+  Result := TMetaView(FSortedViews[Index]);
+end;
+
+function TMetaDataBase.GetSortedViewsCount: Integer;
+begin
+  if FSortedViews.Count <> GetViewsCount then
+    SortViewsByDependencies;
+  Result := FSortedViews.Count;
 end;
 
 class function TMetaDataBase.NodeType: TMetaNodeType;
@@ -3113,6 +3358,11 @@ begin
   Result := MetaConstraint;
 end;
 
+function TMetaConstraint.GetAsDropDDL: string;
+begin
+  Result := Format('ALTER TABLE %s DROP CONSTRAINT %s;', [TMetaTable(FOwner).Name, Name]);
+end;
+
 { TMetaUnique }
 
 procedure TMetaUnique.LoadFromStream(Stream: TStream);
@@ -3136,9 +3386,9 @@ var
   I: Integer;
 begin
   if (copy(FName, 0, 6) = 'INTEG_') then
-    Stream.WriteString(Format('ALTER TABLE %s ADD UNIQUE (',
+    Stream.WriteString(Format('ALTER TABLE %s' + NewLine + '  ADD UNIQUE (',
       [TMetaTable(FOwner).Name])) else
-    Stream.WriteString(Format('ALTER TABLE %s ADD CONSTRAINT %s UNIQUE (',
+    Stream.WriteString(Format('ALTER TABLE %s' + NewLine + '  ADD CONSTRAINT %s UNIQUE (',
       [TMetaTable(FOwner).Name, Name]));
   for I := 0 to FieldsCount - 1 do
   begin
@@ -3151,7 +3401,7 @@ begin
   // fb15up
   if not ((FIndexName = '') or (not (ddlFull in options) and (Copy(FIndexName, 1, 4) = 'RDB$'))) then
   begin
-    Stream.WriteString(' USING');
+    Stream.WriteString(NewLine + '  USING');
     if FOrder = ioDescending then
       Stream.WriteString(' DESC');
     Stream.WriteString(' INDEX ' + FIndexName);
@@ -3164,6 +3414,16 @@ procedure TMetaUnique.SaveToStream(Stream: TStream);
 begin
   inherited;
   WriteString(Stream, FIndexName);
+end;
+
+function TMetaUnique.GetAsAlterToActiveDDL: string;
+begin
+  Result := Format('ALTER INDEX %s ACTIVE;', [FIndexName]);
+end;
+
+function TMetaUnique.GetAsAlterToInactiveDDL: string;
+begin
+  Result := Format('ALTER INDEX %s INACTIVE;', [FIndexName]);
 end;
 
 { TMetaPrimary }
@@ -3205,10 +3465,10 @@ var
   I: Integer;
 begin
   if (copy(FName, 0, 6) = 'INTEG_') then
-    Stream.WriteString(Format('ALTER TABLE %s ADD PRIMARY KEY (',
+    Stream.WriteString(Format('ALTER TABLE %s' + NewLine + '  ADD PRIMARY KEY (',
       [TMetaTable(FOwner).Name]))
   else
-    Stream.WriteString(Format('ALTER TABLE %s ADD CONSTRAINT %s PRIMARY KEY (',
+    Stream.WriteString(Format('ALTER TABLE %s' + NewLine + '  ADD CONSTRAINT %s PRIMARY KEY (',
       [TMetaTable(FOwner).Name, Name]));
   for I := 0 to FieldsCount - 1 do
   begin
@@ -3221,7 +3481,7 @@ begin
   // fb15up
   if not ((FIndexName = '') or (not (ddlFull in options) and (Copy(FIndexName, 1, 4) = 'RDB$'))) then
   begin
-    Stream.WriteString(' USING');
+    Stream.WriteString(NewLine + '  USING');
     if FOrder = ioDescending then
       Stream.WriteString(' DESC');
     Stream.WriteString(' INDEX ' + FIndexName);
@@ -3285,12 +3545,12 @@ begin
   if FOrder = IoDescending then
     ORDER := ' DESCENDING';
 
-  Stream.WriteString(Format('CREATE%s%s INDEX %s ON %s ',
+  Stream.WriteString(Format('CREATE%s%s INDEX %s' + NewLine + '  ON %s ',
     [UNIQUE, ORDER, Name, TMetaTable(FOwner).Name]));
 
 {$IFDEF FB21_UP}
   if FComputedSource <> '' then
-    Stream.WriteString(Format('COMPUTED BY %s;', [FComputedSource]))
+    Stream.WriteString(Format(NewLine + '  COMPUTED BY %s;', [FComputedSource]))
   else
   begin
 {$ENDIF}
@@ -3366,12 +3626,13 @@ procedure TMetaForeign.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions
 var
   I: Integer;
 begin
-  if (copy(FName, 0, 6) = 'INTEG_') then
-    Stream.WriteString(Format('ALTER TABLE %s ADD FOREIGN KEY (',
-      [TMetaTable(FOwner).Name]))
+  if (Copy(FName, 0, 6) = 'INTEG_') then
+    Stream.WriteString(Format('ALTER TABLE %s' + NewLine +
+      '  ADD FOREIGN KEY (', [TMetaTable(FOwner).Name]))
   else
-    Stream.WriteString(Format('ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (',
-      [TMetaTable(FOwner).Name, Name]));
+    Stream.WriteString(Format('ALTER TABLE %s' + NewLine +
+      '  ADD CONSTRAINT %s' + NewLine +
+      '  FOREIGN KEY (', [TMetaTable(FOwner).Name, Name]));
 
   for I := 0 to FieldsCount - 1 do
   begin
@@ -3379,7 +3640,7 @@ begin
     if I <> FieldsCount - 1 then
       Stream.WriteString(', ');
   end;
-  Stream.WriteString(Format(') REFERENCES %s (', [ForTable.Name]));
+  Stream.WriteString(Format(')' + NewLine + '  REFERENCES %s (', [ForTable.Name]));
   for I := 0 to ForFieldsCount - 1 do
   begin
     Stream.WriteString(ForFields[I].Name);
@@ -3389,23 +3650,23 @@ begin
   Stream.WriteString(')');
 
   case OnDelete of
-    urCascade:    Stream.WriteString(' ON DELETE CASCADE');
-    urSetNull:    Stream.WriteString(' ON DELETE SET NULL');
-    urNoAction:   Stream.WriteString(' ON DELETE NO ACTION');
-    urSetDefault: Stream.WriteString(' ON DELETE SET DEFAULT');
+    urCascade:    Stream.WriteString(NewLine + '  ON DELETE CASCADE');
+    urSetNull:    Stream.WriteString(NewLine + '  ON DELETE SET NULL');
+    urNoAction:   Stream.WriteString(NewLine + '  ON DELETE NO ACTION');
+    urSetDefault: Stream.WriteString(NewLine + '  ON DELETE SET DEFAULT');
   end;
 
   case OnUpdate of
-    urCascade:    Stream.WriteString(' ON UPDATE CASCADE');
-    urSetNull:    Stream.WriteString(' ON UPDATE SET NULL');
-    urNoAction:   Stream.WriteString(' ON UPDATE NO ACTION');
-    urSetDefault: Stream.WriteString(' ON UPDATE SET DEFAULT');
+    urCascade:    Stream.WriteString(NewLine + '  ON UPDATE CASCADE');
+    urSetNull:    Stream.WriteString(NewLine + '  ON UPDATE SET NULL');
+    urNoAction:   Stream.WriteString(NewLine + '  ON UPDATE NO ACTION');
+    urSetDefault: Stream.WriteString(NewLine + '  ON UPDATE SET DEFAULT');
   end;
 
   // fb15up
   if not ((FIndexName = '') or (not (ddlFull in options) and (Copy(FIndexName, 1, 4) = 'RDB$'))) then
   begin
-    Stream.WriteString(' USING');
+    Stream.WriteString(NewLine + '  USING');
     if FOrder = ioDescending then
       Stream.WriteString(' DESC');
     Stream.WriteString(' INDEX ' + FIndexName);
@@ -3450,10 +3711,10 @@ end;
 procedure TMetaCheck.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
   if (copy(FName, 0, 6) = 'INTEG_') then
-    Stream.WriteString(Format('ALTER TABLE %s ADD %s;',
-      [TMetaTable(FOwner).Name, FConstraint])) else
-    Stream.WriteString(Format('ALTER TABLE %s ADD CONSTRAINT %s %s;',
-      [TMetaTable(FOwner).Name, Name, FConstraint]));
+    Stream.WriteString(Format('ALTER TABLE %s' + NewLine +
+      '  ADD %s;', [TMetaTable(FOwner).Name, FConstraint])) else
+    Stream.WriteString(Format('ALTER TABLE %s' + NewLine +
+      '  ADD CONSTRAINT %s' + NewLine + '  %s;', [TMetaTable(FOwner).Name, Name, FConstraint]));
 end;
 
 procedure TMetaCheck.SaveToStream(Stream: TStream);
@@ -3731,6 +3992,11 @@ begin
   Result := MetaView;
 end;
 
+function TMetaView.GetAsDropDDL: string;
+begin
+  Result := 'DROP VIEW ' + FName + ';';
+end;
+
 { TMetaDomain }
 
 class function TMetaDomain.NodeClass: string;
@@ -4002,6 +4268,22 @@ begin
   stream := TStringStream.Create('');
   try
     SaveToAlterDDL(stream, []);
+    result := stream.DataString;
+  finally
+    stream.Free;
+  end;
+end;
+
+function TMetaProcedure.GetAsAlterToEmptyDDL: string;
+var stream: TStringStream;
+begin
+  stream := TStringStream.Create('');
+  try
+    InternalSaveToDDL(stream, 'ALTER', []);
+    if OutputFieldsCount > 0 then
+      Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  suspend;' + NewLine + 'end;')
+    else
+      Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  exit;' + NewLine + 'end;');
     result := stream.DataString;
   finally
     stream.Free;
