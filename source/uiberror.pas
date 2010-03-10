@@ -549,13 +549,13 @@ const
   isc_optimizer_between_err             = 335544813;
   isc_service_not_supported             = 335544814;
 
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
   isc_generator_name                    = 335544815;
   isc_udf_name                          = 335544816;
   isc_bad_limit_param                   = 335544817;
   isc_bad_skip_param                    = 335544818;
   isc_io_32bit_exceeded_err             = 335544819;
-{$ENDIF FB102ORYF867}
+{$ENDIF FB102_UP}
 
 {$IFDEF FB15_UP}
   isc_invalid_savepoint                 = 335544820;
@@ -791,10 +791,10 @@ const
   isc_dsql_warn_precision_ambiguous1    = 336003083;
   isc_dsql_warn_precision_ambiguous2    = 336003084;
 
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
   isc_dsql_ambiguous_field_name         = 336003085;
   isc_dsql_udf_return_pos_err           = 336003086;
-{$ENDIF FB102ORYF867}
+{$ENDIF FB102_UP}
 
 {$IFDEF FB15_UP}
   isc_dsql_invalid_label                = 336003087;
@@ -860,9 +860,9 @@ const
   isc_dyn_invalid_dtype_conversion      = 336068817;
   isc_dyn_dtype_conv_invalid            = 336068818;
 
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
   isc_dyn_zero_len_id                   = 336068820;
-{$ENDIF FB102ORYF867}
+{$ENDIF FB102_UP}
 
 {$IFDEF FB21_UP}
   isc_max_coll_per_charset             = 336068829;
@@ -972,10 +972,10 @@ const
   isc_gbak_not_ownr                     = 336331026;
   isc_gbak_mode_req                     = 336331031;
 
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
   isc_gbak_just_data                    = 336331033;
   isc_gbak_data_only                    = 336331034;
-{$ENDIF FB102ORYF867}
+{$ENDIF FB102_UP}
 
 {$IFDEF FB25_UP}
   isc_gbak_invalid_metadata            = 336331093;
@@ -1164,10 +1164,6 @@ const
 {$IFDEF FB25}
   isc_err_max                           = 964;
 {$ENDIF}
-
-{$IFDEF YF867}
-  isc_err_max                           = 699;
-{$ENDIF YF867}
 
 {$IFDEF IB601}
   isc_err_max                           = 689;

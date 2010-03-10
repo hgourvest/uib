@@ -17,7 +17,7 @@ unit uibdescriptor;
 
 interface
 
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
 uses classes, uibase, uiblib;
 
 function DescGetIsNull(Param: PParamDsc): boolean;
@@ -64,7 +64,7 @@ procedure DescBlobWriteStream(Param: PBlobCallBack; Stream: TStream);
 {$ENDIF}
 
 implementation
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
 uses dateutils, uibconst;
 
 type

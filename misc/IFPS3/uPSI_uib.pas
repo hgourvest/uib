@@ -84,7 +84,7 @@ uses
 type
   TUIBStatementOverload = class(TUIBStatement)
   public
-    procedure ReadBlobStream(const Index: Word; Stream: TStream); 
+    procedure ReadBlobStream(const Index: Word; Stream: TStream);
     procedure ReadBlobString(const Index: Word; var str: string);
     procedure ReadBlobVariant(const Index: Word; var Value: Variant);
     procedure ReadBlobNameStream(const name: string; Stream: TStream);
@@ -449,7 +449,7 @@ begin
     RegisterProperty('InfoExpungeCount', 'Integer', iptr);
     RegisterProperty('InfoLimbo', 'integer', iptr);
     RegisterProperty('InfoUserNames', 'Integer', iptr);
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
     RegisterProperty('InfoOldestTransaction', 'Integer', iptr);
     RegisterProperty('InfoOldestActive', 'Integer', iptr);
     RegisterProperty('InfoOldestSnapshot', 'Integer', iptr);
@@ -1438,7 +1438,7 @@ procedure TUIBDataBaseInfoDbReads_R(Self: TUIBDataBase; var T: Integer);
 begin T := Self.InfoDbReads; end;
 {$ENDIF}
 
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
 (*----------------------------------------------------------------------------*)
 procedure TUIBDataBaseInfoActiveTransactions_R(Self: TUIBDataBase; var T: Integer);
 begin T := Self.InfoActiveTransactions; end;
@@ -2029,7 +2029,7 @@ begin
     RegisterPropertyHelper(@TUIBDataBaseInfoExpungeCount_R,nil,'InfoExpungeCount');
     RegisterPropertyHelper(@TUIBDataBaseInfoLimbo_R,nil,'InfoLimbo');
     RegisterPropertyHelper(@TUIBDataBaseInfoUserNames_R,nil,'InfoUserNames');
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
     RegisterPropertyHelper(@TUIBDataBaseInfoOldestTransaction_R,nil,'InfoOldestTransaction');
     RegisterPropertyHelper(@TUIBDataBaseInfoOldestActive_R,nil,'InfoOldestActive');
     RegisterPropertyHelper(@TUIBDataBaseInfoOldestSnapshot_R,nil,'InfoOldestSnapshot');
@@ -2136,8 +2136,8 @@ begin
   RIRegister_TUIBConfig(CL);
 end;
 
- 
- 
+
+
 { TPSImport_uib }
 (*----------------------------------------------------------------------------*)
 procedure TPSImport_uib.CompileImport1(CompExec: TPSScript);
@@ -2150,8 +2150,8 @@ begin
   RIRegister_uib(ri);
 end;
 (*----------------------------------------------------------------------------*)
- 
- 
+
+
 { TUIBStatementOverload }
 
 procedure TUIBStatementOverload.ParamsSetBlobNameStream(

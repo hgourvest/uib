@@ -1181,13 +1181,9 @@ const
     (Name: 'set_db_sql_dialect';     ParamType: prCard), // ok Change sqldialect (1,2,3))
     (Name: 'gfix_attach';            ParamType: prNone), // ok FB15: don't work
     (Name: 'gstat_attach';           ParamType: prNone)  // ok FB15: don't work
-{$IFDEF IB65ORYF867}
+{$IFDEF IB65_UP}
    ,(Name: 'gbak_ods_version';       ParamType: prCard) // ??
    ,(Name: 'gbak_ods_minor_version'; ParamType: prCard) // ??
-{$ENDIF}
-
-{$IFDEF YF867_UP}
-   ,(Name: 'numeric_scale_reduction';ParamType: prNone)
 {$ENDIF}
 
 {$IFDEF IB7_UP}
@@ -2120,7 +2116,7 @@ const
                   if (not Sqlda.FCachedFetch) and        // not stored
                     (BlobData.Size > 0)  then // not null (null if the first one)
                       FreeMem(BlobData.Buffer);
-                      
+
                   if Sqlda.IsNull[Sqlda.FBlobsIndex[i]] then
                   begin
                     BlobData.Size := 0;
@@ -3262,7 +3258,7 @@ type
             end;
         end;
         if (sqlind <> nil) then
-          sqlind^ := 0;        
+          sqlind^ := 0;
       end;
     end;
 
@@ -4216,19 +4212,19 @@ end;
           {$ELSE}
             if sqllen = SizeOf(TGUID) then
               Move(sqldata^, Result, sqllen)
-          {$ENDIF}        
+          {$ENDIF}
             else
               raise EUIBConvertError.Create(EUIB_CASTERROR);
           end;
           SQL_VARYING :
-          begin            
+          begin
           {$IFDEF GUID_AS_TEXT}
             if PVary(sqldata).vary_length  = 38 then
               Result := StringToGUID(DecodeString(SQL_VARYING, Index))
           {$ELSE}
             if PVary(sqldata).vary_length  = SizeOf(TGUID) then
               Move(PVary(sqldata).vary_string, Result, PVary(sqldata).vary_length)
-          {$ENDIF}            
+          {$ENDIF}
             else
               raise EUIBConvertError.Create(EUIB_CASTERROR);
           end;
@@ -4846,7 +4842,7 @@ end;
       varInteger:               SetAsInteger(Index, Value);
 {$IFNDEF COMPILER5}
       varLongWord, varInt64:             SetAsInt64(Index, Value);
-{$ENDIF}      
+{$ENDIF}
       varSingle:                         SetAsSingle(Index, Value);
       varDouble:                         SetAsDouble(Index, Value);
       varCurrency:                       SetAsCurrency(Index, Value);

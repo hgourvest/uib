@@ -365,7 +365,7 @@ type
     { Number of users currently attached to the database.
       Use this property with the "OnInfoUserNames" event to retrieve the user names. }
     property InfoUserNames: Integer index isc_info_user_names read GetInfoStringCount;
-  {$IFDEF FB102ORYF867}
+  {$IFDEF FB102_UP}
     { Cached "oldest interesting" transaction. }
     property InfoOldestTransaction: Integer index isc_info_oldest_transaction read GetInfoIntValue;
     { Cached "oldest active" transaction. }
@@ -1138,14 +1138,14 @@ type
 
   TUIBServerInfo = class(TUIBService)
   private
-    FOnInfoAttachments: TOnInfoIntegerCount;  
+    FOnInfoAttachments: TOnInfoIntegerCount;
     FOnInfoDatabases: TOnInfoIntegerCount;
     FOnInfoDbName: TOnInfoStringCount;
   public
     procedure GetServerInfo;
   published
     property OnInfoAttachments: TOnInfoIntegerCount read FOnInfoAttachments write FOnInfoAttachments;
-    property OnInfoDatabases: TOnInfoIntegerCount read FOnInfoDatabases write FOnInfoDatabases;  
+    property OnInfoDatabases: TOnInfoIntegerCount read FOnInfoDatabases write FOnInfoDatabases;
     property OnInfoDbName: TOnInfoStringCount read FOnInfoDbName write FOnInfoDbName;
   end;
 
@@ -1730,7 +1730,7 @@ begin
   while byte(p^) = item do
   begin
     inc(result, 1);
-  {$IFDEF FB102ORYF867}
+  {$IFDEF FB102_UP}
     case item of
       isc_info_active_transactions:
         if assigned(FOnInfoActiveTransactions) then
@@ -2049,7 +2049,7 @@ begin
   // execute the query again to save
   // the prepare time !
   if (FCurrentState = qsExecute) then
-    CloseCursor; 
+    CloseCursor;
 
   if FetchFirst then
     InternalNext else
@@ -2377,7 +2377,7 @@ begin
     result := FDataBase else
      if FTransaction <> nil then
        result := FTransaction.FDataBase else
-       raise Exception.Create(EUIB_DATABASENOTDEF);  
+       raise Exception.Create(EUIB_DATABASENOTDEF);
 end;
 
 {$IFNDEF UIB_NO_COMPONENT}

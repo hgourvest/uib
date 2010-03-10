@@ -218,9 +218,9 @@ const
   DSQL_close = 1;
   DSQL_drop = 2;
 
-{$IFDEF IB65ORYF867}
+{$IFDEF IB65_UP}
   DSQL_cancel = 4;
-{$ENDIF IB65ORYF867}
+{$ENDIF IB65_UP}
 
 {$IFDEF FB25_UP}
   DSQL_unprepare = 4;
@@ -412,12 +412,12 @@ type
 
 (* Blob passing structure *)
 
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
 const
   (* This enum applies to parameter "mode" in blob_lseek *)
   blb_seek_relative = 1;
   blb_seek_from_tail = 2;
-{$ENDIF FB102ORYF867}
+{$ENDIF FB102_UP}
 
 {$IFDEF FB20_UP}
   (* This enum applies to the value returned by blob_get_segment *)
@@ -436,7 +436,7 @@ type
 
   TBlobLSeekFn = function(hnd: PPointer; mode: ISCUShort; offset: ISCLong): ISCLong; cdecl;
 
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
 
   PBlobCallBack = ^TBlobCallBack;
   BLOBCALLBACK = record
@@ -524,7 +524,7 @@ const
 {$ELSE}
   DTYPE_TYPE_MAX = 20;
 {$ENDIF}
-{$ENDIF FB102ORYF867}
+{$ENDIF FB102_UP}
 
 (***************************
  * Dynamic SQL definitions *
@@ -926,7 +926,7 @@ const
   blr_aggregate = 79;
   blr_join_type = 80;
 
-{$IFDEF IB65ORYF867}
+{$IFDEF IB65_UP}
   blr_rows = 81;
 
   (* sub parameters for blr_rows *)
@@ -1040,7 +1040,7 @@ const
 {$IFNDEF FB20_UP}
   blr_seek_no_warn = 156;
   blr_find_dbkey_version = 157; // find dbkey with record version
-{$ENDIF}  
+{$ENDIF}
   blr_ansi_all = 158; // required for NULL handling
 
   blr_extract = 159;
@@ -1085,11 +1085,11 @@ const
   blr_modify2 = 172;
 {$ENDIF}
 
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
   (* FB1 specific BLR *)
   blr_current_role = 174;
   blr_skip = 175;
-{$ENDIF FB102ORYF867}
+{$ENDIF FB102_UP}
 
 {$IFDEF IB7_UP}
   (* These verbs were added in 7.0 for BOOLEAN dtype support *)
@@ -1291,19 +1291,10 @@ const
   isc_dpb_ext_call_depth = 78;
 {$ENDIF}
 
-{$IFDEF IB65ORYF867}
+{$IFDEF IB65_UP}
   isc_dpb_gbak_ods_version = 68;
   isc_dpb_gbak_ods_minor_version = 69;
-{$ENDIF IB65ORYF867}
-
-{$IFDEF YF867_UP}
-  isc_dpb_numeric_scale_reduction = 70;
-
-  isc_dpb_sec_flags = 91;
-  isc_dpb_sec_type = 92;
-  isc_dpb_sec_principal = 93;
-  isc_dpb_sec_srv_name = 94;
-{$ENDIF YF867_UP}
+{$ENDIF IB65_UP}
 
 {$IFDEF IB7_UP}
   isc_dpb_set_group_commit = 70;
@@ -1346,11 +1337,7 @@ const
 {$IFDEF FB103}
   isc_dpb_Max_Value = 68;
 {$ELSE}
-{$IFDEF YF867}
-  isc_dpb_Max_Value = 70;
-{$ELSE}
   isc_dpb_Max_Value = 67;
-{$ENDIF YF867}
 {$ENDIF FB103}
 {$ENDIF FB15}
 {$ENDIF FB20}
@@ -1436,21 +1423,6 @@ const
   isc_dpb_shut_single       = $30;
   isc_dpb_shut_full         = $40;
 {$ENDIF}
-
-{$IFDEF YF867_UP}
-  (************************************
-   * isc_dpb_sec_flags specific flags *
-   ************************************)
-
-  isc_dpb_sec_delegation = 1;
-  isc_dpb_sec_mutual_auth = 2;
-  isc_dpb_sec_replay = 4;
-  isc_dpb_sec_sequence = 8;
-  isc_dpb_sec_confidentiality = 16;
-  isc_dpb_sec_integrity = 32;
-  isc_dpb_sec_anonymous = 64;
-  isc_dpb_sec_transport = $08000000; // use transport security if supported by underlying protocol
-{$ENDIF YF867_UP}
 
   (**************************************
    * Bit assignments in RDB$SYSTEM_FLAG *
@@ -1661,7 +1633,7 @@ const
   isc_info_server_tcp_port         = 73;
 {$ENDIF}
 
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
   frb_info_att_charset = 101;
   isc_info_db_class = 102;
   isc_info_firebird_version = 103;
@@ -1671,7 +1643,7 @@ const
   isc_info_next_transaction = 107;
   isc_info_db_provider = 108;
   isc_info_active_transactions = 109;
-{$ENDIF FB102ORYF867}
+{$ENDIF FB102_UP}
 {$IFDEF FB20_UP}
   isc_info_active_tran_count = 110;
   isc_info_creation_date = 111;
@@ -1727,7 +1699,7 @@ const
   isc_info_db_impl_isc_winnt = 48;
   isc_info_db_impl_isc_epson = 49;
 {$ENDIF IB65_UP}
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
   isc_info_db_impl_m88K = 48;
   isc_info_db_impl_unixware = 49;
   isc_info_db_impl_isc_winnt_x86 = 50;
@@ -1746,7 +1718,7 @@ const
   isc_info_db_impl_freebsd = 61;
   isc_info_db_impl_netbsd = 62;
   isc_info_db_impl_darwin_ppc = 63;
-{$ENDIF FB102ORYF867}
+{$ENDIF FB102_UP}
 {$IFDEF FB102_UP}
   isc_info_db_impl_sinixz = 64;
 {$ENDIF FB102_UP}
@@ -1800,14 +1772,14 @@ type
     isc_info_db_class_sam_srvr,
     isc_info_db_class_gateway,
     isc_info_db_class_cache,
-  {$IFDEF FB102ORYF867}
+  {$IFDEF FB102_UP}
     isc_info_db_class_classic_access,
     isc_info_db_class_server_access,
-  {$ENDIF FB102ORYF867}
+  {$ENDIF FB102_UP}
     isc_info_db_class_last_value (* Leave this LAST! *)
     );
 
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
   info_db_provider = (
     isc_info_db_code_INVALID_0,
     isc_info_db_code_rdb_eln,
@@ -1816,7 +1788,7 @@ type
     isc_info_db_code_firebird,
     isc_info_db_code_last_value (* Leave this LAST! *)
     );
-{$ENDIF FB102ORYF867}
+{$ENDIF FB102_UP}
 
 (*****************************
  * Request information items *
@@ -2183,10 +2155,10 @@ const
   isc_spb_sts_record_versions = $20;
   isc_spb_sts_table = $40;
 {$ELSE}
-{$IFDEF IB65ORYF867}
+{$IFDEF IB65_UP}
   isc_spb_sts_record_versions = $12;
   isc_spb_sts_table = $14;
-{$ENDIF IB65ORYF867}
+{$ENDIF IB65_UP}
 {$ENDIF IB7}
 
 {$IFDEF FB15_UP}
@@ -2327,22 +2299,6 @@ const
   ISCCFG_USE_ROUTER_KEY	= 29;
   ISCCFG_SORTMEM_BUFFER_SIZE_KEY	= 30;
 {$ENDIF}
-
-{$IFDEF YF867_UP}
-  ISCCFG_CPU_AFFINITY_KEY = 21;
-  ISCCFG_SWEEP_QUANTUM_KEY = 22;
-  ISCCFG_USER_QUANTUM_KEY = 23;
-  ISCCFG_REJECT_AMBIGUITY_KEY = 24;
-  ISCCFG_SQZ_BLOCK_KEY = 25;
-  ISCCFG_LOCK_TIMEOUT_KEY = 26;
-  ISCCFG_YAFFIL_ODS_KEY = 27;
-  ISCCFG_CONSTRAINT_INDEX_NAME_KEY = 28;
-  ISCCFG_NO_NAGLE_KEY = 29;
-  ISCCFG_WIN32_DISABLEFILECACHE_KEY = 30;
-  ISCCFG_LOCKMEM_RES_KEY = 31;
-  ISCCFG_FORCERESHEDULE_KEY = 32;
-  ISCCFG_LEGACY_DIALECT1_KEY = 33;
-{$ENDIF YF867_UP}
 
   (**********************************************
    * Dynamic Data Definition Language operators *
@@ -2632,7 +2588,7 @@ const
   isc_dyn_grant_view = 188;
   isc_dyn_grant_options = 132;
   isc_dyn_grant_user_group = 205;
-{$IFDEF FB102ORYF867}
+{$IFDEF FB102_UP}
   isc_dyn_grant_role = 218;
   isc_dyn_grant_user_explicit = 219;
 {$ENDIF}
@@ -2768,9 +2724,9 @@ const
   (**********************************************
    * Generators again                           *
    **********************************************)
-{$IFDEF FB15ORYF867}
+{$IFDEF FB15_UP}
   gds_dyn_delete_generator = 217;
-{$ENDIF FB15ORYF867}
+{$ENDIF FB15_UP}
 
 {$IFDEF IB75_UP}
 (***********************)
