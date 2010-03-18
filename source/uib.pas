@@ -3007,10 +3007,15 @@ end;
 {$ENDIF}
 
 procedure TUIBTransaction.SetDataBase(const ADatabase: TUIBDataBase);
+var
+  i: Integer;
 begin
   RemoveDatabase(FDataBase);
   AddDataBase(ADatabase);
   FDataBase := ADatabase;
+  if FDataBase <> nil then
+    for i := 0 to FSQLComponent.Count - 1 do
+      TUIBStatement(FSQLComponent[i]).FParameter.CharacterSet := FDataBase.CharacterSet;
 end;
 
 procedure TUIBTransaction.Close(const Mode: TEndTransMode; Auto: boolean);
