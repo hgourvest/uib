@@ -43,7 +43,9 @@ uses
 type
 
 {$IFNDEF UNICODE}
+{$IFNDEF FPC}
   UnicodeString = WideString;
+{$ENDIF}
   RawByteString = AnsiString;
 {$ENDIF}
 
