@@ -1291,10 +1291,9 @@ begin
   FLibrary.Load(FLiBraryName);
 {$IFDEF UNICODE}
   FLibrary.DSQLExecuteImmediate(FDbHandle, TrHandle,
-    MBUEncode(Format(CreateDb, [DatabaseName, UserName, PassWord,
+    AnsiString(Format(CreateDb, [DatabaseName, UserName, PassWord,
                      CharacterSetStr[CharacterSet],
-                     PageSize, CharacterSetStr[DefaultCharacterSet]]),
-              CharacterSetCP[CharacterSet]),
+                     PageSize, CharacterSetStr[DefaultCharacterSet]])),
     SQLDialect);
 {$ELSE}
   FLibrary.DSQLExecuteImmediate(FDbHandle, TrHandle,
