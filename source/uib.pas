@@ -637,6 +637,7 @@ type
   {$IFNDEF UIB_NO_COMPONENT}
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   {$ENDIF}
+    procedure NeedTransaction; virtual;
 
     procedure BeginTransaction; virtual;
     procedure BeginStatement; virtual;
@@ -2030,9 +2031,7 @@ end;
 
 procedure TUIBStatement.BeginTransaction;
 begin
-  if FTransaction <> nil then
-    FTransaction.BeginTransaction else
-    raise Exception.Create(EUIB_TRANSACTIONNOTDEF);
+  NeedTransaction;
   FCurrentState := qsTransaction;
 end;
 
@@ -2053,6 +2052,13 @@ begin
   if FetchFirst then
     InternalNext else
     BeginExecute;
+end;
+
+procedure TUIBStatement.NeedTransaction;
+begin
+  if FTransaction <> nil then
+    FTransaction.BeginTransaction else
+    raise Exception.Create(EUIB_TRANSACTIONNOTDEF);
 end;
 
 procedure TUIBStatement.Next;
@@ -2476,7 +2482,7 @@ end;
 procedure TUIBStatement.ParamsSetBlob(const Index: Word; Stream: TStream);
 var BlobHandle: IscBlobHandle;
 begin
-  BeginTransaction;
+  NeedTransaction;
   BlobHandle := nil;
   with FindDataBase.FLibrary do
   begin
@@ -2503,7 +2509,7 @@ procedure TUIBStatement.ParamsSetBlobB(const Index: Word; const str: RawByteStri
 var
   BlobHandle: IscBlobHandle;
 begin
-  BeginTransaction;
+  NeedTransaction;
   BlobHandle := nil;
   with FindDataBase.FLibrary do
   begin
@@ -2521,7 +2527,7 @@ procedure TUIBStatement.ParamsSetBlob(const Index: Word; Buffer: Pointer;
   Size: Cardinal);
 var BlobHandle: IscBlobHandle;
 begin
-  BeginTransaction;
+  NeedTransaction;
   BlobHandle := nil;
   with FindDataBase.FLibrary do
   begin
@@ -2538,7 +2544,7 @@ end;
 procedure TUIBStatement.ParamsSetBlob(const Name: string; Stream: TStream);
 var BlobHandle: IscBlobHandle;
 begin
-  BeginTransaction;
+  NeedTransaction;
   BlobHandle := nil;
   with FindDataBase.FLibrary do
   begin
@@ -2565,7 +2571,7 @@ procedure TUIBStatement.ParamsSetBlobB(const Name: string; const str: RawByteStr
 var
   BlobHandle: IscBlobHandle;
 begin
-  BeginTransaction;
+  NeedTransaction;
   BlobHandle := nil;
   with FindDataBase.FLibrary do
   begin
@@ -2596,7 +2602,7 @@ end;
 procedure TUIBStatement.ParamsSetBlob(const Name: string; Buffer: Pointer; Size: Cardinal);
 var BlobHandle: IscBlobHandle;
 begin
-  BeginTransaction;
+  NeedTransaction;
   BlobHandle := nil;
   with FindDataBase.FLibrary do
   begin
