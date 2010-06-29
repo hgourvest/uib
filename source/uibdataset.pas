@@ -89,6 +89,7 @@ type
     function GetBufferChunks: Cardinal;
     procedure SetBufferChunks(const Value: Cardinal);
     function GetRowsAffected: Cardinal;
+    function InternalGetFieldData(FieldNo: Integer; Buffer: Pointer; Native: Boolean): Boolean;
   protected
   {$IFNDEF FPC}
     function GetFieldClass(FieldType: TFieldType): TFieldClass; override;
@@ -152,7 +153,7 @@ type
     function GetFieldData(FieldNo: Integer; Buffer: Pointer): Boolean; overload;{$IFNDEF FPC} override; {$ENDIF}
   {$IFNDEF FPC}
     function GetFieldData(Field: TField; Buffer: Pointer; NativeFormat: Boolean): Boolean; overload; override;
-  {$ENDIF}  
+  {$ENDIF}
     function CreateBlobStream(Field: TField; Mode: TBlobStreamMode): TStream; override;
     procedure Execute;
     procedure ExecSQL;
@@ -246,6 +247,210 @@ function TUIBCustomDataSet.IsCursorOpen: Boolean;
 begin
   Result := FIsOpen;
 end;
+
+function TUIBCustomDataSet.InternalGetFieldData(FieldNo: Integer;
+  Buffer: Pointer; Native: Boolean): Boolean;
+const
+  UTF8BOM: array[0..2] of Byte = ($EF, $BB, $BF);
+var
+  aFieldType: TUIBFieldType;
+{$IFDEF UNICODE}
+  uniStr: UnicodeString;
+{$ENDIF}
+begin
+  dec(FieldNo);
+  Result := False;
+
+  if (FStatement.StatementType = stSelect) then
+  begin
+    if (FCurrentRecord < 0) then
+      Exit;
+    FStatement.Fields.GetRecord(PInteger(ActiveBuffer)^);
+  end;
+
+  if FStatement.Fields.IsNull[FieldNo] then
+    Exit;
+
+  if Buffer = nil then
+  begin
+    Result := True;
+    Exit;
+  end;
+  aFieldType := FStatement.Fields.FieldType[FieldNo];
+  with FStatement.Fields, Data.sqlvar[FieldNo] do
+    case aFieldType of
+      uftNumeric:
+        begin
+          case FStatement.Fields.SQLType[FieldNo] of
+            SQL_SHORT:
+              begin
+              {$IFDEF COMPILER6_UP}
+                if (sqlScale >= -4) and not Native then
+                  Currency(Buffer^) := PSmallint(sqldata)^ / scaledivisor[sqlscale] else
+                  TBCD(Buffer^) := strToBcd(FloatToStr(PSmallint(sqldata)^ / scaledivisor[sqlscale]));
+              {$ELSE}
+                {$IFDEF COMPILER5_UP}
+                  if (sqlScale >= -4) then
+                    Currency(Buffer^) := PSmallint(sqldata)^ / scaledivisor[sqlscale] else
+                    CurrToBcd(PSmallint(sqldata)^/scaledivisor[sqlscale], TBCD(Buffer^));
+                {$ELSE}
+                  {$IFDEF FPC}
+                    if (sqlscale = -4) then
+                      PInt64(Buffer)^ := PSmallint(sqldata)^ else
+                      if sqlscale > -4 then
+                        PInt64(Buffer)^ := PSmallint(sqldata)^ * CurrencyDivisor[sqlscale] else
+                        PDouble(Buffer)^ := PSmallint(sqldata)^ / scaledivisor[sqlscale];
+                  {$ELSE}
+                     unexpected
+                  {$ENDIF}
+                {$ENDIF}
+              {$ENDIF}
+              end;
+            SQL_LONG:
+              begin
+              {$IFDEF COMPILER6_UP}
+                if (sqlScale >= -4) and not Native then
+                  Currency(Buffer^) := PInteger(sqldata)^ / scaledivisor[sqlscale] else
+                  TBCD(Buffer^) := strToBcd(FloatToStr(PInteger(sqldata)^ / scaledivisor[sqlscale]));
+              {$ELSE}
+                {$IFDEF COMPILER5_UP}
+                  if (sqlScale >= -4) then
+                    Currency(Buffer^) := PInteger(sqldata)^ / scaledivisor[sqlscale] else
+                    CurrToBcd(PInteger(sqldata)^/scaledivisor[sqlscale], TBCD(Buffer^));
+                {$ELSE}
+                  {$IFDEF FPC}
+                    if (sqlscale = -4) then
+                      PInt64(Buffer)^ := PInteger(sqldata)^ else
+                      if sqlscale > -4 then
+                        PInt64(Buffer)^ := PInteger(sqldata)^ * CurrencyDivisor[sqlscale] else
+                        PDouble(Buffer)^ := PInteger(sqldata)^ / scaledivisor[sqlscale];
+                  {$ELSE}
+                    unexpected
+                  {$ENDIF}
+                {$ENDIF}
+              {$ENDIF}
+              end;
+            SQL_INT64,
+            SQL_QUAD:
+              begin
+              {$IFDEF COMPILER6_UP}
+                if (sqlscale = -4) and not Native then
+                  PInt64(Buffer)^ := PInt64(sqldata)^ else
+                  if (sqlscale > -4) and not Native then
+                    PInt64(Buffer)^ := PInt64(sqldata)^ * CurrencyDivisor[sqlscale] else
+                    TBCD(Buffer^) := strToBcd(FloatToStr(PInt64(sqldata)^ / scaledivisor[sqlscale]));
+              {$ELSE}
+                {$IFDEF COMPILER5_UP}
+                if (sqlscale = -4) then
+                  PInt64(Buffer)^ := PInt64(sqldata)^ else
+                  if (sqlscale > -4) then
+                    PInt64(Buffer)^ := PInt64(sqldata)^ * CurrencyDivisor[sqlscale] else
+                    CurrToBcd(PInt64(sqldata)^/scaledivisor[sqlscale], TBCD(Buffer^));
+                {$ELSE}
+                  {$IFDEF FPC}
+                    if (sqlscale = -4) then
+                      PInt64(Buffer)^ := PInt64(sqldata)^ else
+                      if sqlscale > -4 then
+                        PInt64(Buffer)^ := PInt64(sqldata)^ * CurrencyDivisor[sqlscale] else
+                        PDouble(Buffer)^ := PInt64(sqldata)^ / scaledivisor[sqlscale];
+                  {$ELSE}
+                    unexpected
+                  {$ENDIF}
+                {$ENDIF}
+              {$ENDIF}
+              end;
+            SQL_D_FLOAT,
+            SQL_DOUBLE:
+              PDouble(Buffer)^ := PDouble(sqldata)^;
+          else
+            raise Exception.Create(EUIB_UNEXPECTEDCASTERROR);
+          end;
+        end;
+      uftChar,
+      uftCstring:
+        begin
+        {$IFDEF UNICODE}
+          MBUDecode(sqldata, SqlLen, CharacterSetCP[CharacterSet], PWideChar(buffer));
+          PWideChar(buffer)[(SqlLen div BytesPerCharacter[CharacterSet])] := #0;
+        {$ELSE}
+          Move(sqldata^, Buffer^, SqlLen);
+          PAnsiChar(Buffer)[SqlLen] := #0;
+        {$ENDIF}
+        end;
+      uftVarchar:
+        begin
+        {$IFDEF UNICODE}
+          MBUDecode(@PVary(sqldata).vary_string, PVary(sqldata).vary_length, CharacterSetCP[CharacterSet], PWideChar(buffer));
+        {$ELSE}
+          Move(PVary(sqldata).vary_string, Buffer^, PVary(sqldata).vary_length);
+          PAnsiChar(Buffer)[PVary(sqldata).vary_length] := #0;
+        {$ENDIF}
+        end;
+      uftSmallint: PSmallint(Buffer)^ := PSmallint(sqldata)^;
+      uftInteger : PInteger(Buffer)^ := PInteger(sqldata)^;
+      uftFloat:
+          PDouble(Buffer)^ := PSingle(sqldata)^;
+      uftDoublePrecision:
+          PDouble(Buffer)^ := PDouble(sqldata)^;
+      uftTimestamp:
+        begin
+          {$IFDEF FPC}
+            DecodeTimeStamp(PIscTimeStamp(sqldata), PDouble(Buffer)^);
+          {$ELSE}
+            DecodeTimeStamp(PIscTimeStamp(sqldata),  TTimeStamp(Buffer^));
+            Double(Buffer^) := TimeStampToMSecs(TTimeStamp(Buffer^));
+          {$ENDIF}
+        end;
+      uftBlob, uftBlobId:
+        begin
+          if Buffer <> nil then
+          begin
+          {$IFDEF UNICODE}
+            if SqlSubType = 1 then
+            begin
+              FStatement.ReadBlob(FieldNo, uniStr);
+              TStream(Buffer).Write(PWideChar(uniStr)^, Length(uniStr) * sizeof(WideChar));
+              TStream(Buffer).Seek(0, soFromBeginning);
+            end else
+          {$ENDIF}
+            begin
+              FStatement.ReadBlob(FieldNo, TStream(Buffer));
+              TStream(Buffer).Seek(0, soFromBeginning);
+            end;
+          end;
+        end;
+      uftDate:
+        {$IFDEF FPC}
+          PDouble(Buffer)^ := PInteger(sqldata)^ - DateOffset;
+        {$ELSE}
+          PInteger(Buffer)^ := PInteger(sqldata)^ - DateOffset + 693594;
+        {$ENDIF}
+      uftTime:
+        {$IFDEF FPC}
+          PDouble(Buffer)^ := PCardinal(sqldata)^ / TimeCoeff;
+        {$ELSE}
+          PInteger(Buffer)^ := PCardinal(sqldata)^ div 10;
+        {$ENDIF}
+      uftInt64:
+        {$IFDEF FPC}
+          PInteger(Buffer)^ := PInt64(sqldata)^;
+        {$ELSE}
+          PInt64(Buffer)^ := PInt64(sqldata)^;
+        {$ENDIF}
+    {$IFDEF IB7_UP}
+      uftBoolean:
+        {$IFDEF FPC}
+          Boolean(Buffer^) := PSmallInt(sqldata)^ = ISC_TRUE;
+        {$ELSE}
+          WordBool(Buffer^) := PSmallInt(sqldata)^ = ISC_TRUE;
+        {$ENDIF}
+    {$ENDIF}
+    else
+      raise EUIBError.Create(EUIB_UNEXPECTEDERROR);
+    end;
+  Result := True;
+end;
+
 
 procedure TUIBCustomDataSet.InternalGotoBookmark (Bookmark: Pointer);
 var
@@ -648,205 +853,8 @@ end;
 
 function TUIBCustomDataSet.GetFieldData(FieldNo: Integer;
   Buffer: Pointer): Boolean;
-const
-  UTF8BOM: array[0..2] of Byte = ($EF, $BB, $BF);
-var
-  aFieldType: TUIBFieldType;
-{$IFDEF UNICODE}
-  uniStr: UnicodeString;
-{$ENDIF}
 begin
-  dec(FieldNo);
-  Result := False;
-
-  if (FStatement.StatementType = stSelect) then
-  begin
-    if (FCurrentRecord < 0) then
-      Exit;
-    FStatement.Fields.GetRecord(PInteger(ActiveBuffer)^);
-  end;
-
-  if FStatement.Fields.IsNull[FieldNo] then
-    Exit;
-
-  if Buffer = nil then
-  begin
-    Result := True;
-    Exit;
-  end;
-  aFieldType := FStatement.Fields.FieldType[FieldNo];
-  with FStatement.Fields, Data.sqlvar[FieldNo] do
-    case aFieldType of
-      uftNumeric:
-        begin
-          case FStatement.Fields.SQLType[FieldNo] of
-            SQL_SHORT:
-              begin
-              {$IFDEF COMPILER6_UP}
-                if (sqlScale >= -4) then
-                  Currency(Buffer^) := PSmallint(sqldata)^ / scaledivisor[sqlscale] else
-                  TBCD(Buffer^) := strToBcd(FloatToStr(PSmallint(sqldata)^ / scaledivisor[sqlscale]));
-              {$ELSE}
-                {$IFDEF COMPILER5_UP}
-                  if (sqlScale >= -4) then
-                    Currency(Buffer^) := PSmallint(sqldata)^ / scaledivisor[sqlscale] else
-                    CurrToBcd(PSmallint(sqldata)^/scaledivisor[sqlscale], TBCD(Buffer^));
-                {$ELSE}
-                  {$IFDEF FPC}
-                    if (sqlscale = -4) then
-                      PInt64(Buffer)^ := PSmallint(sqldata)^ else
-                      if sqlscale > -4 then
-                        PInt64(Buffer)^ := PSmallint(sqldata)^ * CurrencyDivisor[sqlscale] else
-                        PDouble(Buffer)^ := PSmallint(sqldata)^ / scaledivisor[sqlscale];
-                  {$ELSE}
-                     unexpected
-                  {$ENDIF}
-                {$ENDIF}
-              {$ENDIF}
-              end;
-            SQL_LONG:
-              begin
-              {$IFDEF COMPILER6_UP}
-                if (sqlScale >= -4) then
-                  Currency(Buffer^) := PInteger(sqldata)^ / scaledivisor[sqlscale] else
-                  TBCD(Buffer^) := strToBcd(FloatToStr(PInteger(sqldata)^ / scaledivisor[sqlscale]));
-              {$ELSE}
-                {$IFDEF COMPILER5_UP}
-                  if (sqlScale >= -4) then
-                    Currency(Buffer^) := PInteger(sqldata)^ / scaledivisor[sqlscale] else
-                    CurrToBcd(PInteger(sqldata)^/scaledivisor[sqlscale], TBCD(Buffer^));
-                {$ELSE}
-                  {$IFDEF FPC}
-                    if (sqlscale = -4) then
-                      PInt64(Buffer)^ := PInteger(sqldata)^ else
-                      if sqlscale > -4 then
-                        PInt64(Buffer)^ := PInteger(sqldata)^ * CurrencyDivisor[sqlscale] else
-                        PDouble(Buffer)^ := PInteger(sqldata)^ / scaledivisor[sqlscale];
-                  {$ELSE}
-                    unexpected
-                  {$ENDIF}
-                {$ENDIF}
-              {$ENDIF}
-              end;
-            SQL_INT64,
-            SQL_QUAD:
-              begin
-              {$IFDEF COMPILER6_UP}
-                if (sqlscale = -4) then
-                  PInt64(Buffer)^ := PInt64(sqldata)^ else
-                  if sqlscale > -4 then
-                    PInt64(Buffer)^ := PInt64(sqldata)^ * CurrencyDivisor[sqlscale] else
-                    TBCD(Buffer^) := strToBcd(FloatToStr(PInt64(sqldata)^ / scaledivisor[sqlscale]));
-              {$ELSE}
-                {$IFDEF COMPILER5_UP}
-                if (sqlscale = -4) then
-                  PInt64(Buffer)^ := PInt64(sqldata)^ else
-                  if (sqlscale > -4) then
-                    PInt64(Buffer)^ := PInt64(sqldata)^ * CurrencyDivisor[sqlscale] else
-                    CurrToBcd(PInt64(sqldata)^/scaledivisor[sqlscale], TBCD(Buffer^));
-                {$ELSE}
-                  {$IFDEF FPC}
-                    if (sqlscale = -4) then
-                      PInt64(Buffer)^ := PInt64(sqldata)^ else
-                      if sqlscale > -4 then
-                        PInt64(Buffer)^ := PInt64(sqldata)^ * CurrencyDivisor[sqlscale] else
-                        PDouble(Buffer)^ := PInt64(sqldata)^ / scaledivisor[sqlscale];
-                  {$ELSE}
-                    unexpected
-                  {$ENDIF}
-                {$ENDIF}
-              {$ENDIF}
-              end;
-            SQL_D_FLOAT,
-            SQL_DOUBLE:
-              PDouble(Buffer)^ := PDouble(sqldata)^;
-          else
-            raise Exception.Create(EUIB_UNEXPECTEDCASTERROR);
-          end;
-        end;
-      uftChar,
-      uftCstring:
-        begin
-        {$IFDEF UNICODE}
-          MBUDecode(sqldata, SqlLen, CharacterSetCP[CharacterSet], PWideChar(buffer));
-          PWideChar(buffer)[(SqlLen div BytesPerCharacter[CharacterSet])] := #0;
-        {$ELSE}
-          Move(sqldata^, Buffer^, SqlLen);
-          PAnsiChar(Buffer)[SqlLen] := #0;
-        {$ENDIF}
-        end;
-      uftVarchar:
-        begin
-        {$IFDEF UNICODE}
-          MBUDecode(@PVary(sqldata).vary_string, PVary(sqldata).vary_length, CharacterSetCP[CharacterSet], PWideChar(buffer));
-        {$ELSE}
-          Move(PVary(sqldata).vary_string, Buffer^, PVary(sqldata).vary_length);
-          PAnsiChar(Buffer)[PVary(sqldata).vary_length] := #0;
-        {$ENDIF}
-        end;
-      uftSmallint: PSmallint(Buffer)^ := PSmallint(sqldata)^;
-      uftInteger : PInteger(Buffer)^ := PInteger(sqldata)^;
-      uftFloat:
-          PDouble(Buffer)^ := PSingle(sqldata)^;
-      uftDoublePrecision:
-          PDouble(Buffer)^ := PDouble(sqldata)^;
-      uftTimestamp:
-        begin
-          {$IFDEF FPC}
-            DecodeTimeStamp(PIscTimeStamp(sqldata), PDouble(Buffer)^);
-          {$ELSE}
-            DecodeTimeStamp(PIscTimeStamp(sqldata),  TTimeStamp(Buffer^));
-            Double(Buffer^) := TimeStampToMSecs(TTimeStamp(Buffer^));
-          {$ENDIF}
-        end;
-      uftBlob, uftBlobId:
-        begin
-          if Buffer <> nil then
-          begin
-          {$IFDEF UNICODE}
-            if SqlSubType = 1 then
-            begin
-              FStatement.ReadBlob(FieldNo, uniStr);
-              TStream(Buffer).Write(PWideChar(uniStr)^, Length(uniStr) * sizeof(WideChar));
-              TStream(Buffer).Seek(0, soFromBeginning);
-            end else
-          {$ENDIF}
-            begin
-              FStatement.ReadBlob(FieldNo, TStream(Buffer));
-              TStream(Buffer).Seek(0, soFromBeginning);
-            end;
-          end;
-        end;
-      uftDate:
-        {$IFDEF FPC}
-          PDouble(Buffer)^ := PInteger(sqldata)^ - DateOffset;
-        {$ELSE}
-          PInteger(Buffer)^ := PInteger(sqldata)^ - DateOffset + 693594;
-        {$ENDIF}
-      uftTime:
-        {$IFDEF FPC}
-          PDouble(Buffer)^ := PCardinal(sqldata)^ / TimeCoeff;
-        {$ELSE}
-          PInteger(Buffer)^ := PCardinal(sqldata)^ div 10;
-        {$ENDIF}
-      uftInt64:
-        {$IFDEF FPC}
-          PInteger(Buffer)^ := PInt64(sqldata)^;
-        {$ELSE}
-          PInt64(Buffer)^ := PInt64(sqldata)^;
-        {$ENDIF}
-    {$IFDEF IB7_UP}
-      uftBoolean:
-        {$IFDEF FPC}
-          Boolean(Buffer^) := PSmallInt(sqldata)^ = ISC_TRUE;
-        {$ELSE}
-          WordBool(Buffer^) := PSmallInt(sqldata)^ = ISC_TRUE;
-        {$ENDIF}
-    {$ENDIF}
-    else
-      raise EUIBError.Create(EUIB_UNEXPECTEDERROR);
-    end;
-  Result := True;
+  Result := InternalGetFieldData(FieldNo, Buffer, True);
 end;
 
 function TUIBCustomDataSet.GetFieldData(Field: TField;
@@ -1159,9 +1167,7 @@ end;
 function TUIBCustomDataSet.GetFieldData(Field: TField; Buffer: Pointer;
   NativeFormat: Boolean): Boolean;
 begin
-  if (Field.DataType = ftBCD) and not NativeFormat then
-    Result := GetFieldData(Field, Buffer) else
-    Result := inherited GetFieldData(Field, Buffer, NativeFormat);
+  Result := InternalGetFieldData(Field.FieldNo, Buffer, NativeFormat)
 end;
 {$ENDIF}
 
