@@ -669,7 +669,7 @@ begin {$IFDEF DEBUG}SendDebug('TUIBDbxConnection.Create');{$ENDIF}
   begin
     Objects := [OIDTable, OIDView, OIDProcedure];
     Tables := [OIDTableField, OIDPrimary, OIDForeign, OIDUnique, OIDIndex];
-    Views := [OIDViewFields];
+    Views := [OIDViewField];
     Procedures := [OIDProcFieldIn, OIDProcFieldOut];
     SysInfos := True;
   end;
@@ -770,7 +770,7 @@ begin {$IFDEF DEBUG}SendDebug('TUIBDbxConnection.GetOption: ' + SQLConnectionOpt
   case eDOption of
     eConnRoleName: WriteString(FDatabase.Params.Values['sql_role_name']);
     eConnWaitOnLocks: Boolean(PropValue^) := FTransaction.WaitOnLocks;
-    eConnCommitRetain: Boolean(PropValue^) := FTransaction.AutoRetain;
+    //eConnCommitRetain: Boolean(PropValue^) := FTransaction.AutoRetain;
     eConnTxnIsoLevel: TTransIsolationLevel(PropValue^) := FTransaction.IsolationLevel;
     eConnCallBack: TSQLCallBackEvent(PropValue^) := FCallBackEvent;
     eConnCallBackInfo : Integer(PropValue^) := FTraceClientData;
@@ -778,7 +778,7 @@ begin {$IFDEF DEBUG}SendDebug('TUIBDbxConnection.GetOption: ' + SQLConnectionOpt
     eConnSqlDialect: Integer(PropValue^) := FDatabase.SQLDialect;
     eConnNativeHandle: Integer(PropValue^) := Integer(FDatabase.DbHandle);
   {$IFDEF COMPILER7_UP}
-    eConnRollbackRetain: Boolean(PropValue^) := FTransaction.AutoRetain;
+    //eConnRollbackRetain: Boolean(PropValue^) := FTransaction.AutoRetain;
     eConnTrimChar: Boolean(PropValue^) := FTrimChar;
     eConnMaxActiveComm: Integer(PropValue^) := 0;
     {$IFNDEF LINUX}
@@ -842,14 +842,14 @@ begin {$IFDEF DEBUG}SendDebug('TUIBDbxConnection.SetOption: ' + SQLConnectionOpt
   case eConnectOption of
     eConnRoleName: FDatabase.Params.Values['sql_role_name'] := PChar(lValue);
     eConnWaitOnLocks: FTransaction.WaitOnLocks := boolean(lValue);
-    eConnCommitRetain: FTransaction.AutoRetain := boolean(lValue);
+    //eConnCommitRetain: FTransaction.AutoRetain := boolean(lValue);
     eConnTxnIsoLevel: Ftransaction.IsolationLevel := TTransIsolationLevel(lValue);
     eConnCallBack: FCallBackEvent := TSQLCallBackEvent(lValue);
     eConnCallBackInfo : FTraceClientData := lValue;
     eConnServerCharSet: FDatabase.Params.Values['lc_ctype'] := PChar(lValue);
     eConnSqlDialect: FDatabase.SQLDialect := lValue;
   {$IFDEF COMPILER7_UP}
-    eConnRollbackRetain: FTransaction.AutoRetain := boolean(lValue);
+    //eConnRollbackRetain: FTransaction.AutoRetain := boolean(lValue);
     eConnTrimChar: FTrimChar := boolean(lValue);
     {$IFNDEF LINUX}
     eConnQualifiedName, eConnObjectName:
@@ -1069,9 +1069,8 @@ begin {$IFDEF DEBUG}SendDebug('TUIBDbxCommand.getParameter');{$ENDIF}
       uftBlob, uftBlobId:
         begin
           CheckRange(ParameterNumber);
-          FStatement.Lock;
           with FOwner.FDatabase.Lib do
-          try
+          begin
             BlobHandle := nil;
             DbHandle := FOwner.FDatabase.DbHandle;
             TrHandle := FStatement.Transaction.TrHandle;
@@ -1081,8 +1080,6 @@ begin {$IFDEF DEBUG}SendDebug('TUIBDbxCommand.getParameter');{$ENDIF}
             finally
               BlobClose(BlobHandle);
             end;
-          finally
-            FStatement.UnLock;
           end;
         end;
       {$IFDEF IB7_UP}
