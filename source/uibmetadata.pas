@@ -35,6 +35,12 @@ type
   TTableFieldInfo = (fiPrimary, fiForeign, fiIndice, fiUnique);
   TTableFieldInfos = set of TTableFieldInfo;
 
+  {$HPPEMIT 'namespace Uibmetadata'}
+  {$HPPEMIT '{'}
+  {$HPPEMIT 'class DELPHICLASS TMetaNode;'}
+  (*$HPPEMIT '}'*)
+  {$HPPEMIT ''}
+
   // indentation = inherit
   TMetaNodeType =
    (
