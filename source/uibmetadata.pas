@@ -95,6 +95,8 @@ type
   TDDLOption = (ddlFull);
   TDDLOptions = set of TDDLOption;
 
+  TMetaNodeArray = array of TMetaNode;
+
   TMetaNode = class(TObject)
   private
     FName: string;
@@ -102,8 +104,8 @@ type
     FNodeItems: array of TNodeItem;
     FNodeItemsCount: Integer;
     FData: Pointer;
-    FDependents: array of TMetaNode;
-    FDependedOn: array of TMetaNode;
+    FDependents: TMetaNodeArray;
+    FDependedOn: TMetaNodeArray;
     function GetItems(const ClassIndex, Index: Integer): TMetaNode;
     procedure AddClass(ClassID: TMetaNodeClass);
     procedure CheckTransaction(Transaction: TUIBTransaction);
