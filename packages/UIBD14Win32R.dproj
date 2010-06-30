@@ -23,11 +23,11 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<DCC_Description>UIB Components for Delphi/RAD Studio 2009</DCC_Description>
+			<DCC_Description>UIB Components for Delphi/RAD Studio 2010</DCC_Description>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
 			<DesignOnlyPackage>false</DesignOnlyPackage>
 			<RuntimeOnlyPackage>true</RuntimeOnlyPackage>
-			<DCC_DependencyCheckOutputName>C:\Users\Public\Documents\RAD Studio\7.0\Bpl\UIBD14Win32R.bpl</DCC_DependencyCheckOutputName>
+			<DCC_DependencyCheckOutputName>C:\Documents and Settings\All Users\Documents\RAD Studio\7.0\Bpl\UIBD14Win32R.bpl</DCC_DependencyCheckOutputName>
 			<GenPackage>true</GenPackage>
 			<GenDll>true</GenDll>
 			<DCC_IOChecking>false</DCC_IOChecking>
