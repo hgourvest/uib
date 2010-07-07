@@ -394,7 +394,7 @@ begin
           PDouble(Buffer)^ := PDouble(sqldata)^;
       uftTimestamp:
         begin
-          {$IFDEF FPC}
+          {$IFNDEF FPC}
             DecodeTimeStamp(PIscTimeStamp(sqldata), PDouble(Buffer)^);
           {$ELSE}
             DecodeTimeStamp(PIscTimeStamp(sqldata),  TTimeStamp(Buffer^));
@@ -420,23 +420,23 @@ begin
           end;
         end;
       uftDate:
-        {$IFDEF FPC}
+        {$IFNDEF FPC}
           PDouble(Buffer)^ := PInteger(sqldata)^ - DateOffset;
         {$ELSE}
           PInteger(Buffer)^ := PInteger(sqldata)^ - DateOffset + 693594;
         {$ENDIF}
       uftTime:
-        {$IFDEF FPC}
+        {$IFNDEF FPC}
           PDouble(Buffer)^ := PCardinal(sqldata)^ / TimeCoeff;
         {$ELSE}
           PInteger(Buffer)^ := PCardinal(sqldata)^ div 10;
         {$ENDIF}
       uftInt64:
-        {$IFDEF FPC}
-          PInteger(Buffer)^ := PInt64(sqldata)^;
-        {$ELSE}
+        {.$IFDEF FPC}
+          //PInteger(Buffer)^ := PInt64(sqldata)^;
+        {.$ELSE}
           PInt64(Buffer)^ := PInt64(sqldata)^;
-        {$ENDIF}
+        {.$ENDIF}
     {$IFDEF IB7_UP}
       uftBoolean:
         {$IFDEF FPC}
@@ -823,12 +823,7 @@ begin
           end;
         uftDate : DataType := ftDate;
         uftTime : DataType := ftTime;
-        uftInt64:
-        {$IFDEF FPC}
-          DataType := ftInteger; // :(
-        {$ELSE}
-          DataType := ftLargeint;
-        {$ENDIF}
+        uftInt64: DataType := ftLargeint;
       {$IFDEF IB7_UP}
         uftBoolean: DataType := ftBoolean;
       {$ENDIF}
