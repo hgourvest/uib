@@ -4246,6 +4246,7 @@ end;
 
 procedure EventCallback(UserData: Pointer; Length: Smallint; Updated: PAnsiChar); cdecl;
 begin
+  if (Length > 0) and (Updated <> nil) then
   if (Assigned(UserData) and Assigned(Updated)) then
   with TUIBEventThread(UserData) do
   begin
