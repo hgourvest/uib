@@ -2213,7 +2213,7 @@ end;
 procedure TUIBStatement.BeginPrepare(describeParams: boolean = false);
 begin
   if (FStHandle = nil) then
-    BeginStatement else ;
+    BeginStatement else
     BeginTransaction;
 
   FSQLResult := ResultClass.Create(FindDataBase.CharacterSet, 0, FCachedFetch, FFetchBlobs, FBufferChunks);
