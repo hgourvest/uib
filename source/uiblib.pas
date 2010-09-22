@@ -3073,7 +3073,7 @@ type
   begin
     CheckRange(Index);
     with FXSQLDA.sqlvar[Index] do
-      Result := (sqltype <> sqltype and not(1)) and (sqlind <> nil) and (sqlind^ = -1)
+      Result := (sqlind <> nil) and (sqlind^ = -1)
   end;
 
   procedure TSQLDA.CheckRange(const Index: Word);
@@ -4258,13 +4258,11 @@ end;
   begin
     CheckRange(Index);
     with FXSQLDA.sqlvar[Index] do
-      if (sqlind <> nil) and (sqltype <> sqltype and not(1)) then
+      if (sqlind <> nil) then
         case Value of
-          True  : sqlind^ := -1;
-          False : sqlind^ :=  0;
-        end else
-          if Value Then
-            raise EUIBError.CreateFmt(EUIB_NOT_NULLABLE, [Index]);
+          True : sqlind^ := -1;
+          False: sqlind^ :=  0;
+        end;
   end;
 
   procedure TSQLDA.SetAsQuad(const Index: Word; const Value: TISCQuad);
