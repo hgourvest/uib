@@ -6504,11 +6504,17 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
   procedure TSQLParams.CheckNotNullFieldsSet;
   var
     Field: Integer;
+    Name: string;
   begin
     for Field := 0 to FXSQLDA.sqln - 1 do
       with FXSQLDA.sqlvar[Field] do
         if (SqlInd <> nil) and (sqltype = sqltype and not(1)) and (SqlInd^ = -1) then
-          raise EUIBError.CreateFmt(EUIB_NOT_NULLABLE, [Field]);
+          if ParamNameLength > 0 then
+          begin
+            SetString(Name, ParamName, ParamNameLength);
+            raise EUIBError.CreateFmt(EUIB_NOT_NULLABLE, [Name])
+          end else
+            raise EUIBError.CreateFmt(EUIB_NOT_NULLABLE, [IntToStr(Field)]);
   end;
 
   function TSQLParams.GetFieldIndex(const name: AnsiString): Word;
