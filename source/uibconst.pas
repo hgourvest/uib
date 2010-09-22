@@ -121,6 +121,7 @@ const
   EUIB_UNEXPECTEDCASTERROR = 'Unexpected cast error.';
   EUIB_INVALIDUSERNAME     = 'Invalid user name : "%s".';
   EUIB_SERVICESPARSING     = 'Error while parsing Services API output.';
+  EUIB_NOT_NULLABLE        = 'Field %d is not nullable.';
   {$ENDIF UIBLANG_EN}
 
   {$IFDEF UIBLANG_FR}
@@ -161,6 +162,7 @@ const
   EUIB_UNEXPECTEDCASTERROR = 'Unexpected cast error.';
   EUIB_INVALIDUSERNAME     = 'Invalid user name : "%s".';
   EUIB_SERVICESPARSING     = 'Error while parsing Services API output.';
+  EUIB_NOT_NULLABLE        = 'Field %d is not nullable.';
 
   {$ENDIF UIBLANG_FR}
 
@@ -202,6 +204,7 @@ const
   EUIB_UNEXPECTEDCASTERROR = 'Unexpected cast error.';
   EUIB_INVALIDUSERNAME     = 'Invalid user name : "%s".';
   EUIB_SERVICESPARSING     = 'Error while parsing Services API output.';
+  EUIB_NOT_NULLABLE        = 'Field %d is not nullable.';
 
   {$ENDIF UIBLANG_CZ}
 
@@ -243,6 +246,7 @@ const
   EUIB_UNEXPECTEDCASTERROR = 'Unexpected cast error.';
   EUIB_INVALIDUSERNAME     = 'Invalid user name : "%s".';
   EUIB_SERVICESPARSING     = 'Error while parsing Services API output.';
+  EUIB_NOT_NULLABLE        = 'Field %d is not nullable.';
 
   {$ENDIF UIBLANG_DE}
 
@@ -284,6 +288,7 @@ const
   EUIB_UNEXPECTEDCASTERROR = 'Unexpected cast error.';
   EUIB_INVALIDUSERNAME     = 'Invalid user name : "%s".';
   EUIB_SERVICESPARSING     = 'Error while parsing Services API output.';
+  EUIB_NOT_NULLABLE        = 'Field %d is not nullable.';
 
   {$ENDIF UIBLANG_RU}
 
@@ -325,6 +330,7 @@ const
   EUIB_UNEXPECTEDCASTERROR = 'Unexpected cast error.';
   EUIB_INVALIDUSERNAME     = 'Invalid user name : "%s".';
   EUIB_SERVICESPARSING     = 'Error while parsing Services API output.';
+  EUIB_NOT_NULLABLE        = 'Field %d is not nullable.';
 
   {$ENDIF UIBLANG_ES}
 
@@ -366,6 +372,7 @@ const
   EUIB_UNEXPECTEDCASTERROR = 'Beklenmeyen tip atama hatasý.';
   EUIB_INVALIDUSERNAME     = 'Geçersiz kullanýcý adý : "%s".';
   EUIB_SERVICESPARSING     = 'Services API çýktýsý ayrýþtýrýlýrken hata oluþtu.';
+  EUIB_NOT_NULLABLE        = 'Field %d is not nullable.';
 
   {$ENDIF UIBLANG_TR}
 

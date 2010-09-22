@@ -867,6 +867,7 @@ type
     function GetFieldName(const Index: Word): string;
     procedure AllocateDataBuffer(AInit: boolean = true);
     function GetMaxSqlLen(const Index: Word): SmallInt;
+    procedure CheckNotNullFieldsSet;
   protected
     function AddFieldA(const name: AnsiString): Word;
     function AddFieldW(const name: UnicodeString): Word;
@@ -1963,6 +1964,9 @@ const
   procedure TUIBLibrary.DSQLExecuteImmediate(var DBHandle: IscDbHandle; var TraHandle: IscTrHandle;
     const Statement: RawbyteString; Dialect: Word; Sqlda: TSQLDA = nil);
   begin
+    if (Sqlda <> nil) and (Sqlda is TSQLParams) then
+      TSQLParams(Sqlda).CheckNotNullFieldsSet;
+
     CheckUIBApiCall(isc_dsql_execute_immediate(@FStatusVector, @DBHandle, @TraHandle,
       length(Statement), Pointer(Statement), Dialect, GetSQLDAData(Sqlda)));
   end;
@@ -1970,6 +1974,9 @@ const
   procedure TUIBLibrary.DSQLExecuteImmediate(const Statement: RawbyteString; Dialect: Word; Sqlda: TSQLDA = nil);
   var p: pointer;
   begin
+    if (Sqlda <> nil) and (Sqlda is TSQLParams) then
+      TSQLParams(Sqlda).CheckNotNullFieldsSet;
+
     p := nil;
     CheckUIBApiCall(isc_dsql_execute_immediate(@FStatusVector, @p, @p,
       length(Statement), Pointer(Statement), Dialect, GetSQLDAData(Sqlda)));
@@ -2012,6 +2019,9 @@ const
   procedure TUIBLibrary.DSQLExecute(var TraHandle: IscTrHandle; var StmtHandle: IscStmtHandle;
     Dialect: Word; Sqlda: TSQLDA = nil);
   begin
+    if (Sqlda <> nil) and (Sqlda is TSQLParams) then
+      TSQLParams(Sqlda).CheckNotNullFieldsSet;
+
     CheckUIBApiCall(isc_dsql_execute(@FStatusVector, @TraHandle, @StmtHandle,
       Dialect, GetSQLDAData(Sqlda)));
   end;
@@ -2019,6 +2029,9 @@ const
   procedure TUIBLibrary.DSQLExecute2(var TraHandle: IscTrHandle; var StmtHandle: IscStmtHandle; Dialect: Word;
     InSqlda: TSQLDA; OutSqlda: TSQLResult);
   begin
+    if (InSqlda <> nil) and (InSqlda is TSQLParams) then
+      TSQLParams(InSqlda).CheckNotNullFieldsSet;
+
     CheckUIBApiCall(isc_dsql_execute2(@FStatusVector, @TraHandle, @StmtHandle, Dialect,
       GetSQLDAData(InSqlda), GetSQLDAData(OutSqlda)));
   end;
@@ -2208,6 +2221,7 @@ const
           src^.MaxSqlLen := dst.sqllen;
           src^.SqlSubType := dst.sqlsubtype;
           src^.SqlScale := dst.SqlScale;
+          src^.SqlInd^ := -1;
 {$IFDEF IB7_UP}
           src^.SqlPrecision := dst.SqlPrecision;
 {$ENDIF}
@@ -3058,8 +3072,8 @@ type
   function TSQLDA.GetIsNull(const Index: Word): boolean;
   begin
     CheckRange(Index);
-    Result := (FXSQLDA.sqlvar[Index].sqlind <> nil) and
-              (FXSQLDA.sqlvar[Index].sqlind^ = -1)
+    with FXSQLDA.sqlvar[Index] do
+      Result := (sqltype <> sqltype and not(1)) and (sqlind <> nil) and (sqlind^ = -1)
   end;
 
   procedure TSQLDA.CheckRange(const Index: Word);
@@ -3395,7 +3409,8 @@ type
   function TSQLDA.GetIsNullable(const Index: Word): boolean;
   begin
     CheckRange(Index);
-    Result := (FXSQLDA.sqlvar[Index].sqlind <> nil);
+    with FXSQLDA.sqlvar[Index] do
+      Result := (sqlind <> nil) and (sqltype <> sqltype and not(1));
   end;
 
   function TSQLDA.GetIsNumeric(const Index: Word): boolean;
@@ -4243,11 +4258,13 @@ end;
   begin
     CheckRange(Index);
     with FXSQLDA.sqlvar[Index] do
-      if (sqlind <> nil) then
+      if (sqlind <> nil) and (sqltype <> sqltype and not(1)) then
         case Value of
           True  : sqlind^ := -1;
           False : sqlind^ :=  0;
-        end;
+        end else
+          if Value Then
+            raise EUIBError.CreateFmt(EUIB_NOT_NULLABLE, [Index]);
   end;
 
   procedure TSQLDA.SetAsQuad(const Index: Word; const Value: TISCQuad);
@@ -6484,6 +6501,16 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
   begin
     CheckRange(Index);
     Result := FXSQLDA.sqlvar[Index].MaxSqlLen
+  end;
+
+  procedure TSQLParams.CheckNotNullFieldsSet;
+  var
+    Field: Integer;
+  begin
+    for Field := 0 to FXSQLDA.sqln - 1 do
+      with FXSQLDA.sqlvar[Field] do
+        if (SqlInd <> nil) and (sqltype = sqltype and not(1)) and (SqlInd^ = -1) then
+          raise EUIBError.CreateFmt(EUIB_NOT_NULLABLE, [Field]);
   end;
 
   function TSQLParams.GetFieldIndex(const name: AnsiString): Word;
