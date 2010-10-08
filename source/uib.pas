@@ -1370,7 +1370,15 @@ begin
         if Assigned(BeforeConnect) then BeforeConnect(Self);
         FLibrary.Load(FLiBraryName);
         if not FHandleShared then
-          AttachDatabase(AnsiString(FDatabaseName), FDbHandle, AnsiString(FParams.Text), BreakLine);
+        begin
+{$IFDEF FB25_UP}
+{$IFDEF UNICODE}
+          if FParams.IndexOf('utf8_filename') >= 0 then
+            AttachDatabase(MBUEncode(FDatabaseName, CP_UTF8), FDbHandle, AnsiString(FParams.Text), BreakLine) else
+{$ENDIF}
+{$ENDIF}
+            AttachDatabase(AnsiString(FDatabaseName), FDbHandle, AnsiString(FParams.Text), BreakLine);
+        end;
         RegisterEvents;
         if Assigned(AfterConnect) then AfterConnect(Self);
       end;

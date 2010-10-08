@@ -1216,7 +1216,7 @@ const
 {$IFDEF FB25_UP}
   ,(Name: 'trusted_role';           ParamType: prNone)
   ,(Name: 'org_filename';           ParamType: prStrg)
-  ,(Name: 'utf8_filename';          ParamType: prCard)
+  ,(Name: 'utf8_filename';          ParamType: prNone)
   ,(Name: 'ext_call_depth';         ParamType: prCard)
 {$ENDIF}
    );
@@ -3171,7 +3171,6 @@ type
             if sqldata = nil then
               getmem(sqldata, NewLen+2) else
               ReallocMem(sqldata, NewLen+2);
-            if True then
             if MaxSqlLen > 0 then
               NewLen := Min(NewLen, MaxSqlLen);
             sqllen := NewLen + 2;
