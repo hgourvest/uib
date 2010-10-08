@@ -250,8 +250,6 @@ end;
 
 function TUIBCustomDataSet.InternalGetFieldData(FieldNo: Integer;
   Buffer: Pointer; Native: Boolean): Boolean;
-const
-  UTF8BOM: array[0..2] of Byte = ($EF, $BB, $BF);
 var
   aFieldType: TUIBFieldType;
 {$IFDEF UNICODE}
