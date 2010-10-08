@@ -954,6 +954,11 @@ type
     property OnGetDBExceptionClass: TOnGetDBExceptionClass read FOnGetDBExceptionClass write FOnGetDBExceptionClass;
     property RaiseErrors: boolean read FRaiseErrors write FRaiseErrors default True;
 
+{$IFDEF FB25_UP}
+    function ServerShutdown(timeout: Cardinal; const reason: Integer): Integer;
+    procedure ServerShutdownCallback(callBack: FB_SHUTDOWN_CALLBACK;
+      const mask: Integer; arg: Pointer);
+{$ENDIF}
 
     {Attaches to an existing database.
      Ex: AttachDatabase('c:\DataBase.gdb', DBHandle, 'user_name=SYSDBA; password=masterkey'); }
@@ -965,6 +970,9 @@ type
     function DatabaseInfoString(var DBHandle: IscDbHandle; item: byte; size: Integer): AnsiString;
     function DatabaseInfoDateTime(var DBHandle: IscDbHandle; item: byte): TDateTime;
     procedure DatabaseDrop(DbHandle: IscDbHandle);
+{$IFDEF FB25_UP}
+    function DatabaseCancelOperation(var DBHandle: IscDbHandle; option: ISC_USHORT): Boolean;
+{$ENDIF}
 
     procedure TransactionStart(var TraHandle: IscTrHandle; var DbHandle: IscDbHandle; const TPB: AnsiString = '');
     procedure TransactionStartMultiple(var TraHandle: IscTrHandle; DBCount: Smallint; Vector: PISCTEB);
@@ -1787,6 +1795,20 @@ const
       end;
   end;
 
+{$IFDEF FB25_UP}
+  function TUIBLibrary.ServerShutdown(timeout: Cardinal; const reason: Integer): Integer;
+  begin
+     Result := fb_shutdown(timeout, reason);
+  end;
+
+  procedure TUIBLibrary.ServerShutdownCallback(callBack: FB_SHUTDOWN_CALLBACK;
+    const mask: Integer; arg: Pointer);
+  begin
+    CheckUIBApiCall(fb_shutdown_callback(@FStatusVector, callBack, mask, arg));
+  end;
+
+
+{$ENDIF}
 
   procedure TUIBLibrary.AttachDatabase(const FileName: AnsiString; var DbHandle: IscDbHandle;
     Params: AnsiString; Sep: AnsiChar = ';');
@@ -1891,6 +1913,17 @@ const
   begin
     CheckUIBApiCall(isc_drop_database(@FStatusVector, @DbHandle));
   end;
+
+{$IFDEF FB25_UP}
+  function TUIBLibrary.DatabaseCancelOperation(var DBHandle: IscDbHandle; option: ISC_USHORT): Boolean;
+  var
+    sv: TStatusVector;
+  begin
+    FillChar(sv, SizeOf(sv), 0);
+    Result := fb_cancel_operation(@sv, @DbHandle, option) = 0;
+  end;
+{$ENDIF}
+
 
 //******************************************************************************
 // Transaction

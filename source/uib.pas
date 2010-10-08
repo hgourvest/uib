@@ -263,6 +263,24 @@ type
     { Recompile all triggers, usefull when indices are modified }
     procedure RecompileAllTriggers;
 
+{$IFDEF FB25_UP}
+    { re-enables delivery of a cancel execution that was previously disabled.
+      The 'cancel' state is effective by default, being initialized when the attachment is created.}
+    function CancelEnable: Boolean;
+    { disables execution of CancelRaise requests.
+      It can be useful when your program is executing critical operations,
+      such as cleanup, for example.}
+    function CancelDisable: Boolean;
+    { forcibly close client side of connection. Useful if you need to close a connection urgently.
+      All active transactions will be rolled back by the server. 'Success' is always returned to the application.
+      Use with care !}
+    function CancelAbort: Boolean;
+    { Usually fb_cancel_raise is called when you need to stop a long-running request.
+      It is called from a separate thread, not from the signal handler,
+      because it is not async signal safe.}
+    function CancelRaise: Boolean;
+{$ENDIF}
+
     { The DbHandle can be used to share the current connection with other Interbase components like IBX. }
     property DbHandle: IscDbHandle read FDbHandle write SetDbHandle;
     { Determine if the DbHandle is initialized by another component. }
@@ -1971,6 +1989,36 @@ begin
     tr.Free;
   end;
 end;
+
+{$IFDEF FB25_UP}
+function TUIBDataBase.CancelEnable: Boolean;
+begin
+  if FDbHandle <> nil then
+    Result := FLibrary.DatabaseCancelOperation(FDbHandle, fb_cancel_enable) else
+    Result := False;
+end;
+
+function TUIBDataBase.CancelDisable: Boolean;
+begin
+  if FDbHandle <> nil then
+    Result := FLibrary.DatabaseCancelOperation(FDbHandle, fb_cancel_disable) else
+    Result := False;
+end;
+
+function TUIBDataBase.CancelAbort: Boolean;
+begin
+  if FDbHandle <> nil then
+    Result := FLibrary.DatabaseCancelOperation(FDbHandle, fb_cancel_abort) else
+    Result := False;
+end;
+
+function TUIBDataBase.CancelRaise: Boolean;
+begin
+  if FDbHandle <> nil then
+    Result := FLibrary.DatabaseCancelOperation(FDbHandle, fb_cancel_raise) else
+    Result := False;
+end;
+{$ENDIF}
 
 function TUIBDataBase.GetRole: string;
 begin
