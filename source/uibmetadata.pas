@@ -1223,7 +1223,7 @@ const
     ', NULL' +
     ', RDB$ARGUMENT_POSITION' +
     ', RDB$MECHANISM ' +
-    ', NULL'+
+    ', NULL '+
     'from ' +
     '  RDB$FUNCTION_ARGUMENTS ' +
     'where ' +
