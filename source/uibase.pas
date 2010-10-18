@@ -4088,7 +4088,7 @@ begin
         and assigned(fb_shutdown_callback)
         and assigned(fb_cancel_operation)
         and assigned(fb_sqlstate)
-//        and assigned(fb_disconnect_transaction)
+        and assigned(fb_disconnect_transaction)
       {$ENDIF}
 
       ;

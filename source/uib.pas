@@ -667,7 +667,7 @@ type
     procedure EndStatement(const ETM: TEndTransMode; Auto, Drop: boolean); virtual;
     procedure EndPrepare(const ETM: TEndTransMode; Auto, Drop: boolean); virtual;
     procedure EndExecute(const ETM: TEndTransMode; Auto, Drop: boolean); virtual;
-    procedure EndExecImme(const ETM: TEndTransMode; Auto: boolean); virtual;
+    procedure EndExecImme(const ETM: TEndTransMode; Auto, Drop: boolean); virtual;
 
     procedure InternalNext; virtual;
     procedure InternalPrior; virtual;
@@ -2351,7 +2351,7 @@ var
 {$ENDIF}
     except
       if (FOnError <> etmStayIn) then
-        EndExecImme(FOnError, False);
+        EndExecImme(FOnError, False, False);
       raise;
     end;
   end;
@@ -2368,8 +2368,14 @@ begin
   FCurrentState := qsExecImme;
 end;
 
-procedure TUIBStatement.EndExecImme(const ETM: TEndTransMode; Auto: boolean);
+procedure TUIBStatement.EndExecImme(const ETM: TEndTransMode; Auto, Drop: boolean);
 begin
+{$IFDEF FB25_UP}
+  if (FStHandle <> nil) then
+    EndStatement(ETM, Auto, Drop);
+
+{$ENDIF}
+
   FCurrentState := qsTransaction;
   if (ETM <> etmStayIn) then
     EndTransaction(ETM, Auto);
@@ -2762,7 +2768,7 @@ procedure TUIBStatement.InternalClose(const Mode: TEndTransMode;
 begin
   case FCurrentState of
     qsStatement : EndStatement(Mode, Auto, Drop);
-    qsExecImme  : EndExecImme(Mode, Auto);
+    qsExecImme  : EndExecImme(Mode, Auto, Drop);
     qsPrepare   : EndPrepare(Mode, Auto, Drop);
     qsExecute   : EndExecute(Mode, Auto, Drop);
   end;
