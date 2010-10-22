@@ -3942,6 +3942,7 @@ type
     r: TRttiType;
     f: TRttiField;
     o: TObject;
+    str: string;
   begin
     p := TypeInfo(T);
     if p <> nil then
@@ -3961,6 +3962,8 @@ type
             f.SetValue(o, GetByNameAsTValue(f.Name));
           PPointer(@Result)^ := o;
         end;
+      tkInteger .. tkSet, tkWChar..tkVariant, tkInt64, tkUString:
+        Result := GetAsTValue(0).AsType<T>;
     else
       raise EUIBException.Create('Invalid data type');
     end;
