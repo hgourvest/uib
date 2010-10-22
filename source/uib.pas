@@ -51,6 +51,7 @@ unit uib;
 interface
 uses
   {$IFDEF MSWINDOWS} Windows, {$ENDIF}
+  {$IFDEF DELPHI14_UP} Rtti, {$ENDIF}
   SyncObjs, Classes, Contnrs, SysUtils, uiblib, uibase,
   uibsqlparser, uibconst;
 
@@ -619,6 +620,45 @@ type
   {$ENDIF}
   end;
 
+{$IFDEF DELPHI14_UP}
+  IUIBEnumerator<T> = interface
+    function GetCurrent: T;
+    function MoveNext: Boolean;
+    property Current: T read GetCurrent;
+  end;
+
+  IUIBEnumerable<T> = interface
+    function GetEnumerator: IUIBEnumerator<T>;
+  end;
+
+  TUIBMethodFilter<T> = reference to function(const item: T): Boolean;
+
+  TUIBEnumerable<T> = class(TInterfacedObject, IUIBEnumerable<T>)
+  private
+    FQuery: TUIBStatement;
+    FFilter: TUIBMethodFilter<T>;
+  protected
+    function GetEnumerator: IUIBEnumerator<T>;
+  public
+    constructor Create(AQuery: TUIBStatement; AFilter: TUIBMethodFilter<T>);
+  end;
+
+  TUIBEnumerator<T> = class(TInterfacedObject, IUIBEnumerator<T>)
+  private
+    FQuery: TUIBStatement;
+    FFilter: TUIBMethodFilter<T>;
+    FCtx: TRttiContext;
+    FCurrent: T;
+  protected
+    function GetCurrent: T;
+    function MoveNext: Boolean;
+    property Current: T read GetCurrent;
+  public
+    constructor Create(AQuery: TUIBStatement; AFilter: TUIBMethodFilter<T>);
+    destructor Destroy; override;
+  end;
+{$ENDIF}
+
   { Simple query component. }
   TUIBStatement = class(TUIBComponent)
   private
@@ -777,6 +817,11 @@ type
     function FieldBlobSize(const Index: Word): Cardinal;
     { Get the blob size of the corresonding parametter. }
     function ParamBlobSize(const Index: Word): Cardinal;
+
+{$IFDEF DELPHI14_UP}
+    function All<T>: IUIBEnumerable<T>;
+    function Select<T>(const AFilter: TUIBMethodFilter<T>): IUIBEnumerable<T>;
+{$ENDIF}
 
     { The internal statement handle. }
     property StHandle: IscStmtHandle read FStHandle;
@@ -2932,6 +2977,20 @@ begin
   end;
 end;
 
+{$IFDEF DELPHI14_UP}
+function TUIBStatement.Select<T>(const AFilter: TUIBMethodFilter<T>): IUIBEnumerable<T>;
+begin
+  Result := TUIBEnumerable<T>.Create(Self, AFilter);
+end;
+{$ENDIF}
+
+{$IFDEF DELPHI14_UP}
+function TUIBStatement.All<T>: IUIBEnumerable<T>;
+begin
+  Result := TUIBEnumerable<T>.Create(Self, nil);
+end;
+{$ENDIF}
+
 { TUIBQuery }
 
 procedure TUIBQuery.BuildStoredProc(const StoredProc: string; forSelect: boolean = true);
@@ -4714,6 +4773,57 @@ begin
     end;
   end;
 end;
+
+{$IFDEF DELPHI14_UP}
+{ TUIBEnumerable<T> }
+
+constructor TUIBEnumerable<T>.Create(AQuery: TUIBStatement; AFilter: TUIBMethodFilter<T>);
+begin
+  FQuery := AQuery;
+  FFilter := AFilter;
+end;
+
+function TUIBEnumerable<T>.GetEnumerator: IUIBEnumerator<T>;
+begin
+  Result := TUIBEnumerator<T>.Create(FQuery, FFilter);
+end;
+
+{ TUIBEnumerator<T> }
+
+constructor TUIBEnumerator<T>.Create(AQuery: TUIBStatement; AFilter: TUIBMethodFilter<T>);
+begin
+  FQuery := AQuery;
+  FFilter := AFilter;
+  FCtx := TRttiContext.Create;
+  FQuery.Open(False);
+end;
+
+destructor TUIBEnumerator<T>.Destroy;
+begin
+  FCtx.Free;
+  inherited;
+end;
+
+function TUIBEnumerator<T>.GetCurrent: T;
+begin
+  Result := FCurrent;
+end;
+
+function TUIBEnumerator<T>.MoveNext: Boolean;
+begin
+  FQuery.Next;
+  FCurrent := FQuery.Fields.GetAsType<T>(FCtx);
+  if Assigned(FFilter) then
+    while not FQuery.Eof do
+    begin
+      if FFilter(FCurrent) then
+        Break;
+      FQuery.Next;
+      FCurrent := FQuery.Fields.GetAsType<T>(FCtx);
+    end;
+  Result := not FQuery.Eof;
+end;
+{$ENDIF}
 
 {$IFNDEF FPC}
 initialization
