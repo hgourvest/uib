@@ -649,6 +649,7 @@ type
     FFilter: TUIBMethodFilter<T>;
     FCtx: TRttiContext;
     FCurrent: T;
+    FCursor: Integer;
   protected
     function GetCurrent: T;
     function MoveNext: Boolean;
@@ -4795,7 +4796,10 @@ begin
   FQuery := AQuery;
   FFilter := AFilter;
   FCtx := TRttiContext.Create;
-  FQuery.Open(False);
+  FCursor := -1;
+  if (FQuery.CurrentState < qsExecute) or not FQuery.CachedFetch then
+    FQuery.Open(True) else
+    FQuery.First;
 end;
 
 destructor TUIBEnumerator<T>.Destroy;
@@ -4811,7 +4815,12 @@ end;
 
 function TUIBEnumerator<T>.MoveNext: Boolean;
 begin
-  FQuery.Next;
+  if FQuery.Eof then Exit(False);
+
+  if FCursor <> -1 then
+    FQuery.Next;
+  if FQuery.Eof then Exit(False);
+  Inc(FCursor);
   FCurrent := FQuery.Fields.GetAsType<T>(FCtx);
   if Assigned(FFilter) then
     while not FQuery.Eof do
@@ -4819,6 +4828,8 @@ begin
       if FFilter(FCurrent) then
         Break;
       FQuery.Next;
+      if FQuery.Eof then Exit(False);
+      Inc(FCursor);
       FCurrent := FQuery.Fields.GetAsType<T>(FCtx);
     end;
   Result := not FQuery.Eof;
