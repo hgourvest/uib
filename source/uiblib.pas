@@ -3921,6 +3921,10 @@ type
 {$ENDIF}
           SQL_TEXT      : Result := DecodeString(SQL_TEXT, Index);
           SQL_VARYING   : Result := DecodeString(SQL_VARYING, Index);
+          SQL_BLOB      :
+            if SqlSubType = 1 then
+              Result := GetAsString(Index) else
+              Result := TValue.From<RawByteString>(GetAsRawByteString(Index));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
 {$ENDIF}
