@@ -1252,6 +1252,11 @@ const
     10000000000000,1000000000000,100000000000,10000000000,1000000000,100000000,
     10000000,1000000,100000,10000,1000,100,10);
 
+  ScaleFormat: array[-15..-1] of string = (
+    '0.0##############', '0.0#############', '0.0############', '0.0###########',
+    '0.0##########', '0.0#########', '0.0########', '0.0#######', '0.0######',
+    '0.0#####', '0.0####', '0.0###', '0.0##', '0.0#', '0.0');
+
   CurrencyDivisor: array[-15..-1] of int64 = (100000000000,10000000000,
     1000000000,100000000,10000000,1000000,100000,10000,1000,100,10,1,10,100,
     1000);
@@ -3707,12 +3712,12 @@ type
       if (sqlscale < 0)  then
       begin
         case ASQLCode of
-          SQL_SHORT  : Result := AnsiString(FloatToStr(PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]));
-          SQL_LONG   : Result := AnsiString(FloatToStr(PInteger(sqldata)^  / ScaleDivisor[sqlscale]));
+          SQL_SHORT  : Result := AnsiString(FormatFloat(ScaleFormat[sqlscale], PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]));
+          SQL_LONG   : Result := AnsiString(FormatFloat(ScaleFormat[sqlscale], PInteger(sqldata)^  / ScaleDivisor[sqlscale]));
           SQL_INT64,
-          SQL_QUAD   : Result := AnsiString(FloatToStr(PInt64(sqldata)^    / ScaleDivisor[sqlscale]));
+          SQL_QUAD   : Result := AnsiString(FormatFloat(ScaleFormat[sqlscale], PInt64(sqldata)^    / ScaleDivisor[sqlscale]));
           SQL_D_FLOAT,
-          SQL_DOUBLE : Result := AnsiString(FloatToStr(PDouble(sqldata)^));
+          SQL_DOUBLE : Result := AnsiString(FormatFloat(ScaleFormat[sqlscale], PDouble(sqldata)^));
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
         end;
@@ -3770,12 +3775,12 @@ type
       if (sqlscale < 0)  then
       begin
         case ASQLCode of
-          SQL_SHORT  : Result := RawByteString(FloatToStr(PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]));
-          SQL_LONG   : Result := RawByteString(FloatToStr(PInteger(sqldata)^  / ScaleDivisor[sqlscale]));
+          SQL_SHORT  : Result := RawByteString(FormatFloat(ScaleFormat[sqlscale], PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]));
+          SQL_LONG   : Result := RawByteString(FormatFloat(ScaleFormat[sqlscale], PInteger(sqldata)^  / ScaleDivisor[sqlscale]));
           SQL_INT64,
-          SQL_QUAD   : Result := RawByteString(FloatToStr(PInt64(sqldata)^    / ScaleDivisor[sqlscale]));
+          SQL_QUAD   : Result := RawByteString(FormatFloat(ScaleFormat[sqlscale], PInt64(sqldata)^    / ScaleDivisor[sqlscale]));
           SQL_D_FLOAT,
-          SQL_DOUBLE : Result := RawByteString(FloatToStr(PDouble(sqldata)^));
+          SQL_DOUBLE : Result := RawByteString(FormatFloat(ScaleFormat[sqlscale], PDouble(sqldata)^));
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
         end;
@@ -4157,12 +4162,12 @@ end;
       if (sqlscale < 0)  then
       begin
         case ASQLCode of
-          SQL_SHORT  : Result := FloatToStr(PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]);
-          SQL_LONG   : Result := FloatToStr(PInteger(sqldata)^  / ScaleDivisor[sqlscale]);
+          SQL_SHORT  : Result := FormatFloat(ScaleFormat[sqlscale], PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]);
+          SQL_LONG   : Result := FormatFloat(ScaleFormat[sqlscale], PInteger(sqldata)^  / ScaleDivisor[sqlscale]);
           SQL_INT64,
-          SQL_QUAD   : Result := FloatToStr(PInt64(sqldata)^    / ScaleDivisor[sqlscale]);
+          SQL_QUAD   : Result := FormatFloat(ScaleFormat[sqlscale], PInt64(sqldata)^    / ScaleDivisor[sqlscale]);
           SQL_D_FLOAT,
-          SQL_DOUBLE : Result := FloatToStr(PDouble(sqldata)^);
+          SQL_DOUBLE : Result := FormatFloat(ScaleFormat[sqlscale], PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
         end;
@@ -5883,12 +5888,12 @@ end;
       if (sqlscale < 0)  then
       begin
         case ASQLCode of
-          SQL_SHORT  : Result := AnsiString(FloatToStr(PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]));
-          SQL_LONG   : Result := AnsiString(FloatToStr(PInteger(sqldata)^  / ScaleDivisor[sqlscale]));
+          SQL_SHORT  : Result := AnsiString(FormatFloat(ScaleFormat[sqlscale], PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]));
+          SQL_LONG   : Result := AnsiString(FormatFloat(ScaleFormat[sqlscale], PInteger(sqldata)^  / ScaleDivisor[sqlscale]));
           SQL_INT64,
-          SQL_QUAD   : Result := AnsiString(FloatToStr(PInt64(sqldata)^    / ScaleDivisor[sqlscale]));
+          SQL_QUAD   : Result := AnsiString(FormatFloat(ScaleFormat[sqlscale], PInt64(sqldata)^    / ScaleDivisor[sqlscale]));
           SQL_D_FLOAT,
-          SQL_DOUBLE : Result := AnsiString(FloatToStr(PDouble(sqldata)^));
+          SQL_DOUBLE : Result := AnsiString(FormatFloat(ScaleFormat[sqlscale], PDouble(sqldata)^));
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
         end;
@@ -5931,12 +5936,12 @@ end;
       if (sqlscale < 0)  then
       begin
         case ASQLCode of
-          SQL_SHORT  : Result := RawByteString(FloatToStr(PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]));
-          SQL_LONG   : Result := RawByteString(FloatToStr(PInteger(sqldata)^  / ScaleDivisor[sqlscale]));
+          SQL_SHORT  : Result := RawByteString(FormatFloat(ScaleFormat[sqlscale], PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]));
+          SQL_LONG   : Result := RawByteString(FormatFloat(ScaleFormat[sqlscale], PInteger(sqldata)^  / ScaleDivisor[sqlscale]));
           SQL_INT64,
-          SQL_QUAD   : Result := RawByteString(FloatToStr(PInt64(sqldata)^    / ScaleDivisor[sqlscale]));
+          SQL_QUAD   : Result := RawByteString(FormatFloat(ScaleFormat[sqlscale], PInt64(sqldata)^    / ScaleDivisor[sqlscale]));
           SQL_D_FLOAT,
-          SQL_DOUBLE : Result := RawByteString(FloatToStr(PDouble(sqldata)^));
+          SQL_DOUBLE : Result := RawByteString(FormatFloat(ScaleFormat[sqlscale], PDouble(sqldata)^));
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
         end;
@@ -5979,12 +5984,12 @@ end;
       if (sqlscale < 0)  then
       begin
         case ASQLCode of
-          SQL_SHORT  : Result := FloatToStr(PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]);
-          SQL_LONG   : Result := FloatToStr(PInteger(sqldata)^  / ScaleDivisor[sqlscale]);
+          SQL_SHORT  : Result := FormatFloat(ScaleFormat[sqlscale], PSmallInt(sqldata)^ / ScaleDivisor[sqlscale]);
+          SQL_LONG   : Result := FormatFloat(ScaleFormat[sqlscale], PInteger(sqldata)^  / ScaleDivisor[sqlscale]);
           SQL_INT64,
-          SQL_QUAD   : Result := FloatToStr(PInt64(sqldata)^    / ScaleDivisor[sqlscale]);
+          SQL_QUAD   : Result := FormatFloat(ScaleFormat[sqlscale], PInt64(sqldata)^ / ScaleDivisor[sqlscale]);
           SQL_D_FLOAT,
-          SQL_DOUBLE : Result := FloatToStr(PDouble(sqldata)^);
+          SQL_DOUBLE : Result := FormatFloat(ScaleFormat[sqlscale], PDouble(sqldata)^);
         else
           raise EUIBConvertError.Create(EUIB_UNEXPECTEDERROR);
         end;
