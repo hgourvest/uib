@@ -230,7 +230,7 @@ type
     procedure DoOnGetDBExceptionClass(Number: Integer; out Excep: EUIBExceptionClass); virtual;
   public
     { Constructor method. }
-    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
+    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent); override{$ENDIF};
     { Destructor method. }
     destructor Destroy; override;
     { Execute a SQL statement without the need to have the database connected,
@@ -549,7 +549,7 @@ type
     procedure SetDataBase(const ADatabase: TUIBDataBase); virtual;
   public
     { Constructor method. }
-    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
+    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent); override{$ENDIF};
     { Destructor method.}
     destructor Destroy; override;
     { Add a database to the transaction. }
@@ -731,7 +731,7 @@ type
 
   public
     { Constructor method. }
-    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
+    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent); override{$ENDIF};
     { Destructor method. }
     destructor Destroy; override;
     { Close the statement. You can commit or rollback the transaction when closing. }
@@ -916,7 +916,7 @@ type
     function GetDatabase: TUIBDataBase;
     procedure SetDatabase(const Value: TUIBDataBase);
   public
-    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
+    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent); override{$ENDIF};
     destructor Destroy; override;
     procedure ExecuteScript;
   published
@@ -953,7 +953,7 @@ type
     function CreateParam(code: AnsiChar; const Value: RawByteString): RawByteString; overload;
     function CreateParam(code: AnsiChar; Value: Integer): RawByteString; overload;
   public
-    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
+    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent); override{$ENDIF};
     destructor Destroy; override;
   published
     property UserName: string read FUserName write FUserName;
@@ -975,7 +975,7 @@ type
     procedure SetBackupFiles(const Value: TStrings);
     function CreateStartSPB: RawByteString; virtual; abstract;
   public
-    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
+    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent); override{$ENDIF};
     destructor Destroy; override;
     procedure Run;
   published
@@ -1010,7 +1010,7 @@ type
     FPageSize: Cardinal;
     function CreateStartSPB: RawByteString; override;
   public
-    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
+    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent); override{$ENDIF};
   published
     property Options: TRestoreOptions read FOptions write FOptions default [roCreateNewDB];
     property PageSize: Cardinal read FPageSize write FPageSize default 0;
@@ -1051,7 +1051,7 @@ type
     procedure SetStringParam(aParam: Integer; const aValue: string);
     procedure RunAction(aAction: TSecurityAction);
   public
-    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
+    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent); override{$ENDIF};
     destructor Destroy; override;
     { tell the server to add the user specified to the security database }
     procedure AddUser;
@@ -1104,7 +1104,7 @@ type
     function CreateStartSPB: RawByteString; virtual;
   public
     procedure Run;
-    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
+    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent); override{$ENDIF};
   published
     property Options: TRepairOptions read FOptions write FOptions;
     property Database: string read FDatabase write FDatabase;
@@ -1139,7 +1139,7 @@ type
       Operation: TOperation); override;
   {$ENDIF}
   public
-    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent){$ENDIF}; override;
+    constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent); override{$ENDIF};
     destructor Destroy; override;
   published
     property AutoRegister: boolean read FAutoRegister write SetAutoRegister;
