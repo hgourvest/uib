@@ -824,6 +824,9 @@ type
     function Select<T>(const AFilter: TUIBMethodFilter<T>): IUIBEnumerable<T>;
 {$ENDIF}
 
+    { Return the rows affected by this statement }
+    procedure AffectedRows(out SelectedRows, InsertedRows, UpdatedRows, DeletedRows: Cardinal);
+
     { The internal statement handle. }
     property StHandle: IscStmtHandle read FStHandle;
     { Use fields to read the current record. }
@@ -2378,6 +2381,13 @@ procedure TUIBStatement.EndExecute(const ETM: TEndTransMode; Auto, Drop: boolean
 begin
   FCurrentState := qsPrepare;
   EndPrepare(ETM, Auto, Drop);
+end;
+
+procedure TUIBStatement.AffectedRows(out SelectedRows, InsertedRows, UpdatedRows,
+  DeletedRows: Cardinal);
+begin
+  with FindDataBase, FLibrary do
+    DSQLInfoRowsAffected2(FStHandle, SelectedRows, InsertedRows, UpdatedRows, DeletedRows);
 end;
 
 procedure TUIBStatement.BeginExecImme;

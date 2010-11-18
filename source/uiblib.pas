@@ -1007,8 +1007,8 @@ type
     procedure DSQLInfo(var StmtHandle: IscStmtHandle; const Items: array of byte; var buffer: AnsiString);
     function  DSQLInfoPlan(var StmtHandle: IscStmtHandle): string;
     function  DSQLInfoStatementType(var StmtHandle: IscStmtHandle): TUIBStatementType;
-    function  DSQLInfoRowsAffected(var StmtHandle: IscStmtHandle;
-      StatementType: TUIBStatementType): Cardinal;
+    function  DSQLInfoRowsAffected(var StmtHandle: IscStmtHandle; StatementType: TUIBStatementType): Cardinal;
+    procedure DSQLInfoRowsAffected2(var StmtHandle: IscStmtHandle; out SelectedRows, InsertedRows, UpdatedRows, DeletedRows: Cardinal);
 
     procedure DDLExecute(var DBHandle: IscDbHandle; var TraHandle: IscTrHandle; const ddl: AnsiString);
 
@@ -2315,8 +2315,8 @@ const
     Result := STInfo.InfoType;
   end;
 
-  function TUIBLibrary.DSQLInfoRowsAffected(var StmtHandle: IscStmtHandle;
-    StatementType: TUIBStatementType): Cardinal;
+  procedure TUIBLibrary.DSQLInfoRowsAffected2(var StmtHandle: IscStmtHandle;
+    out SelectedRows, InsertedRows, UpdatedRows, DeletedRows: Cardinal);
   var
     InfoData : packed record
       InfoCode: byte;
@@ -2330,17 +2330,33 @@ const
     end;
     Command: byte;
   begin
+    Command := isc_info_sql_records;
+    CheckUIBApiCall(isc_dsql_sql_info(@FStatusVector, @StmtHandle, 1, @Command,
+      SizeOf(InfoData), @InfoData));
+    for command := 0 to 3 do
+      with InfoData.Infos[command] do
+      case InfoCode of
+        isc_info_req_select_count: SelectedRows := Rows;
+        isc_info_req_insert_count: InsertedRows := Rows;
+        isc_info_req_update_count: UpdatedRows := Rows;
+        isc_info_req_delete_count: DeletedRows := Rows;
+      end;
+  end;
+
+  function TUIBLibrary.DSQLInfoRowsAffected(var StmtHandle: IscStmtHandle;
+    StatementType: TUIBStatementType): Cardinal;
+  var
+    SelectedRows, InsertedRows, UpdatedRows, DeletedRows: Cardinal;
+  begin
     if not (StatementType in [stUpdate, stDelete, stInsert, stExecProcedure]) then
       Result := 0 else
     begin
-      Command := isc_info_sql_records;
-      CheckUIBApiCall(isc_dsql_sql_info(@FStatusVector, @StmtHandle, 1, @Command,
-        SizeOf(InfoData), @InfoData));
+      DSQLInfoRowsAffected2(StmtHandle, SelectedRows, InsertedRows, UpdatedRows, DeletedRows);
       case StatementType of
-        stUpdate: Result := InfoData.Infos[0].Rows;
-        stDelete: Result := InfoData.Infos[1].Rows;
-        stInsert: Result := InfoData.Infos[3].Rows;
-        stExecProcedure: Result := InfoData.Infos[0].Rows + InfoData.Infos[1].Rows + InfoData.Infos[3].Rows;
+        stUpdate: Result := UpdatedRows;
+        stDelete: Result := DeletedRows;
+        stInsert: Result := InsertedRows;
+        stExecProcedure: Result := InsertedRows + UpdatedRows + DeletedRows;
       else
         Result := 0;
       end;
