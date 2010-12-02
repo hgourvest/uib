@@ -1237,8 +1237,12 @@ begin {$IFDEF DEBUG}SendDebug('TUIBDbxCommand.setParameter');{$ENDIF}
       end;
     fldBCD: // ftBCD ftFMTBcd: SizeOf(TBcd) db
       begin
-        BCDToCurr(TBCD(pBuffer^), Curr);
-        FStatement.Params.AsCurrency[ulParameter] := Curr;
+        if TBCD(pBuffer^).SignSpecialPlaces <= 4 then
+        begin
+          BCDToCurr(TBCD(pBuffer^), Curr);
+          FStatement.Params.AsCurrency[ulParameter] := Curr;
+        end else
+          FStatement.Params.AsDouble[ulParameter] :=  BcdToDouble(TBCD(pBuffer^));
       end;
     fldTIME: // ftTime: SizeOf(Integer)
       begin
