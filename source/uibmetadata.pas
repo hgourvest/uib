@@ -4595,11 +4595,11 @@ begin
     Stream.WriteString(' DEFAULT ' + FDefaultValue);
   if FNotNull then
     Stream.WriteString(' NOT NULL');
+  if (FValidationSource <> '') then
+    Stream.WriteString(' ' + FValidationSource);
   if (FDomain < 0) and (FComputedSource = '') and
      (FFieldType in [uftChar..uftCstring]) and (FCollation <> '') then
     Stream.WriteString(' COLLATE ' + FCollation);
-  if (FValidationSource <> '') then
-    Stream.WriteString(' ' + FValidationSource);
 end;
 
 procedure TMetaTableField.SaveToStream(Stream: TStream);
