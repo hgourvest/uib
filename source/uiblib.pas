@@ -382,11 +382,7 @@ const
 {$IFDEF IB7_UP}
   MaxParamLength = 274;
 {$ELSE}
-{$IFDEF CPUX86_64}
-  MaxParamLength = 130;
-{$ELSE}
   MaxParamLength = 125;
-{$ENDIF}
 {$ENDIF}
 
 type
