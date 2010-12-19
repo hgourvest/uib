@@ -172,10 +172,6 @@ type
     FOnInfoLimbo: TOnInfoIntegerCount;
     FOnInfoUserNames: TOnInfoStringCount;
 
-    function ReadParamString(Param: String; Default: String = ''): String;
-    procedure WriteParamString(Param: String; Value: String);
-    function ReadParamInteger(Param: String; Default: Integer): Integer;
-    procedure WriteParamInteger(Param: String; Value: Integer);
     procedure SetParams(const Value: TStrings);
     procedure SetDatabaseName(const Value: TFileName);
     procedure SetConnected(const Value: boolean);
@@ -228,6 +224,10 @@ type
     function CanConnect : Boolean; virtual;
     procedure DoOnConnectionLost(Lib: TUIBLibrary); virtual;
     procedure DoOnGetDBExceptionClass(Number: Integer; out Excep: EUIBExceptionClass); virtual;
+    function ReadParamString(Param: String; Default: String = ''): String;
+    procedure WriteParamString(Param: String; Value: String);
+    function ReadParamInteger(Param: String; Default: Integer): Integer;
+    procedure WriteParamInteger(Param: String; Value: Integer);
   public
     { Constructor method. }
     constructor Create{$IFNDEF UIB_NO_COMPONENT}(AOwner: TComponent); override{$ENDIF};
@@ -877,6 +877,8 @@ type
     property BufferChunks: Cardinal read FBufferChunks write FBufferChunks default 1000;
     { OnClose event. }
     property OnClose: TNotifyEvent read FOnClose write FOnClose;
+    // processed SQL statement without named parametters.
+    property ParsedSQL: string read FParsedSQL;
   end;
 
   {Oo.......................................................................oO
@@ -2977,7 +2979,7 @@ begin
   begin
     try
       FSQLResult.ClearRecords;
-      if FUseCursor and (FStatementType in [stSelect, stSelectForUpdate]) then
+      if {FUseCursor and} (FStatementType in [stSelect, stSelectForUpdate]) then
         with FindDataBase.FLibrary do
           DSQLFreeStatement(FStHandle, DSQL_close);
     except

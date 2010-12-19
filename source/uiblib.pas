@@ -458,76 +458,77 @@ type
   private
     FXSQLDA: PUIBSQLDa;
     FCharacterSet: TCharacterSet;
-    function GetAllocatedFields: Word;
-    procedure SetAllocatedFields(Fields: Word);
-    function GetFieldCount: Integer;
-    function GetSQLType(const Index: Word): Smallint;
-    function GetSQLLen(const Index: Word): Smallint;
-    function GetSQLScale(const Index: Word): Smallint;
-    procedure ConvertString(const Code: Smallint; Index: Word; out value: Int64); overload;
-    procedure ConvertString(const Code: Smallint; Index: Word; out value: Double); overload;
-    procedure ConvertString(const Code: Smallint; Index: Word; out value: Integer); overload;
-    procedure ConvertString(const Code: Smallint; Index: Word; out value: Single); overload;
-    procedure ConvertString(const Code: Smallint; Index: Word; out value: Smallint); overload;
-    procedure ConvertString(const Code: Smallint; Index: Word; out value: TDateTime); overload;
-    procedure ConvertString(const Code: Smallint; Index: Word; out value: Currency); overload;
-    procedure ConvertString(const Code: Smallint; Index: Word; out value: boolean); overload;
-    procedure ConvertString(const Code: Smallint; Index: Word; out value: Cardinal); overload;
-    procedure ConvertStringToDate(const Code: Smallint; Index: Word; out value: Integer);
-    procedure DecodeStringB(const Code: Smallint; Index: Word; out Str: RawByteString);
-    procedure DecodeStringW(const Code: Smallint; Index: Word; out Str: UnicodeString);
-    procedure DecodeStringA(const Code: Smallint; Index: Word; out Str: AnsiString);
-    procedure DecodeString(const Code: Smallint; Index: Word; out Str: string); overload;
-    function DecodeString(const Code: Smallint; Index: Word): string; overload;
-    procedure EncodeStringA(Code: Smallint; Index: Word; const str: AnsiString);
-    procedure EncodeStringW(Code: Smallint; Index: Word; const str: UnicodeString);
-    procedure EncodeStringB(Code: Smallint; Index: Word; const str: RawByteString);
-    procedure EncodeString(Code: Smallint; Index: Word; const str: string);
-    function GetAsString(const Index: Word): string;
-    procedure SetAsString(const Index: Word; const Value: string);
-    function GetByNameAsString(const name: string): string;
-    procedure SetByNameAsString(const name, Value: string);
-    function GetByNameAsRawByteString(const name: string): RawByteString;
+  protected
+    function GetAllocatedFields: Word; virtual;
+    procedure SetAllocatedFields(Fields: Word); virtual;
+    function GetFieldCount: Integer; virtual;
+    function GetSQLType(const Index: Word): Smallint; virtual;
+    function GetSQLLen(const Index: Word): Smallint; virtual;
+    function GetSQLScale(const Index: Word): Smallint; virtual;
+    procedure ConvertString(const Code: Smallint; Index: Word; out value: Int64); overload; virtual;
+    procedure ConvertString(const Code: Smallint; Index: Word; out value: Double); overload; virtual;
+    procedure ConvertString(const Code: Smallint; Index: Word; out value: Integer); overload; virtual;
+    procedure ConvertString(const Code: Smallint; Index: Word; out value: Single); overload; virtual;
+    procedure ConvertString(const Code: Smallint; Index: Word; out value: Smallint); overload; virtual;
+    procedure ConvertString(const Code: Smallint; Index: Word; out value: TDateTime); overload; virtual;
+    procedure ConvertString(const Code: Smallint; Index: Word; out value: Currency); overload; virtual;
+    procedure ConvertString(const Code: Smallint; Index: Word; out value: boolean); overload; virtual;
+    procedure ConvertString(const Code: Smallint; Index: Word; out value: Cardinal); overload; virtual;
+    procedure ConvertStringToDate(const Code: Smallint; Index: Word; out value: Integer); virtual;
+    procedure DecodeStringB(const Code: Smallint; Index: Word; out Str: RawByteString); virtual;
+    procedure DecodeStringW(const Code: Smallint; Index: Word; out Str: UnicodeString); virtual;
+    procedure DecodeStringA(const Code: Smallint; Index: Word; out Str: AnsiString); virtual;
+    procedure DecodeString(const Code: Smallint; Index: Word; out Str: string); overload; virtual;
+    function DecodeString(const Code: Smallint; Index: Word): string; overload; virtual;
+    procedure EncodeStringA(Code: Smallint; Index: Word; const str: AnsiString); virtual;
+    procedure EncodeStringW(Code: Smallint; Index: Word; const str: UnicodeString); virtual;
+    procedure EncodeStringB(Code: Smallint; Index: Word; const str: RawByteString); virtual;
+    procedure EncodeString(Code: Smallint; Index: Word; const str: string); virtual;
+    function GetAsString(const Index: Word): string; virtual;
+    procedure SetAsString(const Index: Word; const Value: string); virtual;
+    function GetByNameAsString(const name: string): string; virtual;
+    procedure SetByNameAsString(const name, Value: string); virtual;
+    function GetByNameAsRawByteString(const name: string): RawByteString; virtual;
     procedure SetByNameAsRawByteString(const name: string;
-      const Value: RawByteString);
+      const Value: RawByteString); virtual;
   {$IFDEF GUID_TYPE}
-    procedure EncodeGUID(Code: Smallint; Index: Word; const G: TGUID);
+    procedure EncodeGUID(Code: Smallint; Index: Word; const G: TGUID); virtual;
   {$ENDIF}
   protected
-    function GetSqlName(const Index: Word): string;
-    function GetRelName(const Index: Word): string;
-    function GetOwnName(const Index: Word): string;
-    function GetAliasName(const Index: Word): string;
+    function GetSqlName(const Index: Word): string; virtual;
+    function GetRelName(const Index: Word): string; virtual;
+    function GetOwnName(const Index: Word): string; virtual;
+    function GetAliasName(const Index: Word): string; virtual;
 
     function GetFieldType(const Index: Word): TUIBFieldType; virtual;
 
-    function GetIsNumeric(const Index: Word): boolean;
-    function GetIsBlob(const Index: Word): boolean;
-    function GetIsBlobText(const Index: Word): boolean;
-    function GetIsArray(const Index: Word): boolean;
+    function GetIsNumeric(const Index: Word): boolean; virtual;
+    function GetIsBlob(const Index: Word): boolean; virtual;
+    function GetIsBlobText(const Index: Word): boolean; virtual;
+    function GetIsArray(const Index: Word): boolean; virtual;
     function GetIsNullable(const Index: Word): boolean; virtual;
 
-    function GetIsNull(const Index: Word): boolean;
-    function GetAsDouble(const Index: Word): Double;
-    function GetAsCurrency(const Index: Word): Currency;
-    function GetAsInt64(const Index: Word): Int64;
-    function GetAsInteger(const Index: Word): Integer;
-    function GetAsSingle(const Index: Word): Single;
-    function GetAsSmallint(const Index: Word): Smallint;
+    function GetIsNull(const Index: Word): boolean; virtual;
+    function GetAsDouble(const Index: Word): Double; virtual;
+    function GetAsCurrency(const Index: Word): Currency; virtual;
+    function GetAsInt64(const Index: Word): Int64; virtual;
+    function GetAsInteger(const Index: Word): Integer; virtual;
+    function GetAsSingle(const Index: Word): Single; virtual;
+    function GetAsSmallint(const Index: Word): Smallint; virtual;
     function GetAsRawByteString(const Index: Word): RawByteString; virtual;
     function GetAsAnsiString(const Index: Word): AnsiString; virtual;
     function GetAsUnicodeString(const Index: Word): UnicodeString; virtual;
-    function GetAsQuad(const Index: Word): TISCQuad;
+    function GetAsQuad(const Index: Word): TISCQuad; virtual;
     function GetAsVariant(const Index: Word): Variant; virtual;
-    function GetAsDateTime(const Index: Word): TDateTime;
-    function GetAsDate(const Index: Word): Integer;
-    function GetAsTime(const Index: Word): Cardinal;
-    function GetAsBoolean(const Index: Word): boolean;
+    function GetAsDateTime(const Index: Word): TDateTime; virtual;
+    function GetAsDate(const Index: Word): Integer; virtual;
+    function GetAsTime(const Index: Word): Cardinal; virtual;
+    function GetAsBoolean(const Index: Word): boolean; virtual;
 {$IFDEF DELPHI14_UP}
-    function GetAsTValue(const Index: Word): TValue;
+    function GetAsTValue(const Index: Word): TValue; virtual;
 {$ENDIF}
   {$IFDEF GUID_TYPE}
-    function GetAsGUID(const Index: Word): TGUID;
+    function GetAsGUID(const Index: Word): TGUID; virtual;
   {$ENDIF}
 
     procedure SetIsNull(const Index: Word; const Value: boolean); virtual;
@@ -597,7 +598,7 @@ type
   {$ENDIF}
   public
     constructor Create(aCharacterSet: TCharacterSet); virtual;
-    procedure CheckRange(const Index: Word);
+    procedure CheckRange(const Index: Word); virtual;
     function GetFieldIndex(const name: AnsiString): Word; virtual;
     function TryGetFieldIndex(const name: AnsiString; out index: Word): Boolean; virtual;
 {$IFDEF DELPHI14_UP}
@@ -742,19 +743,20 @@ type
     FInMemoryEOF: boolean;
     FArrayInfos: array of TArrayInfo;
     FStatBlobsSize: Int64;
-    procedure AddCurrentRecord;
-    procedure FreeBlobs(Buffer: Pointer);
-    function GetRecordCount: Integer;
-    function GetCurrentRecord: Integer;
-    procedure AllocateDataBuffer;
-    function GetEof: boolean;
-    function GetUniqueRelationName: string;
-    function GetBof: boolean;
-    function GetDataQuadOffset(const index: word): Pointer;
-    function GetBlobData(const index: word): PBlobData;
-    function GetArrayData(const index: word): Pointer;
-    function GetArrayCount: Word;
-    function GetArrayInfos(const index: word): PArrayInfo;
+  protected
+    procedure AddCurrentRecord; virtual;
+    procedure FreeBlobs(Buffer: Pointer); virtual;
+    function GetRecordCount: Integer; virtual;
+    function GetCurrentRecord: Integer; virtual;
+    procedure AllocateDataBuffer; virtual;
+    function GetEof: boolean; virtual;
+    function GetUniqueRelationName: string; virtual;
+    function GetBof: boolean; virtual;
+    function GetDataQuadOffset(const index: word): Pointer; virtual;
+    function GetBlobData(const index: word): PBlobData; virtual;
+    function GetArrayData(const index: word): Pointer; virtual;
+    function GetArrayCount: Word; virtual;
+    function GetArrayInfos(const index: word): PArrayInfo; virtual;
   protected
     function GetAsRawByteString(const Index: Word): RawByteString; override;
     function GetAsAnsiString(const Index: Word): AnsiString; override;
@@ -766,11 +768,11 @@ type
       FetchBlobs: boolean = false;
       BufferChunks: Cardinal = 1000); reintroduce;
     destructor Destroy; override;
-    procedure ClearRecords;
-    procedure GetRecord(const Index: Integer);
-    procedure SaveToStream(Stream: TStream);
-    procedure LoadFromStream(Stream: TStream);
-    procedure Next;
+    procedure ClearRecords; virtual;
+    procedure GetRecord(const Index: Integer); virtual;
+    procedure SaveToStream(Stream: TStream); virtual;
+    procedure LoadFromStream(Stream: TStream); virtual;
+    procedure Next; virtual;
 
     property BlobData[const index: word]: PBlobData read GetBlobData;
 
@@ -778,30 +780,30 @@ type
     property ArrayInfos[const index: word]: PArrayInfo read GetArrayInfos;
     property ArrayCount: Word read GetArrayCount;
 
-    procedure ReadBlob(const Index: Word; Stream: TStream); overload;
-    procedure ReadBlobB(const Index: Word; var data: RawByteString); overload;
-    procedure ReadBlobA(const Index: Word; var str: AnsiString); overload;
-    procedure ReadBlobW(const Index: Word; var str: UnicodeString); overload;
-    procedure ReadBlob(const Index: Word; var str: string); overload;
-    function ReadBlobB(const Index: Word): RawByteString; overload;
-    function ReadBlobA(const Index: Word): AnsiString; overload;
-    function ReadBlobW(const Index: Word): UnicodeString; overload;
-    function ReadBlob(const Index: Word): string; overload;
-    procedure ReadBlob(const Index: Word; var Value: Variant); overload;
-    procedure ReadBlob(const Index: Word; Data: Pointer); overload;
-    procedure ReadBlob(const name: string; Stream: TStream); overload;
-    procedure ReadBlobB(const name: string; var data: RawByteString); overload;
-    procedure ReadBlobA(const name: string; var str: AnsiString); overload;
-    procedure ReadBlobW(const name: string; var str: UnicodeString); overload;
-    procedure ReadBlob(const name: string; var str: string); overload;
-    function ReadBlobB(const name: string): RawByteString; overload;
-    function ReadBlobA(const name: string): AnsiString; overload;
-    function ReadBlobW(const name: string): UnicodeString; overload;
-    function ReadBlob(const name: string): string; overload;
-    procedure ReadBlob(const name: string; var Value: Variant); overload;
-    procedure ReadBlob(const name: string; Data: Pointer); overload;
+    procedure ReadBlob(const Index: Word; Stream: TStream); overload; virtual;
+    procedure ReadBlobB(const Index: Word; var data: RawByteString); overload; virtual;
+    procedure ReadBlobA(const Index: Word; var str: AnsiString); overload; virtual;
+    procedure ReadBlobW(const Index: Word; var str: UnicodeString); overload; virtual;
+    procedure ReadBlob(const Index: Word; var str: string); overload; virtual;
+    function ReadBlobB(const Index: Word): RawByteString; overload; virtual;
+    function ReadBlobA(const Index: Word): AnsiString; overload; virtual;
+    function ReadBlobW(const Index: Word): UnicodeString; overload; virtual;
+    function ReadBlob(const Index: Word): string; overload; virtual;
+    procedure ReadBlob(const Index: Word; var Value: Variant); overload; virtual;
+    procedure ReadBlob(const Index: Word; Data: Pointer); overload; virtual;
+    procedure ReadBlob(const name: string; Stream: TStream); overload; virtual;
+    procedure ReadBlobB(const name: string; var data: RawByteString); overload; virtual;
+    procedure ReadBlobA(const name: string; var str: AnsiString); overload; virtual;
+    procedure ReadBlobW(const name: string; var str: UnicodeString); overload; virtual;
+    procedure ReadBlob(const name: string; var str: string); overload; virtual;
+    function ReadBlobB(const name: string): RawByteString; overload; virtual;
+    function ReadBlobA(const name: string): AnsiString; overload; virtual;
+    function ReadBlobW(const name: string): UnicodeString; overload; virtual;
+    function ReadBlob(const name: string): string; overload; virtual;
+    procedure ReadBlob(const name: string; var Value: Variant); overload; virtual;
+    procedure ReadBlob(const name: string; Data: Pointer); overload; virtual;
 
-    function GetBlobSize(const Index: Word): Cardinal;
+    function GetBlobSize(const Index: Word): Cardinal; virtual;
 
     property Eof: boolean read GetEof;
     property ScrollEOF: boolean read FScrollEOF;
@@ -864,14 +866,15 @@ type
   TSQLParams = class(TSQLDA)
   private
     FParamCount: Word;
-    function GetFieldName(const Index: Word): string;
-    procedure AllocateDataBuffer(AInit: boolean = true);
-    function GetMaxSqlLen(const Index: Word): SmallInt;
   protected
-    function AddFieldA(const name: AnsiString): Word;
-    function AddFieldW(const name: UnicodeString): Word;
-    function AddField(const name: string): Word;
-    procedure SetFieldType(const Index: Word; Size: Integer; Code: SmallInt; Scale: Smallint);
+    function GetFieldName(const Index: Word): string; virtual;
+    procedure AllocateDataBuffer(AInit: boolean = true); virtual;
+    function GetMaxSqlLen(const Index: Word): SmallInt; virtual;
+
+    function AddFieldA(const name: AnsiString): Word; virtual;
+    function AddFieldW(const name: UnicodeString): Word; virtual;
+    function AddField(const name: string): Word; virtual;
+    procedure SetFieldType(const Index: Word; Size: Integer; Code: SmallInt; Scale: Smallint); virtual;
 
     function GetIsNullable(const Index: Word): boolean; override;
 
@@ -896,13 +899,13 @@ type
   public
     constructor Create(Charset: TCharacterSet); override;
     destructor Destroy; override;
-    procedure Clear;
-    function Parse(const SQL: string): string;
+    procedure Clear; virtual;
+    function Parse(const SQL: string): string; virtual;
     function TryGetFieldIndex(const name: AnsiString; out Index: Word): Boolean; override;
     function GetFieldIndex(const name: AnsiString): Word; override;
     // don't use this method
     procedure AddFieldType(const Name: string; FieldType: TUIBFieldType;
-      Scale: TScale = 1; Precision: byte = 0);
+      Scale: TScale = 1; Precision: byte = 0); virtual;
 
     property Values[const name: string]: Variant read GetByNameAsVariant; default;
     property FieldName[const Index: Word]: string read GetFieldName;
@@ -1515,10 +1518,17 @@ const
         Exception.Message := Exception.Message + string(ErrSQLInterprete(Exception.FSQLCode)) + NewLine;
       Exception.FGDSCode := Status;
       Exception.FErrorCode := GETCode(Status);
+      Exception.Message := Exception.Message + NewLine +
+        'GDS Code: ' + IntToStr(Exception.FGDSCode);
 {$IFDEF FB25_UP}
       Exception.FSQLState := ErrSqlState;
 {$ENDIF}
       Exception.Message := Exception.Message + 'Error Code: ' + IntToStr(Exception.FErrorCode);
+
+      if ((Status = isc_lost_db_connection) or (Status = isc_network_error)
+        or (Status = isc_shutdown)) and Assigned(FOnConnectionLost) then
+          FOnConnectionLost(Self);
+
       raise Exception;
     end;
   begin
@@ -1545,9 +1555,6 @@ const
       else
         Excep := EUIBError;
       end;
-      if ((Status = isc_lost_db_connection) or (Status = isc_network_error)) and
-        Assigned(FOnConnectionLost) then
-          FOnConnectionLost(Self);
       RaiseException(Excep)
     end;
   end;
@@ -6702,7 +6709,14 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
       p^.ParamNameLength := len;
       if p^.ParamNameLength > 0 then
         Move(PAnsiChar(Name)^, p^.ParamName[0], p^.ParamNameLength);
-      p^.sqltype    := SQL_TEXT + 1; // tip: don't allocate memory if not defined
+
+      {$IFDEF FB25_UP}
+      p^.sqltype    := SQL_NULL + 1;
+      {$ELSE}
+      // tip: don't allocate memory if not defined
+      p^.sqltype    := SQL_TEXT + 1;
+      {$ENDIF}
+
       p^.sqlscale   := 0;
       p^.sqlsubtype := 0;
       p^.sqllen     := 0;
