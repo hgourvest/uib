@@ -26,6 +26,10 @@
   {$DEFINE UNIX}
 {$ENDIF}
 
+{$IFDEF CPUX64}
+  {$DEFINE CPU64}
+{$ENDIF}
+
 // *****************
 // BEGIN USER DEFINE
 // *****************

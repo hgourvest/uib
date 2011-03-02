@@ -43,7 +43,11 @@ uses
 type
 
 {$ifndef FPC}
-  PtrInt = type Longint;
+  {$IFDEF CPUX64}
+    PtrInt = IntPtr;
+  {$ELSE}
+    PtrInt = type Longint;
+  {$ENDIF}
 {$endif}
 
 {$IFNDEF COMPILER6_UP}
