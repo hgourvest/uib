@@ -901,7 +901,7 @@ type
     const Statement: string) of object;
 
   { Executing error event, occur if executed query is failed. }
-  TOnExecuteError = procedure(Sender: TObject; Error: Exception; SQLText:
+  TOnExecuteError = procedure(Sender: TObject; Error: Exception; const SQLText:
     string; var Handled: Boolean) of object;
 
   { The script component. }
