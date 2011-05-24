@@ -392,12 +392,12 @@ begin
           PDouble(Buffer)^ := PDouble(sqldata)^;
       uftTimestamp:
         begin
-          {$IFNDEF FPC}
-            DecodeTimeStamp(PIscTimeStamp(sqldata), PDouble(Buffer)^);
-          {$ELSE}
-            DecodeTimeStamp(PIscTimeStamp(sqldata),  TTimeStamp(Buffer^));
+//          {$IFNDEF FPC}
+//            DecodeTimeStamp(PIscTimeStamp(sqldata), TTimeStamp(Buffer^));
+//          {$ELSE}
+            DecodeTimeStamp(PIscTimeStamp(sqldata), TTimeStamp(Buffer^));
             Double(Buffer^) := TimeStampToMSecs(TTimeStamp(Buffer^));
-          {$ENDIF}
+//          {$ENDIF}
         end;
       uftBlob, uftBlobId:
         begin
