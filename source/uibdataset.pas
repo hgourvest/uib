@@ -392,12 +392,8 @@ begin
           PDouble(Buffer)^ := PDouble(sqldata)^;
       uftTimestamp:
         begin
-//          {$IFNDEF FPC}
-//            DecodeTimeStamp(PIscTimeStamp(sqldata), TTimeStamp(Buffer^));
-//          {$ELSE}
-            DecodeTimeStamp(PIscTimeStamp(sqldata), TTimeStamp(Buffer^));
-            Double(Buffer^) := TimeStampToMSecs(TTimeStamp(Buffer^));
-//          {$ENDIF}
+          DecodeTimeStamp(PIscTimeStamp(sqldata), TTimeStamp(Buffer^));
+          Double(Buffer^) := TimeStampToMSecs(TTimeStamp(Buffer^));
         end;
       uftBlob, uftBlobId:
         begin
@@ -417,24 +413,9 @@ begin
             end;
           end;
         end;
-      uftDate:
-        {$IFNDEF FPC}
-          PDouble(Buffer)^ := PInteger(sqldata)^ - DateOffset;
-        {$ELSE}
-          PInteger(Buffer)^ := PInteger(sqldata)^ - DateOffset + 693594;
-        {$ENDIF}
-      uftTime:
-        {$IFNDEF FPC}
-          PDouble(Buffer)^ := PCardinal(sqldata)^ / TimeCoeff;
-        {$ELSE}
-          PInteger(Buffer)^ := PCardinal(sqldata)^ div 10;
-        {$ENDIF}
-      uftInt64:
-        {.$IFDEF FPC}
-          //PInteger(Buffer)^ := PInt64(sqldata)^;
-        {.$ELSE}
-          PInt64(Buffer)^ := PInt64(sqldata)^;
-        {.$ENDIF}
+      uftDate: PInteger(Buffer)^ := PInteger(sqldata)^ - DateOffset + 693594;
+      uftTime: PInteger(Buffer)^ := PCardinal(sqldata)^ div 10;
+      uftInt64:PInt64(Buffer)^ := PInt64(sqldata)^;
     {$IFDEF IB7_UP}
       uftBoolean:
         {$IFDEF FPC}
