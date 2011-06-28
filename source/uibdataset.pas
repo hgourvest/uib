@@ -392,8 +392,12 @@ begin
           PDouble(Buffer)^ := PDouble(sqldata)^;
       uftTimestamp:
         begin
-          DecodeTimeStamp(PIscTimeStamp(sqldata), TTimeStamp(Buffer^));
-          Double(Buffer^) := TimeStampToMSecs(TTimeStamp(Buffer^));
+          if Native then
+          begin
+            DecodeTimeStamp(PIscTimeStamp(sqldata), TTimeStamp(Buffer^));
+            Double(Buffer^) := TimeStampToMSecs(TTimeStamp(Buffer^));
+          end else
+            DecodeTimeStamp(PIscTimeStamp(sqldata), TTimeStamp(Buffer^));
         end;
       uftBlob, uftBlobId:
         begin
@@ -413,8 +417,14 @@ begin
             end;
           end;
         end;
-      uftDate: PInteger(Buffer)^ := PInteger(sqldata)^ - DateOffset + 693594;
-      uftTime: PInteger(Buffer)^ := PCardinal(sqldata)^ div 10;
+      uftDate:
+        if native then
+          PInteger(Buffer)^ := PInteger(sqldata)^ - DateOffset + 693594 else
+          PDouble(Buffer)^ := PInteger(sqldata)^ - DateOffset;
+      uftTime:
+        if native then
+          PInteger(Buffer)^ := PCardinal(sqldata)^ div 10 else
+          PDouble(Buffer)^ := PCardinal(sqldata)^ / TimeCoeff;
       uftInt64:PInt64(Buffer)^ := PInt64(sqldata)^;
     {$IFDEF IB7_UP}
       uftBoolean:
