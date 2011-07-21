@@ -397,7 +397,7 @@ begin
             DecodeTimeStamp(PIscTimeStamp(sqldata), TTimeStamp(Buffer^));
             Double(Buffer^) := TimeStampToMSecs(TTimeStamp(Buffer^));
           end else
-            DecodeTimeStamp(PIscTimeStamp(sqldata), TTimeStamp(Buffer^));
+            DecodeTimeStamp(PIscTimeStamp(sqldata), Double(Buffer^));
         end;
       uftBlob, uftBlobId:
         begin
