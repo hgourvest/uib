@@ -288,7 +288,7 @@ begin
                   TBCD(Buffer^) := strToBcd(FormatFloat(ScaleFormat[sqlscale], PSmallint(sqldata)^ / scaledivisor[sqlscale]));
               {$ELSE}
                 {$IFDEF COMPILER5_UP}
-                  if (sqlScale >= -4) then
+                  if (sqlScale >= -4) and not Native then
                     Currency(Buffer^) := PSmallint(sqldata)^ / scaledivisor[sqlscale] else
                     CurrToBcd(PSmallint(sqldata)^/scaledivisor[sqlscale], TBCD(Buffer^));
                 {$ELSE}
@@ -312,7 +312,7 @@ begin
                   TBCD(Buffer^) := strToBcd(FormatFloat(ScaleFormat[sqlscale], PInteger(sqldata)^ / scaledivisor[sqlscale]));
               {$ELSE}
                 {$IFDEF COMPILER5_UP}
-                  if (sqlScale >= -4) then
+                  if (sqlScale >= -4) and not Native then
                     Currency(Buffer^) := PInteger(sqldata)^ / scaledivisor[sqlscale] else
                     CurrToBcd(PInteger(sqldata)^/scaledivisor[sqlscale], TBCD(Buffer^));
                 {$ELSE}
@@ -339,9 +339,9 @@ begin
                     TBCD(Buffer^) := strToBcd(FormatFloat(ScaleFormat[sqlscale], PInt64(sqldata)^ / scaledivisor[sqlscale]));
               {$ELSE}
                 {$IFDEF COMPILER5_UP}
-                if (sqlscale = -4) then
+                if (sqlscale = -4) and not Native then
                   PInt64(Buffer)^ := PInt64(sqldata)^ else
-                  if (sqlscale > -4) then
+                  if (sqlscale > -4) and not Native then
                     PInt64(Buffer)^ := PInt64(sqldata)^ * CurrencyDivisor[sqlscale] else
                     CurrToBcd(PInt64(sqldata)^/scaledivisor[sqlscale], TBCD(Buffer^));
                 {$ELSE}
