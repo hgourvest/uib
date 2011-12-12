@@ -3674,7 +3674,7 @@ var
   FileName: AnsiString;
   AOptions: TRestoreOptions;
   Opts: Cardinal;
-{$IFDEF FB25}
+{$IFDEF FB25_UP}
   FixMeta, FixData: Boolean;
 {$ENDIF}
 begin
@@ -3703,7 +3703,7 @@ begin
   if FVerbose then
     Result := Result + isc_spb_verbose;
 
-{$IFDEF FB25}
+{$IFDEF FB25_UP}
   FixMeta := roFixMetadataCharset in FOptions;
   FixData := roFixDataCharset in FOptions;
   AOptions := FOptions - [roFixMetadataCharset, roFixDataCharset];

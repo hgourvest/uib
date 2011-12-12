@@ -786,6 +786,11 @@ const
   isc_savepoint_err                     = 335544815;
   isc_generator_name                    = 335544816;
   isc_udf_name                          = 335544817;
+  isc_sysf_argscant_both_be_zero        = 335545024;
+  isc_spb_no_id                         = 335545025;
+  isc_ee_blr_mismatch_null              = 335545026;
+  isc_ee_blr_mismatch_length            = 335545027;
+  isc_ss_out_of_bounds                  = 335545028;
 {$ENDIF IB71_UP}
 
   isc_gfix_db_name                      = 335740929;
@@ -979,6 +984,11 @@ const
   isc_dyn_package_body_exists          = 336068877;
   isc_dyn_invalid_ddl_func             = 336068878;
   isc_dyn_newfc_oldsyntax              = 336068879;
+  isc_dyn_func_param_not_found         = 336068886;
+  isc_dyn_routine_param_not_found      = 336068887;
+  isc_dyn_routine_param_ambiguous      = 336068888;
+  isc_dyn_coll_used_function           = 336068889;
+  isc_dyn_domain_used_function         = 336068890;
 {$ENDIF}
 
 {$IFDEF IB71_UP}
@@ -1209,6 +1219,20 @@ const
   isc_dsql_create_alter_view_failed    = 336397300;
   isc_dsql_recreate_view_failed        = 336397301;
   isc_dsql_drop_view_failed            = 336397302;
+  isc_dsql_drop_sequence_failed        = 336397303;
+  isc_dsql_recreate_sequence_failed    = 336397304;
+  isc_dsql_drop_index_failed           = 336397305;
+  isc_dsql_drop_filter_failed          = 336397306;
+  isc_dsql_drop_shadow_failed          = 336397307;
+  isc_dsql_drop_role_failed            = 336397308;
+  isc_dsql_drop_user_failed            = 336397309;
+  isc_dsql_create_role_failed          = 336397310;
+  isc_dsql_alter_role_failed           = 336397311;
+  isc_dsql_alter_index_failed          = 336397312;
+  isc_dsql_alter_database_failed       = 336397313;
+  isc_dsql_create_shadow_failed        = 336397314;
+  isc_dsql_create_filter_failed        = 336397315;
+  isc_dsql_create_index_failed         = 336397316;
 {$ENDIF}
 
 {$IFDEF IB71_UP}
@@ -1390,7 +1414,7 @@ const
 {$ENDIF}
 
 {$IFDEF FB30}
-  isc_err_max                           = 1121;
+  isc_err_max                           = 1146;
 {$ENDIF}
 
 {$IFDEF IB601}

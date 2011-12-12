@@ -945,9 +945,9 @@ type
     FSegmentSize: Word;
     function GetSegmentSize: Word;
     procedure SetSegmentSize(Value: Word);
-    procedure CheckUIBApiCall(const Status: ISCStatus);
   public
     constructor Create; override;
+    procedure CheckUIBApiCall(const Status: ISCStatus);
 
     property OnConnectionLost: TOnConnectionLost read FOnConnectionLost write FOnConnectionLost;
     property OnGetDBExceptionClass: TOnGetDBExceptionClass read FOnGetDBExceptionClass write FOnGetDBExceptionClass;
@@ -1008,9 +1008,9 @@ type
     function  DSQLInfoStatementType(var StmtHandle: IscStmtHandle): TUIBStatementType;
     function  DSQLInfoRowsAffected(var StmtHandle: IscStmtHandle; StatementType: TUIBStatementType): Cardinal;
     procedure DSQLInfoRowsAffected2(var StmtHandle: IscStmtHandle; out SelectedRows, InsertedRows, UpdatedRows, DeletedRows: Cardinal);
-
+{$IFNDEF FB30_UP}
     procedure DDLExecute(var DBHandle: IscDbHandle; var TraHandle: IscTrHandle; const ddl: AnsiString);
-
+{$ENDIF}
     function ArrayLookupBounds(var DBHandle: IscDbHandle; var TransHandle: IscTrHandle;
       const RelationName, FieldName: AnsiString): TArrayDesc;
     procedure ArrayGetSlice(var DBHandle: IscDbHandle; var TransHandle: IscTrHandle;
@@ -2366,12 +2366,14 @@ const
     end;
   end;
 
+{$IFNDEF FB30_UP}
   procedure TUIBLibrary.DDLExecute(var DBHandle: IscDbHandle;
     var TraHandle: IscTrHandle; const ddl: AnsiString);
   begin
     CheckUIBApiCall(isc_ddl(@FStatusVector, @DBHandle, @TraHandle,
       length(ddl), Pointer(ddl)));
   end;
+{$ENDIF}
 
 //******************************************************************************
 //  Array

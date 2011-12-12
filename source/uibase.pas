@@ -524,7 +524,12 @@ const
   dtype_int64 = 19;
 {$IFDEF FB25_UP}
   dtype_dbkey = 20;
+{$IFDEF FB30_UP}
+  dtype_boolean = 21;
   DTYPE_TYPE_MAX = 21;
+{$ELSE}
+  DTYPE_TYPE_MAX = 21;
+{$ENDIF}
 {$ELSE}
   DTYPE_TYPE_MAX = 20;
 {$ENDIF}
@@ -813,6 +818,9 @@ const
   blr_column_name  = 21;
   blr_column_name2 = 22;
 {$ENDIF}
+{$IFDEF FB30_UP}
+  blr_bool = 23;
+{$ENDIF}
 
   blr_domain_type_of = 0;
   blr_domain_full = 1;
@@ -837,6 +845,9 @@ const
   blr_default_code = 4;
   blr_raise = 5;
   blr_exception_msg = 6;
+{$IFDEF FB30_UP}
+  blr_exception_params = 7;
+{$ENDIF}
 
   blr_version4 = 4;
   blr_version5 = 5;
@@ -874,9 +885,8 @@ const
   blr_minimum = 30;
   blr_total = 31;
 
-  (* count 2
-  define blr_count2  32
-  *)
+  // unused codes: 32..33
+
   blr_add = 34;
   blr_subtract = 35;
   blr_multiply = 36;
@@ -887,12 +897,14 @@ const
   blr_parameter2 = 41;
   blr_from = 42;
   blr_via = 43;
+{$IFNDEF FB30_UP}
   blr_parameter2_old = 44; // Confusion
+{$ENDIF}
   blr_user_name = 44; // added from gds.h
   blr_null = 45;
 
 {$IFDEF FB20_UP}
-  blr_equiv	= 46;
+  blr_equiv = 46;
 {$ENDIF}
   blr_eql = 47;
   blr_neq = 48;
@@ -911,9 +923,9 @@ const
   blr_missing = 61;
   blr_unique = 62;
   blr_like = 63;
-{$IFNDEF FB20_UP}
-  blr_stream = 65; // added from gds.h
-  blr_set_index = 66; // added from gds.h
+{$IFNDEF FB20_UP} // unused codes: 64..66
+  blr_stream = 65;
+  blr_set_index = 66;
 {$ENDIF}
   blr_rse = 67;
   blr_first = 68;
@@ -930,6 +942,8 @@ const
   blr_aggregate = 79;
   blr_join_type = 80;
 
+  // unused codes: 81..82
+
 {$IFDEF IB65_UP}
   blr_rows = 81;
 
@@ -945,20 +959,28 @@ const
   blr_agg_total = 86;
   blr_agg_average = 87;
   blr_parameter3 = 88; // same as Rdb definition
+{$IFNDEF FB30_UP}
   blr_run_max = 89;
   blr_run_min = 90;
   blr_run_total = 91;
   blr_run_average = 92;
+{$ENDIF}
   blr_agg_count2 = 93;
   blr_agg_count_distinct = 94;
   blr_agg_total_distinct = 95;
   blr_agg_average_distinct = 96;
 
+  // unused codes: 97..99
+
   blr_function = 100;
   blr_gen_id = 101;
+{$IFNDEF FB30_UP}
   blr_prot_mask = 102;
+{$ENDIF}
   blr_upcase = 103;
+{$IFNDEF FB30_UP}
   blr_lock_state = 104;
+{$ENDIF}
   blr_value_if = 105;
   blr_matching2 = 106;
   blr_index = 107;
@@ -968,28 +990,39 @@ const
   blr_crack = 110;
   blr_force_crack = 111;
 {$ENDIF}
+{$IFDEF FB30_UP}
+  blr_scrollable = 109;
+{$ENDIF}
+
+{$IFNDEF FB30_UP}
   blr_seek = 112;
+{$ENDIF}
 {$IFNDEF FB20_UP}
   blr_find = 113;
 {$ENDIF}
 
   (* these indicate directions for blr_seek and blr_find *)
-
+{$IFNDEF FB30_UP}
   blr_continue = 0;
   blr_forward = 1;
   blr_backward = 2;
   blr_bof_forward = 3;
   blr_eof_backward = 4;
+{$ENDIF}
 {$IFNDEF FB20_UP}
   blr_lock_relation = 114;
   blr_lock_record = 115;
   blr_set_bookmark = 116;
   blr_get_bookmark = 117;
 {$ENDIF}
+
+  // unused codes: 110..117
+
   blr_run_count = 118; // changed from 88 to avoid conflict with blr_parameter3
   blr_rs_stream = 119;
   blr_exec_proc = 120;
 {$IFNDEF FB20_UP}
+  // unused codes: 121..123
   blr_begin_range = 121;
   blr_end_range = 122;
   blr_delete_range = 123;
@@ -1007,9 +1040,15 @@ const
   blr_release_lock = 132;
   blr_release_locks = 133;
 {$ENDIF}
+{$IFDEF FB30_UP}
+  blr_pid2 = 132;
+  blr_procedure2 = 133;
+{$ENDIF}
+
   blr_start_savepoint = 134;
   blr_end_savepoint = 135;
 {$IFNDEF FB20_UP}
+  // unused codes: 136..138
   blr_find_dbkey = 136;
   blr_range_relation = 137;
   blr_delete_ranges = 138;
@@ -1026,6 +1065,7 @@ const
   blr_relation2 = 146;
   blr_rid2 = 147;
 {$IFNDEF FB20_UP}
+  // unused codes: 148..149
   blr_reset_stream = 148;
   blr_release_bookmark = 149;
 {$ENDIF}
@@ -1035,6 +1075,7 @@ const
   blr_ansi_any = 151; // required for NULL handling
   blr_exists = 152; // required for NULL handling
 {$IFNDEF FB20_UP}
+  // unused codes: 153
   blr_cardinality = 153;
 {$ENDIF}
 
@@ -1042,6 +1083,7 @@ const
   blr_stall = 155; // fake server stall
 
 {$IFNDEF FB20_UP}
+  // unused codes: 156..157
   blr_seek_no_warn = 156;
   blr_find_dbkey_version = 157; // find dbkey with record version
 {$ENDIF}
@@ -1072,13 +1114,13 @@ const
 {$IFDEF FB15_UP}
   (* This codes reuse BLR code space *)
   blr_post_arg = 163;
-  blr_exec_into	= 164;
+  blr_exec_into = 164;
   blr_user_savepoint = 165;
 {$ENDIF FB15_UP}
 
 {$IFDEF FB20_UP}
   blr_dcl_cursor = 166;
-  blr_cursor_stmt	=	167;
+  blr_cursor_stmt = 167;
   blr_current_timestamp2 = 168;
   blr_current_time2 = 169;
 {$ENDIF FB20_UP}
@@ -1088,6 +1130,8 @@ const
   blr_agg_list_distinct = 171;
   blr_modify2 = 172;
 {$ENDIF}
+
+  // unused codes: 173
 
 {$IFDEF FB102_UP}
   (* FB1 specific BLR *)
@@ -1144,10 +1188,21 @@ const
 {$ENDIF FB15_UP}
 
 {$IFDEF FB20_UP}
-  blr_cursor_open	 = 0;
+  blr_cursor_open  = 0;
   blr_cursor_close = 1;
   blr_cursor_fetch = 2;
 {$ENDIF FB20_UP}
+{$IFDEF FB30_UP}
+  blr_cursor_fetch_scroll = 3;
+
+  // scroll options
+  blr_scroll_forward = 0;
+  blr_scroll_backward = 1;
+  blr_scroll_bof   = 2;
+  blr_scroll_eof   = 3;
+  blr_scroll_absolute = 4;
+  blr_scroll_relative = 5;
+{$ENDIF}
 
 {$IFDEF FB21_UP}
   blr_init_variable = 184;
@@ -1179,11 +1234,35 @@ const
   blr_derived_expr          = 191;
 {$ENDIF}
 
+{$IFDEF FB30_UP}
+  // FB 3.0 specific BLR
+  blr_procedure3            = 192;
+  blr_exec_proc2            = 193;
+  blr_function2             = 194;
+  blr_window                = 195;
+  blr_partition_by          = 196;
+  blr_continue_loop         = 197;
+  blr_procedure4            = 198;
+  blr_agg_function          = 199;
+  blr_substring_similar     = 200;
+  blr_bool_as_value         = 201;
+  blr_coalesce              = 202;
+  blr_decode                = 203;
+  blr_exec_subproc          = 204;
+  blr_subproc_decl          = 205;
+  blr_subproc               = 206;
+  blr_subfunc_decl          = 207;
+  blr_subfunc               = 208;
+{$ENDIF}
+
 (**********************************
  * Database parameter block stuff *
  **********************************)
 
   isc_dpb_version1 = 1;
+{$IFDEF FB30_UP}
+  isc_dpb_version2 = 2;
+{$ENDIF}
   isc_dpb_cdd_pathname = 1;
   isc_dpb_allocation = 2;
   isc_dpb_journal = 3;
@@ -1253,10 +1332,13 @@ const
   isc_dpb_gstat_attach = 67;
 
  {$IFDEF FB25_UP}
-  fb_shut_confirmation        =  1;
-  fb_shut_preproviders        =  2;
-  fb_shut_postproviders       =  4;
-  fb_shut_finish              =  8;
+  fb_shut_confirmation        =   1;
+  fb_shut_preproviders        =   2;
+  fb_shut_postproviders       =   4;
+  fb_shut_finish              =   8;
+{$IFDEF FB30_UP}
+  fb_shut_exit                =  16;
+{$ENDIF}
 
   fb_shutrsn_svc_stopped      = -1;
   fb_shutrsn_no_connection    = -2;
@@ -1295,6 +1377,10 @@ const
   isc_dpb_ext_call_depth = 78;
 {$ENDIF}
 
+{$IFDEF FB30_UP}
+  isc_dpb_auth_block = 79;
+{$ENDIF}
+
 {$IFDEF IB65_UP}
   isc_dpb_gbak_ods_version = 68;
   isc_dpb_gbak_ods_minor_version = 69;
@@ -1309,7 +1395,7 @@ const
 {$ENDIF IB71_UP}
 
 {$IFDEF IB75_UP}
-  isc_dpb_client_interbase_var	 = 72;
+  isc_dpb_client_interbase_var  = 72;
   isc_dpb_admin_option           = 73;
   isc_dpb_flush_interval         = 74;
 {$ENDIF}
@@ -1364,35 +1450,35 @@ const
 (* Format of this clumplet is the following:
 
  <address-path-clumplet> ::=
-	isc_dpb_address_path <byte-clumplet-length> <address-stack>
+ isc_dpb_address_path <byte-clumplet-length> <address-stack>
 
  <address-stack> ::=
-	<address-descriptor> |
-	<address-stack> <address-descriptor>
+ <address-descriptor> |
+ <address-stack> <address-descriptor>
 
  <address-descriptor> ::=
-	isc_dpb_address <byte-clumplet-length> <address-elements>
+ isc_dpb_address <byte-clumplet-length> <address-elements>
 
  <address-elements> ::=
-	<address-element> |
-	<address-elements> <address-element>
+ <address-element> |
+ <address-elements> <address-element>
 
  <address-element> ::=
-	isc_dpb_addr_protocol <byte-clumplet-length> <protocol-string> |
-	isc_dpb_addr_endpoint <byte-clumplet-length> <remote-endpoint-string>
+ isc_dpb_addr_protocol <byte-clumplet-length> <protocol-string> |
+ isc_dpb_addr_endpoint <byte-clumplet-length> <remote-endpoint-string>
 
  <protocol-string> ::=
-	"TCPv4" |
-	"TCPv6" |
-	"XNET" |
-	"WNET" |
-	....
+ "TCPv4" |
+ "TCPv6" |
+ "XNET" |
+ "WNET" |
+ ....
 
  <remote-endpoint-string> ::=
-	<IPv4-address> | // such as "172.20.1.1"
-	<IPv6-address> | // such as "2001:0:13FF:09FF::1"
-	<xnet-process-id> | // such as "17864"
-	...
+ <IPv4-address> | // such as "172.20.1.1"
+ <IPv6-address> | // such as "2001:0:13FF:09FF::1"
+ <xnet-process-id> | // such as "17864"
+ ...
 *)
 const
 
@@ -1502,6 +1588,9 @@ const
   isc_spb_version1 = AnsiChar(#1);
   isc_spb_current_version = AnsiChar(#2);
   isc_spb_version = isc_spb_current_version;
+{$IFDEF FB30_UP}
+  isc_spb_version3 = AnsiChar(#3);
+{$ENDIF}
   isc_spb_user_name = AnsiChar(isc_dpb_user_name);
   isc_spb_sys_user_name = AnsiChar(isc_dpb_sys_user_name);
   isc_spb_sys_user_name_enc = AnsiChar(isc_dpb_sys_user_name_enc);
@@ -1526,6 +1615,11 @@ const
 
 {$IFDEF FB25_UP}
    isc_spb_trusted_role = AnsiChar(#113);
+{$ENDIF}
+
+{$IFDEF FB30_UP}
+  isc_spb_verbint = AnsiChar(#114);
+  isc_spb_auth_block = Ansichar(#115);
 {$ENDIF}
 
   isc_spb_connect_timeout = AnsiChar(isc_dpb_connect_timeout);
@@ -1662,7 +1756,9 @@ const
 {$IFDEF FB25_UP}
   fb_info_page_contents = 113;
 {$ENDIF}
-
+{$IFDEF FB30_UP}
+  fb_info_implementation = 114;
+{$ENDIF}
 
   isc_info_version = isc_info_isc_version;
 
@@ -1858,6 +1954,13 @@ const
   isc_info_rsb_virt_sequential = 23;
   isc_info_rsb_recursive = 24;
 {$ENDIF}
+{$IFDEF FB30_UP}
+  isc_info_rsb_window = 25;
+  isc_info_rsb_singular = 26;
+  isc_info_rsb_writelock = 27;
+  isc_info_rsb_buffer = 28;
+  isc_info_rsb_hash = 29;
+{$ENDIF}
 
   (**********************
    * Bitmap expressions *
@@ -1896,6 +1999,9 @@ const
   isc_info_tra_isolation          = 8;
   isc_info_tra_access             = 9;
   isc_info_tra_lock_timeout       = 10;
+{$IFDEF FB30_UP}
+  fb_info_tra_dbpath              = 11;
+{$ENDIF}
 
   isc_info_tra_consistency        = 1;
   isc_info_tra_concurrency        = 2;
@@ -1924,7 +2030,7 @@ const
   isc_action_svc_db_stats = #11; // Retrieves database statistics
   isc_action_svc_get_ib_log = #12; // Retrieves the InterBase log file from the server
 {$IFDEF FB20_UP}
-  isc_action_svc_get_fb_log = #12;	// Retrieves the Firebird log file from the server
+  isc_action_svc_get_fb_log = #12; // Retrieves the Firebird log file from the server
 {$ENDIF}
 {$IFDEF FB25_UP}
   isc_action_svc_nbak             = #20;
@@ -1982,6 +2088,10 @@ const
   isc_info_svc_running = #67;
   // Returns the user information from isc_action_svc_display_users
   isc_info_svc_get_users = #68;
+{$IFDEF FB30_UP}
+  // Sets authentication block for service query() call
+  isc_info_svc_auth_block = #69;
+{$ENDIF}
 
   (******************************************************
    * Parameters for isc_action_{add|delete|modify)_user *
@@ -2175,7 +2285,7 @@ const
 {$ENDIF FB15_UP}
 
 {$IFDEF FB20_UP}
-  isc_spb_sts_nocreation		= $80;
+  isc_spb_sts_nocreation  = $80;
 {$ENDIF}
 
 {$IFDEF FB25_UP}
@@ -2217,6 +2327,10 @@ const
 
 {$IFDEF FB20_UP}
   isc_info_sql_relation_alias = 25;
+{$ENDIF}
+
+{$IFDEF FB30_UP}
+  isc_info_sql_explain_plan = 26;
 {$ENDIF}
 
 {$IFDEF IB71_UP}
@@ -2304,10 +2418,11 @@ const
 {$ENDIF IB71_UP}
 
 {$IFDEF IB75_UP}
-  ISCCFG_USE_ROUTER_KEY	= 29;
-  ISCCFG_SORTMEM_BUFFER_SIZE_KEY	= 30;
+  ISCCFG_USE_ROUTER_KEY = 29;
+  ISCCFG_SORTMEM_BUFFER_SIZE_KEY = 30;
 {$ENDIF}
 
+{$IFNDEF FB30_UP}
   (**********************************************
    * Dynamic Data Definition Language operators *
    **********************************************)
@@ -2391,9 +2506,9 @@ const
 (***********************)
 (* collation values    *)
 (***********************)
-  isc_dyn_def_collation	= 231;
+  isc_dyn_def_collation = 231;
   isc_dyn_coll_for_charset = 232;
-  isc_dyn_coll_from =	233;
+  isc_dyn_coll_from = 233;
   isc_dyn_coll_attribute = 234;
   isc_dyn_coll_specific_attributes_charset = 235;
   isc_dyn_coll_specific_attributes = 236;
@@ -2814,6 +2929,7 @@ const
 {$IFDEF IB75}
   isc_dyn_last_dyn_value = 227;
 {$ENDIF}
+{$ENDIF FB30_UP}
 
   (******************************************
    * Array slice description language (SDL) *
@@ -2831,12 +2947,15 @@ const
   isc_sdl_tiny_integer = 9;
   isc_sdl_short_integer = 10;
   isc_sdl_long_integer = 11;
+{$IFNDEF FB30_UP}
   isc_sdl_literal = 12;
+{$ENDIF}
   isc_sdl_add = 13;
   isc_sdl_subtract = 14;
   isc_sdl_multiply = 15;
   isc_sdl_divide = 16;
   isc_sdl_negate = 17;
+{$IFNDEF FB30_UP}
   isc_sdl_eql = 18;
   isc_sdl_neq = 19;
   isc_sdl_gtr = 20;
@@ -2850,6 +2969,7 @@ const
   isc_sdl_assignment = 28;
   isc_sdl_label = 29;
   isc_sdl_leave = 30;
+{$ENDIF}
   isc_sdl_begin = 31;
   isc_sdl_end = 32;
   isc_sdl_do3 = 33;
@@ -2861,9 +2981,11 @@ const
    * International text interpretation values *
    ********************************************)
 
+{$IFNDEF FB30_UP}
   isc_interp_eng_ascii = 0;
   isc_interp_jpn_sjis = 5;
   isc_interp_jpn_euc = 6;
+{$ENDIF}
 
   (*******************
    * SQL definitions *
@@ -2924,18 +3046,24 @@ const
 
   (* the range 20-30 is reserved for dBASE and Paradox types *)
 
+{$IFNDEF FB30_UP}
   isc_blob_formatted_memo = 20;
   isc_blob_paradox_ole = 21;
   isc_blob_graphic = 22;
   isc_blob_dbase_ole = 23;
   isc_blob_typed_binary = 24;
+{$ENDIF}
 
 {$IFDEF FB21_UP}
-  fb_dbg_version = 1;
-  fb_dbg_end = 255;
-  fb_dbg_map_src2blr = 2;
-  fb_dbg_map_varname = 3;
-  fb_dbg_map_argument = 4;
+  fb_dbg_version      =   1;
+  fb_dbg_end          = 255;
+  fb_dbg_map_src2blr  =   2;
+  fb_dbg_map_varname  =   3;
+  fb_dbg_map_argument =   4;
+{$IFDEF FB30_UP}
+  fb_dbg_subproc      =   5;
+  fb_dbg_subfunc      =   6;
+{$ENDIF}
 
   fb_dbg_arg_input = 0;
   fb_dbg_arg_output = 1;
@@ -3102,9 +3230,11 @@ type
       item_length: Smallint; items: PAnsiChar; buffer_length: Smallint;
       buffer: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
+{$IFNDEF FB30_UP}
     isc_ddl: function(user_status: PISCStatus; db_handle: PIscDbHandle; tra_handle: PIscTrHandle;
       length: Smallint; ddl: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
+{$ENDIF}
     isc_declare: function(user_status: PISCStatus; statement,
       cursor: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
@@ -3315,7 +3445,7 @@ type
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
 {$IFDEF FB25_UP}
     fb_print_blr: function(const blr: PAnsiChar; blr_length: ISC_ULONG; routine: ISC_PRINT_CALLBACK;
-			user_arg: Pointer; language: Smallint): Integer;
+      user_arg: Pointer; language: Smallint): Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
 {$ENDIF}
     isc_print_sqlerror: procedure(sqlcode: ISCShort; status_vector: PISCStatus);
@@ -3374,6 +3504,14 @@ type
       const mask: Integer; arg: Pointer): ISC_STATUS;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     fb_cancel_operation: function(user_status: PISCStatus; handle: PIscDbHandle; option: ISC_USHORT): ISC_STATUS;
+      {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
+{$ENDIF}
+{$IFDEF FB30_UP}
+    fb_ping: function(user_status: PISCStatus; handle: PIscDbHandle): ISC_STATUS;
+      {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
+    fb_get_database_handle: function(user_status: PISCStatus; database: PIscDbHandle; handle: Pointer): ISC_STATUS;
+      {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
+    fb_get_transaction_handle: function(user_status: PISCStatus; transaction: PIscTrHandle; handle: Pointer): ISC_STATUS;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
 {$ENDIF}
 {$IFDEF INTERBASEORFIREBIRD}
@@ -3645,7 +3783,9 @@ begin
     isc_create_blob2 := nil;
     isc_create_database := nil;
     isc_database_info := nil;
+{$IFNDEF FB30_UP}
     isc_ddl := nil;
+{$ENDIF}
     isc_declare := nil;
     isc_decode_date := nil;
     isc_decode_sql_date := nil;
@@ -3738,6 +3878,11 @@ begin
     isc_service_detach := nil;
     isc_service_query := nil;
     isc_service_start := nil;
+{$IFDEF FB30_UP}
+    fb_ping := nil;
+    fb_get_database_handle := nil;
+    fb_get_transaction_handle := nil;
+{$ENDIF}
   {$IFDEF INTERBASEORFIREBIRD}
     isc_set_debug := nil;
   {$ENDIF INTERBASEORFIREBIRD}
@@ -3854,7 +3999,9 @@ begin
       isc_create_blob2 := GetProcAddress(FGDS32Lib, 'isc_create_blob2');
       isc_create_database := GetProcAddress(FGDS32Lib, 'isc_create_database');
       isc_database_info := GetProcAddress(FGDS32Lib, 'isc_database_info');
+{$IFNDEF FB30_UP}
       isc_ddl := GetProcAddress(FGDS32Lib, 'isc_ddl');
+{$ENDIF}
       isc_declare := GetProcAddress(FGDS32Lib, 'isc_declare');
       isc_decode_date := GetProcAddress(FGDS32Lib, 'isc_decode_date');
       isc_decode_sql_date := GetProcAddress(FGDS32Lib, 'isc_decode_sql_date');
@@ -3947,6 +4094,11 @@ begin
       isc_service_detach := GetProcAddress(FGDS32Lib, 'isc_service_detach');
       isc_service_query := GetProcAddress(FGDS32Lib, 'isc_service_query');
       isc_service_start := GetProcAddress(FGDS32Lib, 'isc_service_start');
+{$IFDEF FB30_UP}
+      fb_ping := GetProcAddress(FGDS32Lib, 'fb_ping');
+      fb_get_database_handle := GetProcAddress(FGDS32Lib, 'fb_get_database_handle');
+      fb_get_transaction_handle := GetProcAddress(FGDS32Lib, 'fb_get_transaction_handle');
+{$ENDIF}
     {$IFDEF INTERBASEORFIREBIRD}
       isc_set_debug := GetProcAddress(FGDS32Lib, 'isc_set_debug');
     {$ENDIF INTERBASEORFIREBIRD}
@@ -4019,7 +4171,7 @@ begin
         Assigned(isc_commit_transaction) and Assigned(isc_compile_request) and
         Assigned(isc_compile_request2) and Assigned(isc_create_blob) and
         Assigned(isc_create_blob2) and Assigned(isc_create_database) and
-        Assigned(isc_database_info) and Assigned(isc_ddl) and Assigned(isc_declare) and
+        Assigned(isc_database_info) {$IFNDEF FB30_UP}and Assigned(isc_ddl){$ENDIF} and Assigned(isc_declare) and
         Assigned(isc_decode_date) and Assigned(isc_decode_sql_date) and
         Assigned(isc_decode_sql_time) and Assigned(isc_decode_timestamp) and
         Assigned(isc_delete_user) and Assigned(isc_describe) and Assigned(isc_describe_bind) and
@@ -4063,7 +4215,12 @@ begin
         Assigned(isc_rollback_retaining) and Assigned(isc_rollback_transaction) and
         Assigned(isc_seek_blob) and Assigned(isc_send) and Assigned(isc_service_attach) and
         Assigned(isc_service_detach) and Assigned(isc_service_query) and
-        Assigned(isc_service_start) and Assigned(isc_sql_interprete) and
+        Assigned(isc_service_start) and
+{$IFDEF FB30_UP}
+        Assigned(fb_ping) and Assigned(fb_get_database_handle) and
+        Assigned(fb_get_transaction_handle) and
+{$ENDIF}
+        Assigned(isc_sql_interprete) and
         Assigned(isc_sqlcode) and Assigned(isc_start_and_send) and Assigned(isc_start_multiple) and
         Assigned(isc_start_request) and Assigned(isc_start_transaction) and
         Assigned(isc_transact_request) and Assigned(isc_transaction_info) and
