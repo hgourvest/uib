@@ -345,10 +345,6 @@ const
 {$ENDIF}
   );
 
-{$IFDEF DLLREGISTRY}
-  FBINSTANCES = 'SOFTWARE\Firebird Project\Firebird Server\Instances';
-{$ENDIF}
-
   function GetSystemCharacterset: TCharacterSet;
 
   function MBUEncode(const str: UnicodeString; cp: Word): RawByteString;
@@ -1572,15 +1568,19 @@ const
 
   function GetClientLibrary: string;
   {$IFDEF DLLREGISTRY}
+  const
+    FBINSTANCES = 'SOFTWARE\Firebird Project\Firebird Server\Instances';
   var
     Key: HKEY;
     Size: Cardinal;
     HR: Integer;
+    Path: string;
   {$ENDIF}
   begin
   {$IFDEF DLLREGISTRY}
     if FileExists(ExtractFilePath(ParamStr(0)) + GDS32DLL) then
-      Result := GDS32DLL else
+      Result := GDS32DLL
+    else
     begin
       HR := RegOpenKeyEx(HKEY_LOCAL_MACHINE, FBINSTANCES, 0, KEY_READ, Key);
       if (HR = ERROR_SUCCESS) then
@@ -1588,10 +1588,22 @@ const
         HR := RegQueryValueEx(Key, 'DefaultInstance', nil, nil, nil, @Size);
         if (HR = ERROR_SUCCESS) then
         begin
-          SetLength(Result, Size div sizeof(Char));
+          SetLength(Result, Size div SizeOf(Char));
           HR := RegQueryValueEx(Key, 'DefaultInstance', nil, nil, Pointer(Result), @Size);
           if (HR = ERROR_SUCCESS) then
-            Result := Trim(Result)+ 'bin\' + GDS32DLL;
+          begin
+            Path := Trim(Result);
+            if FileExists(Path + GDS32DLL) then
+              Result := Path + GDS32DLL
+            else
+            begin
+              Path := Path + 'bin\';
+              if FileExists(Path + GDS32DLL) then
+                Result := Path + GDS32DLL
+              else
+                Result := GDS32DLL;
+            end;
+          end;
         end;
         RegCloseKey(Key);
       end;
@@ -1601,7 +1613,7 @@ const
   {$ELSE}
     Result := GDS32DLL;
   {$ENDIF}
-  end;
+    end;
 
   function CreateDBParams(Params: AnsiString; Delimiter: AnsiChar = ';'): AnsiString;
   var
