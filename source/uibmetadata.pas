@@ -2019,7 +2019,7 @@ begin
             FComputedSource := QIndex.Fields.AsString[5];
           {$ENDIF}
             if Trim(QIndex.Fields.AsString[1]) <> '' then
-              FFields[0] := FindFieldIndex(Trim(QIndex.Fields.AsString[1]));
+              FFields[0] := FindFieldIndex(MetaQuote(Trim(QIndex.Fields.AsString[1])));
             FUnique := QIndex.Fields.AsSingle[2] = 1;
             FActive := QIndex.Fields.AsSingle[3] = 0;
             if QIndex.Fields.AsSingle[4] = 0 then
@@ -2032,7 +2032,7 @@ begin
           with Indices[IndicesCount - 1] do
           begin
             SetLength(FFields, FieldsCount + 1);
-            FFields[FieldsCount - 1] := FindFieldIndex(Trim(QIndex.Fields.AsString[1]));
+            FFields[FieldsCount - 1] := FindFieldIndex(MetaQuote(Trim(QIndex.Fields.AsString[1])));
             Include(Fields[FieldsCount - 1].FInfos, fiIndice);
           end;
         QIndex.Next;
@@ -2053,7 +2053,7 @@ begin
           begin
             SetLength(FFields, 1);
             FName := MetaQuote(Trim(QPrimary.Fields.AsString[0]));
-            FFields[0] := FindFieldIndex(Trim(QPrimary.Fields.AsString[1]));
+            FFields[0] := FindFieldIndex(MetaQuote(Trim(QPrimary.Fields.AsString[1])));
 
             // FB15up
             FIndexName := MetaQuote(Trim(QPrimary.Fields.AsString[2]));
@@ -2067,7 +2067,7 @@ begin
           with Uniques[UniquesCount - 1] do
           begin
             SetLength(FFields, FieldsCount + 1);
-            FFields[FieldsCount - 1] := FindFieldIndex(Trim(QPrimary.Fields.AsString[1]));
+            FFields[FieldsCount - 1] := FindFieldIndex(MetaQuote(Trim(QPrimary.Fields.AsString[1])));
             Include(Fields[FieldsCount - 1].FInfos, fiUnique);
           end;
         QPrimary.Next;
@@ -2647,7 +2647,7 @@ begin
       begin
         for I := 0 to TablesCount - 1 do
         begin
-          QForeign.Params.AsString[0] := Tables[I].Name;
+          QForeign.Params.AsString[0] := SQLUnQuote(Tables[I].Name);
           QForeign.Open;
           ConStr := '';
           while not QForeign.Eof do
@@ -2658,12 +2658,12 @@ begin
               begin
                 ConStr := Trim(QForeign.Fields.AsString[0]);
                 FName := MetaQuote(ConStr);
-                FForTable := FindTableIndex(Trim(QForeign.Fields.AsString[3]));
+                FForTable := FindTableIndex(MetaQuote(Trim(QForeign.Fields.AsString[3])));
                 SetLength(FFields, 1);
-                FFields[0] := Tables[I].FindFieldIndex(Trim(QForeign.Fields.AsString[5]));
+                FFields[0] := Tables[I].FindFieldIndex(MetaQuote(Trim(QForeign.Fields.AsString[5])));
                 Include(Tables[I].Fields[FFields[0]].FInfos, fiForeign);
                 SetLength(FForFields, 1);
-                FForFields[0] := ForTable.FindFieldIndex(Trim(QForeign.Fields.AsString[4]));
+                FForFields[0] := ForTable.FindFieldIndex(MetaQuote(Trim(QForeign.Fields.AsString[4])));
 
                 Str := Trim(QForeign.Fields.AsString[1]);
                 if Str = 'RESTRICT'  then FOnUpdate := urRestrict else
@@ -2690,10 +2690,10 @@ begin
               with Tables[I].Foreign[Tables[I].ForeignCount - 1] do
               begin
                 SetLength(FFields, Length(FFields) + 1);
-                FFields[FieldsCount - 1] := Tables[I].FindFieldIndex(Trim(QForeign.Fields.AsString[5]));
+                FFields[FieldsCount - 1] := Tables[I].FindFieldIndex(MetaQuote(Trim(QForeign.Fields.AsString[5])));
                 Include(Tables[I].Fields[FFields[FieldsCount - 1]].FInfos, fiForeign);
                 SetLength(FForFields, Length(FForFields) + 1);
-                FForFields[ForFieldsCount - 1] := ForTable.FindFieldIndex(Trim(QForeign.Fields.AsString[4]));
+                FForFields[ForFieldsCount - 1] := ForTable.FindFieldIndex(MetaQuote(Trim(QForeign.Fields.AsString[4])));
               end;
             QForeign.Next;
           end;
@@ -3465,7 +3465,7 @@ begin
   for I := 0 to Q.Fields.RecordCount - 1 do
   begin
     Q.Fields.GetRecord(I);
-    FFields[I] := TMetaTable(FOwner).FindFieldIndex(Trim(Q.Fields.AsString[1]));
+    FFields[I] := TMetaTable(FOwner).FindFieldIndex(MetaQuote(Trim(Q.Fields.AsString[1])));
     Include(TMetaTable(FOwner).Fields[FFields[I]].FInfos, fiPrimary);
   end;
 
@@ -3848,7 +3848,7 @@ begin
   stream := TStringStream.Create('');
   try
     SaveToAlterToActiveDDL(stream);
-    result := stream.DataString;
+    Result := stream.DataString;
   finally
     stream.Free;
   end;
@@ -3860,7 +3860,7 @@ begin
   stream := TStringStream.Create('');
   try
     SaveToAlterDDL(stream);
-    result := stream.DataString;
+    Result := stream.DataString;
   finally
     stream.Free;
   end;
@@ -3872,7 +3872,7 @@ begin
   stream := TStringStream.Create('');
   try
     SaveToAlterToInactiveDDL(stream);
-    result := stream.DataString;
+    Result := stream.DataString;
   finally
     stream.Free;
   end;
@@ -4284,7 +4284,7 @@ begin
   stream := TStringStream.Create('');
   try
     SaveToAlterDDL(stream, []);
-    result := stream.DataString;
+    Result := stream.DataString;
   finally
     stream.Free;
   end;
@@ -4300,7 +4300,7 @@ begin
       Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  suspend;' + NewLine + 'end;')
     else
       Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  exit;' + NewLine + 'end;');
-    result := stream.DataString;
+    Result := stream.DataString;
   finally
     stream.Free;
   end;
@@ -4312,7 +4312,7 @@ begin
   stream := TStringStream.Create('');
   try
     SaveToCreateEmptyDDL(stream, []);
-    result := stream.DataString;
+    Result := stream.DataString;
   finally
     stream.Free;
   end;
@@ -4468,12 +4468,12 @@ end;
 
 function TMetaTableField.GetArrayBounds(const index: Integer): TArrayBound;
 begin
-  result := FArrayBounds[index];
+  Result := FArrayBounds[index];
 end;
 
 function TMetaTableField.GetArrayBoundsCount: Integer;
 begin
-  result := System.Length(FArrayBounds);
+  Result := System.Length(FArrayBounds);
 end;
 
 function TMetaTableField.GetDomain: TMetaDomain;
@@ -4487,13 +4487,13 @@ end;
 function TMetaTableField.GetShortFieldType: string;
 var i: integer;
 begin
-  result := inherited GetShortFieldType;
+  Result := inherited GetShortFieldType;
   if ArrayBoundsCount > 0 then
   begin
-    result := result + format(' [%d:%d', [FArrayBounds[0].LowerBound, FArrayBounds[0].HigherBound]);
+    Result := Result + Format(' [%d:%d', [FArrayBounds[0].LowerBound, FArrayBounds[0].HigherBound]);
     for i := 1 to ArrayBoundsCount - 1 do
-      result := result + format(',%d:%d', [FArrayBounds[i].LowerBound, FArrayBounds[i].HigherBound]);
-    result := result+ ']';
+      Result := Result + Format(',%d:%d', [FArrayBounds[i].LowerBound, FArrayBounds[i].HigherBound]);
+    Result := Result+ ']';
   end;
 end;
 
@@ -4581,9 +4581,9 @@ begin
 
         if ArrayBoundsCount > 0 then
         begin
-          Stream.WriteString(format(' [%d:%d', [FArrayBounds[0].LowerBound, FArrayBounds[0].HigherBound]));
+          Stream.WriteString(Format(' [%d:%d', [FArrayBounds[0].LowerBound, FArrayBounds[0].HigherBound]));
           for i := 1 to ArrayBoundsCount - 1 do
-            Stream.WriteString(format(',%d:%d', [FArrayBounds[i].LowerBound, FArrayBounds[i].HigherBound]));
+            Stream.WriteString(Format(',%d:%d', [FArrayBounds[i].LowerBound, FArrayBounds[i].HigherBound]));
           Stream.WriteString(']');
         end;
 
