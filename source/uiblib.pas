@@ -1494,7 +1494,7 @@ const
     Result := (code and CLASS_MASK) shr 30;
   end;
 
-  function GETCode(code: ISCStatus): Word;
+  function GetCode(code: ISCStatus): Word;
   begin
     Result := (code and CODE_MASK) shr 0;
   end;
@@ -1503,23 +1503,24 @@ const
   var
     Number: Integer;
     Excep: EUIBExceptionClass;
+
     procedure RaiseException(const Excep: EUIBExceptionClass);
-    var Exception: EUIBError;
+    var
+      Exception: EUIBError;
     begin
       Exception := Excep.Create(string(ErrInterprete));
       if Excep = EUIBException then
         EUIBException(Exception).FNumber := Number;
-      Exception.FSQLCode   := ErrSqlcode;
+      Exception.FSQLCode := ErrSqlcode;
       if Exception.FSQLCode <> 0 then
-        Exception.Message := Exception.Message + string(ErrSQLInterprete(Exception.FSQLCode)) + NewLine;
+        Exception.Message := Exception.Message + string(ErrSQLInterprete(Exception.FSQLCode));
       Exception.FGDSCode := Status;
-      Exception.FErrorCode := GETCode(Status);
-      Exception.Message := Exception.Message + NewLine +
-        'GDS Code: ' + IntToStr(Exception.FGDSCode);
+      Exception.FErrorCode := GetCode(Status);
 {$IFDEF FB25_UP}
       Exception.FSQLState := ErrSqlState;
 {$ENDIF}
-      Exception.Message := Exception.Message + 'Error Code: ' + IntToStr(Exception.FErrorCode);
+      Exception.Message := Exception.Message + NewLine +
+        Format('GDS Code: %d - SQL Code: %d - Error Code: %d', [Exception.FGDSCode, Exception.FSQLCode, Exception.FErrorCode]);
 
       if ((Status = isc_lost_db_connection) or (Status = isc_network_error)
         or (Status = isc_shutdown)) and Assigned(FOnConnectionLost) then
