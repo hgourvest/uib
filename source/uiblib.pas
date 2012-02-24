@@ -6499,13 +6499,17 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
         if AInit then
           Include(Flags, pfNotInitialized) else
           Exclude(Flags, pfNotInitialized);
-        if SqlLen > 0 then
-          GetMem(sqldata, SqlLen) else
-          sqldata := nil;
+
+        if (SqlLen > 0) and (SqlData = nil) then
+          GetMem(sqldata, SqlLen);
+
         if ParamNameLength > 0 then
-          for j := 0 to GetAllocatedFields - 1 do
-            if (j <> i) and (ID = FXSQLDA.sqlvar[j].ID) then
+          for j := i + 1 to FXSQLDA.sqln - 1 do
+            if (ID = FXSQLDA.sqlvar[j].ID) then
+            begin
               Move(FXSQLDA.sqlvar[i], FXSQLDA.sqlvar[j], SizeOf(TUIBSQLVar)-MaxParamLength-2);
+              Break;
+            end;
       end;
   end;
 
@@ -6761,18 +6765,16 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
     for i := 0 to FXSQLDA.sqln - 1 do
     begin
       if (FXSQLDA.sqlvar[i].sqlind <> nil) then
-      begin
-        freemem(FXSQLDA.sqlvar[i].sqlind);
-        if FXSQLDA.sqlvar[i].sqldata <> nil then
-          freemem(FXSQLDA.sqlvar[i].sqldata);
-        // don't free shared pointers
-        for j := i + 1 to FXSQLDA.sqln - 1 do
-          if (FXSQLDA.sqlvar[i].ID = FXSQLDA.sqlvar[j].ID) then
-            begin
-              FXSQLDA.sqlvar[j].sqldata := nil;
-              FXSQLDA.sqlvar[j].sqlind  := nil;
-            end;
-      end;
+        FreeMem(FXSQLDA.sqlvar[i].sqlind);
+      if FXSQLDA.sqlvar[i].sqldata <> nil then
+        FreeMem(FXSQLDA.sqlvar[i].sqldata);
+      // don't free shared pointers
+      for j := i + 1 to FXSQLDA.sqln - 1 do
+        if (FXSQLDA.sqlvar[i].ID = FXSQLDA.sqlvar[j].ID) then
+          begin
+            FXSQLDA.sqlvar[j].sqldata := nil;
+            FXSQLDA.sqlvar[j].sqlind  := nil;
+          end;
     end;
     FXSQLDA.sqln := 0;
     FXSQLDA.sqld := 0;
