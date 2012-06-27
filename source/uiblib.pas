@@ -2640,7 +2640,7 @@ type
   procedure TUIBLibrary.BlobSize(var BlobHandle: IscBlobHandle; out Size: Cardinal);
   var
     BlobInfo : packed record
-      Code: Char;
+      Code: AnsiChar;
       Length: Word;
       Value: Cardinal;
       reserved: Word; // alignement (8)
