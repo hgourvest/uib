@@ -1,7 +1,8 @@
-package UIBD16Win32D;
+package UIBD17Win32D;
+
+{$IMPLICITBUILD OFF}
 
 {$R *.res}
-{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
 {$ALIGN 8}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}
@@ -23,10 +24,8 @@ package UIBD16Win32D;
 {$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
-{$ENDIF IMPLICITBUILDING}
-{$DESCRIPTION 'UIB Components for XE2 D16'}
+{$DESCRIPTION 'UIB Components for XE3 D17'}
 {$DESIGNONLY}
-{$IMPLICITBUILD ON}
 
 requires
   rtl,
@@ -40,7 +39,7 @@ requires
   vclx,
   dclstd,
   vcldb,
-  UIBD16Win32R;
+  UIBD17Win32R;
 
 contains
   uibreg in '..\source\uibreg.pas',
