@@ -1008,7 +1008,7 @@ const
     'where ' +
     '  (RC.RDB$CONSTRAINT_TYPE = ?) and (RC.RDB$RELATION_NAME = ?) ' +
     'order by ' +
-    '  RC.RDB$RELATION_NAME, IDX.RDB$FIELD_POSITION';
+    '  RC.RDB$RELATION_NAME, RC.RDB$CONSTRAINT_NAME, IDX.RDB$FIELD_POSITION';
 
   QRYIndex =
     'select ' +
