@@ -4274,13 +4274,9 @@ end;
 procedure TMetaProcedure.SaveToCreateEmptyDDL(Stream: TStringStream; options: TDDLOptions);
 begin
   InternalSaveToDDL(Stream, {$IFDEF FB15_UP}'CREATE OR ALTER'{$ELSE}'CREATE'{$ENDIF}, options);
-{$IFDEF FB15_UP}
-    Stream.WriteString(NewLine + 'AS' + NewLine + 'begin end;');
-{$ELSE}
   if OutputFieldsCount > 0 then
     Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  suspend;' + NewLine + 'end;') else
     Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  exit;' + NewLine + 'end;');
-{$ENDIF}
 end;
 
 procedure TMetaProcedure.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
@@ -4340,14 +4336,10 @@ begin
   stream := TStringStream.Create('');
   try
     InternalSaveToDDL(stream, 'ALTER', []);
-{$IFDEF FB15_UP}
-    Stream.WriteString(NewLine + 'AS' + NewLine + 'begin end;');
-{$ELSE}
     if OutputFieldsCount > 0 then
       Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  suspend;' + NewLine + 'end;')
     else
       Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  exit;' + NewLine + 'end;');
-{$ENDIF}
     Result := stream.DataString;
   finally
     stream.Free;
