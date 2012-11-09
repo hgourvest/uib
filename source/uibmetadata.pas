@@ -58,8 +58,9 @@ type
       MetaBaseField,         { Characteristics, Charset, Collation, Default ... }
         MetaUDFField,
         MetaField,
-          MetaProcInField,
-          MetaProcOutField,
+          MetaProcField,
+            MetaProcInField,
+            MetaProcOutField,
           MetaTableField,    { Nullable, Domain, Check, Computed By ...}
             MetaDomain,
       MetaConstraint,
@@ -216,22 +217,34 @@ type
     function GetDomain: TMetaDomain;
   protected
     FDomain: Integer;
+    FNotNull: Boolean;
   public
     class function NodeType: TMetaNodeType; override;
     procedure SaveToDDL(Stream: TStringStream; options: TDDLOptions); override;
     procedure SaveToStream(Stream: TStream); override;
     property Domain: TMetaDomain read GetDomain;
+    property NotNull: Boolean read FNotNull;
     property SegmentLength;
     property DefaultValue;
   end;
 
-  TMetaProcInField = class(TMetaField)
+  TMetaProcField = class(TMetaField)
+  private
+    FTypeOf: Boolean;
+    procedure LoadFromQuery(Q, C, A: TUIBStatement; DefaultCharset: TCharacterSet); override;
+    procedure LoadFromStream(Stream: TStream); override;
+  public
+    procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
+    procedure SaveToStream(Stream: TStream); override;
+  end;
+
+  TMetaProcInField = class(TMetaProcField)
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
   end;
 
-  TMetaProcOutField = class(TMetaField)
+  TMetaProcOutField = class(TMetaProcField)
   public
     class function NodeClass: string; override;
     class function NodeType: TMetaNodeType; override;
@@ -245,7 +258,6 @@ type
 
   TMetaTableField = class(TMetaField)
   private
-    FNotNull: Boolean;
     FInfos: TTableFieldInfos;
     FValidationSource: string;
     FComputedSource: string;
@@ -259,7 +271,6 @@ type
     class function NodeType: TMetaNodeType; override;
     procedure SaveToDDLNode(Stream: TStringStream; options: TDDLOptions); override;
     procedure SaveToStream(Stream: TStream); override;
-    property NotNull: Boolean read FNotNull;
     property FieldInfos: TTableFieldInfos read FInfos;
     property ComputedSource: string read FComputedSource;
     property ValidationSource: string read FValidationSource;
@@ -975,10 +986,10 @@ const
     ', RFR.RDB$FIELD_NAME' +
     ', FLD.RDB$SEGMENT_LENGTH' +
     ', FLD.RDB$SYSTEM_FLAG'+
+    ', RFR.RDB$FIELD_SOURCE' +       // DOMAIN
     ', RFR.RDB$NULL_FLAG' +          // NULLABLE
     ', FLD.RDB$VALIDATION_SOURCE' +  // CHECK
     ', FLD.RDB$DIMENSIONS'+
-    ', RFR.RDB$FIELD_SOURCE' +       // DOMAIN
     ', FLD.RDB$COMPUTED_SOURCE' +    // COMPUTED BY
     ', RDB$VALIDATION_SOURCE ' +
     'from ' +
@@ -1128,6 +1139,7 @@ const
     ', FLD.RDB$FIELD_NAME' +
     ', FLD.RDB$SEGMENT_LENGTH' +
     ', FLD.RDB$SYSTEM_FLAG' +
+    ', ''''' +                      // DOMAIN
     ', FLD.RDB$NULL_FLAG' +         // NULLABLE
     ', FLD.RDB$VALIDATION_SOURCE' + // CHECK
     ', FLD.RDB$DIMENSIONS ' +
@@ -1151,6 +1163,7 @@ const
     ', RDB$FIELD_NAME' +
     ', RDB$SEGMENT_LENGTH' +
     ', FLD.RDB$SYSTEM_FLAG'+
+    ', ''''' +                      // DOMAIN
     ', RDB$NULL_FLAG' +             // NULLABLE
     ', RDB$VALIDATION_SOURCE' +     // CHECK
     ', RDB$DIMENSIONS ' +
@@ -1173,20 +1186,42 @@ const
     ', FLD.RDB$FIELD_SCALE ' +
     ', FLD.RDB$FIELD_LENGTH ' +
     ', FLD.RDB$FIELD_PRECISION ' +
-    ', FLD.RDB$CHARACTER_SET_ID ' +  // CHARACTER SET
-    ', FLD.RDB$COLLATION_ID ' +
-    ', COL.RDB$COLLATION_NAME ' +    // COLLATE
+    ', FLD.RDB$CHARACTER_SET_ID ' +   // CHARACTER SET
+ {$IFDEF FB21_UP}
+    ', PPA.RDB$COLLATION_ID ' +       // COLLATE ID
+ {$ELSE}
+    ', FLD.RDB$COLLATION_ID ' +       // FAKE COLLATE ID (Useless before FB 2.1)
+ {$ENDIF}
+    ', COL.RDB$COLLATION_NAME ' +     // COLLATE
     ', FLD.RDB$FIELD_SUB_TYPE ' +
-    ', FLD.RDB$DEFAULT_SOURCE ' +    // DEFAULT
+ {$IFDEF FB20_UP}
+    ', PPA.RDB$DEFAULT_SOURCE ' +     // DEFAULT (FB 2.0)
+ {$ELSE}
+    ', FLD.RDB$DEFAULT_SOURCE ' +     // FAKE DEFAULT (Useless before FB 2.0)
+ {$ENDIF}
     ', PPA.RDB$PARAMETER_NAME ' +
     ', FLD.RDB$SEGMENT_LENGTH  ' +
     ', FLD.RDB$SYSTEM_FLAG ' +
-    ', PPA.RDB$FIELD_SOURCE ' +      // DOMAIN
+    ', PPA.RDB$FIELD_SOURCE ' +       // DOMAIN
+ {$IFDEF FB21_UP}
+    ', PPA.RDB$NULL_FLAG ' +          // NULLABLE
+ {$ELSE}
+    ', FLD.RDB$NULL_FLAG ' +          // FAKE NULLABLE (Useless before FB21)
+ {$ENDIF}
+ {$IFDEF FB21_UP}
+    ', RDB$PARAMETER_MECHANISM ' +    // TYPE OF domain
+ {$ELSE}
+    ', 0 ' +                          // FAKE TYPE OF domain (Useless before FB21)
+ {$ENDIF}
     'from  ' +
     '  RDB$PROCEDURES PRO ' +
     'join RDB$PROCEDURE_PARAMETERS PPA on (PPA.RDB$PROCEDURE_NAME = PRO.RDB$PROCEDURE_NAME) ' +
     'join RDB$FIELDS FLD on (FLD.RDB$FIELD_NAME = PPA.RDB$FIELD_SOURCE) ' +
+ {$IFDEF FB21_UP}
+    'left outer join RDB$COLLATIONS COL on (PPA.RDB$COLLATION_ID = COL.RDB$COLLATION_ID and FLD.RDB$CHARACTER_SET_ID = COL.RDB$CHARACTER_SET_ID) ' +
+ {$ELSE}
     'left outer join RDB$COLLATIONS COL on (FLD.RDB$COLLATION_ID = COL.RDB$COLLATION_ID and FLD.RDB$CHARACTER_SET_ID = COL.RDB$CHARACTER_SET_ID) ' +
+ {$ENDIF}
     'where ' +
     '  (PRO.RDB$PROCEDURE_NAME = ?) and (PPA.RDB$PARAMETER_TYPE = ?) ' +
     'order by ' +
@@ -4239,9 +4274,13 @@ end;
 procedure TMetaProcedure.SaveToCreateEmptyDDL(Stream: TStringStream; options: TDDLOptions);
 begin
   InternalSaveToDDL(Stream, {$IFDEF FB15_UP}'CREATE OR ALTER'{$ELSE}'CREATE'{$ENDIF}, options);
+{$IFDEF FB15_UP}
+    Stream.WriteString(NewLine + 'AS' + NewLine + 'begin end;');
+{$ELSE}
   if OutputFieldsCount > 0 then
     Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  suspend;' + NewLine + 'end;') else
     Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  exit;' + NewLine + 'end;');
+{$ENDIF}
 end;
 
 procedure TMetaProcedure.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
@@ -4301,10 +4340,14 @@ begin
   stream := TStringStream.Create('');
   try
     InternalSaveToDDL(stream, 'ALTER', []);
+{$IFDEF FB15_UP}
+    Stream.WriteString(NewLine + 'AS' + NewLine + 'begin end;');
+{$ELSE}
     if OutputFieldsCount > 0 then
       Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  suspend;' + NewLine + 'end;')
     else
       Stream.WriteString(NewLine + 'AS' + NewLine + 'begin' + NewLine + '  exit;' + NewLine + 'end;');
+{$ENDIF}
     Result := stream.DataString;
   finally
     stream.Free;
@@ -4498,28 +4541,17 @@ procedure TMetaTableField.LoadFromQuery(Q, C, A: TUIBStatement; DefaultCharset: 
 var i: Integer;
 begin
   inherited LoadFromQuery(Q, C, A, DefaultCharset);
-  FNotNull := (Q.Fields.AsSmallint[12] = 1);
-
-  FDomain := -1;
-  if not (Self is TMetaDomain) then
-  begin
-    if OIDDomain in TMetaDataBase(FOwner.FOwner).FOIDDatabases then
-      if not (Q.Fields.IsNull[15] or (Copy(Q.Fields.AsString[15], 1, 4) = 'RDB$')) then
-        FDomain :=
-          TMetaDataBase(FOwner.FOwner).FindDomainIndex(MetaQuote(Trim(Q.Fields.AsString[15])));
-    Q.ReadBlob(16, FComputedSource);
-  end;
 
   if (FDomain < 0) or (Domain.ValidationSource = '') then
-    Q.ReadBlob(13, FValidationSource);
+    Q.ReadBlob(14, FValidationSource);
 
   // Array
-  if Q.Fields.AsSmallint[14] > 0 then
+  if Q.Fields.AsSmallint[15] > 0 then
   begin
-    SetLength(FArrayBounds, Q.Fields.AsSmallint[14]);
+    SetLength(FArrayBounds, Q.Fields.AsSmallint[15]);
     if (Self is TMetaDomain) then
       A.Params.AsString[0] := FName else
-      A.Params.AsString[0] := Q.Fields.AsString[15];
+      A.Params.AsString[0] := Q.Fields.AsString[12];
     A.Open;
     i := 0;
     while not A.Eof do
@@ -4530,13 +4562,15 @@ begin
       A.Next;
     end;
   end;
+
+  if not (Self is TMetaDomain) then
+    Q.ReadBlob(16, FComputedSource);
 end;
 
 procedure TMetaTableField.LoadFromStream(Stream: TStream);
 var i: Integer;
 begin
   inherited LoadFromStream(Stream);
-  Stream.Read(FNotNull, SizeOf(FNotNull));
   ReadString(Stream, FValidationSource);
   ReadString(Stream, FComputedSource);
   Stream.Read(i, Sizeof(i));
@@ -4591,10 +4625,13 @@ begin
 
   if FDefaultValue <> '' then
     Stream.WriteString(' DEFAULT ' + FDefaultValue);
+
   if FNotNull then
     Stream.WriteString(' NOT NULL');
+
   if (FValidationSource <> '') then
     Stream.WriteString(' ' + FValidationSource);
+
   if (FDomain < 0) and (FComputedSource = '') and
      (FFieldType in [uftChar..uftCstring]) and (FCollation <> '') then
     Stream.WriteString(' COLLATE ' + FCollation);
@@ -4604,13 +4641,78 @@ procedure TMetaTableField.SaveToStream(Stream: TStream);
 var i: integer;
 begin
   inherited SaveToStream(Stream);
-  Stream.Write(FNotNull, SizeOf(FNotNull));
   WriteString(Stream, FValidationSource);
   WriteString(Stream, FComputedSource);
   i := ArrayBoundsCount;
   Stream.Write(i, Sizeof(i));
   for i := 0 to i - 1 do
     Stream.Write(FArrayBounds[i], SizeOf(TArrayBound));
+end;
+
+{ TMetaProcField }
+
+procedure TMetaProcField.LoadFromQuery(Q, C, A: TUIBStatement;
+  DefaultCharset: TCharacterSet);
+begin
+  inherited LoadFromQuery(Q, C, A, DefaultCharset);
+  FTypeOf := (Q.Fields.AsSmallint[14] = 1);
+end;
+
+procedure TMetaProcField.LoadFromStream(Stream: TStream);
+begin
+  inherited LoadFromStream(Stream);
+  Stream.Read(FTypeOf, SizeOf(FTypeOf));
+end;
+
+procedure TMetaProcField.SaveToDDLNode(Stream: TStringStream;
+  options: TDDLOptions);
+begin
+  if FDomain >= 0 then
+  begin
+    if FTypeOf then
+      Stream.WriteString('TYPE OF ');
+    Stream.WriteString(Domain.Name)
+  end
+  else
+    case FFieldType of
+      uftNumeric:
+        if FSubType = 2 then
+          Stream.WriteString(Format('DECIMAL(%d,%d)', [FPrecision, FScale])) else
+          Stream.WriteString(Format('NUMERIC(%d,%d)', [FPrecision, FScale]));
+      uftChar..uftCstring:
+        begin
+          Stream.WriteString(Format('%s(%d)',
+            [FieldTypes[FFieldType], FLength div FBytesPerCharacter]));
+          if FNotNull then
+            Stream.WriteString(' NOT NULL');
+          if FDefaultValue <> '' then
+            Stream.WriteString(' DEFAULT ' + FDefaultValue);
+          if (FCharSet <> '') then
+            Stream.WriteString(' CHARACTER SET ' + FCharSet);
+          if (FCollation <> '') then
+            Stream.WriteString(' COLLATE ' + FCollation);
+        end;
+      uftBlob:
+        Stream.WriteString(Format('%s SUB_TYPE %d SEGMENT SIZE %d',
+          [FieldTypes[FFieldType], FSubType, FSegmentLength]));
+    else
+      Stream.WriteString(Format('%s', [FieldTypes[FFieldType]]));
+    end;
+
+  if (FDomain >= 0) or (not (FFieldType in [uftChar..uftCstring])) then
+  begin
+    if FNotNull then
+      Stream.WriteString(' NOT NULL');
+
+     if (FDefaultValue <> '') then
+      Stream.WriteString(' DEFAULT ' + FDefaultValue);
+  end;
+end;
+
+procedure TMetaProcField.SaveToStream(Stream: TStream);
+begin
+  inherited SaveToStream(Stream);
+  Stream.Write(FTypeOf, SizeOf(FTypeOf));
 end;
 
 { TMetaProcInField }
@@ -4652,11 +4754,14 @@ begin
       if not (Q.Fields.IsNull[12] or (Copy(Q.Fields.AsString[12], 1, 4) = 'RDB$')) then
         FDomain := TMetaDataBase(FOwner.FOwner).FindDomainIndex(MetaQuote(Trim(Q.Fields.AsString[12])));
   end;
+
+  FNotNull := (Q.Fields.AsSmallint[13] = 1);
 end;
 
 procedure TMetaField.LoadFromStream(Stream: TStream);
 begin
   inherited LoadFromStream(Stream);
+  Stream.Read(FNotNull, SizeOf(FNotNull));
   Stream.Read(FDomain, SizeOf(FDomain));
 end;
 
@@ -4668,15 +4773,13 @@ end;
 procedure TMetaField.SaveToDDL(Stream: TStringStream; options: TDDLOptions);
 begin
   Stream.WriteString(Name + ' ');
-  if FDomain >= 0 then
-    Stream.WriteString(Domain.Name)
-  else
-    inherited SaveToDDL(Stream, options);
+  inherited SaveToDDL(Stream, options);
 end;
 
 procedure TMetaField.SaveToStream(Stream: TStream);
 begin
   inherited SaveToStream(Stream);
+  Stream.Write(FNotNull, SizeOf(FNotNull));
   Stream.Write(FDomain, SizeOf(FDomain));
 end;
 
