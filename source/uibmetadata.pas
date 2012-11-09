@@ -202,7 +202,8 @@ type
     property Length: Smallint read FLength;
     property Precision: Smallint read FPrecision;
     property FieldType: TUIBFieldType read FFieldType;
-    property CharSet: string read FCharSet;
+    property CharSet: string read FCharSet write FCharSet;
+    property Collation: string read FCollation write FCollation;
     property SubType: Smallint read FSubType;
     property BytesPerCharacter: Smallint read FBytesPerCharacter;
     property ShortFieldType: string read GetShortFieldType;
