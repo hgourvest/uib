@@ -4334,29 +4334,29 @@ end;
         case ASQLCode of
           SQL_TEXT    :
           begin
-            with PGUID(sqldata)^ do
-            begin
-              D1 := BSwap32(D1);
-              D2 := BSwap16(D2);
-              D3 := BSwap16(D3);
-            end;
             if sqllen = SizeOf(TGUID) then
               Move(sqldata^, Result, sqllen)
             else
               raise EUIBConvertError.Create(EUIB_CASTERROR);
-          end;
-          SQL_VARYING :
-          begin
-            with PGUID(@PVary(sqldata).vary_string)^ do
+            with PGUID(@Result)^ do
             begin
               D1 := BSwap32(D1);
               D2 := BSwap16(D2);
               D3 := BSwap16(D3);
             end;
+          end;
+          SQL_VARYING :
+          begin
             if PVary(sqldata).vary_length  = SizeOf(TGUID) then
               Move(PVary(sqldata).vary_string, Result, PVary(sqldata).vary_length)
             else
               raise EUIBConvertError.Create(EUIB_CASTERROR);
+            with PGUID(@Result)^ do
+            begin
+              D1 := BSwap32(D1);
+              D2 := BSwap16(D2);
+              D3 := BSwap16(D3);
+            end;
           end;
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
