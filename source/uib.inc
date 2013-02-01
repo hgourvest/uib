@@ -73,12 +73,6 @@
 // no components
 {.$DEFINE UIB_NO_COMPONENT}
 
-// support VARCHAR(16) CHARSET OCTET COLLATION OCTET as TGUID
-{.$DEFINE GUID_TYPE}
-
-// set this to handle GUID as VARCHAR(38) instead of standard VARCHAR(16) "octets"
-{.$DEFINE GUID_AS_TEXT}
-
 // ***************
 // END USER DEFINE
 // ***************
@@ -249,8 +243,3 @@
 {$IFDEF KYLIX}
   {$DEFINE PUREPASCAL}
 {$ENDIF}
-
-{$IFNDEF GUID_TYPE}
-  {$UNDEF GUID_AS_TEXT}
-{$ENDIF}
-
