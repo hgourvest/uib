@@ -1365,23 +1365,35 @@ begin
 end;
 
 function BSwap32(I: DWORD): DWORD;
+{$IFNDEF OLD_UUID}
 var
   a: array[0..3] of Byte absolute I;
   b: array[0..3] of Byte absolute Result;
+{$ENDIF}
 begin
+{$IFDEF OLD_UUID}
+  Result := I;
+{$ELSE}
   b[0] := a[3];
   b[1] := a[2];
   b[2] := a[1];
   b[3] := a[0];
+{$ENDIF}
 end;
 
 function BSwap16(I: WORD): WORD;
+{$IFNDEF OLD_UUID}
 var
   a: array[0..1] of Byte absolute I;
   b: array[0..1] of Byte absolute Result;
+{$ENDIF}
 begin
+{$IFDEF OLD_UUID}
+  Result := I;
+{$ELSE}
   b[0] := a[1];
   b[1] := a[0];
+{$ENDIF}
 end;
 
 (******************************************************************************)
