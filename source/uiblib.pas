@@ -3181,19 +3181,23 @@ type
   end;
 
   procedure TSQLDA.DecodeStringW(const Code: Smallint; Index: Word; out Str: UnicodeString);
+  var
+    Buff: RawByteString;
   begin
     with FXSQLDA.sqlvar[Index] do
     case Code of
       SQL_TEXT    :
         begin
-          Str := MBUDecode(Copy(sqldata, 0, sqllen), CharacterSetCP[FCharacterSet]);
+          SetString(Buff, sqldata, sqllen);
+          Str := MBUDecode(Buff, CharacterSetCP[FCharacterSet]);
           if SqlSubType > 0 then
             SetLength(Str, sqllen div BytesPerCharacter[FCharacterSet]);
         end;
       SQL_VARYING :
-        Str := MBUDecode(
-          Copy(PAnsiChar(@PVary(sqldata).vary_string), 0, PVary(sqldata).vary_length),
-          CharacterSetCP[FCharacterSet]);
+        begin
+          SetString(Buff, PAnsiChar(@PVary(sqldata).vary_string), PVary(sqldata).vary_length);
+          Str := MBUDecode(Buff, CharacterSetCP[FCharacterSet]);
+        end;
     end;
   end;
 
