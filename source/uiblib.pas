@@ -3249,9 +3249,9 @@ type
               ReallocMem(sqldata, NewLen+2);
             if MaxSqlLen > 0 then
               NewLen := Min(NewLen, MaxSqlLen);
-            sqllen := NewLen + 2;
+            sqllen := NewLen;
             PVary(sqldata).vary_length := NewLen;
-            Move(PAnsiChar(str)^, PVary(sqldata).vary_string,PVary(sqldata).vary_length);
+            Move(PAnsiChar(str)^, PVary(sqldata).vary_string, PVary(sqldata).vary_length);
           end;
         end;
     end;
