@@ -1,1 +1,6 @@
 *.dcu
+*.local
+*_Icon.ico
+*.stat
+*.identcache
+__history

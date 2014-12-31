@@ -10,7 +10,8 @@
 (* the specific language governing rights and limitations under the License.    *)
 (*                                                                              *)
 (* Unit owner : Henri Gourvest <hgourvest@progdigy.com>                         *)
-(* Contributor: Pierre Yager                                                    *)
+(* Contributor:                                                                 *)
+(*     Pierre Yager <pierre.y@gmail.com>                                        *)
 (*                                                                              *)
 (********************************************************************************)
 
@@ -24,7 +25,8 @@ uses
 {$IFDEF MSWINDOWS}
   Windows,
 {$ENDIF}
-  Classes, SysUtils, uibase, uiblib, uib, uibconst, uibkeywords, uibavl;
+  Classes, SysUtils, Types,
+  uibase, uiblib, uib, uibconst, uibkeywords, uibavl;
 
 type
   TTriggerPrefix = (tpBefore, tpAfter);

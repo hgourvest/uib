@@ -13,6 +13,8 @@
 (* Contributor:                                                                 *)
 (*     Volkan Ceylan <volkance@hotmail.com>                                     *)
 (*     Olivier Guilbaud <oguilb@free.fr>                                        *)
+(*     William Yu <william@practiceperfectemr.com>                              *)
+(*     Pierre Yager <pierre.y@gmail.com>                                        *)
 (********************************************************************************)
 
 unit uibdataset;
@@ -149,11 +151,20 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+  {$IFDEF COMPILER21_UP}
+    function GetFieldData(Field: TField; var Buffer: TValueBuffer): Boolean; overload; override;
+    function GetFieldData(FieldNo: Integer; var Buffer: TValueBuffer): Boolean; overload;{$IFNDEF FPC} override; {$ENDIF}
+  {$ELSE}
     function GetFieldData(Field: TField; Buffer: Pointer): Boolean; overload; override;
     function GetFieldData(FieldNo: Integer; Buffer: Pointer): Boolean; overload;{$IFNDEF FPC} override; {$ENDIF}
-  {$IFNDEF FPC}
+  {$ENDIF}
+{$IFNDEF FPC}
+  {$IFDEF COMPILER21_UP}
+    function GetFieldData(Field: TField; var Buffer: TValueBuffer; NativeFormat: Boolean): Boolean; overload; override;
+  {$ELSE}
     function GetFieldData(Field: TField; Buffer: Pointer; NativeFormat: Boolean): Boolean; overload; override;
   {$ENDIF}
+{$ENDIF}
     function CreateBlobStream(Field: TField; Mode: TBlobStreamMode): TStream; override;
     procedure Execute;
     procedure ExecSQL;
@@ -221,8 +232,15 @@ procedure TUIBCustomDataSet.InternalOpen;
 begin
   FRecordSize := SizeOf(Integer);
   InternalInitFieldDefs;
+
+{$IFDEF COMPILER21_UP}
+  if (FieldOptions.AutoCreateMode <> acExclusive) or not (lcPersistent in Fields.LifeCycles) then
+    CreateFields;
+{$ELSE}
   if DefaultFields then
     CreateFields;
+{$ENDIF}
+
   BindFields (True);
   FStatement.Open(False);
   FCurrentRecord := -1;
@@ -234,9 +252,14 @@ end;
 
 procedure TUIBCustomDataSet.InternalClose;
 begin
-  BindFields (False);
+  BindFields(False);
+{$IFDEF COMPILER21_UP}
+  if (FieldOptions.AutoCreateMode <> acExclusive) or not (lcPersistent in Fields.LifeCycles) then
+    DestroyFields;
+{$ELSE}
   if DefaultFields then
     DestroyFields;
+{$ENDIF}
   FStatement.Close(FOnClose);
   FIsOpen := False;
   FCurrentRecord := -1;
@@ -835,18 +858,35 @@ begin
   end;
 end;
 
+{$IFDEF COMPILER21_UP}
+function TUIBCustomDataSet.GetFieldData(FieldNo: Integer;
+  var Buffer: TValueBuffer): Boolean;
+begin
+  Result := InternalGetFieldData(FieldNo, Buffer, True);
+end;
+{$ELSE}
 function TUIBCustomDataSet.GetFieldData(FieldNo: Integer;
   Buffer: Pointer): Boolean;
 begin
   Result := InternalGetFieldData(FieldNo, Buffer, True);
 end;
+{$ENDIF}
 
+{$IFDEF COMPILER21_UP}
+function TUIBCustomDataSet.GetFieldData(Field: TField;
+  var Buffer: TValueBuffer): Boolean;
+begin
+  CheckActive;
+  Result := GetFieldData(Field.FieldNo, Buffer);
+end;
+{$ELSE}
 function TUIBCustomDataSet.GetFieldData(Field: TField;
   Buffer: Pointer): Boolean;
 begin
   CheckActive;
   Result := GetFieldData(Field.FieldNo, Buffer);
 end;
+{$ENDIF}
 
 function TUIBCustomDataSet.GetCanModify: Boolean;
 begin
@@ -863,8 +903,9 @@ function TUIBCustomDataSet.CreateBlobStream(Field: TField;
 begin
   if (Mode = bmRead) then
   begin
+    CheckActive;
     Result := TMemoryStream.Create;
-    GetFieldData(Field, Result);
+    InternalGetFieldData(Field.FieldNo, Result, True);
   end else
     Result := nil;
 end;
@@ -1148,11 +1189,19 @@ end;
 {$ENDIF}
 
 {$IFNDEF FPC}
+{$IFDEF COMPILER21_UP}
+function TUIBCustomDataSet.GetFieldData(Field: TField; var Buffer: TValueBuffer;
+  NativeFormat: Boolean): Boolean;
+begin
+  Result := InternalGetFieldData(Field.FieldNo, Buffer, NativeFormat)
+end;
+{$ELSE}
 function TUIBCustomDataSet.GetFieldData(Field: TField; Buffer: Pointer;
   NativeFormat: Boolean): Boolean;
 begin
   Result := InternalGetFieldData(Field.FieldNo, Buffer, NativeFormat)
 end;
+{$ENDIF}
 {$ENDIF}
 
 { TUIBBCDField }
