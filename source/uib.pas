@@ -10,7 +10,9 @@
 (* the specific language governing rights and limitations under the License.    *)
 (*                                                                              *)
 (* Unit owner : Henri Gourvest <hgourvest@progdigy.com>                         *)
-(* Contributor: Olivier Guilbaud <oguilb@free.fr>                               *)
+(* Contributor:                                                                 *)
+(*     Olivier Guilbaud <oguilb@free.fr>                                        *)
+(*     Pierre Yager <pierre.y@gmail.com>                                        *)
 (*                                                                              *)
 (********************************************************************************)
 
@@ -52,8 +54,8 @@ interface
 uses
   {$IFDEF MSWINDOWS} Windows, {$ENDIF}
   {$IFDEF DELPHI14_UP} Rtti, {$ENDIF}
-  SyncObjs, Classes, Contnrs, SysUtils, uiblib, uibase,
-  uibsqlparser, uibconst;
+  SyncObjs, Classes, Contnrs, SysUtils, Types,
+  uiblib, uibase, uibsqlparser, uibconst;
 
 type
 
