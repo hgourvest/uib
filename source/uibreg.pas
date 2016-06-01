@@ -129,7 +129,7 @@ begin
 {$ENDIF HAVE_SYNEDIT}
   RegisterComponents('UIB', [TUIBDatabase, TUIBTransaction, TUIBQuery,
     TUIBScript, TUIBBackup, TUIBRestore, TUIBSecurity, TUIBRepair,
-    TUIBEvents, TUIBConfig, TUIBServerInfo]);
+    TUIBEvents, TUIBConfig, TUIBServerInfo, TUIBStats]);
 {$IFNDEF UIBPEVERSION}
   RegisterComponents('UIB', [TUIBDataSet]);
 {$IFNDEF BCB}

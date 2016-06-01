@@ -13,6 +13,7 @@
 (* Contributors:                                                                *)
 (*     Olivier Guilbaud <oguilb@free.fr>                                        *)
 (*     Volkan Ceylan <volkance@hotmail.com>                                     *)
+(*     Jean-Marc BOTTURA <jmbottura@visiativ.com>                               *)
 (*                                                                              *)
 (********************************************************************************)
 
@@ -2238,31 +2239,34 @@ const
    * Parameters for isc_action_svc_properties *
    ********************************************)
 
-  isc_spb_prp_page_buffers = #5;
-  isc_spb_prp_sweep_interval = #6;
-  isc_spb_prp_shutdown_db = #7;
-  isc_spb_prp_deny_new_attachments = #9;
-  isc_spb_prp_deny_new_transactions = #10;
-  isc_spb_prp_reserve_space = #11;
-  isc_spb_prp_write_mode = #12;
-  isc_spb_prp_access_mode = #13;
-  isc_spb_prp_set_sql_dialect = #14;
+  isc_spb_prp_page_buffers = #5; // int
+  isc_spb_prp_sweep_interval = #6; // int
+
+  isc_spb_prp_shutdown_db = #7; // int
+  isc_spb_prp_deny_new_attachments = #9; // int
+  isc_spb_prp_deny_new_transactions = #10; // int
+
+  isc_spb_prp_reserve_space = #11; // byte
+  isc_spb_prp_write_mode = #12; // byte
+  isc_spb_prp_access_mode = #13; // byte
+  isc_spb_prp_set_sql_dialect = #14; // byte
   isc_spb_prp_activate = $0100;
   isc_spb_prp_db_online = $0200;
 {$IFDEF FB30_UP}
   isc_spb_prp_nolinger = $0400;
 {$ENDIF}
 {$IFDEF FB25_UP}
-  isc_spb_prp_force_shutdown              = #41;
-  isc_spb_prp_attachments_shutdown        = #42;
-  isc_spb_prp_transactions_shutdown       = #43;
-  isc_spb_prp_shutdown_mode               = #44;
-  isc_spb_prp_online_mode                 = #45;
+  isc_spb_prp_force_shutdown              = #41; // int
+  isc_spb_prp_attachments_shutdown        = #42; // int
+  isc_spb_prp_transactions_shutdown       = #43; // int
 
-  isc_spb_prp_sm_normal          = 0;
-  isc_spb_prp_sm_multi           = 1;
-  isc_spb_prp_sm_single          = 2;
-  isc_spb_prp_sm_full            = 3;
+  isc_spb_prp_shutdown_mode               = #44; // byte isc_spb_prp_sm_*
+  isc_spb_prp_online_mode                 = #45; // byte isc_spb_prp_sm_*
+
+    isc_spb_prp_sm_normal          = 0;
+    isc_spb_prp_sm_multi           = 1;
+    isc_spb_prp_sm_single          = 2;
+    isc_spb_prp_sm_full            = 3;
 {$ENDIF}
 
   (********************************************
@@ -4083,6 +4087,8 @@ const
 {$ENDIF FPC}
 
 function TUIBaseLibrary.Load(const lib: string = GDS32DLL): Boolean;
+var
+  CurrentDir, Folder: string;
 
 {$IFDEF UNIX}
 function GetProcAddress(Lib: Pointer; Name: PAnsiChar): Pointer;
@@ -4096,7 +4102,19 @@ begin
   if not Result then
   begin
   {$IFDEF MSWINDOWS}
-    FGDS32Lib := LoadLibrary(PChar(lib));
+    if FileExists(ExpandFileName(lib)) then
+    begin
+      CurrentDir := GetCurrentDir;
+      try
+        Folder := ExtractFilePath(ExpandFileName(lib));
+        SetCurrentDir(Folder);
+        FGDS32Lib := LoadLibrary(PChar(ExtractFileName(lib)));
+      finally
+        SetCurrentDir(CurrentDir);
+      end;
+    end else
+      FGDS32Lib := LoadLibrary(PChar(lib));
+
   {$ENDIF MSWINDOWS}
   {$IFDEF UNIX}
     FCryptLib := dlopen('libcrypt.so', RTLD_GLOBAL); // Service
@@ -4344,7 +4362,8 @@ begin
         Assigned(isc_encode_sql_time) and Assigned(isc_encode_timestamp) and
         Assigned(isc_event_block)
 {$IFDEF FB21_UP}
-        and Assigned(isc_event_block_a)
+        // not exported in fbclient.so 2.5
+        // and Assigned(isc_event_block_a)
 {$ENDIF}
         and Assigned(isc_event_counts) and Assigned(isc_execute) and
         Assigned(isc_execute_immediate) and Assigned(isc_expand_dpb) and
