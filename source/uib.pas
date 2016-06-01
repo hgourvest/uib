@@ -3075,6 +3075,9 @@ begin
           {$IFDEF IB7_UP}
             blr_boolean_dtype : Params.AddFieldType(Trim(AsString[1]), uftBoolean);
           {$ENDIF}
+          {$IFDEF FB30_UP}
+            blr_bool      : Params.AddFieldType(Trim(AsString[1]), uftBoolean);
+          {$ENDIF}
           else
             // shouldn't occur but ...
             raise Exception.Create(EUIB_UNEXPECTEDERROR);

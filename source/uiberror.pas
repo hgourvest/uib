@@ -740,7 +740,7 @@ const
 {$IFDEF FB30_UP}
   isc_package_name                     = 335544988;
   isc_cannot_make_not_null             = 335544989;
-  isc_feature_deprecated               = 335544990;
+  isc_feature_removed                  = 335544990;
   isc_view_name                        = 335544991;
   isc_lock_dir_access                  = 335544992;
   isc_invalid_fetch_option             = 335544993;
@@ -754,11 +754,11 @@ const
   isc_eem_engine_notfound              = 335545001;
   isc_attachment_in_use                = 335545002;
   isc_transaction_in_use               = 335545003;
-  isc_pman_plugin_notfound             = 335545004;
-  isc_pman_cannot_load_plugin          = 335545005;
+  isc_pman_cannot_load_plugin          = 335545004;
+  isc_pman_module_notfound             = 335545005;
   isc_pman_entrypoint_notfound         = 335545006;
-  isc_pman_bad_conf_index              = 335545007;
-  isc_pman_unknown_instance            = 335545008;
+  isc_pman_module_bad                  = 335545007;
+  isc_pman_plugin_notfound             = 335545008;
   isc_sysf_invalid_trig_namespace      = 335545009;
   isc_unexpected_null                  = 335545010;
   isc_type_notcompat_blob              = 335545011;
@@ -780,6 +780,92 @@ const
   isc_bad_events_handle                = 335545021;
   isc_cannot_copy_stmt                 = 335545022;
   isc_invalid_boolean_usage            = 335545023;
+  isc_sysf_argscant_both_be_zero       = 335545024;
+  isc_spb_no_id                        = 335545025;
+  isc_ee_blr_mismatch_null             = 335545026;
+  isc_ee_blr_mismatch_length           = 335545027;
+  isc_ss_out_of_bounds                 = 335545028;
+  isc_missing_data_structures          = 335545029;
+  isc_protect_sys_tab                  = 335545030;
+  isc_libtommath_generic               = 335545031;
+  isc_wroblrver2                       = 335545032;
+  isc_trunc_limits                     = 335545033;
+  isc_info_access                      = 335545034;
+  isc_svc_no_stdin                     = 335545035;
+  isc_svc_start_failed                 = 335545036;
+  isc_svc_no_switches                  = 335545037;
+  isc_svc_bad_size                     = 335545038;
+  isc_no_crypt_plugin                  = 335545039;
+  isc_cp_name_too_long                 = 335545040;
+  isc_cp_process_active                = 335545041;
+  isc_cp_already_crypted               = 335545042;
+  isc_decrypt_error                    = 335545043;
+  isc_no_providers                     = 335545044;
+  isc_null_spb                         = 335545045;
+  isc_max_args_exceeded                = 335545046;
+  isc_ee_blr_mismatch_names_count      = 335545047;
+  isc_ee_blr_mismatch_name_not_found   = 335545048;
+  isc_bad_result_set                   = 335545049;
+  isc_wrong_message_length             = 335545050;
+  isc_no_output_format                 = 335545051;
+  isc_item_finish                      = 335545052;
+  isc_miss_config                      = 335545053;
+  isc_conf_line                        = 335545054;
+  isc_conf_include                     = 335545055;
+  isc_include_depth                    = 335545056;
+  isc_include_miss                     = 335545057;
+  isc_protect_ownership                = 335545058;
+  isc_badvarnum                        = 335545059;
+  isc_sec_context                      = 335545060;
+  isc_multi_segment                    = 335545061;
+  isc_login_changed                    = 335545062;
+  isc_auth_handshake_limit             = 335545063;
+  isc_wirecrypt_incompatible           = 335545064;
+  isc_miss_wirecrypt                   = 335545065;
+  isc_wirecrypt_key                    = 335545066;
+  isc_wirecrypt_plugin                 = 335545067;
+  isc_secdb_name                       = 335545068;
+  isc_auth_data                        = 335545069;
+  isc_auth_datalength                  = 335545070;
+  isc_info_unprepared_stmt             = 335545071;
+  isc_idx_key_value                    = 335545072;
+  isc_forupdate_virtualtbl             = 335545073;
+  isc_forupdate_systbl                 = 335545074;
+  isc_forupdate_temptbl                = 335545075;
+  isc_cant_modify_sysobj               = 335545076;
+  isc_server_misconfigured             = 335545077;
+  isc_alter_role                       = 335545078;
+  isc_map_already_exists               = 335545079;
+  isc_map_not_exists                   = 335545080;
+  isc_map_load                         = 335545081;
+  isc_map_aster                        = 335545082;
+  isc_map_multi                        = 335545083;
+  isc_map_undefined                    = 335545084;
+  isc_baddpb_damaged_mode              = 335545085;
+  isc_baddpb_buffers_range             = 335545086;
+  isc_baddpb_temp_buffers              = 335545087;
+  isc_map_nodb                         = 335545088;
+  isc_map_notable                      = 335545089;
+  isc_miss_trusted_role                = 335545090;
+  isc_set_invalid_role                 = 335545091;
+  isc_cursor_not_positioned            = 335545092;
+  isc_dup_attribute                    = 335545093;
+  isc_dyn_no_priv                      = 335545094;
+  isc_dsql_cant_grant_option           = 335545095;
+  isc_read_conflict                    = 335545096;
+  isc_crdb_load                        = 335545097;
+  isc_crdb_nodb                        = 335545098;
+  isc_crdb_notable                     = 335545099;
+  isc_interface_version_too_old        = 335545100;
+  isc_fun_param_mismatch               = 335545101;
+  isc_savepoint_backout_err            = 335545102;
+  isc_domain_primary_key_notnull       = 335545103;
+  isc_invalid_attachment_charset       = 335545104;
+  isc_map_down                         = 335545105;
+  isc_login_error                      = 335545106;
+  isc_already_opened                   = 335545107;
+  isc_bad_crypt_key                    = 335545108;
+  isc_encrypt_error                    = 335545109;
 {$ENDIF}
 
 {$IFDEF IB71_UP}
@@ -833,7 +919,13 @@ const
   isc_dsql_transitional_numeric         = 336003075;
   isc_dsql_dialect_warning_expr         = 336003076;
   isc_sql_db_dialect_dtype_unsupport    = 336003077;
+
+{$IFDEF FB30_UP}
+  isc_sql_dialect_conflict_num          = 336003079;
+{$ELSE}
   isc_isc_sql_dialect_conflict_num      = 336003079;
+{$ENDIF}
+
   isc_dsql_warning_number_ambiguous     = 336003080;
   isc_dsql_warning_number_ambiguous1    = 336003081;
   isc_dsql_warn_precision_ambiguous     = 336003082;
@@ -872,6 +964,14 @@ const
 {$ENDIF}
 
 {$IFDEF FB30_UP}
+  isc_dsql_record_version_table        = 336003104;
+  isc_dsql_invalid_sqlda_version       = 336003105;
+  isc_dsql_sqlvar_index                = 336003106;
+  isc_dsql_no_sqlind                   = 336003107;
+  isc_dsql_no_sqldata                  = 336003108;
+  isc_dsql_no_input_sqlda              = 336003109;
+  isc_dsql_no_output_sqlda             = 336003110;
+  isc_dsql_wrong_param_num             = 336003111;
   isc_dyn_filter_not_found             = 336068645;
   isc_dyn_func_not_found               = 336068649;
   isc_dyn_index_not_found              = 336068656;
@@ -980,7 +1080,7 @@ const
   isc_dyn_procnotdef_package           = 336068872;
   isc_dyn_funcsignat_package           = 336068873;
   isc_dyn_procsignat_package           = 336068874;
-  isc_dyn_defvaldecl_package           = 336068875;
+  isc_dyn_defvaldecl_package_proc      = 336068875;
   isc_dyn_package_body_exists          = 336068877;
   isc_dyn_invalid_ddl_func             = 336068878;
   isc_dyn_newfc_oldsyntax              = 336068879;
@@ -989,6 +1089,12 @@ const
   isc_dyn_routine_param_ambiguous      = 336068888;
   isc_dyn_coll_used_function           = 336068889;
   isc_dyn_domain_used_function         = 336068890;
+  isc_dyn_alter_user_no_clause         = 336068891;
+  isc_dyn_duplicate_package_item       = 336068894;
+  isc_dyn_cant_modify_sysobj           = 336068895;
+  isc_dyn_cant_use_zero_increment      = 336068896;
+  isc_dyn_cant_use_in_foreignkey       = 336068897;
+  isc_dyn_defvaldecl_package_func      = 336068898;
 {$ENDIF}
 
 {$IFDEF IB71_UP}
@@ -1233,6 +1339,23 @@ const
   isc_dsql_create_shadow_failed        = 336397314;
   isc_dsql_create_filter_failed        = 336397315;
   isc_dsql_create_index_failed         = 336397316;
+  isc_dsql_create_user_failed          = 336397317;
+  isc_dsql_alter_user_failed           = 336397318;
+  isc_dsql_grant_failed                = 336397319;
+  isc_dsql_revoke_failed               = 336397320;
+  isc_dsql_cte_recursive_aggregate     = 336397321;
+  isc_dsql_mapping_failed              = 336397322;
+  isc_dsql_alter_sequence_failed       = 336397323;
+  isc_dsql_create_generator_failed     = 336397324;
+  isc_dsql_set_generator_failed        = 336397325;
+  isc_dsql_wlock_simple                = 336397326;
+  isc_dsql_firstskip_rows              = 336397327;
+  isc_dsql_wlock_aggregates            = 336397328;
+  isc_dsql_wlock_conflict              = 336397329;
+  isc_dsql_max_exception_arguments     = 336397330;
+  isc_dsql_string_byte_length          = 336397331;
+  isc_dsql_string_char_length          = 336397332;
+  isc_dsql_max_nesting                 = 336397333;
 {$ENDIF}
 
 {$IFDEF IB71_UP}
@@ -1376,6 +1499,8 @@ const
   isc_nbackup_err_eofhdr_restdb        = 337117250;
   isc_nbackup_lostguid_l0bk            = 337117251;
   isc_nbackup_switchd_parameter        = 337117255;
+  isc_nbackup_user_stop                = 337117257;
+  isc_nbackup_deco_parse               = 337117259;
   isc_trace_conflict_acts              = 337182750;
   isc_trace_act_notfound               = 337182751;
   isc_trace_switch_once                = 337182752;
@@ -1414,7 +1539,7 @@ const
 {$ENDIF}
 
 {$IFDEF FB30}
-  isc_err_max                           = 1146;
+  isc_err_max                           = 1259;
 {$ENDIF}
 
 {$IFDEF IB601}

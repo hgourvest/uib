@@ -452,9 +452,17 @@ begin
     {$IFDEF IB7_UP}
       uftBoolean:
         {$IFDEF FPC}
-          Boolean(Buffer^) := PSmallInt(sqldata)^ = ISC_TRUE;
+          Boolean(Buffer^) := PSmallInt(sqldata)^ <> ISC_FALSE;
         {$ELSE}
-          WordBool(Buffer^) := PSmallInt(sqldata)^ = ISC_TRUE;
+          WordBool(Buffer^) := PSmallInt(sqldata)^ <> ISC_FALSE;
+        {$ENDIF}
+    {$ENDIF}
+    {$IFDEF FB30_UP}
+      uftBoolean:
+        {$IFDEF FPC}
+          Boolean(Buffer^) := PAnsiChar(sqldata)^ <> FB_FALSE;
+        {$ELSE}
+          WordBool(Buffer^) := PAnsiChar(sqldata)^ <> FB_FALSE;
         {$ENDIF}
     {$ENDIF}
     else
@@ -836,7 +844,7 @@ begin
         uftDate : DataType := ftDate;
         uftTime : DataType := ftTime;
         uftInt64: DataType := ftLargeint;
-      {$IFDEF IB7_UP}
+      {$IFDEF UIB_HAVE_BOOLEAN}
         uftBoolean: DataType := ftBoolean;
       {$ENDIF}
       else

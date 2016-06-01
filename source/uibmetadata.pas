@@ -933,7 +933,7 @@ const
   FieldTypes: array [TUIBFieldType] of string =
    ('', 'NUMERIC', 'CHAR', 'VARCHAR', 'CSTRING', 'SMALLINT', 'INTEGER', 'QUAD',
     'FLOAT', 'DOUBLE PRECISION', 'TIMESTAMP', 'BLOB', 'BLOBID', 'DATE', 'TIME',
-    'BIGINT' , 'ARRAY'{$IFDEF IB7_UP}, 'BOOLEAN' {$ENDIF}
+    'BIGINT' , 'ARRAY'{$IFDEF UIB_HAVE_BOOLEAN}, 'BOOLEAN' {$ENDIF}
     {$IFDEF FB25_UP}, 'NULL'{$ENDIF});
 
   QRYDefaultCharset =
@@ -2414,7 +2414,11 @@ begin
       {$IFDEF IB7_UP}
       blr_boolean_dtype:
         FFieldType := uftBoolean;
-      {$ENDIF IB7_UP}
+      {$ENDIF}
+      {$IFDEF FB30_UP}
+      blr_bool:
+        FFieldType := uftBoolean;
+      {$ENDIF}
     end;
   if (FFieldType in [uftChar, uftVarchar, uftCstring]) and
     not QField.Fields.IsNull[4] then

@@ -160,6 +160,11 @@ const
   FB_API_VER = 25;
 {$ENDIF FB25}
 
+{$IFDEF FB30}
+  FB_API_VER = 30;
+{$ENDIF FB30}
+
+
   GDS_TRUE = 1;
   GDS_FALSE = 0;
 
@@ -206,6 +211,11 @@ type
   ISCUChar = ISC_UCHAR;
   PISCUChar = ^ISCUChar;
 
+  FB_BOOLEAN = ISC_UCHAR;
+const
+  FB_FALSE = #0;
+  FB_TRUE  = #1;
+
 const
   ISC_STATUS_LENGTH = 20;
 type
@@ -213,7 +223,13 @@ type
 
 {$IFDEF FB25_UP}
 const
+{$IFDEF FB30_UP}
+  FB_SQLSTATE_LENGTH = 5;
+  FB_SQLSTATE_SIZE   = (FB_SQLSTATE_LENGTH + 1);
+{$ELSE}
   FB_SQLSTATE_SIZE  = 6;
+{$ENDIF}
+
 type
   FB_SQLSTATE_STRING = array[0..FB_SQLSTATE_SIZE-1] of AnsiChar;
 {$ENDIF}
@@ -391,6 +407,7 @@ type
 (* Blob stream definitions *)
 (***************************)
 
+
   PBStream = ^TBStream;
   BSTREAM = record
     bstr_blob: PPointer;    // Blob handle
@@ -401,6 +418,9 @@ type
     bstr_mode: AnsiChar;    // (mode) ? OUTPUT : INPUT
   end;
   TBStream = BSTREAM;
+{$IFDEF FB30_UP}
+  FB_BLOB_STREAM = PBStream;
+{$ENDIF}
 
 (********************************************************************
  * CVC: Public blob interface definition held in val.h.             *
@@ -526,7 +546,7 @@ const
   dtype_dbkey = 20;
 {$IFDEF FB30_UP}
   dtype_boolean = 21;
-  DTYPE_TYPE_MAX = 21;
+  DTYPE_TYPE_MAX = 22;
 {$ELSE}
   DTYPE_TYPE_MAX = 21;
 {$ENDIF}
@@ -847,10 +867,12 @@ const
   blr_exception_msg = 6;
 {$IFDEF FB30_UP}
   blr_exception_params = 7;
+  blr_sql_state = 8;
 {$ENDIF}
 
   blr_version4 = 4;
   blr_version5 = 5;
+
   blr_eoc = 76;
   blr_end = 255; // note: defined as -1 in gds.h
 
@@ -1235,24 +1257,25 @@ const
 {$ENDIF}
 
 {$IFDEF FB30_UP}
-  // FB 3.0 specific BLR
-  blr_procedure3            = 192;
-  blr_exec_proc2            = 193;
-  blr_function2             = 194;
-  blr_window                = 195;
-  blr_partition_by          = 196;
-  blr_continue_loop         = 197;
-  blr_procedure4            = 198;
-  blr_agg_function          = 199;
-  blr_substring_similar     = 200;
-  blr_bool_as_value         = 201;
-  blr_coalesce              = 202;
-  blr_decode                = 203;
-  blr_exec_subproc          = 204;
-  blr_subproc_decl          = 205;
-  blr_subproc               = 206;
-  blr_subfunc_decl          = 207;
-  blr_subfunc               = 208;
+  blr_procedure3         = 192;
+  blr_exec_proc2         = 193;
+  blr_function2          = 194;
+  blr_window             = 195;
+  blr_partition_by       = 196;
+  blr_continue_loop      = 197;
+  blr_procedure4         = 198;
+  blr_agg_function       = 199;
+  blr_substring_similar  = 200;
+  blr_bool_as_value      = 201;
+  blr_coalesce           = 202;
+  blr_decode             = 203;
+  blr_exec_subproc       = 204;
+  blr_subproc_decl       = 205;
+  blr_subproc            = 206;
+  blr_subfunc_decl       = 207;
+  blr_subfunc            = 208;
+  blr_record_version2    = 209;
+  blr_gen_id2            = 210;
 {$ENDIF}
 
 (**********************************
@@ -1331,29 +1354,6 @@ const
   isc_dpb_gfix_attach = 66;
   isc_dpb_gstat_attach = 67;
 
- {$IFDEF FB25_UP}
-  fb_shut_confirmation        =   1;
-  fb_shut_preproviders        =   2;
-  fb_shut_postproviders       =   4;
-  fb_shut_finish              =   8;
-{$IFDEF FB30_UP}
-  fb_shut_exit                =  16;
-{$ENDIF}
-
-  fb_shutrsn_svc_stopped      = -1;
-  fb_shutrsn_no_connection    = -2;
-  fb_shutrsn_app_stopped      = -3;
-  fb_shutrsn_device_removed   = -4;
-  fb_shutrsn_signal           = -5;
-  fb_shutrsn_services         = -6;
-  fb_shutrsn_exit_called      = -7;
-
-  fb_cancel_disable           =  1;
-  fb_cancel_enable            =  2;
-  fb_cancel_raise             =  3;
-  fb_cancel_abort             =  4;
-{$ENDIF}
-
 {$IFDEF FB103_UP}
   isc_dpb_set_db_charset = 68;
 {$ENDIF FB103_UP}
@@ -1379,6 +1379,17 @@ const
 
 {$IFDEF FB30_UP}
   isc_dpb_auth_block = 79;
+  isc_dpb_client_version = 80;
+  isc_dpb_remote_protocol = 81;
+  isc_dpb_host_name = 82;
+  isc_dpb_os_user = 83;
+  isc_dpb_specific_auth_data = 84;
+  isc_dpb_auth_plugin_list = 85;
+  isc_dpb_auth_plugin_name = 86;
+  isc_dpb_config = 87;
+  isc_dpb_nolinger = 88;
+  isc_dpb_reset_icu = 89;
+  isc_dpb_map_attach = 90;
 {$ENDIF}
 
 {$IFDEF IB65_UP}
@@ -1413,7 +1424,7 @@ const
   isc_dpb_Max_Value = 71;
 {$ELSE}
 {$IFDEF FB30}
-  isc_dpb_Max_Value = 78;
+  isc_dpb_Max_Value = 90;
 {$ELSE}
 {$IFDEF FB25}
   isc_dpb_Max_Value = 78;
@@ -1441,6 +1452,33 @@ const
 {$ENDIF IB71}
 {$ENDIF IB7}
 {$ENDIF IB65}
+
+ {$IFDEF FB25_UP}
+  fb_shut_confirmation        =   1;
+  fb_shut_preproviders        =   2;
+  fb_shut_postproviders       =   4;
+  fb_shut_finish              =   8;
+{$IFDEF FB30_UP}
+  fb_shut_exit                =  16;
+{$ENDIF}
+
+  fb_shutrsn_svc_stopped      = -1;
+  fb_shutrsn_no_connection    = -2;
+  fb_shutrsn_app_stopped      = -3;
+{$IFNDEF FB30_UP}
+  fb_shutrsn_device_removed   = -4;
+{$ENDIF}
+  fb_shutrsn_signal           = -5;
+  fb_shutrsn_services         = -6;
+  fb_shutrsn_exit_called      = -7;
+
+  fb_cancel_disable           =  1;
+  fb_cancel_enable            =  2;
+  fb_cancel_raise             =  3;
+  fb_cancel_abort             =  4;
+{$ENDIF}
+
+
 
 {$IFDEF FB20_UP}
 (**************************************************)
@@ -1619,12 +1657,25 @@ const
 
 {$IFDEF FB30_UP}
   isc_spb_verbint = AnsiChar(#114);
-  isc_spb_auth_block = Ansichar(#115);
+  isc_spb_auth_block = AnsiChar(#115);
+  isc_spb_auth_plugin_name = AnsiChar(#116);
+  isc_spb_auth_plugin_list = AnsiChar(#117);
+  isc_spb_utf8_filename = AnsiChar(#118);
+  isc_spb_client_version = AnsiChar(#119);
+  isc_spb_remote_protocol = AnsiChar(#120);
+  isc_spb_host_name = AnsiChar(#121);
+  isc_spb_os_user = AnsiChar(#122);
+  isc_spb_config = AnsiChar(#123);
+  isc_spb_expected_db = AnsiChar(#124);
 {$ENDIF}
 
   isc_spb_connect_timeout = AnsiChar(isc_dpb_connect_timeout);
   isc_spb_dummy_packet_interval = AnsiChar(isc_dpb_dummy_packet_interval);
   isc_spb_sql_role_name = AnsiChar(isc_dpb_sql_role_name);
+
+{$IFDEF FB30_UP}
+  isc_spb_specific_auth_data = isc_spb_trusted_auth;
+{$ENDIF}
 
   (*********************************
    * Information call declarations *
@@ -1758,6 +1809,24 @@ const
 {$ENDIF}
 {$IFDEF FB30_UP}
   fb_info_implementation = 114;
+
+  fb_info_page_warns = 115;
+  fb_info_record_warns = 116;
+  fb_info_bpage_warns = 117;
+  fb_info_dpage_warns = 118;
+  fb_info_ipage_warns = 119;
+  fb_info_ppage_warns = 120;
+  fb_info_tpage_warns = 121;
+  fb_info_pip_errors = 122;
+  fb_info_pip_warns = 123;
+
+  fb_info_pages_used = 124;
+  fb_info_pages_free = 125;
+
+  fb_info_crypt_state = 126;
+
+  fb_info_crypt_encrypted = $01;
+  fb_info_crypt_process = $02;
 {$ENDIF}
 
   isc_info_version = isc_info_isc_version;
@@ -1855,11 +1924,20 @@ const
   isc_info_db_impl_linux_sh = 80;
   isc_info_db_impl_linux_sheb = 81;
 {$ENDIF}
+{$IFDEF FB30_UP}
+  isc_info_db_impl_linux_hppa = 82;
+  isc_info_db_impl_linux_alpha = 83;
+  isc_info_db_impl_linux_arm64 = 84;
+  isc_info_db_impl_linux_ppc64el = 85;
+  isc_info_db_impl_linux_ppc64 = 86;
+{$ENDIF}
 
+{$IFNDEF FB30_UP}
   isc_info_db_impl_isc_a = isc_info_db_impl_isc_apl_68K;
   isc_info_db_impl_isc_u = isc_info_db_impl_isc_vax_ultr;
   isc_info_db_impl_isc_v = isc_info_db_impl_isc_vms;
   isc_info_db_impl_isc_s = isc_info_db_impl_isc_sun_68k;
+{$ENDIF}
 
 type
   info_db_class = (
@@ -2043,8 +2121,20 @@ const
   isc_action_svc_set_mapping      = #27;
   isc_action_svc_drop_mapping     = #28;
   isc_action_svc_display_user_adm = #29;
+{$ENDIF}
+
+{$IFDEF FB30_UP}
+  isc_action_svc_validate         = #30;
+{$ENDIF}
+
+{$IFDEF FB25}
   isc_action_svc_last             = #30;
 {$ENDIF}
+
+{$IFDEF FB30}
+  isc_action_svc_last             = #31;
+{$ENDIF}
+
 
   (*****************************
    * Service information items *
@@ -2091,6 +2181,7 @@ const
 {$IFDEF FB30_UP}
   // Sets authentication block for service query() call
   isc_info_svc_auth_block = #69;
+  isc_info_svc_stdin = #78;
 {$ENDIF}
 
   (******************************************************
@@ -2125,6 +2216,10 @@ const
   isc_spb_bkp_file = #5;
   isc_spb_bkp_factor = #6;
   isc_spb_bkp_length = #7;
+{$IFDEF FB30_UP}
+  isc_spb_bkp_skip_data = #8;
+  isc_spb_bkp_stat = #15;
+{$ENDIF}
 
   //flags
   isc_spb_bkp_ignore_checksums = $01;
@@ -2154,6 +2249,9 @@ const
   isc_spb_prp_set_sql_dialect = #14;
   isc_spb_prp_activate = $0100;
   isc_spb_prp_db_online = $0200;
+{$IFDEF FB30_UP}
+  isc_spb_prp_nolinger = $0400;
+{$ENDIF}
 {$IFDEF FB25_UP}
   isc_spb_prp_force_shutdown              = #41;
   isc_spb_prp_attachments_shutdown        = #42;
@@ -2211,6 +2309,12 @@ const
   isc_spb_tra_advise_rollback = 31;
   isc_spb_tra_advise_unknown = 33;
 
+{$IFDEF FB30_UP}
+  isc_spb_tra_id_64 = 46;
+  isc_spb_single_tra_id_64 = 47;
+  isc_spb_multi_tra_id_64 = 48;
+{$ENDIF}
+
   isc_spb_rpr_validate_db = $01;
   isc_spb_rpr_sweep_db = $02;
   isc_spb_rpr_mend_db = $04;
@@ -2219,11 +2323,17 @@ const
   isc_spb_rpr_ignore_checksum = $20;
   isc_spb_rpr_kill_shadows = $40;
   isc_spb_rpr_full = $80;
+{$IFDEF FB30_UP}
+  isc_spb_rpr_icu = $0800;
+{$ENDIF}
 
   (*****************************************
    * Parameters for isc_action_svc_restore *
    *****************************************)
 
+{$IFDEF FB30_UP}
+  isc_spb_res_skip_data = isc_spb_bkp_skip_data;
+{$ENDIF}
   isc_spb_res_buffers = #9;
   isc_spb_res_page_size = #10;
   isc_spb_res_length = #11;
@@ -2231,6 +2341,10 @@ const
 {$IFDEF FB25_UP}
   isc_spb_res_fix_fss_data = #13;
   isc_spb_res_fix_fss_metadata = #14;
+{$ENDIF}
+{$IFDEF FB30_UP}
+  isc_spb_res_stat = isc_spb_bkp_stat;
+  isc_spb_res_metadata_only = isc_spb_bkp_metadata_only;
 {$ENDIF}
   isc_spb_res_deactivate_idx = $0100;
   isc_spb_res_no_shadow = $0200;
@@ -2243,6 +2357,14 @@ const
 {$IFDEF IB71_UP}
   isc_spb_res_validate = $8000;
 {$ENDIF IB71_UP}
+
+{$IFDEF FB30_UP}
+  isc_spb_val_tab_incl = 1;
+  isc_spb_val_tab_excl = 2;
+  isc_spb_val_idx_incl = 3;
+  isc_spb_val_idx_excl = 4;
+  isc_spb_val_lock_timeout = 5;
+{$ENDIF}
 
   (******************************************
    * Parameters for isc_spb_res_access_mode *
@@ -2288,6 +2410,10 @@ const
   isc_spb_sts_nocreation  = $80;
 {$ENDIF}
 
+{$IFDEF FB30_UP}
+  isc_spb_sts_encryption = $100;
+{$ENDIF}
+
 {$IFDEF FB25_UP}
   isc_spb_nbk_level       = 5;
   isc_spb_nbk_file        = 6;
@@ -2331,6 +2457,7 @@ const
 
 {$IFDEF FB30_UP}
   isc_info_sql_explain_plan = 26;
+  isc_info_sql_stmt_flags = 27;
 {$ENDIF}
 
 {$IFDEF IB71_UP}
@@ -3063,6 +3190,7 @@ const
 {$IFDEF FB30_UP}
   fb_dbg_subproc      =   5;
   fb_dbg_subfunc      =   6;
+  fb_dbg_map_curname  =   7;
 {$ENDIF}
 
   fb_dbg_arg_input = 0;
@@ -3231,6 +3359,7 @@ type
       buffer: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
 {$IFNDEF FB30_UP}
+    // This function always returns error since FB 3.0.
     isc_ddl: function(user_status: PISCStatus; db_handle: PIscDbHandle; tra_handle: PIscTrHandle;
       length: Smallint; ddl: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
@@ -3564,10 +3693,14 @@ type
     isc_wait_for_event: function(user_status: PISCStatus; handle: PIscDbHandle;
       length: Smallint; events, buffer: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    {$IFDEF FB15_UP}{$IFNDEF UNIX}
+
+{$IFDEF FB15_UP}
+{$IFNDEF UNIX}
     isc_reset_fpe: function(fpe_status: Word): ISCLong; stdcall;
-    {$ENDIF}{$ENDIF FB15_UP}
-    {$IFDEF IB7_UP}
+{$ENDIF UNIX}
+{$ENDIF FB15_UP}
+
+{$IFDEF IB7_UP}
     isc_array_gen_sdl2: function(status: PISCStatus; desc: PISCArrayDescV2;
       sdl_buffer_length: PSmallInt; sdl_buffer: PAnsiChar; sdl_length: PSmallInt): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
@@ -3602,16 +3735,23 @@ type
     isc_blob_set_desc2: function(status: PISCStatus; relation_name, field_name: PAnsiChar; subtype, charset,
       segment_size: Smallint; desc: PISCBlobDescV2): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    {$ENDIF IB7_UP}
-    {$IFDEF IB7ORFB15}
+{$ENDIF IB7_UP}
+
+{$IFDEF IB7ORFB15}
     isc_get_client_version: procedure(version: PAnsiChar);
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_get_client_major_version: function: Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
     isc_get_client_minor_version: function: Integer;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    {$ENDIF IB7ORFB15}
-    {$IFDEF IB71_UP}
+{$ENDIF IB7ORFB15}
+
+{$IFDEF FB30_UP}
+  fb_database_crypt_callback: function(status: PISCStatus; data: Pointer): ISC_STATUS;
+      {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
+{$ENDIF}
+
+{$IFDEF IB71_UP}
     isc_release_savepoint: function(status: PISCStatus; TrHandle: PIscTrHandle;
       name: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
@@ -3621,7 +3761,7 @@ type
     isc_start_savepoint: function(status: PISCStatus; TrHandle: PIscTrHandle;
       name: PAnsiChar): ISCStatus;
       {$IFDEF UNIX} cdecl; {$ELSE} stdcall; {$ENDIF}
-    {$ENDIF IB71_UP}
+{$ENDIF IB71_UP}
   public
     constructor Create; virtual;
     destructor Destroy; override;
@@ -3921,6 +4061,9 @@ begin
     isc_get_client_major_version := nil;
     isc_get_client_minor_version := nil;
   {$ENDIF IB7ORFB15}
+  {$IFDEF FB30_UP}
+    fb_database_crypt_callback := nil;
+  {$ENDIF}
   {$IFDEF IB71_UP}
     isc_release_savepoint := nil;
     isc_rollback_savepoint := nil;
@@ -4137,6 +4280,9 @@ begin
       isc_get_client_major_version := GetProcAddress(FGDS32Lib, 'isc_get_client_major_version');
       isc_get_client_minor_version := GetProcAddress(FGDS32Lib, 'isc_get_client_minor_version');
     {$ENDIF IB7ORFB15}
+    {$IFDEF FB30_UP}
+      fb_database_crypt_callback := GetProcAddress(FGDS32Lib, 'fb_database_crypt_callback');
+    {$ENDIF}
     {$IFDEF IB71_UP}
       isc_release_savepoint := GetProcAddress(FGDS32Lib, 'isc_release_savepoint');
       isc_rollback_savepoint := GetProcAddress(FGDS32Lib, 'isc_rollback_savepoint');
@@ -4244,6 +4390,9 @@ begin
         and Assigned(isc_get_client_version) and Assigned(isc_get_client_major_version)
         and Assigned(isc_get_client_minor_version)
       {$ENDIF IB7ORFB15}
+      {$IFDEF FB30_UP}
+        and Assigned(fb_database_crypt_callback)
+      {$ENDIF}
       {$IFDEF IB71_UP}
         and Assigned(isc_release_savepoint) and Assigned(isc_rollback_savepoint)
         and Assigned(isc_start_savepoint)

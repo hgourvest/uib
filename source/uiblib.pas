@@ -52,7 +52,7 @@ type
 
   TUIBFieldType = (uftUnKnown, uftNumeric, uftChar, uftVarchar, uftCstring, uftSmallint,
     uftInteger, uftQuad, uftFloat, uftDoublePrecision, uftTimestamp, uftBlob, uftBlobId,
-    uftDate, uftTime, uftInt64, uftArray {$IFDEF IB7_UP}, uftBoolean{$ENDIF}
+    uftDate, uftTime, uftInt64, uftArray {$IFDEF UIB_HAVE_BOOLEAN}, uftBoolean{$ENDIF}
     {$IFDEF FB25_UP}, uftNull{$ENDIF});
 
   TScale = 1..15;
@@ -1203,10 +1203,23 @@ const
   ,(Name: 'utf8_filename';          ParamType: prNone)
   ,(Name: 'ext_call_depth';         ParamType: prCard)
 {$ENDIF}
+{$IFDEF FB30_UP}
+  ,(Name: 'auth_block';             ParamType: prIgno) // buffer
+  ,(Name: 'client_version';         ParamType: prStrg)
+  ,(Name: 'remote_protocol';        ParamType: prStrg)
+  ,(Name: 'host_name';              ParamType: prStrg)
+  ,(Name: 'os_user';                ParamType: prStrg)
+  ,(Name: 'specific_auth_data';     ParamType: prIgno) // buffer
+  ,(Name: 'auth_plugin_list';       ParamType: prIgno) // buffer
+  ,(Name: 'auth_plugin_name';       ParamType: prIgno) // buffer
+  ,(Name: 'config';                 ParamType: prStrg)
+  ,(Name: 'nolinger';               ParamType: prNone)
+  ,(Name: 'reset_icu';              ParamType: prNone)
+  ,(Name: 'map_attach';             ParamType: prNone)
+{$ENDIF}
    );
 
 const
-
   BPBInfos : array[1..isc_bpb_Max_Value] of TDPBInfo =
    ((Name: 'source_type';      ParamType: prShrt),
     (Name: 'target_type';      ParamType: prShrt),
@@ -3527,6 +3540,9 @@ type
 {$IFDEF FB25_UP}
           SQL_NULL: ;
 {$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN: Result := PByte(sqldata)^;
+{$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -3573,6 +3589,9 @@ type
           SQL_VARYING   : ConvertString(SQL_VARYING, Index, Result);
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN: Result := PByte(sqldata)^;
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -3621,6 +3640,9 @@ type
 {$IFDEF FB25_UP}
           SQL_NULL: ;
 {$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN: Result := PByte(sqldata)^;
+{$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -3668,6 +3690,9 @@ type
 {$IFDEF FB25_UP}
           SQL_NULL: ;
 {$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN: Result := PByte(sqldata)^;
+{$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -3714,6 +3739,9 @@ type
           SQL_TYPE_TIME : ; // Result := 0; What else ??
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN: Result := PByte(sqldata)^;
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -3772,6 +3800,9 @@ type
           SQL_INT64     : Result := AnsiString(IntToStr(PInt64(sqldata)^));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN: Result := AnsiString(BoolToStr(PAnsiChar(sqldata)^ <> FB_FALSE));
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -3836,6 +3867,9 @@ type
 {$IFDEF FB25_UP}
           SQL_NULL: ;
 {$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN: Result := RawByteString(BoolToStr(PAnsiChar(sqldata)^ <> FB_FALSE));
+{$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -3881,6 +3915,9 @@ type
           SQL_FLOAT     : Result := PSingle(sqldata)^;
 {$IFDEF IB7_UP}
           SQL_BOOLEAN   : Result := PSmallint(sqldata)^ = 1;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : Result := PAnsiChar(sqldata)^ <> FB_FALSE;
 {$ENDIF}
           SQL_SHORT     : Result := PSmallint(sqldata)^;
 {$IFDEF COMPILER6_UP}
@@ -3946,6 +3983,9 @@ type
           SQL_FLOAT     : Result := PSingle(sqldata)^;
 {$IFDEF IB7_UP}
           SQL_BOOLEAN   : Result := PSmallint(sqldata)^ = 1;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : Result := PAnsiChar(sqldata)^ <> FB_FALSE;
 {$ENDIF}
           SQL_SHORT     : Result := PSmallint(sqldata)^;
 {$IFDEF COMPILER6_UP}
@@ -4054,6 +4094,9 @@ type
 {$IFDEF FB25_UP}
           SQL_NULL: ;
 {$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : Result := PByte(sqldata)^;
+{$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -4130,7 +4173,9 @@ type
 {$IFDEF FB25_UP}
           SQL_NULL: ;
 {$ENDIF}
-        else
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : Result := PByte(sqldata)^;
+{$ENDIF}        else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
     end;
@@ -4173,6 +4218,9 @@ end;
           SQL_VARYING   : ConvertString(SQL_VARYING, Index, result);
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : Result := PAnsiChar(sqldata)^ <> FB_FALSE;
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4223,6 +4271,9 @@ end;
 {$IFDEF FB25_UP}
           SQL_NULL: ;
 {$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : Result := BoolToStr(PAnsiChar(sqldata)^ <> FB_FALSE);
+{$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -4270,6 +4321,9 @@ end;
 {$IFDEF FB25_UP}
           SQL_NULL: ;
 {$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : Result := PByte(sqldata)^;
+{$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -4316,6 +4370,9 @@ end;
           SQL_TYPE_DATE : Result := 0;
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : Result := PByte(sqldata)^;
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4430,12 +4487,15 @@ end;
           SQL_LONG      : PInteger(sqldata)^ := StrToInt(string(Value));
           SQL_FLOAT     : PSingle(sqldata)^ := StrToFloat(string(Value));
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN,
+          SQL_BOOLEAN   : PSmallint(sqldata)^ := Ord(StrToBool(string(Value)));
 {$ENDIF}
           SQL_SHORT     : PSmallint(sqldata)^ := StrToInt(string(Value));
           SQL_INT64     : PInt64(sqldata)^ := StrToInt64(string(Value));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : PByte(sqldata)^ := Ord(StrToBool(string(Value)));
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4475,7 +4535,7 @@ end;
           SQL_LONG      : PInteger(sqldata)^ := Trunc(Value);
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN,
+          SQL_BOOLEAN   : PSmallint(sqldata)^ :=  Ord(Value <> 0);
 {$ENDIF}
           SQL_SHORT     : PSmallint(sqldata)^ := Trunc(Value);
           SQL_INT64     : PInt64(sqldata)^ := Trunc(Value);
@@ -4483,6 +4543,9 @@ end;
           SQL_VARYING   : EncodeString(SQL_VARYING, Index, DateTimeToStr(Value));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : PByte(sqldata)^ :=  Ord(Value <> 0);
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4520,7 +4583,7 @@ end;
           SQL_LONG      : PInteger(sqldata)^ := Value;
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN,
+          SQL_BOOLEAN   : PSmallint(sqldata)^ :=  Ord(Value <> 0);
 {$ENDIF}
           SQL_SHORT     : PSmallint(sqldata)^ := Value;
           SQL_INT64     : PInt64(sqldata)^ := Value;
@@ -4528,6 +4591,9 @@ end;
           SQL_VARYING   : EncodeString(SQL_VARYING, Index, DateToStr(Value));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : PByte(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4565,7 +4631,7 @@ end;
           SQL_LONG      : PInteger(sqldata)^ := Value;
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN,
+          SQL_BOOLEAN   : PSmallint(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
           SQL_SHORT     : PSmallint(sqldata)^ := Value;
           SQL_INT64     : PInt64(sqldata)^ := Value;
@@ -4573,6 +4639,9 @@ end;
           SQL_VARYING   : EncodeString(SQL_VARYING, Index, TimeToStr(Value));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : PByte(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4607,7 +4676,7 @@ end;
           SQL_LONG      : PInteger(sqldata)^ := ord(Value);
           SQL_FLOAT     : PSingle(sqldata)^ := ord(Value);
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN,
+          SQL_BOOLEAN   : PSmallint(sqldata)^ := Ord(Value);
 {$ENDIF}
           SQL_SHORT     : PSmallint(sqldata)^ := ord(Value);
           SQL_INT64     : PInt64(sqldata)^ := ord(Value);
@@ -4615,6 +4684,9 @@ end;
           SQL_VARYING   : EncodeString(SQL_VARYING, Index, IntToStr(ord(Value)));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : PByte(sqldata)^ := Ord(Value);
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4652,7 +4724,7 @@ end;
           SQL_LONG      : PInteger(sqldata)^ := Value;
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN,
+          SQL_BOOLEAN   : PSmallInt(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
           SQL_SHORT     : PSmallint(sqldata)^ := Value;
           SQL_INT64     : PInt64(sqldata)^ := Value;
@@ -4660,6 +4732,9 @@ end;
           SQL_VARYING   : EncodeString(SQL_VARYING, Index, IntToStr(Value));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : PByte(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4697,7 +4772,7 @@ end;
           SQL_LONG      : PInteger(sqldata)^ := Trunc(Value);
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN,
+          SQL_BOOLEAN   : PSmallint(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
           SQL_SHORT     : PSmallint(sqldata)^ := Trunc(Value);
           SQL_INT64     : PInt64(sqldata)^ := Trunc(Value);
@@ -4705,6 +4780,9 @@ end;
           SQL_VARYING   : EncodeString(SQL_VARYING, Index, FloatToStr(Value));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : PByte(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4742,7 +4820,7 @@ end;
           SQL_LONG      : PInteger(sqldata)^ := Value;
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN,
+          SQL_BOOLEAN   : PSmallint(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
           SQL_SHORT     : PSmallint(sqldata)^ := Value;
           SQL_INT64     : PInt64(sqldata)^ := Value;
@@ -4750,6 +4828,9 @@ end;
           SQL_VARYING   : EncodeString(SQL_VARYING, Index, IntToStr(Value));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : PByte(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4799,12 +4880,15 @@ end;
           SQL_LONG      : PInteger(sqldata)^ := StrToInt(string(Value));
           SQL_FLOAT     : PSingle(sqldata)^ := StrToFloat(string(Value));
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN,
+          SQL_BOOLEAN   : PSmallint(sqldata)^ := ord(StrToBool(string(Value)));
 {$ENDIF}
           SQL_SHORT     : PSmallint(sqldata)^ := StrToInt(string(Value));
           SQL_INT64     : PInt64(sqldata)^ := StrToInt64(string(Value));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : PByte(sqldata)^ := Ord(StrToBool(string(Value)));
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4847,12 +4931,15 @@ end;
           SQL_LONG      : PInteger(sqldata)^ := StrToInt(Value);
           SQL_FLOAT     : PSingle(sqldata)^ := StrToFloat(Value);
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN,
+          SQL_BOOLEAN   : PSmallint(sqldata)^ := Ord(StrToBool(string(Value)));
 {$ENDIF}
           SQL_SHORT     : PSmallint(sqldata)^ := StrToInt(Value);
           SQL_INT64     : PInt64(sqldata)^ := StrToInt64(Value);
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : PByte(sqldata)^ := Ord(StrToBool(string(Value)));
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4891,7 +4978,7 @@ end;
           SQL_LONG      : PInteger(sqldata)^ := Value;
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN,
+          SQL_BOOLEAN   : PSmallint(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
           SQL_SHORT     : PSmallint(sqldata)^ := Value;
           SQL_INT64     : PInt64(sqldata)^ := Value;
@@ -4899,6 +4986,9 @@ end;
           SQL_VARYING   : EncodeString(SQL_VARYING, Index, IntToStr(Value));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : PByte(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4936,7 +5026,7 @@ end;
           SQL_LONG      : PInteger(sqldata)^ := Trunc(Value);
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN,
+          SQL_BOOLEAN   : PSmallint(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
           SQL_SHORT     : PSmallint(sqldata)^ := Trunc(Value);
           SQL_INT64     : PInt64(sqldata)^ := Trunc(Value);
@@ -4944,6 +5034,9 @@ end;
           SQL_VARYING   : EncodeString(SQL_VARYING, Index, FloatToStr(Value));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : PByte(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -4986,7 +5079,7 @@ end;
           SQL_LONG      : PInteger(sqldata)^ := Trunc(Value);
           SQL_FLOAT     : PSingle(sqldata)^ := Value;
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN,
+          SQL_BOOLEAN   : PSmallint(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
           SQL_SHORT     : PSmallint(sqldata)^ := Trunc(Value);
           SQL_INT64     : PInt64(sqldata)^ := Trunc(Value);
@@ -4994,6 +5087,9 @@ end;
           SQL_VARYING   : EncodeString(SQL_VARYING, Index, FloatToStr(Value));
 {$IFDEF FB25_UP}
           SQL_NULL: ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : PByte(sqldata)^ := Ord(Value <> 0);
 {$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
@@ -5024,7 +5120,7 @@ end;
 {$IFDEF UNICODE}
       varUString:                        SetAsString(Index, Value);
 {$ENDIF}
-{$IFDEF IB7_UP}
+{$IFDEF UIB_HAVE_BOOLEAN}
       varBoolean:                        SetAsBoolean(Index, Value);
 {$ENDIF}
       varNull, VarEmpty:                 SetIsNull(index, true);
@@ -5311,7 +5407,7 @@ end;
     case FXSQLDA.sqlvar[Index].sqltype and not (1) of
       SQL_TEXT        : Result := uftChar;
       SQL_VARYING     : Result := uftVarchar;
-    {$IFDEF IB7_UP}
+    {$IFDEF UIB_HAVE_BOOLEAN}
       SQL_BOOLEAN     : Result := uftBoolean;
     {$ENDIF}
       SQL_SHORT       : Result := uftSmallint;
@@ -5942,6 +6038,12 @@ end;
           SQL_VARYING   : DecodeStringA(SQL_VARYING, Index, Result);
           SQL_BLOB      : ReadBlobA(Index, Result);
           SQL_ARRAY     : Result := '(Array)';
+{$IFDEF FB25_UP}
+          SQL_NULL      : ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : Result := AnsiString(BoolToStr(PAnsiChar(sqldata)^ <> FB_FALSE));
+{$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -5990,6 +6092,12 @@ end;
           SQL_VARYING   : DecodeStringB(SQL_VARYING, Index, Result);
           SQL_BLOB      : ReadBlobB(Index, Result);
           SQL_ARRAY     : Result := '(Array)';
+{$IFDEF FB25_UP}
+          SQL_NULL      : ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : Result := RawByteString(BoolToStr(PAnsiChar(sqldata)^ <> FB_FALSE));
+{$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -6038,6 +6146,12 @@ end;
           SQL_VARYING   : DecodeStringW(SQL_VARYING, Index, Result);
           SQL_BLOB      : ReadBlobW(Index, Result);
           SQL_ARRAY     : Result := '(Array)';
+{$IFDEF FB25_UP}
+          SQL_NULL      : ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : Result := BoolToStr(PAnsiChar(sqldata)^ <> FB_FALSE);
+{$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -6082,7 +6196,7 @@ end;
           SQL_LONG      : Result := PInteger(sqldata)^;
           SQL_FLOAT     : Result := PSingle(sqldata)^;
 {$IFDEF IB7_UP}
-          SQL_BOOLEAN   : Result :=  WordBool(PSmallint(sqldata)^);
+          SQL_BOOLEAN   : Result :=  PSmallint(sqldata)^ <> 0;
 {$ENDIF}
           SQL_SHORT     : Result := PSmallint(sqldata)^;
 {$IFDEF COMPILER6_UP}
@@ -6098,6 +6212,12 @@ end;
           SQL_VARYING   : Result := DecodeString(SQL_VARYING, Index);
           SQL_BLOB      : ReadBlob(Index, Result);
           SQL_ARRAY     : Result := '(Array)';
+{$IFDEF FB25_UP}
+          SQL_NULL      : ;
+{$ENDIF}
+{$IFDEF FB30_UP}
+          SQL_BOOLEAN   : Result := PAnsiChar(sqldata)^ <> FB_FALSE;
+{$ENDIF}
         else
           raise EUIBConvertError.Create(EUIB_CASTERROR);
         end;
@@ -6479,6 +6599,12 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
   {$IFDEF IB7_UP}
       uftBoolean         : SetFieldType(AddField(name), SizeOf(Smallint)     , SQL_BOOLEAN   + 1, 0);
   {$ENDIF}
+  {$IFDEF FB25_UP}
+      uftNull            : SetFieldType(AddField(name), 0                    , SQL_NULL      + 0, 0);
+  {$ENDIF}
+  {$IFDEF FB30_UP}
+      uftBoolean         : SetFieldType(AddField(name), SizeOf(Byte)         , SQL_BOOLEAN   + 1, 0);
+  {$ENDIF}
     end;
   end;
 
@@ -6810,8 +6936,12 @@ procedure TSQLParams.AddFieldType(const Name: string; FieldType: TUIBFieldType;
 
   procedure TSQLParams.SetAsBoolean(const Index: Word; const Value: Boolean);
   begin
-{$IFDEF IB7_UP}
+{$IFDEF UIB_HAVE_BOOLEAN}
+  {$IFDEF IB70_UP}
     SetFieldType(Index, sizeof(Smallint), SQL_BOOLEAN + 1, 0);
+  {$ELSE}
+    SetFieldType(Index, sizeof(Byte), SQL_BOOLEAN + 1, 0);
+  {$ENDIF}
 {$ELSE}
     SetFieldType(Index, sizeof(Smallint), SQL_SHORT + 1, 0);
 {$ENDIF}
