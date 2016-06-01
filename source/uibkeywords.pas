@@ -6,7 +6,7 @@ uses
   SysUtils;
 
 const
-  SQLToKens : array[0..327] of String = (
+  SQLToKens : array[0..326] of String = (
     'ABS', 'ACCENT', 'ACOS', 'ACTION', 'ACTIVE', 'ADD', 'ADMIN', 'AFTER', 'ALL',
     'ALTER', 'ALWAYS', 'AND', 'ANY', 'AS', 'ASC', 'ASCENDING', 'ASCII_CHAR',
     'ASCII_VAL', 'ASIN', 'AT', 'ATAN', 'ATAN2', 'AUTO', 'AVG', 'BACKUP',
@@ -49,7 +49,7 @@ const
     'STABILITY', 'START', 'STARTING', 'STARTS', 'STATEMENT', 'STATISTICS',
     'SUBSTRING', 'SUB_TYPE', 'SUM', 'SUSPEND', 'TABLE', 'TAN', 'TANH',
     'TEMPORARY', 'THEN', 'TIME', 'TIMESTAMP', 'TIMEOUT', 'TO', 'TRAILING',
-    'TRANSACTION', 'TRIGGER', 'TRIM', 'TRUNC', 'TYPE', 'UNCOMMITTED', 'UNDO',
+    'TRANSACTION', 'TRIGGER', 'TRIM', 'TRUNC', 'UNCOMMITTED', 'UNDO',
     'UNION', 'UNIQUE', 'UPDATE', 'UPDATING', 'UPPER', 'USER', 'USING', 'VALUE',
     'VALUES', 'VARCHAR', 'VARIABLE', 'VARYING', 'VIEW', 'WAIT', 'WEEK',
     'WEEKDAY', 'WHEN', 'WHERE', 'WHILE', 'WITH', 'WORK', 'WRITE', 'YEAR',

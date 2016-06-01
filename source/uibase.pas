@@ -3207,6 +3207,9 @@ const
 
 const
 {$IFDEF MSWINDOWS}
+{$IFDEF FB30_UP}
+  GDS32DLL = 'fbclient.dll';
+{$ELSE}
 {$IFDEF FB15_UP}
 {$IFDEF FBEMBED}
   GDS32DLL = 'fbembed.dll';
@@ -3216,6 +3219,7 @@ const
 {$ELSE}
   GDS32DLL = 'gds32.dll';
 {$ENDIF FB15_UP}
+{$ENDIF FB30_UP}
 {$ENDIF MSWINDOWS}
 
 {$IFDEF UNIX}
