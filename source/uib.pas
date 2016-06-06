@@ -1030,7 +1030,7 @@ type
     property PageSize: Cardinal read FPageSize write FPageSize default 0;
 {$IFDEF FB25_UP}
     property FixMetadataCharset: TCharacterSet read FFixMetadataCharset write FFixMetadataCharset;
-    property FixDataCharset: TCharacterSet read FFixDataCharset write FFixMetadataCharset;
+    property FixDataCharset: TCharacterSet read FFixDataCharset write FFixDataCharset;
 {$ENDIF}
   end;
 
