@@ -658,6 +658,7 @@ type
     FOIDUDFs: TOIDUDFs;
     FOIDRoles: TOIDRoles;
     FSysInfos: Boolean;
+    FSQLDialect: Integer;
     FDefaultCharset: TCharacterSet;
 
     FSortedTables: TList;
@@ -2526,6 +2527,7 @@ begin
   FOIDUDFs := ALLUDFs;
   FOIDRoles := ALLRoles;
   FSysInfos := False;
+  FSQLDialect := 3;
   FDefaultCharset := csNONE;
 
   FSortedTables := TList.Create;
@@ -2617,6 +2619,7 @@ begin
   CheckTransaction(Transaction);
 
   FName := Transaction.DataBase.DatabaseName;
+  FSQLDialect := Transaction.DataBase.SQLDialect;
 
   Configure(QNames, '');
   if FSysInfos then
