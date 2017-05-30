@@ -5083,7 +5083,7 @@ end;
 procedure TMetaRoleGrant.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
   inherited SaveToDDLNode(Stream, options);
-  Stream.WriteString('"' + FName + '" TO ');
+  Stream.WriteString(MetaQuote(FName) + ' TO ');
   inherited SaveGranteesToDDLNode(Stream, 'ADMIN', options);
 end;
 
