@@ -1152,7 +1152,8 @@ const
     '  RDB$FIELDS FLD ' +
     'left outer join RDB$COLLATIONS COL on (COL.RDB$CHARACTER_SET_ID = FLD.RDB$CHARACTER_SET_ID and COL.RDB$COLLATION_ID = FLD.RDB$COLLATION_ID) ' +
     'where ' +
-    '  not (FLD.RDB$FIELD_NAME starting with ''RDB$'')';
+    '  (FLD.RDB$SYSTEM_FLAG <> 1 or FLD.RDB$SYSTEM_FLAG is null) and' +
+    '  (not FLD.RDB$FIELD_NAME starting with ''RDB$'')';
 
   QRYSysDomains =
     'select ' +
