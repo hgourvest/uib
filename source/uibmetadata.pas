@@ -143,7 +143,7 @@ type
     procedure RegisterDependedOn(OtherNode: TMetaNode);
     function GetNodes(const Index: Integer): TNodeItem;
     function GetDatabase: TMetaDatabase;
-    function MetaQuote(const str: string): string;    
+    function MetaQuote(const str: string): string;
     property Name: string read GetName;
     property AsDDL: string read GetAsDDL;
     property AsDDLNode: string read GetAsDDLNode;
@@ -1525,8 +1525,11 @@ end;
 
 function TMetaNode.MetaQuote(const str: string): string;
 begin
-  if (GetDatabase.FIdentifiers.Search(PChar(str)) <> nil) then
-    Result := '"' + str + '"' else
+  if GetDatabase.FSQLDialect < 3 then
+    Result := str
+  else if (GetDatabase.FIdentifiers.Search(PChar(str)) <> nil) then
+    Result := '"' + str + '"'
+  else
     Result := SQLQuote(str);
 end;
 
