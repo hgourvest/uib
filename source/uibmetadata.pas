@@ -3464,7 +3464,7 @@ begin
   end;
   Stream.WriteString(')');
 
-  // fb15up
+{$IFDEF FB15_UP}
   if not ((FIndexName = '') or (not (ddlFull in options) and (Copy(FIndexName, 1, 4) = 'RDB$'))) then
   begin
     Stream.WriteString(NewLine + '  USING');
@@ -3472,6 +3472,7 @@ begin
       Stream.WriteString(' DESC');
     Stream.WriteString(' INDEX ' + FIndexName);
   end;
+{$ENDIF}
 
   Stream.WriteString(';');
 end;
@@ -3544,7 +3545,7 @@ begin
   end;
   Stream.WriteString(')');
 
-  // fb15up
+{$IFDEF FB15_UP}
   if not ((FIndexName = '') or (not (ddlFull in options) and (Copy(FIndexName, 1, 4) = 'RDB$'))) then
   begin
     Stream.WriteString(NewLine + '  USING');
@@ -3552,6 +3553,8 @@ begin
       Stream.WriteString(' DESC');
     Stream.WriteString(' INDEX ' + FIndexName);
   end;
+{$ENDIF}
+
   Stream.WriteString(';');
 end;
 
@@ -3729,7 +3732,7 @@ begin
     urSetDefault: Stream.WriteString(NewLine + '  ON UPDATE SET DEFAULT');
   end;
 
-  // fb15up
+{$IFDEF FB15_UP}
   if not ((FIndexName = '') or (not (ddlFull in options) and (Copy(FIndexName, 1, 4) = 'RDB$'))) then
   begin
     Stream.WriteString(NewLine + '  USING');
@@ -3737,6 +3740,7 @@ begin
       Stream.WriteString(' DESC');
     Stream.WriteString(' INDEX ' + FIndexName);
   end;
+{$ENDIF}
 
   Stream.WriteString(';');
 end;
