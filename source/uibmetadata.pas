@@ -143,7 +143,7 @@ type
     procedure RegisterDependedOn(OtherNode: TMetaNode);
     function GetNodes(const Index: Integer): TNodeItem;
     function GetDatabase: TMetaDatabase;
-    function MetaQuote(const str: string): string;    
+    function MetaQuote(const str: string): string;
     property Name: string read GetName;
     property AsDDL: string read GetAsDDL;
     property AsDDLNode: string read GetAsDDLNode;
@@ -658,6 +658,7 @@ type
     FOIDUDFs: TOIDUDFs;
     FOIDRoles: TOIDRoles;
     FSysInfos: Boolean;
+    FSQLDialect: Integer;
     FDefaultCharset: TCharacterSet;
 
     FSortedTables: TList;
@@ -1152,7 +1153,8 @@ const
     '  RDB$FIELDS FLD ' +
     'left outer join RDB$COLLATIONS COL on (COL.RDB$CHARACTER_SET_ID = FLD.RDB$CHARACTER_SET_ID and COL.RDB$COLLATION_ID = FLD.RDB$COLLATION_ID) ' +
     'where ' +
-    '  not (FLD.RDB$FIELD_NAME starting with ''RDB$'')';
+    '  (FLD.RDB$SYSTEM_FLAG <> 1 or FLD.RDB$SYSTEM_FLAG is null) and' +
+    '  (not FLD.RDB$FIELD_NAME starting with ''RDB$'')';
 
   QRYSysDomains =
     'select ' +
@@ -1523,8 +1525,11 @@ end;
 
 function TMetaNode.MetaQuote(const str: string): string;
 begin
-  if (GetDatabase.FIdentifiers.Search(PChar(str)) <> nil) then
-    Result := '"' + str + '"' else
+  if GetDatabase.FSQLDialect < 3 then
+    Result := str
+  else if (GetDatabase.FIdentifiers.Search(PChar(str)) <> nil) then
+    Result := '"' + str + '"'
+  else
     Result := SQLQuote(str);
 end;
 
@@ -2525,6 +2530,7 @@ begin
   FOIDUDFs := ALLUDFs;
   FOIDRoles := ALLRoles;
   FSysInfos := False;
+  FSQLDialect := 3;
   FDefaultCharset := csNONE;
 
   FSortedTables := TList.Create;
@@ -2616,6 +2622,7 @@ begin
   CheckTransaction(Transaction);
 
   FName := Transaction.DataBase.DatabaseName;
+  FSQLDialect := Transaction.DataBase.SQLDialect;
 
   Configure(QNames, '');
   if FSysInfos then
@@ -3463,7 +3470,7 @@ begin
   end;
   Stream.WriteString(')');
 
-  // fb15up
+{$IFDEF FB15_UP}
   if not ((FIndexName = '') or (not (ddlFull in options) and (Copy(FIndexName, 1, 4) = 'RDB$'))) then
   begin
     Stream.WriteString(NewLine + '  USING');
@@ -3471,6 +3478,7 @@ begin
       Stream.WriteString(' DESC');
     Stream.WriteString(' INDEX ' + FIndexName);
   end;
+{$ENDIF}
 
   Stream.WriteString(';');
 end;
@@ -3543,7 +3551,7 @@ begin
   end;
   Stream.WriteString(')');
 
-  // fb15up
+{$IFDEF FB15_UP}
   if not ((FIndexName = '') or (not (ddlFull in options) and (Copy(FIndexName, 1, 4) = 'RDB$'))) then
   begin
     Stream.WriteString(NewLine + '  USING');
@@ -3551,6 +3559,8 @@ begin
       Stream.WriteString(' DESC');
     Stream.WriteString(' INDEX ' + FIndexName);
   end;
+{$ENDIF}
+
   Stream.WriteString(';');
 end;
 
@@ -3728,7 +3738,7 @@ begin
     urSetDefault: Stream.WriteString(NewLine + '  ON UPDATE SET DEFAULT');
   end;
 
-  // fb15up
+{$IFDEF FB15_UP}
   if not ((FIndexName = '') or (not (ddlFull in options) and (Copy(FIndexName, 1, 4) = 'RDB$'))) then
   begin
     Stream.WriteString(NewLine + '  USING');
@@ -3736,6 +3746,7 @@ begin
       Stream.WriteString(' DESC');
     Stream.WriteString(' INDEX ' + FIndexName);
   end;
+{$ENDIF}
 
   Stream.WriteString(';');
 end;
@@ -5072,7 +5083,7 @@ end;
 procedure TMetaRoleGrant.SaveToDDLNode(Stream: TStringStream; options: TDDLOptions);
 begin
   inherited SaveToDDLNode(Stream, options);
-  Stream.WriteString('"' + FName + '" TO ');
+  Stream.WriteString(MetaQuote(FName) + ' TO ');
   inherited SaveGranteesToDDLNode(Stream, 'ADMIN', options);
 end;
 
