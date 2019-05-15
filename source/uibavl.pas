@@ -679,7 +679,6 @@ var
   (* h is root of current subtree, child is one of its children. *)
   lessparent, h, child: TAvlHandle;
 begin
-  h := nil;
   (* Depth of root node of current subtree. *)
   depth := 0;
   (* Number of nodes in current subtree. *)

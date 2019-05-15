@@ -28,6 +28,9 @@ unit uibase;
 
 interface
 uses
+{$ifdef FB30_UP}
+  Firebird,
+{$endif}
 {$IFDEF MSWINDOWS}
   Windows,
 {$ENDIF MSWINDOWS}
