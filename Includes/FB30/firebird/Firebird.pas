@@ -6,6 +6,7 @@ interface
 
 uses Classes, SysUtils;
 
+{$WARN NO_RETVAL OFF}  //turn off warninsg that a return value may not be defined
 type
 {$IFNDEF FPC}
 	QWord = UInt64;
@@ -12127,6 +12128,7 @@ var
 	statusVector: array[0..4] of NativeIntPtr;
 	msg: AnsiString;
 begin
+  {$WARN IMPLICIT_STRING_CAST_LOSS OFF}
 	if (e.inheritsFrom(FbException)) then
 		status.setErrors(FbException(e).getStatus.getErrors)
 	else
