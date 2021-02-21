@@ -742,7 +742,7 @@ next:
     '.': begin inc(FCursor); result := toDot end;
     '?': begin inc(FCursor); result := toVParam end;
 
-    ' ', #9: begin
+    ' ', #9, #13, #10: begin // 2021-02-21 fix: include #13, #10 to skip if detected at line end. Otherwise reporting false parsing error.
                inc(FCursor); // separator
                goto next;
              end;
