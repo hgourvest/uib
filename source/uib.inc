@@ -64,6 +64,7 @@
 {.$DEFINE UIBLANG_RU} // Russian
 {.$DEFINE UIBLANG_ES} // Espanol
 {.$DEFINE UIBLANG_TR} // Turkish
+{.$DEFINE UIBLANG_HU} // Hungarian
 
 // use SYNEDIT (sql editor)
 {$IFNDEF UNICODE}
