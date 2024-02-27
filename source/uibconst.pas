@@ -83,7 +83,7 @@ const
 {$ENDIF}
 
 const
-  {$IFDEF UIBLANG_EN}
+{$IFDEF UIBLANG_EN}
   sUIBTrue  = 'True';
   sUIBFalse = 'False';
 
@@ -122,34 +122,34 @@ const
   EUIB_INVALIDUSERNAME     = 'Invalid user name : "%s".';
   EUIB_SERVICESPARSING     = 'Error while parsing Services API output.';
   EUIB_NOT_NULLABLE        = 'Field "%s" is not nullable.';
-  {$ENDIF UIBLANG_EN}
+{$ENDIF UIBLANG_EN}
 
-  {$IFDEF UIBLANG_FR}
+{$IFDEF UIBLANG_FR}
   sUIBTrue  = 'Vrai';
   sUIBFalse = 'Faux';
 
   // UIB Errors
-  EUIB_INVALIDEIBVERSION   = 'Version de base de donnйes incorrecte, vйrifiez les options de compilation.';
+  EUIB_INVALIDEIBVERSION   = 'Version de base de donnГ©es incorrecte, vГ©rifiez les options de compilation.';
   EUIB_CANTLOADLIB         = 'Impossible de charger la DLL: %s.';
-  EUIB_DBHANDLEALREADYSET  = 'Le handle de la base de donnйes est dйjа dйfini, dйconnectez d''abord la base de donnйes.';
-  EUIB_TRANSACTIONNOTDEF   = 'La transaction n''est pas dйfinie';
-  EUIB_DATABASENOTDEF      = 'La base de donnйes n''est pas dйfinie.';
-  EUIB_QUERYNOTOPEN        = 'La requкte n''est pas encore ouverte.';
+  EUIB_DBHANDLEALREADYSET  = 'Le handle de la base de donnГ©es est dГ©jГ  dГ©fini, dГ©connectez d''abord la base de donnГ©es.';
+  EUIB_TRANSACTIONNOTDEF   = 'La transaction n''est pas dГ©finie';
+  EUIB_DATABASENOTDEF      = 'La base de donnГ©es n''est pas dГ©finie.';
+  EUIB_QUERYNOTOPEN        = 'La requГЄte n''est pas encore ouverte.';
   EUIB_CASTERROR           = 'Transtypage incorrect.';
   EUIB_UNEXPECTEDERROR     = 'Erreur inattendue.';
-  EUIB_FIELDNUMNOTFOUND    = 'Le champ numйro: %d n''existe pas.';
+  EUIB_FIELDNUMNOTFOUND    = 'Le champ numГ©ro: %d n''existe pas.';
   EUIB_FIELDSTRNOTFOUND    = 'Le champ "%s" n''existe pas.';
   EUIB_PARAMSTRNOTFOUND    = 'Le Parametre "%s" n''existe pas.';
-  EUIB_BLOBFIELDNOTFOUND   = 'Le champ Blob numйro: %d n''existe pas.';
-  EUIB_FETCHBLOBNOTSET     = 'La propriйtй FetchBlob doit кtre activйe pour utiliser cette mйthode.';
+  EUIB_BLOBFIELDNOTFOUND   = 'Le champ Blob numГ©ro: %d n''existe pas.';
+  EUIB_FETCHBLOBNOTSET     = 'La propriГ©tГ© FetchBlob doit ГЄtre activГ©e pour utiliser cette mГ©thode.';
   EUIB_INDEXERROR          = 'Indice de liste hors limites (%d)';
   EUIB_SIZENAME            = 'La taille du nom est trop grande (%s)';
-  EUIB_MUSTBEPREPARED      = 'La requиte doit d''abord кtre prйparйe.';
-  EUIB_MUSTBEOPEN          = 'La requиte doit d''abord кtre ouverte.';
-  EUIB_EXPLICITTRANS       = 'La transaction doit кtre dйmarrйe explicitement.';
+  EUIB_MUSTBEPREPARED      = 'La requГЁte doit d''abord ГЄtre prГ©parГ©e.';
+  EUIB_MUSTBEOPEN          = 'La requГЁte doit d''abord ГЄtre ouverte.';
+  EUIB_EXPLICITTRANS       = 'La transaction doit ГЄtre dГ©marrГ©e explicitement.';
   EUIB_EXCEPTIONNOTFOUND   = 'L''exception %s, n''existe pas.';
-  EUIB_EXPTIONREGISTERED   = 'L''exception %d a dйjа йtй enregistrйe.';
-  EUIB_NOAUTOSTOP          = 'La transaction doit кtre fermйe explicitement.';
+  EUIB_EXPTIONREGISTERED   = 'L''exception %d a dГ©jГ  Г©tГ© enregistrГ©e.';
+  EUIB_NOAUTOSTOP          = 'La transaction doit ГЄtre fermГ©e explicitement.';
   EUIB_NOGENERATOR         = 'Generator %s not found.';
   EUIB_NOFIELD             = 'Field not found.';
   EUIB_TABLESTRNOTFOUND    = 'Table "%s" not found.';
@@ -163,30 +163,29 @@ const
   EUIB_INVALIDUSERNAME     = 'Invalid user name : "%s".';
   EUIB_SERVICESPARSING     = 'Error while parsing Services API output.';
   EUIB_NOT_NULLABLE        = 'Field "%s" is not nullable.';
+{$ENDIF UIBLANG_FR}
 
-  {$ENDIF UIBLANG_FR}
-
-  {$IFDEF UIBLANG_CZ}
+{$IFDEF UIBLANG_CZ}
   sUIBTrue  = 'Ano';
   sUIBFalse = 'Ne';
 
   // UIB Errors
-  EUIB_INVALIDEIBVERSION   = 'Nekorektnн verze databбzovйho serveru, zkontrolujte nastavenн kompileru.';
-  EUIB_CANTLOADLIB         = 'Nelze naинst knihovnu: %s.';
-  EUIB_DBHANDLEALREADYSET  = 'Kanбl databбze je jiћ pшipraven, nejdшнve odpojte databбzi.';
-  EUIB_TRANSACTIONNOTDEF   = 'Transakce nenн pшiшazena.';
-  EUIB_DATABASENOTDEF      = 'Databбze nenн pшiшazena.';
-  EUIB_QUERYNOTOPEN        = 'Dotaz nenн otevшen.';
-  EUIB_CASTERROR           = 'Chyba bsazenн.';
-  EUIB_UNEXPECTEDERROR     = 'Neznбmб chyba.';
-  EUIB_FIELDNUMNOTFOUND    = 'Poloћka инslo: %d neexistuje.';
-  EUIB_FIELDSTRNOTFOUND    = 'Poloћka "%s" neexistuje.';
+  EUIB_INVALIDEIBVERSION   = 'NekorektnГ­ verze databГЎzovГ©ho serveru, zkontrolujte nastavenГ­ kompileru.';
+  EUIB_CANTLOADLIB         = 'Nelze naГЁГ­st knihovnu: %s.';
+  EUIB_DBHANDLEALREADYSET  = 'KanГЎl databГЎze je jiВћ pГёipraven, nejdГёГ­ve odpojte databГЎzi.';
+  EUIB_TRANSACTIONNOTDEF   = 'Transakce nenГ­ pГёiГёazena.';
+  EUIB_DATABASENOTDEF      = 'DatabГЎze nenГ­ pГёiГёazena.';
+  EUIB_QUERYNOTOPEN        = 'Dotaz nenГ­ otevГёen.';
+  EUIB_CASTERROR           = 'Chyba bsazenГ­.';
+  EUIB_UNEXPECTEDERROR     = 'NeznГЎmГЎ chyba.';
+  EUIB_FIELDNUMNOTFOUND    = 'PoloВћka ГЁГ­slo: %d neexistuje.';
+  EUIB_FIELDSTRNOTFOUND    = 'PoloВћka "%s" neexistuje.';
   EUIB_PARAMSTRNOTFOUND    = 'Parametr "%s" neexistuje.';
-  EUIB_BLOBFIELDNOTFOUND   = 'Blob zбznam инslo: %d neexistuje.';
-  EUIB_FETCHBLOBNOTSET     = 'Vlastnost FetchBlob musн bэt nastavena pro pouћitн tйto metody.';
+  EUIB_BLOBFIELDNOTFOUND   = 'Blob zГЎznam ГЁГ­slo: %d neexistuje.';
+  EUIB_FETCHBLOBNOTSET     = 'Vlastnost FetchBlob musГ­ bГЅt nastavena pro pouВћitГ­ tГ©to metody.';
   EUIB_INDEXERROR          = 'Index je mimo rozsah (%d)';
-  EUIB_SIZENAME            = 'Velikost nбzvu je pшнliљ velkб (%s)';
-  EUIB_MUSTBEPREPARED      = 'Dotaz musн bэt nejdшнve pшipraven (prepared).';
+  EUIB_SIZENAME            = 'Velikost nГЎzvu je pГёГ­liВљ velkГЎ (%s)';
+  EUIB_MUSTBEPREPARED      = 'Dotaz musГ­ bГЅt nejdГёГ­ve pГёipraven (prepared).';
   EUIB_MUSTBEOPEN          = 'The query must be opened first.';
   EUIB_EXPLICITTRANS       = 'Transaction must be started explicitly.';
   EUIB_EXCEPTIONNOTFOUND   = 'Exception name %s, not found.';
@@ -205,20 +204,19 @@ const
   EUIB_INVALIDUSERNAME     = 'Invalid user name : "%s".';
   EUIB_SERVICESPARSING     = 'Error while parsing Services API output.';
   EUIB_NOT_NULLABLE        = 'Field "%s" is not nullable.';
+{$ENDIF UIBLANG_CZ}
 
-  {$ENDIF UIBLANG_CZ}
-
-  {$IFDEF UIBLANG_DE}
+{$IFDEF UIBLANG_DE}
   sUIBTrue  = 'Wahr';
   sUIBFalse = 'Falsch';
 
   // UIB Errors
-  EUIB_INVALIDEIBVERSION   = 'Falsche Version des Datenbankservers. Bitte ueberprьfen sie die Compileroptionen.';
+  EUIB_INVALIDEIBVERSION   = 'Falsche Version des Datenbankservers. Bitte ueberprГјfen sie die Compileroptionen.';
   EUIB_CANTLOADLIB         = 'Kann Bibliothek %s nicht laden.';
   EUIB_DBHANDLEALREADYSET  = 'Datenbank-Handle bereits zugewiesen. Bitte erst Verbindung zur Datenbank trennen.';
   EUIB_TRANSACTIONNOTDEF   = 'Transaktion nicht zugewiesen.';
   EUIB_DATABASENOTDEF      = 'Datenbank nicht zugewiesen.';
-  EUIB_QUERYNOTOPEN        = 'Abfrage nicht geцffnet.';
+  EUIB_QUERYNOTOPEN        = 'Abfrage nicht geГ¶ffnet.';
   EUIB_CASTERROR           = 'Fehler bei Typumwandlung.';
   EUIB_UNEXPECTEDERROR     = 'Unerwarteter Fehler.';
   EUIB_FIELDNUMNOTFOUND    = 'Feld Nummer %d nicht gefunden.';
@@ -226,10 +224,10 @@ const
   EUIB_PARAMSTRNOTFOUND    = 'Parameter "%s" nicht gefunden.';
   EUIB_BLOBFIELDNOTFOUND   = 'Blob-Feld Nummer: %d nicht gefunden.';
   EUIB_FETCHBLOBNOTSET     = 'Die Eigenschaft FetchBlob muss gesetzt sein um diese Methode zu nutzen.';
-  EUIB_INDEXERROR          = 'Index ausserhalb des gьltigen Bereichs (%d).';
+  EUIB_INDEXERROR          = 'Index ausserhalb des gГјltigen Bereichs (%d).';
   EUIB_SIZENAME            = 'Name ist zu lang (%s).';
   EUIB_MUSTBEPREPARED      = 'Die Abfrage muss erst vorbereitet werden.';
-  EUIB_MUSTBEOPEN          = 'Die Abfrage muss erst geцffnet werden.';
+  EUIB_MUSTBEOPEN          = 'Die Abfrage muss erst geГ¶ffnet werden.';
   EUIB_EXPLICITTRANS       = 'Die Transaktion muss explizit gestartet werden.';
   EUIB_EXCEPTIONNOTFOUND   = 'Ausnahme "%s" nicht gefunden.';
   EUIB_EXPTIONREGISTERED   = 'Ausnahme %d bereits registriert.';
@@ -237,7 +235,7 @@ const
   EUIB_NOGENERATOR         = 'Generator %s nicht gefunden.';
   EUIB_NOFIELD             = 'Feld nicht gefunden.';
   EUIB_TABLESTRNOTFOUND    = 'Tabelle "%s" nicht gefunden.';
-  EUIB_DOMAINSTRNOTFOUND   = 'Domдne %s nicht gefunden.';
+  EUIB_DOMAINSTRNOTFOUND   = 'DomГ¤ne %s nicht gefunden.';
   EUIB_PROCSTRNOTFOUND     = 'Prozedur %s nicht gefunden.';
   EUIB_CACHEDFETCHNOTSET   = 'CachedFetch property not set to True.';
   EUIB_PARSESQLDIALECT     = 'Parse error: SET SQL DIALECT';
@@ -247,34 +245,33 @@ const
   EUIB_INVALIDUSERNAME     = 'Invalid user name : "%s".';
   EUIB_SERVICESPARSING     = 'Error while parsing Services API output.';
   EUIB_NOT_NULLABLE        = 'Field "%s" is not nullable.';
+{$ENDIF UIBLANG_DE}
 
-  {$ENDIF UIBLANG_DE}
-
-  {$IFDEF UIBLANG_RU}
-  sUIBTrue  = 'Да';
-  sUIBFalse = 'Нет';
+{$IFDEF UIBLANG_RU}
+  sUIBTrue  = 'Г„Г ';
+  sUIBFalse = 'ГЌГҐГІ';
 
   // UIB Errors
-  EUIB_INVALIDEIBVERSION   = 'Некорректная версия сервера БД, проверьте опции компилятора.';
-  EUIB_CANTLOADLIB         = 'Не могу загрузить библиотеку DLL: %s.';
-  EUIB_DBHANDLEALREADYSET  = 'Дескриптор базы данных уже установлен, сначала разорвите текущее соединение с базой данных.';
-  EUIB_TRANSACTIONNOTDEF   = 'Свойство Transaction не установлено.';
-  EUIB_DATABASENOTDEF      = 'Свойство Database не установлено.';
-  EUIB_QUERYNOTOPEN        = 'Запрос не открыт.';
-  EUIB_CASTERROR           = 'Ошибка приведения типа.';
-  EUIB_UNEXPECTEDERROR     = 'Неизвестная ошибка.';
-  EUIB_FIELDNUMNOTFOUND    = 'Поле номер: %d не найдено.';
-  EUIB_FIELDSTRNOTFOUND    = 'Поле "%s" не найдено.';
-  EUIB_PARAMSTRNOTFOUND    = 'Параметр "%s" не найден.';
-  EUIB_BLOBFIELDNOTFOUND   = 'Blob поле номер: %d не найдено.';
-  EUIB_FETCHBLOBNOTSET     = 'Свойство FetchBlob должно быть установлено для выполнения этого метода.';
-  EUIB_INDEXERROR          = 'Index за пределами допустимых значений (%d)';
-  EUIB_SIZENAME            = 'Слишком длинное название (%s)';
-  EUIB_MUSTBEPREPARED      = 'Необходимо сначала подготовить (prepare) запрос.';
-  EUIB_MUSTBEOPEN          = 'Необходимо сначала открыть запрос.';
-  EUIB_EXPLICITTRANS       = 'Не выполнен старт транзакции.';
-  EUIB_EXCEPTIONNOTFOUND   = 'Исключение %s не найдено.';
-  EUIB_EXPTIONREGISTERED   = 'Исключение: %d уже зарегистрировано';
+  EUIB_INVALIDEIBVERSION   = 'ГЌГҐГЄГ®Г°Г°ГҐГЄГІГ­Г Гї ГўГҐГ°Г±ГЁГї Г±ГҐГ°ГўГҐГ°Г  ГЃГ„, ГЇГ°Г®ГўГҐГ°ГјГІГҐ Г®ГЇГ¶ГЁГЁ ГЄГ®Г¬ГЇГЁГ«ГїГІГ®Г°Г .';
+  EUIB_CANTLOADLIB         = 'ГЌГҐ Г¬Г®ГЈГі Г§Г ГЈГ°ГіГ§ГЁГІГј ГЎГЁГЎГ«ГЁГ®ГІГҐГЄГі DLL: %s.';
+  EUIB_DBHANDLEALREADYSET  = 'Г„ГҐГ±ГЄГ°ГЁГЇГІГ®Г° ГЎГ Г§Г» Г¤Г Г­Г­Г»Гµ ГіГ¦ГҐ ГіГ±ГІГ Г­Г®ГўГ«ГҐГ­, Г±Г­Г Г·Г Г«Г  Г°Г Г§Г®Г°ГўГЁГІГҐ ГІГҐГЄГіГ№ГҐГҐ Г±Г®ГҐГ¤ГЁГ­ГҐГ­ГЁГҐ Г± ГЎГ Г§Г®Г© Г¤Г Г­Г­Г»Гµ.';
+  EUIB_TRANSACTIONNOTDEF   = 'Г‘ГўГ®Г©Г±ГІГўГ® Transaction Г­ГҐ ГіГ±ГІГ Г­Г®ГўГ«ГҐГ­Г®.';
+  EUIB_DATABASENOTDEF      = 'Г‘ГўГ®Г©Г±ГІГўГ® Database Г­ГҐ ГіГ±ГІГ Г­Г®ГўГ«ГҐГ­Г®.';
+  EUIB_QUERYNOTOPEN        = 'Г‡Г ГЇГ°Г®Г± Г­ГҐ Г®ГІГЄГ°Г»ГІ.';
+  EUIB_CASTERROR           = 'ГЋГёГЁГЎГЄГ  ГЇГ°ГЁГўГҐГ¤ГҐГ­ГЁГї ГІГЁГЇГ .';
+  EUIB_UNEXPECTEDERROR     = 'ГЌГҐГЁГ§ГўГҐГ±ГІГ­Г Гї Г®ГёГЁГЎГЄГ .';
+  EUIB_FIELDNUMNOTFOUND    = 'ГЏГ®Г«ГҐ Г­Г®Г¬ГҐГ°: %d Г­ГҐ Г­Г Г©Г¤ГҐГ­Г®.';
+  EUIB_FIELDSTRNOTFOUND    = 'ГЏГ®Г«ГҐ "%s" Г­ГҐ Г­Г Г©Г¤ГҐГ­Г®.';
+  EUIB_PARAMSTRNOTFOUND    = 'ГЏГ Г°Г Г¬ГҐГІГ° "%s" Г­ГҐ Г­Г Г©Г¤ГҐГ­.';
+  EUIB_BLOBFIELDNOTFOUND   = 'Blob ГЇГ®Г«ГҐ Г­Г®Г¬ГҐГ°: %d Г­ГҐ Г­Г Г©Г¤ГҐГ­Г®.';
+  EUIB_FETCHBLOBNOTSET     = 'Г‘ГўГ®Г©Г±ГІГўГ® FetchBlob Г¤Г®Г«Г¦Г­Г® ГЎГ»ГІГј ГіГ±ГІГ Г­Г®ГўГ«ГҐГ­Г® Г¤Г«Гї ГўГ»ГЇГ®Г«Г­ГҐГ­ГЁГї ГЅГІГ®ГЈГ® Г¬ГҐГІГ®Г¤Г .';
+  EUIB_INDEXERROR          = 'Index Г§Г  ГЇГ°ГҐГ¤ГҐГ«Г Г¬ГЁ Г¤Г®ГЇГіГ±ГІГЁГ¬Г»Гµ Г§Г­Г Г·ГҐГ­ГЁГ© (%d)';
+  EUIB_SIZENAME            = 'Г‘Г«ГЁГёГЄГ®Г¬ Г¤Г«ГЁГ­Г­Г®ГҐ Г­Г Г§ГўГ Г­ГЁГҐ (%s)';
+  EUIB_MUSTBEPREPARED      = 'ГЌГҐГ®ГЎГµГ®Г¤ГЁГ¬Г® Г±Г­Г Г·Г Г«Г  ГЇГ®Г¤ГЈГ®ГІГ®ГўГЁГІГј (prepare) Г§Г ГЇГ°Г®Г±.';
+  EUIB_MUSTBEOPEN          = 'ГЌГҐГ®ГЎГµГ®Г¤ГЁГ¬Г® Г±Г­Г Г·Г Г«Г  Г®ГІГЄГ°Г»ГІГј Г§Г ГЇГ°Г®Г±.';
+  EUIB_EXPLICITTRANS       = 'ГЌГҐ ГўГ»ГЇГ®Г«Г­ГҐГ­ Г±ГІГ Г°ГІ ГІГ°Г Г­Г§Г ГЄГ¶ГЁГЁ.';
+  EUIB_EXCEPTIONNOTFOUND   = 'Г€Г±ГЄГ«ГѕГ·ГҐГ­ГЁГҐ %s Г­ГҐ Г­Г Г©Г¤ГҐГ­Г®.';
+  EUIB_EXPTIONREGISTERED   = 'Г€Г±ГЄГ«ГѕГ·ГҐГ­ГЁГҐ: %d ГіГ¦ГҐ Г§Г Г°ГҐГЈГЁГ±ГІГ°ГЁГ°Г®ГўГ Г­Г®';
   EUIB_NOAUTOSTOP          = 'Transaction must be closed explicitly.';
   EUIB_NOGENERATOR         = 'Generator %s not found.';
   EUIB_NOFIELD             = 'Field not found.';
@@ -289,28 +286,27 @@ const
   EUIB_INVALIDUSERNAME     = 'Invalid user name : "%s".';
   EUIB_SERVICESPARSING     = 'Error while parsing Services API output.';
   EUIB_NOT_NULLABLE        = 'Field "%s" is not nullable.';
+{$ENDIF UIBLANG_RU}
 
-  {$ENDIF UIBLANG_RU}
-
-  {$IFDEF UIBLANG_ES}
+{$IFDEF UIBLANG_ES}
   sUIBTrue             = 'Si';
   sUIBFalse            = 'No';
 
   // UIB Errors
-  EUIB_INVALIDEIBVERSION   = 'Versiуn incorrecta del Servidor de Base de Datos, verifica las opciones del compilador.';
+  EUIB_INVALIDEIBVERSION   = 'VersiГіn incorrecta del Servidor de Base de Datos, verifica las opciones del compilador.';
   EUIB_CANTLOADLIB         = 'Imposible cargar la DLL: %s.';
-  EUIB_DBHANDLEALREADYSET  = 'El handle de la base de datos estб asignado, primero desconecte la base de datos.';
-  EUIB_TRANSACTIONNOTDEF   = 'La transacciуn no estб asignada.';
-  EUIB_DATABASENOTDEF      = 'La Base de Datos no estб asignada.';
-  EUIB_QUERYNOTOPEN        = 'El query estб cerrado.';
-  EUIB_CASTERROR           = 'Error en conversiуn.';
+  EUIB_DBHANDLEALREADYSET  = 'El handle de la base de datos estГЎ asignado, primero desconecte la base de datos.';
+  EUIB_TRANSACTIONNOTDEF   = 'La transacciГіn no estГЎ asignada.';
+  EUIB_DATABASENOTDEF      = 'La Base de Datos no estГЎ asignada.';
+  EUIB_QUERYNOTOPEN        = 'El query estГЎ cerrado.';
+  EUIB_CASTERROR           = 'Error en conversiГіn.';
   EUIB_UNEXPECTEDERROR     = 'Error inesperado.';
-  EUIB_FIELDNUMNOTFOUND    = 'Campo nъmero: %d no encontrado.';
+  EUIB_FIELDNUMNOTFOUND    = 'Campo nГєmero: %d no encontrado.';
   EUIB_FIELDSTRNOTFOUND    = 'Campo "%s" no encontrado.';
   EUIB_PARAMSTRNOTFOUND    = 'Parametro "%s" no  encontrado.';
-  EUIB_BLOBFIELDNOTFOUND   = 'Campo Blob nъmero: %d no  encontrado.';
-  EUIB_FETCHBLOBNOTSET     = 'La propiedad FetchBlob debe habilitarse para usar estй mйtodo';
-  EUIB_INDEXERROR          = 'Нndice fuera de lнmite (%d)';
+  EUIB_BLOBFIELDNOTFOUND   = 'Campo Blob nГєmero: %d no  encontrado.';
+  EUIB_FETCHBLOBNOTSET     = 'La propiedad FetchBlob debe habilitarse para usar estГ© mГ©todo';
+  EUIB_INDEXERROR          = 'ГЌndice fuera de lГ­mite (%d)';
   EUIB_SIZENAME            = 'Nombre demasiado largo (%s)';
   EUIB_MUSTBEPREPARED      = 'El query debe prepararse primero.';
   EUIB_MUSTBEOPEN          = 'El query debe ser abierto primero.';
@@ -331,50 +327,90 @@ const
   EUIB_INVALIDUSERNAME     = 'Invalid user name : "%s".';
   EUIB_SERVICESPARSING     = 'Error while parsing Services API output.';
   EUIB_NOT_NULLABLE        = 'Field "%s" is not nullable.';
+{$ENDIF UIBLANG_ES}
 
-  {$ENDIF UIBLANG_ES}
-
-  {$IFDEF UIBLANG_TR}
-  sUIBTrue  = 'Doрru';
-  sUIBFalse = 'Yanlэю';
+{$IFDEF UIBLANG_TR}
+  sUIBTrue  = 'DoГ°ru';
+  sUIBFalse = 'YanlГЅГѕ';
 
   // UIB Errors
-  EUIB_INVALIDEIBVERSION   = 'Hatalэ Veritabanэ Sunucusu sьrьmь, derleyici seзeneklerini kontrol ediniz.';
-  EUIB_CANTLOADLIB         = 'Kitaplэk yьklenemiyor: %s.';
-  EUIB_DBHANDLEALREADYSET  = 'Veritabanэ tanэtэcэsэ atanmэю durumda, цncelikle veritabanэ baрlantэsэnэ kesiniz.';
-  EUIB_TRANSACTIONNOTDEF   = 'Эюlem grubu atanmamэю.';
-  EUIB_DATABASENOTDEF      = 'Veritabanэ atanmamэю.';
-  EUIB_QUERYNOTOPEN        = 'Sorgu aзэk deрil.';
-  EUIB_CASTERROR           = 'Tip atama hatasэ.';
+  EUIB_INVALIDEIBVERSION   = 'HatalГЅ VeritabanГЅ Sunucusu sГјrГјmГј, derleyici seГ§eneklerini kontrol ediniz.';
+  EUIB_CANTLOADLIB         = 'KitaplГЅk yГјklenemiyor: %s.';
+  EUIB_DBHANDLEALREADYSET  = 'VeritabanГЅ tanГЅtГЅcГЅsГЅ atanmГЅГѕ durumda, Г¶ncelikle veritabanГЅ baГ°lantГЅsГЅnГЅ kesiniz.';
+  EUIB_TRANSACTIONNOTDEF   = 'ГќГѕlem grubu atanmamГЅГѕ.';
+  EUIB_DATABASENOTDEF      = 'VeritabanГЅ atanmamГЅГѕ.';
+  EUIB_QUERYNOTOPEN        = 'Sorgu aГ§ГЅk deГ°il.';
+  EUIB_CASTERROR           = 'Tip atama hatasГЅ.';
   EUIB_UNEXPECTEDERROR     = 'Beklenmeyen hata.';
-  EUIB_FIELDNUMNOTFOUND    = '%d numaralэ saha bulunamadэ.';
-  EUIB_FIELDSTRNOTFOUND    = '"%s" sahasэ bulunamadэ.';
-  EUIB_PARAMSTRNOTFOUND    = '"%s" parametresi bulunamadэ.';
-  EUIB_BLOBFIELDNOTFOUND   = '%d numaralэ Blob sahasэ bulunamadэ.';
-  EUIB_FETCHBLOBNOTSET     = 'Bu metodu kullanmak iзin FetchBlob niteliрi ayarlanmalэdэr.';
-  EUIB_INDEXERROR          = 'Indeks sэnэr dэюэnda (%d)';
-  EUIB_SIZENAME            = 'Ad bьyьklьрь зok yьksek (%s)';
-  EUIB_MUSTBEPREPARED      = 'Sorgu цncelikle hazэrlanmalэdэr.';
-  EUIB_MUSTBEOPEN          = 'Sorgu цncelikle aзэlmalэdэr.';
-  EUIB_EXPLICITTRANS       = 'Эюlem grubu elle baюlatэlmalэdэr.';
-  EUIB_EXCEPTIONNOTFOUND   = 'Kural dэюэ nesnesi "%s" bulunamadэ.';
-  EUIB_EXPTIONREGISTERED   = 'Kural dэюэ: %d zaten kayэtlэ.';
-  EUIB_NOAUTOSTOP          = 'Эюlem grubu elle kapatэlmalэdэr.';
-  EUIB_NOGENERATOR         = '%s ьreteci bulunamadэ.';
-  EUIB_NOFIELD             = 'Saha bulunamadэ.';
-  EUIB_TABLESTRNOTFOUND    = '"%s" tablosu bulunamadэ.';
-  EUIB_DOMAINSTRNOTFOUND   = '"%s" etki alanэ bulunamadэ.';
-  EUIB_PROCSTRNOTFOUND     = '%s yordamэ bulunamadэ.';
-  EUIB_CACHEDFETCHNOTSET   = 'CachedFetch niteliрi True olarak belirlenmemiю.';
-  EUIB_PARSESQLDIALECT     = 'Ayrэюtэrma hatasэ: SET SQL DIALECT';
-  EUIB_PARSESETNAMES       = 'Ayrэюtэrma hatasэ: SET NAMES';
-  EUIB_CHARSETNOTFOUND     = '%s karakter seti bulunamadэ.';
-  EUIB_UNEXPECTEDCASTERROR = 'Beklenmeyen tip atama hatasэ.';
-  EUIB_INVALIDUSERNAME     = 'Geзersiz kullanэcэ adэ : "%s".';
-  EUIB_SERVICESPARSING     = 'Services API зэktэsэ ayrэюtэrэlэrken hata oluюtu.';
+  EUIB_FIELDNUMNOTFOUND    = '%d numaralГЅ saha bulunamadГЅ.';
+  EUIB_FIELDSTRNOTFOUND    = '"%s" sahasГЅ bulunamadГЅ.';
+  EUIB_PARAMSTRNOTFOUND    = '"%s" parametresi bulunamadГЅ.';
+  EUIB_BLOBFIELDNOTFOUND   = '%d numaralГЅ Blob sahasГЅ bulunamadГЅ.';
+  EUIB_FETCHBLOBNOTSET     = 'Bu metodu kullanmak iГ§in FetchBlob niteliГ°i ayarlanmalГЅdГЅr.';
+  EUIB_INDEXERROR          = 'Indeks sГЅnГЅr dГЅГѕГЅnda (%d)';
+  EUIB_SIZENAME            = 'Ad bГјyГјklГјГ°Гј Г§ok yГјksek (%s)';
+  EUIB_MUSTBEPREPARED      = 'Sorgu Г¶ncelikle hazГЅrlanmalГЅdГЅr.';
+  EUIB_MUSTBEOPEN          = 'Sorgu Г¶ncelikle aГ§ГЅlmalГЅdГЅr.';
+  EUIB_EXPLICITTRANS       = 'ГќГѕlem grubu elle baГѕlatГЅlmalГЅdГЅr.';
+  EUIB_EXCEPTIONNOTFOUND   = 'Kural dГЅГѕГЅ nesnesi "%s" bulunamadГЅ.';
+  EUIB_EXPTIONREGISTERED   = 'Kural dГЅГѕГЅ: %d zaten kayГЅtlГЅ.';
+  EUIB_NOAUTOSTOP          = 'ГќГѕlem grubu elle kapatГЅlmalГЅdГЅr.';
+  EUIB_NOGENERATOR         = '%s Гјreteci bulunamadГЅ.';
+  EUIB_NOFIELD             = 'Saha bulunamadГЅ.';
+  EUIB_TABLESTRNOTFOUND    = '"%s" tablosu bulunamadГЅ.';
+  EUIB_DOMAINSTRNOTFOUND   = '"%s" etki alanГЅ bulunamadГЅ.';
+  EUIB_PROCSTRNOTFOUND     = '%s yordamГЅ bulunamadГЅ.';
+  EUIB_CACHEDFETCHNOTSET   = 'CachedFetch niteliГ°i True olarak belirlenmemiГѕ.';
+  EUIB_PARSESQLDIALECT     = 'AyrГЅГѕtГЅrma hatasГЅ: SET SQL DIALECT';
+  EUIB_PARSESETNAMES       = 'AyrГЅГѕtГЅrma hatasГЅ: SET NAMES';
+  EUIB_CHARSETNOTFOUND     = '%s karakter seti bulunamadГЅ.';
+  EUIB_UNEXPECTEDCASTERROR = 'Beklenmeyen tip atama hatasГЅ.';
+  EUIB_INVALIDUSERNAME     = 'GeГ§ersiz kullanГЅcГЅ adГЅ : "%s".';
+  EUIB_SERVICESPARSING     = 'Services API Г§ГЅktГЅsГЅ ayrГЅГѕtГЅrГЅlГЅrken hata oluГѕtu.';
   EUIB_NOT_NULLABLE        = 'Field "%s" is not nullable.';
+{$ENDIF UIBLANG_TR}
 
-  {$ENDIF UIBLANG_TR}
+{$IFDEF UIBLANG_HU}
+  sUIBTrue  = 'Igaz';
+  sUIBFalse = 'Hamis';
+
+  // UIB Errors
+  EUIB_INVALIDEIBVERSION   = 'Inkorrekt AdatbГЎzis Szerver verziГі! EllenЕ‘rizd a fordГ­tГіi opciГіkat.';
+  EUIB_CANTLOADLIB         = 'Nem lehet betГ¶lteni ezt a fГјggvГ©nytГЎrat: %s.';
+  EUIB_DBHANDLEALREADYSET  = 'Az adatbГЎzis kezelЕ‘ (handle) mГЎr hozzГЎ lett rendelve! ElЕ‘bb kapcsolГіdj le.';
+  EUIB_TRANSACTIONNOTDEF   = 'Nincs tranzakciГі hozzГЎrendelve.';
+  EUIB_DATABASENOTDEF      = 'Nincs adatbГЎzis hozzГЎrendelve.';
+  EUIB_QUERYNOTOPEN        = 'Nincs nyitva a LekГ©rdezГ©s (Query).';
+  EUIB_CASTERROR           = 'TГ­pus MegfeleltetГ©si (Cast) hiba.';
+  EUIB_UNEXPECTEDERROR     = 'VГЎratlan hiba.';
+  EUIB_FIELDNUMNOTFOUND    = 'Ez a mezЕ‘ szГЎm: %d nem talГЎlhatГі.';
+  EUIB_FIELDSTRNOTFOUND    = 'Ez a mezЕ‘: "%s" nem talГЎlhatГі.';
+  EUIB_PARAMSTRNOTFOUND    = 'Ez a paramГ©ter: "%s" nem talГЎlhatГі.';
+  EUIB_BLOBFIELDNOTFOUND   = 'Ez a Blob-mezЕ‘ szГЎm: %d nem talГЎlhatГі.';
+  EUIB_FETCHBLOBNOTSET     = 'A "FetchBlob" tulajdonsГЎgnak be kell lennie ГЎllГ­tva, hogy ezt a ez a metГіdus hasznГЎlhatГі legyen.';
+  EUIB_INDEXERROR          = 'A szГЎmozГЎs hatГЎrГ©rtГ©ken tГєli (%d)';
+  EUIB_SIZENAME            = 'A NГ©v tГєl hosszГє (%s)';
+  EUIB_MUSTBEPREPARED      = 'A LekГ©rdezГ©st elЕ‘bb preparГЎlni kell.';
+  EUIB_MUSTBEOPEN          = 'A LekГ©rdezГ©st elЕ‘bb meg kell nyitni.';
+  EUIB_EXPLICITTRANS       = 'A TransakciГіt explicit mГіdon kell elindГ­tani.';
+  EUIB_EXCEPTIONNOTFOUND   = 'Ez a HibakezelГ©si nГ©v: "%s" nem talГЎlhatГі.';
+  EUIB_EXPTIONREGISTERED   = 'Ez a HibakezelГ©si nГ©v: "%s" mГЎr regisztГЎlva lett.';
+  EUIB_NOAUTOSTOP          = 'A TransakciГіt explicit mГіdon kell lezГЎrni.';
+  EUIB_NOGENERATOR         = 'Ez a Generator: "%s" nem talГЎlhatГі.';
+  EUIB_NOFIELD             = 'A mezЕ‘ nem talГЎlhatГі.';
+  EUIB_TABLESTRNOTFOUND    = 'Ez a TГЎbla: "%s" nem talГЎlhatГі.';
+  EUIB_DOMAINSTRNOTFOUND   = 'Ez a TartomГЎny (Domain): %s nem talГЎlhatГі.';
+  EUIB_PROCSTRNOTFOUND     = 'Ez az EljГЎrГЎs (Procedure): %s nem talГЎlhatГі.';
+  EUIB_CACHEDFETCHNOTSET   = 'A "CachedFetch" tulajdonsГЎg Hamisra ГЎllГ­tva.';
+  EUIB_PARSESQLDIALECT     = 'FeldolgozГЎsi (Parse) hiba: SET SQL DIALECT';
+  EUIB_PARSESETNAMES       = 'FeldolgozГЎsi (Parse) hiba: SET NAMES';
+  EUIB_CHARSETNOTFOUND     = 'Ez a Karakter-tГЎbla: "%s" nem talГЎlhatГі.';
+  EUIB_UNEXPECTEDCASTERROR = 'VГЎratlan mezЕ‘-konvertГЎlГЎsi (cast) hiba.';
+  EUIB_INVALIDUSERNAME     = 'Helytelen felhasznГЎlГі nГ©v: "%s".';
+  EUIB_SERVICESPARSING     = 'Hiba tГ¶rtГ©nt a SzolgГЎltatГі API kimenetГ©nek adatfeldolgozГЎsa (parse) sorГЎn.';
+  EUIB_NOT_NULLABLE        = 'Ezen MezЕ‘: "%s" Г©rtГ©ke nem lehet [NULL] !';
+{$ENDIF UIBLANG_HU}
+
 
 implementation
 
